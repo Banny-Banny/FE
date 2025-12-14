@@ -104,11 +104,7 @@
 ### Backend & Database (Planned)
 
 ```
-• Supabase
-  - Authentication
-  - PostgreSQL Database
-  - Storage
-  - Realtime
+- 수정예정
 ```
 
 ### Code Quality
