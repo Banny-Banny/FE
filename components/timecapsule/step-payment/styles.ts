@@ -41,6 +41,7 @@ export const styles = StyleSheet.create({
     height: 73,
     borderBottomWidth: 0.613,
     borderBottomColor: '#e0e0e0', // neutral-200
+    pointerEvents: 'none', // 터치 이벤트 무시 (뒤로가기 버튼 클릭 가능하도록)
   },
 
   backButton: {
@@ -53,22 +54,17 @@ export const styles = StyleSheet.create({
     borderWidth: 1.838,
     borderColor: '#000000', // neutral-950
     borderRadius: 21.8315,
-    paddingTop: 9.834,
-    paddingBottom: 1.838,
-    paddingHorizontal: 9.834,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10, // 다른 요소 위에 표시
   },
 
-  backButtonIconContainer: {
-    width: 23.996,
-    height: 23.996,
-    overflow: 'hidden',
-  },
-
-  backButtonIcon: {
-    width: 19.993,
-    height: 19.993,
+  backButtonText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '400',
+    fontSize: 26,
+    color: '#000000',
+    includeFontPadding: false,
   },
 
   headerTitle: {
@@ -291,6 +287,8 @@ export const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 20,
     marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   checkboxBorder: {
@@ -305,7 +303,16 @@ export const styles = StyleSheet.create({
   },
 
   checkboxChecked: {
-    backgroundColor: '#1a1a1a', // neutral-900
+    backgroundColor: '#ffffff', // 체크되어도 흰색 유지
+  },
+
+  checkboxCheckmark: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 16,
+    color: '#1a1a1a', // neutral-900
+    zIndex: 1,
   },
 
   allAgreeText: {
@@ -340,15 +347,18 @@ export const styles = StyleSheet.create({
   },
 
   chevronButton: {
-    width: 15.991,
-    height: 15.991,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
-  chevronIcon: {
-    width: 15.991,
-    height: 15.991,
+  chevronText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '400',
+    fontSize: 24,
+    lineHeight: 24,
+    color: '#666666', // neutral-500
   },
 
   // ============================================
@@ -356,11 +366,11 @@ export const styles = StyleSheet.create({
   // ============================================
   footer: {
     width: '100%',
-    borderTopWidth: 0.613,
+    borderTopWidth: 0.66,
     borderTopColor: '#e0e0e0', // neutral-200
     paddingHorizontal: 24,
     paddingTop: 25,
-    paddingBottom: 25,
+    paddingBottom: 34,
   },
 
   footerBorder: {
@@ -375,9 +385,16 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 60,
     backgroundColor: '#1a1a1a', // neutral-900
-    borderRadius: 20,
+    borderRadius: 16,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
+  },
+
+  submitButtonDisabled: {
+    backgroundColor: '#d4d4d4', // neutral-300 (비활성화 상태)
+    opacity: 0.6,
   },
 
   submitButtonText: {
@@ -387,6 +404,95 @@ export const styles = StyleSheet.create({
     lineHeight: 28,
     letterSpacing: -0.4395,
     color: '#ffffff',
-    textAlign: 'center',
+  },
+
+  submitButtonArrow: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 20,
+    lineHeight: 28,
+    color: '#ffffff',
+  },
+
+  // ============================================
+  // 약관 상세 모달
+  // ============================================
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalContainer: {
+    width: '85%',
+    maxHeight: '70%',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+
+  modalHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  modalTitle: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 24,
+    letterSpacing: -0.3,
+    color: '#1a1a1a',
+    flex: 1,
+  },
+
+  modalCloseButton: {
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  modalCloseText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 24,
+    lineHeight: 24,
+    color: '#666666',
+  },
+
+  modalContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+  },
+
+  modalText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '400',
+    fontSize: 14,
+    lineHeight: 22,
+    letterSpacing: -0.2,
+    color: '#333333',
+  },
+
+  modalSection: {
+    marginBottom: 16,
+  },
+
+  modalSectionTitle: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 24,
+    letterSpacing: -0.3,
+    color: '#1a1a1a',
+    marginBottom: 8,
   },
 });

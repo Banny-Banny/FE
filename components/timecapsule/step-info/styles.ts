@@ -48,6 +48,66 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.white,
   },
+
+  // ============================================
+  // Header
+  // ============================================
+  header: {
+    width: '100%',
+    height: 73,
+  },
+
+  headerContainer: {
+    position: 'relative',
+    width: '100%',
+    height: 73,
+  },
+
+  headerBorder: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: '100%',
+    height: 73,
+    borderBottomWidth: 0.613,
+    borderBottomColor: colors.gray200,
+    pointerEvents: 'none',
+  },
+
+  backButton: {
+    position: 'absolute',
+    left: 24,
+    top: 14,
+    width: 43.663,
+    height: 43.663,
+    backgroundColor: colors.white,
+    borderWidth: 1.838,
+    borderColor: colors.black,
+    borderRadius: 21.8315,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+
+  backButtonText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '400',
+    fontSize: 26,
+    color: colors.black,
+    includeFontPadding: false,
+  },
+
+  headerTitle: {
+    position: 'absolute',
+    left: 79.98,
+    top: 22.8,
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 24,
+    lineHeight: 26.4,
+    letterSpacing: -0.4097,
+    color: colors.neutral900,
+  },
   scrollContent: {
     paddingTop: 32,
     paddingHorizontal: 24,
@@ -225,9 +285,12 @@ export const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
   },
-  stepperButtonIcon: {
-    width: 24,
-    height: 24,
+  stepperButtonText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 28,
+    lineHeight: 28,
+    color: colors.white,
   },
   stepperValueContainer: {
     flexDirection: 'row',

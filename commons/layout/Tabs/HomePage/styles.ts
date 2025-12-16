@@ -13,12 +13,40 @@ import { StyleSheet } from 'react-native';
 // Tailwind 토큰 매핑
 const COLORS = {
   white: '#ffffff',
+  black: '#000000',
 };
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.white,
+  },
+
+  // 타임캡슐 만들기 플로팅 버튼
+  floatingButton: {
+    position: 'absolute',
+    bottom: 40,
+    right: 24,
+    left: 24,
+    height: 60,
+    backgroundColor: COLORS.black,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+
+  floatingButtonText: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '700',
+    fontSize: 18,
+    lineHeight: 28,
+    letterSpacing: -0.4,
+    color: COLORS.white,
   },
 });
 

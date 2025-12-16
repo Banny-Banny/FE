@@ -8,7 +8,8 @@
  * - [x] 외부 라이브러리 설치 0건 (react-native-calendars, dayjs 사용)
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import dayjs from 'dayjs';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Image,
@@ -19,20 +20,19 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
-import dayjs from 'dayjs';
-import { styles } from './styles';
-import { useDateSelection } from './hooks/useDateSelection';
-import { usePriceCalculation } from './hooks/usePriceCalculation';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   formatPrice,
   MAX_CAPSULE_NAME_LENGTH,
-  MIN_PERSONNEL,
   MAX_PERSONNEL,
-  MIN_STORAGE,
   MAX_STORAGE,
+  MIN_PERSONNEL,
+  MIN_STORAGE,
 } from './constants';
+import { useDateSelection } from './hooks/useDateSelection';
+import { usePriceCalculation } from './hooks/usePriceCalculation';
+import { styles } from './styles';
 import type { AdditionalOptionsState } from './types';
 
 // ============================================
@@ -97,29 +97,31 @@ const ICONS = {
 // ============================================
 interface StepInfoProps {
   onSubmit?: (formData: any) => void;
+  onBack?: () => void; // 뒤로가기 핸들러
+  initialData?: any; // 이전에 입력한 데이터 (뒤로가기 시 복원용)
 }
 
 // ============================================
 // 컴포넌트
 // ============================================
-export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
+export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps): JSX.Element => {
   // ============================================
   // 상태 관리
   // ============================================
 
   /** 캡슐 이름 */
-  const [capsuleName, setCapsuleName] = useState('');
+  const [capsuleName, setCapsuleName] = useState(initialData?.capsuleName || '');
 
   /** 인원 수 */
-  const [personnelCount, setPersonnelCount] = useState(2);
+  const [personnelCount, setPersonnelCount] = useState(initialData?.personnelCount || 2);
 
   /** 이미지 슬롯 수 */
-  const [storageCount, setStorageCount] = useState(3);
+  const [storageCount, setStorageCount] = useState(initialData?.storageCount || 3);
 
   /** 선택된 추가 옵션 */
   const [selectedOptions, setSelectedOptions] = useState<AdditionalOptionsState>({
-    music: false,
-    video: false,
+    music: initialData?.selectedOptions?.music || false,
+    video: initialData?.selectedOptions?.video || false,
   });
 
   /** 임시 선택 날짜 (달력에서 선택 중) */
@@ -139,14 +141,14 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
     handleOptionSelect,
     handleDateSelect,
     handleCalendarClose,
-  } = useDateSelection();
+  } = useDateSelection(initialData);
 
   /** 가격 계산 Hook */
   const { personnelPrice, storagePrice, optionsPrice, totalPrice } = usePriceCalculation(
     datePrice,
     personnelCount,
     storageCount,
-    selectedOptions
+    selectedOptions,
   );
 
   // ============================================
@@ -230,12 +232,15 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
       totalPrice,
     };
 
+    console.log('🔍 onSubmit 존재 여부:', !!onSubmit);
+
     // 부모 컴포넌트로 전달
     if (onSubmit) {
+      console.log('✅ onSubmit 호출!');
       onSubmit(formData);
     } else {
       // 임시: 콘솔에 출력
-      console.log('폼 제출:', formData);
+      console.log('❌ onSubmit 없음 - 폼 제출:', formData);
       Alert.alert('제출 완료', `총 결제금액: ${formatPrice(totalPrice)}`);
     }
   }, [
@@ -265,6 +270,21 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={onBack}
+            accessibilityRole="button"
+            accessibilityLabel="뒤로가기">
+            <Text style={styles.backButtonText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>타임캡슐 만들기</Text>
+        </View>
+        <View style={styles.headerBorder} />
+      </View>
+
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
@@ -313,17 +333,13 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
                     styles.dateButtonPrice,
                     selectedOptionIndex === index && styles.dateButtonPriceSelected,
                   ]}>
-                  {index === 3 && selectedDate
-                    ? dayjs(selectedDate).format('MM/DD')
-                    : option.price}
+                  {index === 3 && selectedDate ? dayjs(selectedDate).format('MM/DD') : option.price}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
           {/* 개봉일 표시 */}
-          {formattedOpenDate && (
-            <Text style={styles.openDateText}>{formattedOpenDate}</Text>
-          )}
+          {formattedOpenDate && <Text style={styles.openDateText}>{formattedOpenDate}</Text>}
         </View>
 
         {/* 최대 인원 섹션 */}
@@ -343,7 +359,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
               onPress={() => handlePersonnelChange(personnelCount - 1)}
               accessibilityRole="button"
               accessibilityLabel="인원 감소">
-              <Image source={{ uri: ICONS.minus }} style={styles.stepperButtonIcon} />
+              <Text style={styles.stepperButtonText}>−</Text>
             </TouchableOpacity>
             <View style={styles.stepperValueContainer}>
               <Text style={styles.stepperValue}>{personnelCount}</Text>
@@ -354,7 +370,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
               onPress={() => handlePersonnelChange(personnelCount + 1)}
               accessibilityRole="button"
               accessibilityLabel="인원 증가">
-              <Image source={{ uri: ICONS.plus }} style={styles.stepperButtonIcon} />
+              <Text style={styles.stepperButtonText}>+</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.stepperHint}>{TEXTS.personnel.hint}</Text>
@@ -377,7 +393,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
               onPress={() => handleStorageChange(storageCount - 1)}
               accessibilityRole="button"
               accessibilityLabel="슬롯 감소">
-              <Image source={{ uri: ICONS.minus }} style={styles.stepperButtonIcon} />
+              <Text style={styles.stepperButtonText}>−</Text>
             </TouchableOpacity>
             <View style={styles.stepperValueContainer}>
               <Text style={styles.stepperValue}>{storageCount}</Text>
@@ -388,7 +404,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
               onPress={() => handleStorageChange(storageCount + 1)}
               accessibilityRole="button"
               accessibilityLabel="슬롯 증가">
-              <Image source={{ uri: ICONS.plus }} style={styles.stepperButtonIcon} />
+              <Text style={styles.stepperButtonText}>+</Text>
             </TouchableOpacity>
           </View>
           <Text style={styles.stepperHint}>{TEXTS.storage.hint}</Text>
@@ -419,18 +435,10 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
                     />
                   </View>
                   <View style={styles.optionTextContainer}>
-                    <Text
-                      style={[
-                        styles.optionTitle,
-                        isSelected && styles.optionTitleSelected,
-                      ]}>
+                    <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
                       {option.title}
                     </Text>
-                    <Text
-                      style={[
-                        styles.optionPrice,
-                        isSelected && styles.optionPriceSelected,
-                      ]}>
+                    <Text style={[styles.optionPrice, isSelected && styles.optionPriceSelected]}>
                       {option.price}
                     </Text>
                   </View>
@@ -467,9 +475,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
           style={styles.calendarBottomSheetOverlay}
           activeOpacity={1}
           onPress={handleCalendarClosePress}>
-          <TouchableOpacity
-            style={styles.calendarBottomSheetContainer}
-            activeOpacity={1}>
+          <TouchableOpacity style={styles.calendarBottomSheetContainer} activeOpacity={1}>
             {/* 헤더 */}
             <View style={styles.calendarBottomSheetHeader}>
               <Text style={styles.calendarBottomSheetTitle}>{TEXTS.calendar.title}</Text>
@@ -504,9 +510,7 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
               style={styles.calendarConfirmButton}
               onPress={handleCalendarConfirm}
               disabled={!tempSelectedDate}>
-              <Text style={styles.calendarConfirmButtonText}>
-                {TEXTS.calendar.confirmButton}
-              </Text>
+              <Text style={styles.calendarConfirmButtonText}>{TEXTS.calendar.confirmButton}</Text>
             </TouchableOpacity>
           </TouchableOpacity>
         </TouchableOpacity>

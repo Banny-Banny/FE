@@ -16,6 +16,7 @@ import type { UseDateSelectionReturn } from '../types';
 /**
  * 개봉일 선택 상태 관리 및 가격 계산 Hook
  *
+ * @param initialData 초기 데이터 (뒤로가기 시 복원용)
  * @returns {UseDateSelectionReturn} 개봉일 선택 관련 상태 및 핸들러
  *
  * @example
@@ -27,23 +28,38 @@ import type { UseDateSelectionReturn } from '../types';
  *   handleOptionSelect,
  *   handleDateSelect,
  *   handleCalendarClose
- * } = useDateSelection();
+ * } = useDateSelection(initialData);
  */
-export const useDateSelection = (): UseDateSelectionReturn => {
+export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
   // ============================================
   // 상태 관리
   // ============================================
 
   /** 선택된 옵션 인덱스 (기본값: 1 = 1년 후) */
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number>(
-    DATE_OPTION_INDEX.ONE_YEAR
+    initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR
   );
 
   /** 선택된 날짜 (직접 선택 시) */
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    initialData?.selectedDate || null
+  );
 
-  /** 계산된 개봉일 가격 (기본값: 1년 후 가격) */
-  const [datePrice, setDatePrice] = useState<number>(DATE_PRICE_OPTIONS.ONE_YEAR);
+  /** 계산된 개봉일 가격 (초기값 계산) */
+  const getInitialDatePrice = () => {
+    if (initialData?.selectedDate) {
+      const today = dayjs();
+      const selectedDay = dayjs(initialData.selectedDate);
+      const daysDifference = selectedDay.diff(today, 'day');
+      return calculateDatePrice(daysDifference);
+    }
+    const optionIndex = initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR;
+    if (optionIndex === DATE_OPTION_INDEX.ONE_WEEK) return DATE_PRICE_OPTIONS.ONE_WEEK;
+    if (optionIndex === DATE_OPTION_INDEX.THREE_YEARS) return DATE_PRICE_OPTIONS.THREE_YEARS;
+    return DATE_PRICE_OPTIONS.ONE_YEAR;
+  };
+
+  const [datePrice, setDatePrice] = useState<number>(getInitialDatePrice());
 
   /** 달력 바텀시트 표시 여부 */
   const [isCalendarVisible, setIsCalendarVisible] = useState<boolean>(false);
