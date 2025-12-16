@@ -5,7 +5,7 @@ import { styles } from './styles';
 
 /**
  * 홈 페이지 (지도 화면)
- * DrawerLayout과 함께 사용
+ * Tabs 레이아웃과 함께 사용
  */
 export default function HomePage() {
   return (
@@ -14,4 +14,3 @@ export default function HomePage() {
     </View>
   );
 }
-
