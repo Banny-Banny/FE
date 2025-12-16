@@ -38,6 +38,7 @@ ehthumbs.db
 # Editor (Android Studio, Vim)
 .idea/
 *.swp
+.history/
 
 # local env files (Security)
 .env
