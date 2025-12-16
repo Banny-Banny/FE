@@ -21,6 +21,7 @@
 | 5    | `nativewind`                   | `^4.2.1`   | 25-12-15  | Styling    | Tailwind CSS 기반 스타일링   |
 | 6    | `react-native-gesture-handler` | `~2.28.0`  | 25-12-15  | Gesture    | 제스처 핸들링 라이브러리     |
 | 7    | `react-native-reanimated`      | `~4.1.1`   | 25-12-15  | Animation  | 고성능 애니메이션 라이브러리 |
+| 8    | `react-native-webview`         | `^13.16.0` | 25-12-16  | UI         | WebView 컴포넌트             |
 
 ---
 
@@ -112,17 +113,7 @@
 | **카테고리**  | Navigation                      |
 | **설치 이유** | 하단 탭 네비게이션 구현         |
 
-#### 9. @react-navigation/drawer
-
-| 항목          | 내용                           |
-| ------------- | ------------------------------ |
-| **이름**      | `@react-navigation/drawer`     |
-| **버전**      | `^7.7.9`                       |
-| **설치 날짜** | 25-12-15                       |
-| **카테고리**  | Navigation                     |
-| **설치 이유** | 드로어(서랍형) 네비게이션 구현 |
-
-#### 10. @react-navigation/elements
+#### 9. @react-navigation/elements
 
 | 항목          | 내용                          |
 | ------------- | ----------------------------- |
@@ -132,7 +123,7 @@
 | **카테고리**  | Navigation                    |
 | **설치 이유** | React Navigation UI 요소 제공 |
 
-#### 11. react-native-screens
+#### 10. react-native-screens
 
 | 항목          | 내용                                   |
 | ------------- | -------------------------------------- |
@@ -142,7 +133,7 @@
 | **카테고리**  | Navigation                             |
 | **설치 이유** | 네이티브 화면 최적화를 위한 라이브러리 |
 
-#### 12. react-native-safe-area-context
+#### 11. react-native-safe-area-context
 
 | 항목          | 내용                                   |
 | ------------- | -------------------------------------- |
@@ -156,7 +147,7 @@
 
 ### 스타일링
 
-#### 13. nativewind
+#### 12. nativewind
 
 | 항목          | 내용                                                     |
 | ------------- | -------------------------------------------------------- |
@@ -166,7 +157,7 @@
 | **카테고리**  | Styling                                                  |
 | **설치 이유** | Tailwind CSS를 React Native에서 사용하기 위한 라이브러리 |
 
-#### 14. tailwindcss
+#### 13. tailwindcss
 
 | 항목          | 내용                                        |
 | ------------- | ------------------------------------------- |
@@ -180,7 +171,7 @@
 
 ### 애니메이션 & 제스처
 
-#### 15. react-native-gesture-handler
+#### 14. react-native-gesture-handler
 
 | 항목          | 내용                                          |
 | ------------- | --------------------------------------------- |
@@ -190,7 +181,7 @@
 | **카테고리**  | Gesture                                       |
 | **설치 이유** | 터치 제스처 핸들링을 위한 네이티브 라이브러리 |
 
-#### 16. react-native-reanimated
+#### 15. react-native-reanimated
 
 | 항목          | 내용                                     |
 | ------------- | ---------------------------------------- |
@@ -200,7 +191,7 @@
 | **카테고리**  | Animation                                |
 | **설치 이유** | 고성능 애니메이션 구현을 위한 라이브러리 |
 
-#### 17. react-native-worklets
+#### 16. react-native-worklets
 
 | 항목          | 내용                                                           |
 | ------------- | -------------------------------------------------------------- |
@@ -214,7 +205,7 @@
 
 ### UI 컴포넌트 & 아이콘
 
-#### 18. @expo/vector-icons
+#### 17. @expo/vector-icons
 
 | 항목          | 내용                                              |
 | ------------- | ------------------------------------------------- |
@@ -224,7 +215,7 @@
 | **카테고리**  | UI Components                                     |
 | **설치 이유** | 벡터 아이콘 라이브러리 (Material, FontAwesome 등) |
 
-#### 19. expo-symbols
+#### 18. expo-symbols
 
 | 항목          | 내용                                      |
 | ------------- | ----------------------------------------- |
@@ -233,6 +224,16 @@
 | **설치 날짜** | 25-12-15                                  |
 | **카테고리**  | UI Components                             |
 | **설치 이유** | SF Symbols (iOS) 및 Material Symbols 지원 |
+
+#### 19. react-native-webview
+
+| 항목          | 내용                                                        |
+| ------------- | ----------------------------------------------------------- |
+| **이름**      | `react-native-webview`                                      |
+| **버전**      | `^13.16.0`                                                  |
+| **설치 날짜** | 25-12-16                                                    |
+| **카테고리**  | UI Components                                               |
+| **설치 이유** | React Native에서 웹 컨텐츠를 표시하기 위한 WebView 컴포넌트 |
 
 ---
 
@@ -390,9 +391,9 @@
 
 - expo, expo-router, react, react-native, react-dom, react-native-web, @react-navigation/native
 
-### Navigation (6개)
+### Navigation (5개)
 
-- @react-navigation/bottom-tabs, @react-navigation/drawer, @react-navigation/elements
+- @react-navigation/bottom-tabs, @react-navigation/elements
 - react-native-screens, react-native-safe-area-context, expo-linking
 
 ### Styling (2개)
@@ -403,9 +404,9 @@
 
 - react-native-gesture-handler, react-native-reanimated, react-native-worklets
 
-### UI Components (8개)
+### UI Components (9개)
 
-- @expo/vector-icons, expo-symbols, expo-font, expo-image
+- @expo/vector-icons, expo-symbols, expo-font, expo-image, react-native-webview
 - expo-splash-screen, expo-status-bar, expo-system-ui, expo-haptics
 
 ### Utilities (3개)
@@ -420,9 +421,10 @@
 
 ## 변경 이력
 
-| 버전  | 날짜     | 변경 내용                                         | 작성자 |
-| ----- | -------- | ------------------------------------------------- | ------ |
-| 1.0.0 | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성) | 최지호 |
+| 버전  | 날짜     | 변경 내용                                                                     | 작성자 |
+| ----- | -------- | ----------------------------------------------------------------------------- | ------ |
+| 1.0.0 | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성)                             | 최지호 |
+| 1.0.1 | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지) | AI     |
 
 ---
 
