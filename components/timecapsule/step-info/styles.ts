@@ -361,6 +361,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  submitButtonDisabled: {
+    backgroundColor: colors.gray300,
+    opacity: 0.6,
+  },
   submitButtonText: {
     fontFamily: 'Pretendard Variable',
     fontWeight: '700',

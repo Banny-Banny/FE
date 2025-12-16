@@ -8,7 +8,7 @@
  * - [x] 외부 라이브러리 설치 0건 (react-native-calendars, dayjs 사용)
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Alert,
   Image,
@@ -198,19 +198,27 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
     handleCalendarClose();
   }, [handleCalendarClose]);
 
+  // ============================================
+  // 폼 유효성 검사
+  // ============================================
+
+  /** 폼이 유효한지 검사 */
+  const isFormValid = useMemo(() => {
+    // 캡슐 이름이 입력되지 않은 경우
+    if (!capsuleName.trim()) {
+      return false;
+    }
+
+    // 직접 선택(index 3)인데 날짜가 선택되지 않은 경우
+    if (selectedOptionIndex === 3 && !selectedDate) {
+      return false;
+    }
+
+    return true;
+  }, [capsuleName, selectedOptionIndex, selectedDate]);
+
   /** 결제하기 버튼 핸들러 */
   const handleSubmitPress = useCallback(() => {
-    // 유효성 검증
-    if (!capsuleName.trim()) {
-      Alert.alert('알림', '캡슐 이름을 입력해주세요.');
-      return;
-    }
-
-    if (selectedOptionIndex === 3 && !selectedDate) {
-      Alert.alert('알림', '개봉일을 선택해주세요.');
-      return;
-    }
-
     // 폼 데이터 구성
     const formData = {
       capsuleName,
@@ -440,8 +448,9 @@ export const StepInfo = ({ onSubmit }: StepInfoProps = {}): JSX.Element => {
           <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
         </View>
         <TouchableOpacity
-          style={styles.submitButton}
+          style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
           onPress={handleSubmitPress}
+          disabled={!isFormValid}
           accessibilityRole="button"
           accessibilityLabel={TEXTS.footer.submitButton}>
           <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
