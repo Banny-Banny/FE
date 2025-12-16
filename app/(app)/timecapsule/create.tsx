@@ -1,16 +1,13 @@
 import { View, Text } from 'react-native';
 import { useState } from 'react';
+import { StepInfo } from '@/components/timecapsule/step-info';
 
 export default function TimeCapsuleCreate(): JSX.Element {
   const [step, setStep] = useState(1);
 
   // 1단계: 타임캡슐 정보 입력
   if (step === 1) {
-    return (
-      <View>
-        <Text>타임캡슐 생성 - 1단계 (이름, 날짜 입력)</Text>
-      </View>
-    );
+    return <StepInfo />;
   }
 
   // 2단계: 결제
