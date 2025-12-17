@@ -14,14 +14,10 @@
  */
 
 import { Image } from 'expo-image';
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, Text, TouchableOpacity, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useFabAnimation } from './hooks';
 import { styles } from './styles';
 
 // 텍스트 상수
@@ -36,53 +32,14 @@ interface FabButtonProps {
 }
 
 export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCapsulePress }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const rotation = useSharedValue(0);
-  const overlayOpacity = useSharedValue(0);
-  const subButtonsTranslateY = useSharedValue(50);
-
-  const handleMainButtonPress = () => {
-    const newExpandedState = !isExpanded;
-    setIsExpanded(newExpandedState);
-
-    // Rotation animation for main button
-    rotation.value = withSpring(newExpandedState ? 45 : 0, {
-      damping: 15,
-      stiffness: 150,
-    });
-
-    // Overlay fade animation
-    overlayOpacity.value = withTiming(newExpandedState ? 1 : 0, {
-      duration: 200,
-    });
-
-    // Sub buttons slide animation
-    subButtonsTranslateY.value = withSpring(newExpandedState ? 0 : 50, {
-      damping: 15,
-      stiffness: 150,
-    });
-  };
-
-  const handleSubButtonPress = (callback?: () => void) => {
-    setIsExpanded(false);
-    rotation.value = withSpring(0);
-    overlayOpacity.value = withTiming(0);
-    subButtonsTranslateY.value = withSpring(50);
-    callback?.();
-  };
-
-  const animatedRotationStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  const animatedOverlayStyle = useAnimatedStyle(() => ({
-    opacity: overlayOpacity.value,
-  }));
-
-  const animatedSubButtonsStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: subButtonsTranslateY.value }],
-    opacity: 1 - subButtonsTranslateY.value / 50,
-  }));
+  const {
+    isExpanded,
+    handleMainButtonPress,
+    handleSubButtonPress,
+    animatedRotationStyle,
+    animatedOverlayStyle,
+    animatedSubButtonsStyle,
+  } = useFabAnimation();
 
   return (
     <View style={styles.container}>

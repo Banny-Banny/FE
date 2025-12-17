@@ -10,7 +10,7 @@ import { styles } from './styles';
 export default function HomePage() {
   const handleEasterEggPress = () => {
     console.log('이스터에그 버튼 클릭');
-    // TODO: 이스터에그 생성 화면으로 이동
+    // TODO: 이스터에그 생성 바텀 시트 띄우기
   };
 
   const handleTimeCapsulePress = () => {
