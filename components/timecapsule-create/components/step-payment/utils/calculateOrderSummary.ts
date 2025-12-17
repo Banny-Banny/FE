@@ -4,46 +4,10 @@
  * 주문 상품 계산 로직
  */
 
+import { formatCurrency } from '@/utils';
+import { MUSIC_PRICE, PHOTO_PRICE, TEXT_PRICE, VIDEO_PRICE } from '../../../constants';
 import { StepInfoFormData } from '../../step-info/types';
-import { OrderSummary, OrderItem } from '../types';
-
-// ============================================
-// 가격 상수
-// ============================================
-
-/** 텍스트 가격 (무료) */
-const TEXT_PRICE = 0;
-
-/** 사진 1개당 가격 */
-const PHOTO_PRICE = 500;
-
-/** 음악 가격 */
-const MUSIC_PRICE = 1000;
-
-/** 동영상 가격 */
-const VIDEO_PRICE = 2000;
-
-// ============================================
-// 유틸리티 함수
-// ============================================
-
-/**
- * 숫자를 천단위 콤마 형식으로 변환
- * @param value 숫자
- * @returns 포맷된 문자열 (예: "5,000")
- */
-const formatPrice = (value: number): string => {
-  return value.toLocaleString('ko-KR');
-};
-
-/**
- * 가격을 원화 형식으로 변환
- * @param value 숫자
- * @returns 원화 형식 문자열 (예: "₩5,000")
- */
-const formatCurrency = (value: number): string => {
-  return `₩${formatPrice(value)}`;
-};
+import { OrderItem, OrderSummary } from '../types';
 
 // ============================================
 // 주문 상품 계산 함수
@@ -103,4 +67,3 @@ export const calculateOrderSummary = (formData: StepInfoFormData): OrderSummary 
     totalPrice,
   };
 };
-

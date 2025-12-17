@@ -1,9 +1,14 @@
-import { StepInfo } from '@/components/timecapsule/step-info';
-import { StepInfoFormData } from '@/components/timecapsule/step-info/types';
-import { StepPayment } from '@/components/timecapsule/step-payment';
+/**
+ * components/timecapsule/index.tsx
+ * 타임캡슐 생성 컨테이너 컴포넌트
+ */
+
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
+import { StepInfo } from './components/step-info';
+import { StepInfoFormData } from './components/step-info/types';
+import { StepPayment } from './components/step-payment';
 
 export default function TimeCapsuleCreate() {
   const router = useRouter();
