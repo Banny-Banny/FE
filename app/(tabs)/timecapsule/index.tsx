@@ -4,9 +4,9 @@
  * 로직 없음 - 순수 라우팅만 담당
  */
 
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
-export default function TimeCapsuleList(): JSX.Element {
+export default function TimeCapsuleList() {
   // TODO: TimeCapsuleListFeature 컴포넌트 구현 후 교체
   return (
     <View>
