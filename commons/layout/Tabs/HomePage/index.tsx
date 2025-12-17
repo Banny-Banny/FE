@@ -1,5 +1,4 @@
-import FabButton from '@/commons/components/fab-button';
-import MapScreen from '@/components/map';
+import MapFeature from '@/components/map';
 import { View } from 'react-native';
 
 import { styles } from './styles';
@@ -21,8 +20,7 @@ export default function HomePage() {
 
   return (
     <View style={styles.container}>
-      <MapScreen />
-      <FabButton
+      <MapFeature
         onEasterEggPress={handleEasterEggPress}
         onTimeCapsulePress={handleTimeCapsulePress}
       />

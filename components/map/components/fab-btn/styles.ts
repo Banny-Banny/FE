@@ -164,3 +164,4 @@ export const styles = StyleSheet.create({
     // This would need a custom solution or library if critical
   },
 });
+

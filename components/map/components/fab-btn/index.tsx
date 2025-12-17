@@ -110,7 +110,7 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
             <Text style={styles.subButtonLabel}>{LABELS.easterEgg}</Text>
             <View style={styles.subButtonCircle}>
               <Image
-                source={require('../../../assets/icons/egg-icon.svg')}
+                source={require('../../../../../assets/icons/egg-icon.svg')}
                 style={styles.subButtonIcon}
                 contentFit="contain"
                 accessibilityLabel="이스터에그 아이콘"
@@ -128,7 +128,7 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
             <View style={styles.subButtonCircle}>
               <View style={styles.capsuleIconContainer}>
                 <Image
-                  source={require('../../../assets/icons/capsule-icon.svg')}
+                  source={require('../../../../../assets/icons/capsule-icon.svg')}
                   style={styles.capsuleIcon}
                   contentFit="contain"
                   accessibilityLabel="타임캡슐 아이콘"
@@ -150,14 +150,14 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
           <Animated.View style={[styles.mainButtonInner, animatedRotationStyle]}>
             {isExpanded ? (
               <Image
-                source={require('../../../assets/icons/close-icon.svg')}
+                source={require('../../../../../assets/icons/close-icon.svg')}
                 style={styles.mainButtonIcon}
                 contentFit="contain"
                 accessibilityLabel="닫기 아이콘"
               />
             ) : (
               <Image
-                source={require('../../../assets/icons/plus-icon.svg')}
+                source={require('../../../../../assets/icons/plus-icon.svg')}
                 style={styles.mainButtonIcon}
                 contentFit="contain"
                 accessibilityLabel="더하기 아이콘"
