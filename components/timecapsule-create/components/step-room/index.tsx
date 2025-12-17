@@ -10,9 +10,10 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import React from 'react';
-import { View, Text, Image, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Image, ScrollView, Pressable } from 'react-native';
 import { styles } from './styles';
+import { UserBottomSheet } from '../write-bottomsheet';
 
 // Props 인터페이스 정의
 interface StepRoomProps {
@@ -63,6 +64,10 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
   // 호스트 여부 확인
   const isHost = role === 'host';
 
+  // 바텀시트 상태 관리
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+
   // 진행 상황 계산
   const completedCount = mockParticipants.filter(p => p.status === 'completed').length;
   const totalCount = mockParticipants.filter(p => p.name).length;
@@ -98,10 +103,18 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
 
           {/* 참여자 정보 */}
           <View style={styles.participantDetails}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Pressable
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+              onPress={() => {
+                if (participant.name) {
+                  setSelectedParticipant(participant);
+                  setIsBottomSheetVisible(true);
+                }
+              }}
+            >
               <Text style={styles.participantName}>{participant.name || '초대한 친구 기다리는 중...'}</Text>
               {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
-            </View>
+            </Pressable>
             {participant.name && (
               <Text
                 style={[
@@ -255,6 +268,15 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           </View>
         )}
       </View>
+
+      {/* 바텀시트 */}
+      {selectedParticipant && (
+        <UserBottomSheet
+          isVisible={isBottomSheetVisible}
+          onClose={() => setIsBottomSheetVisible(false)}
+          participant={selectedParticipant}
+        />
+      )}
     </ScrollView>
   );
 };
