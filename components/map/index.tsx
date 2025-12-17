@@ -25,4 +25,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
       <FabButton onEasterEggPress={onEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
     </View>
   );
-}
+};
+
+// 기본 export (하위 호환성)
+export default MapFeature;

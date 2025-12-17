@@ -117,48 +117,73 @@
 
 <br/>
 
-## 📁 프로젝트 구조
+## 📁 프로젝트 구조 (Feature-Sliced Design)
 
 ```
 TimeEgg/FE/
-├── app/                          # 페이지 & 라우팅 (Expo Router)
-│   ├── _layout.tsx               # 최상위 레이아웃
-│   ├── (app)/                    # 메인 앱 (로그인 후)
-│   │   ├── _layout.tsx           # Drawer 레이아웃
-│   │   ├── index.tsx             # 홈 (지도)
+├── .env                          # 환경 변수 (API Key, Base URL 등)
+│
+├── app/                          # [Routing Layer] 오직 라우팅만 담당
+│   ├── _layout.tsx               # Root Layout (RootProvider)
+│   ├── (taps)/                   # 탭 네비게이션
+│   │   ├── _layout.tsx           # Drawer 설정
+│   │   ├── index.tsx             # 홈
+│   │   ├── map.tsx               # 지도 (MapFeature만 렌더링)
 │   │   ├── payments.tsx          # 결제
-│   │   └── settings.tsx          # 설정
-│   └── (auth)/                   # 인증 (로그인 전)
-│       ├── _layout.tsx           # Auth Stack 레이아웃
+│   │   ├── settings.tsx          # 설정
+│   │   └── timecapsule/          # 타임캡슐 Stack
+│   │       ├── [id].tsx          # 상세
+│   │       ├── create.tsx        # 생성
+│   │       └── index.tsx         # 목록
+│   └── (auth)/                   # 인증
+│       ├── _layout.tsx           # Auth Stack
 │       └── login.tsx             # 로그인
 │
-├── components/                   # 재사용 컴포넌트
-│   └── map/                      # 지도 컴포넌트
+├── utils/                        # [Pure Functions] 순수 함수
+│   ├── format.ts                 # 포맷팅 함수
+│   └── index.ts
 │
-├── commons/                      # 공통 모듈
-│   └── layout/                   # 레이아웃 컴포넌트
-│       └── Drawer/               # Drawer 관련
+├── commons/                      # [Design System] 순수 UI
+│   ├── layout/                   # 레이아웃
+│   │   ├── provider/             # 전역 Provider
+│   │   │   └── RootProvider.tsx  # SafeAreaProvider 등
+│   │   └── Drawer/               # Drawer 레이아웃
+│   ├── components/               # 재사용 UI 컴포넌트
+│   └── constants/                # 디자인 토큰
+│       ├── colors.ts             # 색상
+│       ├── fonts.ts              # 폰트
+│       ├── spacing.ts            # 간격
+│       └── index.ts
 │
-├── hooks/                        # 커스텀 훅 (예정)
-├── services/                     # API 호출 (예정)
-├── types/                        # TypeScript 타입 (예정)
-├── constants/                    # 상수 및 설정 (예정)
-├── assets/                       # 이미지 및 폰트
-├── scripts/                      # 유틸리티 스크립트
-├── doc/v.1.0/                    # 프로젝트 문서
-│
-├── .cursor/rules/                # AI 코딩 규칙
-├── .vscode/                      # VSCode 설정
-├── .gitignore
-├── .prettierrc.js                # Prettier 설정
-├── eslint.config.js              # ESLint 설정
-├── babel.config.js               # Babel 설정
-├── metro.config.js               # Metro 번들러 설정
-├── tailwind.config.js            # Tailwind 설정
-├── tsconfig.json                 # TypeScript 설정
-├── app.json                      # Expo 설정
-└── package.json                  # 의존성 관리
+└── components/                   # [Features] 기능 단위
+    ├── map/                      # 지도 기능
+    │   ├── index.tsx             # Feature Container
+    │   ├── types.ts              # Feature Types
+    │   ├── hooks/                # Business Logic
+    │   │   └── useMapFeature.ts
+    │   └── components/           # Sub-Components
+    │       ├── map-view/         # 지도 뷰
+    │       │   ├── index.tsx
+    │       │   ├── types.ts
+    │       │   ├── styles.ts
+    │       │   └── hooks/        # UI Logic
+    │       │       └── useMapGestures.ts
+    │       └── fab-btn/          # 플로팅 버튼
+    │           ├── index.tsx
+    │           ├── types.ts
+    │           └── styles.ts
+    │
+    └── timecapsule/              # 타임캡슐 기능
+        ├── index.tsx             # Feature Container
+        ├── types.ts              # 공통 타입
+        ├── constants.ts          # 가격 상수 등
+        ├── step-info/            # 1단계
+        ├── step-payment/         # 2단계
+        ├── step-room/            # 3단계
+        └── [기타 서브 컴포넌트들]
 ```
+
+> 📖 상세한 아키텍처 설명은 [architecture.md](./doc/v.1.0/architecture.md)를 참고하세요.
 
 <br/>
 

@@ -1,15 +1,30 @@
 /**
- * Map Gestures Hook
- * Version: 1.0.0
- * Created: 2025-12-17
- *
- * [UI Logic] 지도 줌/패닝 제어 로직
+ * components/map/components/map-view/hooks/useMapGestures.ts
+ * 지도 줌/패닝 제어 로직 (UI Logic)
  */
 
+import { useState } from 'react';
+
 export const useMapGestures = () => {
-  // TODO: 제스처 로직 구현 (필요시)
+  const [scale, setScale] = useState(1);
+
+  const handleZoomIn = () => {
+    setScale((prev) => Math.min(prev + 0.5, 3));
+  };
+
+  const handleZoomOut = () => {
+    setScale((prev) => Math.max(prev - 0.5, 0.5));
+  };
+
+  const resetZoom = () => {
+    setScale(1);
+  };
 
   return {
-    // 제스처 관련 핸들러들
+    scale,
+    handleZoomIn,
+    handleZoomOut,
+    resetZoom,
   };
 };
+
