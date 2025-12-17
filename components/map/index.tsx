@@ -1,26 +1,28 @@
 /**
- * components/map/index.tsx
- * 지도 기능 Feature Container (조립 공장)
- * 비즈니스 로직과 UI 컴포넌트를 조합
+ * Map Feature Container
+ * Version: 1.0.0
+ * Created: 2025-12-17
+ *
+ * [Entry Point] 지도 기능의 조립 공장
+ * - MapView: 실제 지도 렌더링
+ * - FabButton: 플로팅 액션 버튼
+ * - useMapFeature: 비즈니스 로직
  */
 
 import React from 'react';
 import { View } from 'react-native';
+import FabButton from './components/fab-btn';
+import MapView from './components/map-view';
 import { useMapFeature } from './hooks/useMapFeature';
-import { MapView } from './components/map-view';
-import { MapFeatureProps } from './types';
+import type { MapFeatureProps } from './types';
 
-/**
- * MapFeature: 지도 기능의 진입점
- * - 비즈니스 로직(useMapFeature)과 UI(MapView)를 연결
- * - app/에서는 이 컴포넌트만 import하여 사용
- */
-export const MapFeature: React.FC<MapFeatureProps> = () => {
-  const { region, setRegion, isLoading } = useMapFeature();
+export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: MapFeatureProps = {}) {
+  const { mapConfig } = useMapFeature();
 
   return (
     <View style={{ flex: 1 }}>
-      <MapView region={region} onRegionChange={setRegion} />
+      <MapView center={mapConfig.center} level={mapConfig.level} />
+      <FabButton onEasterEggPress={onEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
     </View>
   );
 };

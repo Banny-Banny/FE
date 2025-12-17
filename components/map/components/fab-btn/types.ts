@@ -1,10 +1,10 @@
 /**
- * components/map/components/fab-btn/types.ts
- * FAB 버튼 Props 타입
+ * FAB Button Types
+ * Version: 1.0.0
+ * Created: 2025-12-17
  */
 
-export interface FabBtnProps {
-  onPress: () => void;
-  label: string;
+export interface FabButtonProps {
+  onEasterEggPress?: () => void;
+  onTimeCapsulePress?: () => void;
 }
-

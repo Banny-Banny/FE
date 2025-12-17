@@ -1,42 +1,30 @@
 /**
- * components/map/hooks/useMapFeature.ts
- * 지도 기능의 비즈니스 로직 (위치 권한, API 호출, 전역 상태 관리)
+ * Map Feature Hook
+ * Version: 1.0.0
+ * Created: 2025-12-17
+ *
+ * [Business Logic] 지도 기능의 핵심 로직
+ * - 위치 권한 관리
+ * - API 호출
+ * - 전역 상태 관리
  */
 
-import { useState, useEffect } from 'react';
-import { MapRegion } from '../types';
+import { useEffect, useState } from 'react';
+import type { MapConfig } from '../types';
 
 export const useMapFeature = () => {
-  const [region, setRegion] = useState<MapRegion>({
-    latitude: 37.5665,
-    longitude: 126.978,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+  const [mapConfig, setMapConfig] = useState<MapConfig>({
+    center: { lat: 37.5665, lng: 126.978 }, // 서울시청
+    level: 4,
   });
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 위치 권한 요청 로직
-  const requestLocationPermission = async () => {
-    try {
-      setIsLoading(true);
-      // TODO: 실제 위치 권한 요청 로직 구현
-      console.log('위치 권한 요청');
-    } catch (error) {
-      console.error('위치 권한 요청 실패:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    requestLocationPermission();
+    // TODO: 위치 권한 요청 및 현재 위치 가져오기
+    // TODO: API를 통해 마커 데이터 가져오기
   }, []);
 
   return {
-    region,
-    setRegion,
-    isLoading,
+    mapConfig,
+    setMapConfig,
   };
 };
-

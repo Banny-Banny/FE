@@ -1,12 +1,15 @@
 /**
- * components/map/components/map-view/types.ts
- * MapView 컴포넌트의 Props 타입
+ * MapView Component Types
+ * Version: 1.0.0
+ * Created: 2025-12-17
  */
 
-import { MapRegion } from '../../types';
-
 export interface MapViewProps {
-  region: MapRegion;
-  onRegionChange?: (region: MapRegion) => void;
+  center?: {
+    lat: number;
+    lng: number;
+  };
+  level?: number;
+  onMapClick?: (coord: { lat: number; lng: number }) => void;
+  onMarkerClick?: (id: string) => void;
 }
-
