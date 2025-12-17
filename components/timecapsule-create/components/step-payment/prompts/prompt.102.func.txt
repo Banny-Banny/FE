@@ -1,0 +1,219 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 TSX 파일경로: components/timecapsule/step-payment/index.tsx
+조건-파일경로) 참고할 CSS 파일경로: components/timecapsule/step-payment/styles.ts
+조건-파일경로) 참고할 TYPE 파일경로: components/timecapsule/step-info/types.ts
+조건-파일경로) 구현될 TYPE 파일경로: components/timecapsule/step-payment/types.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule/step-payment/hooks/usePaymentValidation.ts
+
+==============================================
+
+핵심요구사항) 병렬처리 구현을 위한 작업 방식 조건
+            - 다른 채팅에서 개발중인 파일을 수정 및 삭제 하지 말 것.
+            - 기존 UI 구조(index.tsx, styles.ts)는 최소한으로 수정하고, hook과 로직 파일만 추가할 것.
+
+==============================================
+
+핵심요구사항) 타임캡슐 결제 화면 기능을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) 라이브러리 조건
+                - 상태관리: React hooks (useState, useCallback, useMemo) 사용할 것.
+                - 알림: React Native의 Alert 사용할 것.
+
+            2) 유저시나리오 (뒤로가기)
+                1. 헤더 왼쪽 뒤로가기 버튼 클릭 시
+                2. 이전 단계(step-info)로 돌아가기
+                3. onBack prop이 있으면 호출
+                4. 입력된 데이터는 유지되어야 함
+
+            3) 유저시나리오 (주문 상품 표시)
+                1. 이전 단계(step-info)에서 전달받은 폼 데이터 기반으로 표시
+                2. 표시 항목:
+                   - 참여 인원: "N명"
+                   - 텍스트: "N명 × 기본 × ₩0" (무료)
+                   - 사진: "N명 × M개 × ₩500" = "₩X,XXX"
+                   - 음악: "N명 × 1개 × ₩1,000" = "₩X,XXX" (선택 시만)
+                   - 동영상: "N명 × 1개 × ₩2,000" = "₩X,XXX" (선택 시만)
+                3. 합계: 모든 항목 금액 합산
+                4. 실시간 계산 및 표시
+
+            4) 유저시나리오 (약관 동의)
+                1. 전체 동의 체크박스
+                   - 클릭 시 모든 개별 약관 동의/해제
+                   - 모든 개별 약관이 체크되면 자동으로 체크됨
+                2. 개별 약관 체크박스 (3개)
+                   - "이용약관 동의 (필수)"
+                   - "개인정보 처리방침 동의 (필수)"
+                   - "결제 진행 동의 (필수)"
+                3. 각 약관 우측 화살표 버튼
+                   - 클릭 시 약관 상세 페이지로 이동 (TODO)
+                4. 선택된 체크박스 시각적 표시 (배경색 변경)
+
+            5) 유저시나리오 (결제하기 버튼)
+                1. 초기 상태: 비활성화 (회색)
+                2. 전체 약관 동의 완료 시: 활성화 (검은색)
+                3. 활성화 상태에서 클릭 시:
+                   - onSubmit prop 호출 (주문 정보 전달)
+                   - 다음 단계로 이동 준비
+                4. 비활성화 상태에서 클릭 시:
+                   - Alert로 "모든 약관에 동의해주세요" 표시
+
+==============================================
+
+추가요구사항) 주문 상품 가격 계산 로직
+            1) 계산 규칙
+                - 텍스트: 무료 (₩0)
+                - 사진: 인원 수 × 이미지 슬롯 수 × ₩500
+                - 음악: 인원 수 × 1개 × ₩1,000 (선택 시만)
+                - 동영상: 인원 수 × 1개 × ₩2,000 (선택 시만)
+                - 합계: 위 모든 항목의 합
+
+            2) 표시 형식
+                - 천단위 콤마 표시 (예: ₩5,000)
+                - 계산식 표시 (예: "2명 × 3개 × ₩500")
+                - 0원일 때도 ₩0 표시
+
+==============================================
+
+구현 가이드라인
+
+1. Types 파일 생성
+   - 파일: components/timecapsule/step-payment/types.ts
+   - StepPaymentProps: 컴포넌트 Props 타입
+     - formData: StepInfoFormData (이전 단계 데이터)
+     - onBack?: () => void
+     - onSubmit?: (orderSummary: OrderSummary) => void
+   - OrderItem: 주문 항목 타입
+     - label: string
+     - detail: string
+     - price: number
+   - OrderSummary: 주문 요약 타입
+     - personnelCount: number
+     - items: OrderItem[]
+     - totalPrice: number
+   - AgreementsState: 약관 동의 상태 타입
+     - terms: boolean
+     - privacy: boolean
+     - payment: boolean
+
+2. usePaymentValidation Hook 구현
+   - 파일: components/timecapsule/step-payment/hooks/usePaymentValidation.ts
+   - 약관 동의 상태 관리
+   - 전체 동의 체크 로직
+   - 결제 버튼 활성화 여부 계산
+   - 반환값:
+     - allAgreed: boolean
+     - agreements: AgreementsState
+     - isPaymentEnabled: boolean
+     - handleAllAgreeToggle: () => void
+     - handleAgreementToggle: (key: keyof AgreementsState) => void
+
+3. 주문 상품 계산 로직 구현
+   - 함수: calculateOrderSummary(formData: StepInfoFormData): OrderSummary
+   - 각 항목별 가격 계산
+   - 선택되지 않은 옵션은 제외
+   - 총 금액 계산
+
+4. index.tsx 수정
+   - Props에 formData 추가
+   - usePaymentValidation Hook 연결
+   - calculateOrderSummary 함수 호출하여 주문 상품 표시
+   - 뒤로가기 버튼 핸들러 구현
+   - 결제하기 버튼 핸들러 구현
+     - 약관 동의 검증
+     - 검증 통과 시 onSubmit 호출 (주문 정보 전달)
+     - 검증 실패 시 Alert 표시
+
+5. styles.ts 업데이트 (필요시만)
+   - 비활성화 버튼 스타일 추가
+   - 활성화 버튼 스타일 (기존 유지)
+
+==============================================
+
+구현 순서
+
+1. Types 파일 작성
+2. 주문 상품 계산 로직 구현 (calculateOrderSummary)
+3. usePaymentValidation Hook 구현
+4. index.tsx Props 타입 수정
+5. index.tsx에 hooks 및 함수 연결
+6. 뒤로가기 버튼 기능 구현
+7. 주문 상품 표시 로직 적용
+8. 약관 동의 로직 적용
+9. 결제하기 버튼 활성화 로직 적용
+10. 결제하기 버튼 클릭 시 검증 및 onSubmit 호출
+11. 테스트 및 디버깅
+12. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 UI 구조 유지
+   - index.tsx의 기본 구조는 최대한 유지
+   - styles.ts는 필요한 스타일만 추가
+   - 새로운 파일(hooks, types, utils)로 로직 분리
+
+2. 성능 최적화
+   - useMemo로 주문 상품 계산 최적화
+   - useCallback으로 이벤트 핸들러 최적화
+   - 불필요한 리렌더링 방지
+
+3. 사용자 경험
+   - 명확한 에러 메시지 표시
+   - 결제 진행 중 로딩 표시 (선택사항)
+   - 약관 동의 상태 시각적 피드백
+
+4. 코드 품질
+   - TypeScript 타입 안정성
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+   - 재사용 가능한 함수 작성
+
+5. 데이터 전달
+   - 이전 단계(step-info)의 StepInfoFormData 정확히 전달받기
+   - 약관 동의 완료 후 다음 단계로 주문 정보 전달
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] 뒤로가기 버튼 클릭 시 이전 단계로 이동
+- [ ] 주문 상품 항목이 formData 기반으로 정확히 표시됨
+- [ ] 가격 계산이 정확함 (인원 수 × 수량 × 단가)
+- [ ] 선택하지 않은 옵션은 표시되지 않음
+- [ ] 전체 동의 체크 시 모든 개별 약관 체크됨
+- [ ] 개별 약관 모두 체크 시 전체 동의 자동 체크됨
+- [ ] 약관 미동의 시 결제 버튼 비활성화
+- [ ] 약관 동의 완료 시 결제 버튼 활성화
+- [ ] 비활성화 상태에서 버튼 클릭 시 알림 표시
+- [ ] 활성화 상태에서 버튼 클릭 시 onSubmit 호출
+- [ ] 주문 정보가 정확히 전달됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] 성능 최적화 (useMemo, useCallback) 적용
+- [ ] 코드 가독성 및 유지보수성 확보
+
+==============================================
+
+추가 개선사항 (선택사항)
+
+1) 가격 표시 애니메이션
+   - 금액 변경 시 부드러운 전환 효과
+
+2) 약관 상세 페이지
+   - 약관 내용을 보여주는 모달
+
+3) 주문 내역 임시 저장
+   - 로컬 스토리지에 저장하여 페이지 이탈 시에도 유지
+
+==============================================
+
