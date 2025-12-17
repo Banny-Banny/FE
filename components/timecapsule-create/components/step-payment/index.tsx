@@ -10,13 +10,13 @@
  * - [x] 기능 구현 완료 (약관 동의, 주문 상품 계산, 검증)
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Image, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
 import { styles } from './styles';
 import { StepPaymentProps } from './types';
-import { calculateOrderSummary } from './utils/calculateOrderSummary';
 
 // ============================================
 // 텍스트 상수 (국제화 대비)
@@ -141,17 +141,11 @@ export const StepPayment = ({ formData, onSubmit, onBack }: StepPaymentProps) =>
   const { allAgreed, agreements, isPaymentEnabled, handleAllAgreeToggle, handleAgreementToggle } =
     usePaymentValidation();
 
+  /** 주문 요약 정보 계산 Hook */
+  const orderSummary = useOrderSummary(formData);
+
   /** 약관 상세 모달 상태 */
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
-
-  // ============================================
-  // 주문 상품 계산 (useMemo로 최적화)
-  // ============================================
-
-  /** 주문 요약 정보 */
-  const orderSummary = useMemo(() => {
-    return calculateOrderSummary(formData);
-  }, [formData]);
 
   // ============================================
   // 이벤트 핸들러
@@ -327,10 +321,7 @@ export const StepPayment = ({ formData, onSubmit, onBack }: StepPaymentProps) =>
         transparent
         animationType="fade"
         onRequestClose={handleModalClose}>
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={handleModalClose}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={handleModalClose}>
           <TouchableOpacity
             style={styles.modalContainer}
             activeOpacity={1}
@@ -352,9 +343,7 @@ export const StepPayment = ({ formData, onSubmit, onBack }: StepPaymentProps) =>
             </View>
 
             {/* 모달 콘텐츠 */}
-            <ScrollView
-              style={styles.modalContent}
-              showsVerticalScrollIndicator={true}>
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={true}>
               {selectedAgreementIndex !== null &&
                 AGREEMENT_DETAILS[selectedAgreementIndex].content.map((section, index) => (
                   <View key={index} style={styles.modalSection}>

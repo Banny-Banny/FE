@@ -3,7 +3,7 @@
  * 타임캡슐 생성 컨테이너 컴포넌트
  */
 
-import { useRouter } from 'expo-router';
+import { useNavigation } from '@/commons/hooks';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { StepInfo } from './components/step-info';
@@ -11,7 +11,7 @@ import { StepInfoFormData } from './components/step-info/types';
 import { StepPayment } from './components/step-payment';
 
 export default function TimeCapsuleCreate() {
-  const router = useRouter();
+  const navigation = useNavigation();
   const [step, setStep] = useState(1);
   const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(null);
 
@@ -27,7 +27,7 @@ export default function TimeCapsuleCreate() {
 
     const handleBack = () => {
       console.log('🔙 메인으로 돌아가기');
-      router.back(); // 메인 페이지로 이동
+      navigation.back(); // 메인 페이지로 이동
     };
 
     console.log('📤 StepInfo에 onSubmit 전달:', typeof handleSubmit);

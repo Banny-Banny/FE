@@ -8,6 +8,7 @@
  * - [x] 외부 라이브러리 설치 0건 (react-native-calendars, dayjs 사용)
  */
 
+import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
@@ -23,7 +24,6 @@ import {
 import { Calendar } from 'react-native-calendars';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  formatPrice,
   MAX_CAPSULE_NAME_LENGTH,
   MAX_PERSONNEL,
   MAX_STORAGE,
@@ -104,7 +104,7 @@ interface StepInfoProps {
 // ============================================
 // 컴포넌트
 // ============================================
-export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps): JSX.Element => {
+export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
   // ============================================
   // 상태 관리
   // ============================================

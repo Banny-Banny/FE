@@ -1,9 +1,7 @@
 /**
  * commons/constants/index.ts
- * 상수 중앙 export
+ * 공통 상수 export
  */
 
-export * from './colors';
-export * from './fonts';
-export * from './spacing';
-
+export { ROUTES } from './routes';
+export type { RouteKey, RoutePath } from './routes';

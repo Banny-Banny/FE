@@ -21,3 +21,11 @@ export const formatCurrency = (value: number): string => {
   return `₩${formatPrice(value)}`;
 };
 
+/**
+ * 숫자를 통화 형식으로 변환 (formatCurrency의 별칭)
+ * @param amount 금액
+ * @returns 포맷된 문자열 (예: ₩5,000)
+ */
+export const formatPriceWithSymbol = (amount: number): string => {
+  return `₩${amount.toLocaleString('ko-KR')}`;
+};

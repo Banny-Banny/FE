@@ -1,5 +1,6 @@
+import { ROUTES } from '@/commons/constants';
+import { useNavigation } from '@/commons/hooks';
 import MapFeature from '@/components/map';
-import { router } from 'expo-router';
 import { View } from 'react-native';
 import { styles } from './styles';
 
@@ -8,6 +9,8 @@ import { styles } from './styles';
  * Tabs 레이아웃과 함께 사용
  */
 export default function HomePage() {
+  const navigation = useNavigation();
+
   const handleEasterEggPress = () => {
     console.log('이스터에그 버튼 클릭');
     // TODO: 이스터에그 생성 바텀 시트 띄우기
@@ -15,7 +18,7 @@ export default function HomePage() {
 
   const handleTimeCapsulePress = () => {
     console.log('타임캡슐 버튼 클릭');
-    router.push('/timecapsule/create');
+    navigation.push(ROUTES.TIMECAPSULE_CREATE);
   };
 
   return (

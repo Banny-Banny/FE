@@ -4,13 +4,11 @@
  * 개봉일 선택 및 가격 계산 Hook
  */
 
-import { useState, useCallback, useMemo } from 'react';
+import { calculateDatePrice } from '@/utils';
 import dayjs from 'dayjs';
-import {
-  DATE_PRICE_OPTIONS,
-  DATE_OPTION_INDEX,
-  calculateDatePrice,
-} from '../constants';
+import { useCallback, useMemo, useState } from 'react';
+import { DATE_RANGES } from '../../step-payment/constants';
+import { DATE_OPTION_INDEX, DATE_PRICE_OPTIONS } from '../constants';
 import type { UseDateSelectionReturn } from '../types';
 
 /**
@@ -37,13 +35,11 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
 
   /** 선택된 옵션 인덱스 (기본값: 1 = 1년 후) */
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number>(
-    initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR
+    initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR,
   );
 
   /** 선택된 날짜 (직접 선택 시) */
-  const [selectedDate, setSelectedDate] = useState<Date | null>(
-    initialData?.selectedDate || null
-  );
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialData?.selectedDate || null);
 
   /** 계산된 개봉일 가격 (초기값 계산) */
   const getInitialDatePrice = () => {
@@ -51,7 +47,7 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
       const today = dayjs();
       const selectedDay = dayjs(initialData.selectedDate);
       const daysDifference = selectedDay.diff(today, 'day');
-      return calculateDatePrice(daysDifference);
+      return calculateDatePrice(daysDifference, DATE_RANGES, DATE_PRICE_OPTIONS.CUSTOM_BASE);
     }
     const optionIndex = initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR;
     if (optionIndex === DATE_OPTION_INDEX.ONE_WEEK) return DATE_PRICE_OPTIONS.ONE_WEEK;
@@ -72,28 +68,31 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
    * 개봉일 옵션 선택 핸들러
    * @param index 선택된 옵션 인덱스 (0: 1주일, 1: 1년, 2: 3년, 3: 직접선택)
    */
-  const handleOptionSelect = useCallback((index: number) => {
-    setSelectedOptionIndex(index);
+  const handleOptionSelect = useCallback(
+    (index: number) => {
+      setSelectedOptionIndex(index);
 
-    // 직접 선택이 아닌 경우 해당 옵션의 가격 설정
-    if (index === DATE_OPTION_INDEX.ONE_WEEK) {
-      setDatePrice(DATE_PRICE_OPTIONS.ONE_WEEK);
-      setSelectedDate(null);
-    } else if (index === DATE_OPTION_INDEX.ONE_YEAR) {
-      setDatePrice(DATE_PRICE_OPTIONS.ONE_YEAR);
-      setSelectedDate(null);
-    } else if (index === DATE_OPTION_INDEX.THREE_YEARS) {
-      setDatePrice(DATE_PRICE_OPTIONS.THREE_YEARS);
-      setSelectedDate(null);
-    } else if (index === DATE_OPTION_INDEX.CUSTOM) {
-      // 직접 선택인 경우 달력 바텀시트 표시
-      setIsCalendarVisible(true);
-      // 이전에 선택된 날짜가 없으면 기본 금액 설정
-      if (!selectedDate) {
-        setDatePrice(DATE_PRICE_OPTIONS.CUSTOM_BASE);
+      // 직접 선택이 아닌 경우 해당 옵션의 가격 설정
+      if (index === DATE_OPTION_INDEX.ONE_WEEK) {
+        setDatePrice(DATE_PRICE_OPTIONS.ONE_WEEK);
+        setSelectedDate(null);
+      } else if (index === DATE_OPTION_INDEX.ONE_YEAR) {
+        setDatePrice(DATE_PRICE_OPTIONS.ONE_YEAR);
+        setSelectedDate(null);
+      } else if (index === DATE_OPTION_INDEX.THREE_YEARS) {
+        setDatePrice(DATE_PRICE_OPTIONS.THREE_YEARS);
+        setSelectedDate(null);
+      } else if (index === DATE_OPTION_INDEX.CUSTOM) {
+        // 직접 선택인 경우 달력 바텀시트 표시
+        setIsCalendarVisible(true);
+        // 이전에 선택된 날짜가 없으면 기본 금액 설정
+        if (!selectedDate) {
+          setDatePrice(DATE_PRICE_OPTIONS.CUSTOM_BASE);
+        }
       }
-    }
-  }, [selectedDate]);
+    },
+    [selectedDate],
+  );
 
   /**
    * 달력에서 날짜 선택 핸들러
@@ -108,7 +107,11 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
     const daysDifference = selectedDay.diff(today, 'day');
 
     // 날짜 차이에 따른 가격 계산
-    const calculatedPrice = calculateDatePrice(daysDifference);
+    const calculatedPrice = calculateDatePrice(
+      daysDifference,
+      DATE_RANGES,
+      DATE_PRICE_OPTIONS.CUSTOM_BASE,
+    );
     setDatePrice(calculatedPrice);
 
     // 달력 바텀시트 닫기

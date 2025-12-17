@@ -1,12 +1,23 @@
 /**
- * step-info/constants.ts
- * 생성 시각: 2024-12-16
- * 타임캡슐 정보 입력 화면 상수 정의
+ * components/timecapsule-create/components/step-info/constants.ts
+ * 타임캡슐 생성 관련 상수 정의
  */
 
 // ============================================
-// 가격 정책 상수
+// 가격 상수
 // ============================================
+
+/** 텍스트 가격 (무료) */
+export const TEXT_PRICE = 0;
+
+/** 사진 1개당 가격 */
+export const PHOTO_PRICE = 500;
+
+/** 음악 가격 */
+export const MUSIC_PRICE = 1000;
+
+/** 동영상 가격 */
+export const VIDEO_PRICE = 2000;
 
 /**
  * 개봉일 옵션별 가격 정의
@@ -35,31 +46,14 @@ export const ADDITIONAL_OPTIONS = {
   MUSIC: {
     id: 'music',
     title: '음악 파일',
-    price: 1000,
+    price: MUSIC_PRICE,
   },
   VIDEO: {
     id: 'video',
     title: '영상 추가',
-    price: 2000,
+    price: VIDEO_PRICE,
   },
 } as const;
-
-// ============================================
-// 날짜 계산 상수
-// ============================================
-
-/**
- * 직접 선택 시 날짜 범위별 가격 매핑
- * 선택된 날짜와 오늘 날짜의 차이(일)에 따라 가격 결정
- */
-export const DATE_RANGES = [
-  { maxDays: 7, price: 1000 }, // 1주일 이내
-  { maxDays: 30, price: 2000 }, // 1개월 이내
-  { maxDays: 90, price: 3000 }, // 3개월 이내
-  { maxDays: 180, price: 5000 }, // 6개월 이내
-  { maxDays: 365, price: 8000 }, // 1년 이내
-  { maxDays: Infinity, price: 10000 }, // 1년 이상
-] as const;
 
 // ============================================
 // 검증 규칙
@@ -70,15 +64,27 @@ export const DATE_RANGES = [
  */
 export const MAX_CAPSULE_NAME_LENGTH = 20;
 
-/**
- * 최소 인원
- */
-export const MIN_PERSONNEL = 1;
+/** 최소 참가자 수 */
+export const MIN_PARTICIPANTS = 1;
+
+/** 최대 참가자 수 */
+export const MAX_PARTICIPANTS = 10;
+
+/** 최소 저장 개수 */
+export const MIN_STORAGE_COUNT = 1;
+
+/** 최대 저장 개수 */
+export const MAX_STORAGE_COUNT = 20;
 
 /**
- * 최대 인원
+ * 최소 인원 (MIN_PARTICIPANTS의 별칭)
  */
-export const MAX_PERSONNEL = 10;
+export const MIN_PERSONNEL = MIN_PARTICIPANTS;
+
+/**
+ * 최대 인원 (MAX_PARTICIPANTS의 별칭)
+ */
+export const MAX_PERSONNEL = MAX_PARTICIPANTS;
 
 /**
  * 최소 이미지 슬롯
@@ -103,26 +109,3 @@ export const DATE_OPTION_INDEX = {
   THREE_YEARS: 2,
   CUSTOM: 3,
 } as const;
-
-// ============================================
-// 유틸리티 함수
-// ============================================
-
-/**
- * 날짜 차이(일)에 따른 가격 계산
- * @param days 오늘부터 선택된 날짜까지의 일수
- * @returns 계산된 가격
- */
-export const calculateDatePrice = (days: number): number => {
-  const range = DATE_RANGES.find((r) => days <= r.maxDays);
-  return range ? range.price : DATE_PRICE_OPTIONS.CUSTOM_BASE;
-};
-
-/**
- * 숫자를 통화 형식으로 변환
- * @param amount 금액
- * @returns 포맷된 문자열 (예: ₩5,000)
- */
-export const formatPrice = (amount: number): string => {
-  return `₩${amount.toLocaleString('ko-KR')}`;
-};
