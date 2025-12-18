@@ -36,7 +36,7 @@ interface Participant {
 const mockParticipants: Participant[] = [
   {
     id: '1',
-    name: '나 (최홍식)',
+    name: '나 (존잘최홍식)',
     emoji: '🥚',
     status: 'pending',
     isMe: true,
