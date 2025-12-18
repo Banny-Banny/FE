@@ -54,7 +54,7 @@ export default function TimeCapsuleCreate() {
     // TODO: 실제로는 결제 완료 후 서버에서 호스트/게스트 정보를 받아와야 함
     // 현재는 임시로 호스트로 설정
     const userRole: 'host' | 'guest' = 'host';
-    
+
     return <StepRoom role={userRole} />;
   }
 
