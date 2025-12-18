@@ -118,9 +118,27 @@ export const KAKAO_MAP_HTML = `
         }
       }
 
-      window.addEventListener("message", (e) => onMessage(e.data));
-      document.addEventListener("message", (e) => onMessage(e.data));
+      // React Native WebView 메시지 수신
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.onMessage = (event) => {
+          onMessage(event.data);
+        };
+      }
+      
+      // 폴백: 일반 window message 이벤트 리스너
+      window.addEventListener("message", (e) => {
+        if (e.data) {
+          onMessage(e.data);
+        }
+      });
+      
+      document.addEventListener("message", (e) => {
+        if (e.data) {
+          onMessage(e.data);
+        }
+      });
     </script>
   </body>
 </html>
 `;
+

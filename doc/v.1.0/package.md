@@ -12,16 +12,19 @@
 
 ## 주요 패키지 목록
 
-| 번호 | 이름                           | 버전       | 설치 날짜 | 카테고리   | 설치 이유                    |
-| ---- | ------------------------------ | ---------- | --------- | ---------- | ---------------------------- |
-| 1    | `expo`                         | `~54.0.29` | 25-12-15  | Framework  | Expo 프레임워크 코어         |
-| 2    | `expo-router`                  | `~6.0.19`  | 25-12-15  | Navigation | 파일 기반 라우팅 시스템      |
-| 3    | `react`                        | `19.1.0`   | 25-12-15  | Framework  | React 코어 라이브러리        |
-| 4    | `react-native`                 | `0.81.5`   | 25-12-15  | Framework  | React Native 코어            |
-| 5    | `nativewind`                   | `^4.2.1`   | 25-12-15  | Styling    | Tailwind CSS 기반 스타일링   |
-| 6    | `react-native-gesture-handler` | `~2.28.0`  | 25-12-15  | Gesture    | 제스처 핸들링 라이브러리     |
-| 7    | `react-native-reanimated`      | `~4.1.1`   | 25-12-15  | Animation  | 고성능 애니메이션 라이브러리 |
-| 8    | `react-native-webview`         | `^13.16.0` | 25-12-16  | UI         | WebView 컴포넌트             |
+| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리   | 설치 이유                    |
+| ---- | ------------------------------ | ----------- | --------- | ---------- | ---------------------------- |
+| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework  | Expo 프레임워크 코어         |
+| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation | 파일 기반 라우팅 시스템      |
+| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework  | React 코어 라이브러리        |
+| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework  | React Native 코어            |
+| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling    | Tailwind CSS 기반 스타일링   |
+| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture    | 제스처 핸들링 라이브러리     |
+| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation  | 고성능 애니메이션 라이브러리 |
+| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI         | 캘린더 컴포넌트              |
+| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities  | 날짜 처리 라이브러리         |
+| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI         | Remix Icon React Native 래퍼 |
+| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI         | SVG 렌더링 라이브러리        |
 
 ---
 
@@ -225,21 +228,51 @@
 | **카테고리**  | UI Components                             |
 | **설치 이유** | SF Symbols (iOS) 및 Material Symbols 지원 |
 
-#### 19. react-native-webview
+#### 19. react-native-calendars
 
-| 항목          | 내용                                                        |
-| ------------- | ----------------------------------------------------------- |
-| **이름**      | `react-native-webview`                                      |
-| **버전**      | `^13.16.0`                                                  |
-| **설치 날짜** | 25-12-16                                                    |
-| **카테고리**  | UI Components                                               |
-| **설치 이유** | React Native에서 웹 컨텐츠를 표시하기 위한 WebView 컴포넌트 |
+| 항목          | 내용                     |
+| ------------- | ------------------------ |
+| **이름**      | `react-native-calendars` |
+| **버전**      | `^1.1313.0`              |
+| **설치 날짜** | 25-12-16                 |
+| **카테고리**  | UI Components            |
+| **설치 이유** | 캘린더 UI 컴포넌트 제공  |
+
+#### 20. dayjs
+
+| 항목          | 내용                           |
+| ------------- | ------------------------------ |
+| **이름**      | `dayjs`                        |
+| **버전**      | `^1.11.19`                     |
+| **설치 날짜** | 25-12-16                       |
+| **카테고리**  | Utilities                      |
+| **설치 이유** | 경량 날짜/시간 처리 라이브러리 |
+
+#### 21. react-native-remix-icon
+
+| 항목          | 내용                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| **이름**      | `react-native-remix-icon`                                                                              |
+| **버전**      | `^4.7.0`                                                                                               |
+| **설치 날짜** | 25-12-17                                                                                               |
+| **카테고리**  | UI Components                                                                                          |
+| **설치 이유** | Remix Icon을 React Native에서 사용하기 위한 래퍼 라이브러리로, TabLayout 등에서 아이콘 컴포넌트로 활용 |
+
+#### 22. react-native-svg
+
+| 항목          | 내용                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| **이름**      | `react-native-svg`                                                                           |
+| **버전**      | `^15.15.1`                                                                                   |
+| **설치 날짜** | 25-12-17                                                                                     |
+| **카테고리**  | UI Components                                                                                |
+| **설치 이유** | React Native에서 SVG를 렌더링하기 위한 라이브러리로, react-native-remix-icon의 의존성 패키지 |
 
 ---
 
 ### Expo 모듈
 
-#### 20. expo-constants
+#### 21. expo-constants
 
 | 항목          | 내용                      |
 | ------------- | ------------------------- |
@@ -249,7 +282,7 @@
 | **카테고리**  | Utilities                 |
 | **설치 이유** | 앱 설정 및 환경 변수 접근 |
 
-#### 21. expo-font
+#### 22. expo-font
 
 | 항목          | 내용             |
 | ------------- | ---------------- |
@@ -259,7 +292,7 @@
 | **카테고리**  | UI Components    |
 | **설치 이유** | 커스텀 폰트 로딩 |
 
-#### 22. expo-haptics
+#### 23. expo-haptics
 
 | 항목          | 내용                   |
 | ------------- | ---------------------- |
@@ -269,7 +302,7 @@
 | **카테고리**  | UX                     |
 | **설치 이유** | 햅틱 피드백(진동) 제공 |
 
-#### 23. expo-image
+#### 24. expo-image
 
 | 항목          | 내용                   |
 | ------------- | ---------------------- |
@@ -279,7 +312,7 @@
 | **카테고리**  | UI Components          |
 | **설치 이유** | 고성능 이미지 컴포넌트 |
 
-#### 24. expo-linking
+#### 25. expo-linking
 
 | 항목          | 내용               |
 | ------------- | ------------------ |
@@ -289,7 +322,7 @@
 | **카테고리**  | Navigation         |
 | **설치 이유** | 딥링크 및 URL 처리 |
 
-#### 25. expo-splash-screen
+#### 26. expo-splash-screen
 
 | 항목          | 내용                 |
 | ------------- | -------------------- |
@@ -299,7 +332,7 @@
 | **카테고리**  | UI Components        |
 | **설치 이유** | 스플래시 스크린 제어 |
 
-#### 26. expo-status-bar
+#### 27. expo-status-bar
 
 | 항목          | 내용               |
 | ------------- | ------------------ |
@@ -309,7 +342,7 @@
 | **카테고리**  | UI Components      |
 | **설치 이유** | 상태바 스타일 제어 |
 
-#### 27. expo-system-ui
+#### 28. expo-system-ui
 
 | 항목          | 내용             |
 | ------------- | ---------------- |
@@ -319,7 +352,7 @@
 | **카테고리**  | UI Components    |
 | **설치 이유** | 시스템 UI 제어   |
 
-#### 28. expo-web-browser
+#### 29. expo-web-browser
 
 | 항목          | 내용               |
 | ------------- | ------------------ |
@@ -333,7 +366,7 @@
 
 ### 개발 도구 (DevDependencies)
 
-#### 29. typescript
+#### 30. typescript
 
 | 항목          | 내용                |
 | ------------- | ------------------- |
@@ -343,7 +376,7 @@
 | **카테고리**  | Development         |
 | **설치 이유** | TypeScript 컴파일러 |
 
-#### 30. @types/react
+#### 31. @types/react
 
 | 항목          | 내용                       |
 | ------------- | -------------------------- |
@@ -353,7 +386,7 @@
 | **카테고리**  | Development                |
 | **설치 이유** | React TypeScript 타입 정의 |
 
-#### 31. eslint
+#### 32. eslint
 
 | 항목          | 내용                       |
 | ------------- | -------------------------- |
@@ -363,7 +396,7 @@
 | **카테고리**  | Development                |
 | **설치 이유** | JavaScript/TypeScript 린터 |
 
-#### 32. eslint-config-expo
+#### 33. eslint-config-expo
 
 | 항목          | 내용                        |
 | ------------- | --------------------------- |
@@ -373,7 +406,7 @@
 | **카테고리**  | Development                 |
 | **설치 이유** | Expo 프로젝트용 ESLint 설정 |
 
-#### 33. babel-plugin-module-resolver
+#### 34. babel-plugin-module-resolver
 
 | 항목          | 내용                           |
 | ------------- | ------------------------------ |
@@ -404,14 +437,15 @@
 
 - react-native-gesture-handler, react-native-reanimated, react-native-worklets
 
-### UI Components (9개)
+### UI Components (11개)
 
-- @expo/vector-icons, expo-symbols, expo-font, expo-image, react-native-webview
+- @expo/vector-icons, expo-symbols, expo-font, expo-image
 - expo-splash-screen, expo-status-bar, expo-system-ui, expo-haptics
+- react-native-calendars, react-native-remix-icon, react-native-svg
 
 ### Utilities (3개)
 
-- expo-constants, expo-web-browser, babel-plugin-module-resolver
+- expo-constants, expo-web-browser, dayjs
 
 ### Development (4개)
 
@@ -421,10 +455,32 @@
 
 ## 변경 이력
 
-| 버전  | 날짜     | 변경 내용                                                                     | 작성자 |
-| ----- | -------- | ----------------------------------------------------------------------------- | ------ |
-| 1.0.0 | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성)                             | 최지호 |
-| 1.0.1 | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지) | AI     |
+| 버전  | 날짜     | 변경 내용                                                                                                     | 작성자 |
+| ----- | -------- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| 1.0.0 | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성)                                                             | 최지호 |
+| 1.0.1 | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지)                                 | 최지호 |
+| 1.0.2 | 25-12-17 | react-native-webview 제거, @react-native-kakao 패키지들 추가, 전체 패키지 목록 업데이트                       | 최지호 |
+| 1.0.3 | 25-12-17 | @react-native-kakao 패키지들 제거, expo-application, expo-build-properties, expo-crypto, expo-dev-client 제거 | 최지호 |
+| 1.0.4 | 25-12-17 | remixicon 추가                                                                                                | 최지호 |
+| 1.0.5 | 25-12-17 | react-native-remix-icon, react-native-svg 추가 (TabLayout 아이콘 구현용)                                      | 최지호 |
+| 1.0.6 | 25-12-17 | remixicon 제거 (react-native-remix-icon 사용으로 대체)                                                        | 최지호 |
+
+---
+
+## Archived (제거됨)
+
+### remixicon
+
+| 항목          | 내용                                                                                                                                                            |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**      | `remixicon` (Archived)                                                                                                                                          |
+| **버전**      | `^4.7.0`                                                                                                                                                        |
+| **설치 날짜** | 25-12-17                                                                                                                                                        |
+| **제거 날짜** | 25-12-17                                                                                                                                                        |
+| **카테고리**  | UI Components                                                                                                                                                   |
+| **설치 이유** | 오픈소스 아이콘 폰트 라이브러리로, 2,500개 이상의 벡터 아이콘을 제공하여 UI에서 일관된 아이콘 디자인 구현                                                       |
+| **제거 사유** | React Native에서 직접 사용 불가능하여 `react-native-remix-icon`으로 대체. `react-native-remix-icon`이 내부적으로 remixicon 아이콘을 사용하므로 별도 설치 불필요 |
+| **대체 수단** | `react-native-remix-icon` 사용                                                                                                                                  |
 
 ---
 
