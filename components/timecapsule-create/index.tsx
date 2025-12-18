@@ -5,10 +5,10 @@
 
 import { useNavigation } from '@/commons/hooks';
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
 import { StepInfo } from './components/step-info';
 import { StepInfoFormData } from './components/step-info/types';
 import { StepPayment } from './components/step-payment';
+import { StepRoom } from './components/step-room';
 
 export default function TimeCapsuleCreate() {
   const navigation = useNavigation();
@@ -51,11 +51,11 @@ export default function TimeCapsuleCreate() {
 
   // 3단계: 대기방
   if (step === 3) {
-    return (
-      <View>
-        <Text>타임캡슐 생성 - 3단계 (대기방)</Text>
-      </View>
-    );
+    // TODO: 실제로는 결제 완료 후 서버에서 호스트/게스트 정보를 받아와야 함
+    // 현재는 임시로 호스트로 설정
+    const userRole: 'host' | 'guest' = 'host';
+
+    return <StepRoom role={userRole} />;
   }
 
   return null;
