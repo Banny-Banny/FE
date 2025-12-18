@@ -106,18 +106,23 @@ export const styles = StyleSheet.create({
   },
 
   // 첨부파일 버튼 컨테이너 (3개 버튼)
+  // 레이아웃 고정: 미리보기 컨테이너와 동일한 크기 유지
   attachmentButtonsContainer: {
     flexDirection: 'row',
+    width: '100%',
+    height: 120, // 미리보기 컨테이너와 동일한 높이 (고정)
   },
   attachmentButton: {
-    flex: 1,
+    width: '31%', // 3개 버튼이므로 각각 약 33%에서 margin 고려하여 31%로 설정
     backgroundColor: Colors.white[100],
     borderRadius: BorderRadius.md,
-    paddingVertical: Spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     marginRight: Spacing.md,
+    height: 120, // 미리보기와 동일한 높이 (고정)
+    position: 'relative',
+    overflow: 'hidden', // 미리보기가 버튼 영역을 벗어나지 않도록
   },
   attachmentButtonLast: {
     marginRight: 0,
@@ -138,40 +143,44 @@ export const styles = StyleSheet.create({
     color: Colors.black[500],
     marginTop: Spacing.xs,
   },
+  attachmentButtonDisabled: {
+    opacity: 0.5,
+    borderColor: Colors.grey[300],
+  },
+  attachmentButtonTextDisabled: {
+    color: Colors.grey[400],
+  },
 
-  // 첨부파일 미리보기 컨테이너
-  attachmentPreviewContainer: {
-    flexDirection: 'row',
-  },
-  attachmentPreview: {
-    flex: 1,
-    position: 'relative',
-  },
-  attachmentPreviewMargin: {
-    marginRight: Spacing.md,
-  },
-  attachmentPreviewIcon: {
+  // 실제 이미지/썸네일 (버튼 위에 오버레이)
+  attachmentPreviewImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: BorderRadius.md,
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  // 플레이스홀더 (썸네일 생성 중 또는 음악)
+  attachmentPreviewImagePlaceholder: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xs,
-  },
-  attachmentPreviewIconPhoto: {
-    backgroundColor: Colors.red[50],
-  },
-  attachmentPreviewIconMusic: {
-    backgroundColor: Colors.blue[50],
-  },
-  attachmentPreviewIconVideo: {
-    backgroundColor: Colors.red[50],
+    backgroundColor: Colors.whiteGrey[200],
   },
   attachmentPreviewLabel: {
+    position: 'absolute',
+    bottom: Spacing.xs,
+    left: Spacing.xs,
+    right: Spacing.xs,
     backgroundColor: Colors.darkGrey[800],
     borderRadius: BorderRadius.sm,
     paddingHorizontal: Spacing.xs,
     paddingVertical: Spacing.xs / 2, // 2px 대신 Spacing 토큰 사용
+    zIndex: 1, // 삭제 버튼보다 아래에 표시
   },
   attachmentPreviewText: {
     fontSize: FontSize.xs,
@@ -189,6 +198,7 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.black[500],
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2, // 미리보기 위에 표시
   },
 
   // 숨기기 버튼
