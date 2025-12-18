@@ -166,3 +166,4 @@ components/map/                   # ✅ 완벽한 Feature Slice
 - [ ] `utils/` 폴더에 유틸리티 함수 추가
 - [ ] `commons/components/` 에 공통 UI 컴포넌트 추가
 - [ ] 타임캡슐 Feature도 동일한 구조로 재구성
+

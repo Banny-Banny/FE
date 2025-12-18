@@ -141,3 +141,4 @@ export const KAKAO_MAP_HTML = `
   </body>
 </html>
 `;
+

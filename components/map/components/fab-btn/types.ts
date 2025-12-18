@@ -8,3 +8,4 @@ export interface FabButtonProps {
   onEasterEggPress?: () => void;
   onTimeCapsulePress?: () => void;
 }
+
