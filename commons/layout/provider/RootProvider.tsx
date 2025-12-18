@@ -6,7 +6,7 @@
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ReactQueryProvider } from './react-query/ReactQueryProvider';
+import { ReactQueryProvider } from './react-query/react-query.provider';
 
 interface RootProviderProps {
   children: React.ReactNode;
