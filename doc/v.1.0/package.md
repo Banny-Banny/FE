@@ -12,19 +12,22 @@
 
 ## 주요 패키지 목록
 
-| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리   | 설치 이유                    |
-| ---- | ------------------------------ | ----------- | --------- | ---------- | ---------------------------- |
-| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework  | Expo 프레임워크 코어         |
-| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation | 파일 기반 라우팅 시스템      |
-| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework  | React 코어 라이브러리        |
-| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework  | React Native 코어            |
-| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling    | Tailwind CSS 기반 스타일링   |
-| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture    | 제스처 핸들링 라이브러리     |
-| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation  | 고성능 애니메이션 라이브러리 |
-| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI         | 캘린더 컴포넌트              |
-| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities  | 날짜 처리 라이브러리         |
-| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI         | Remix Icon React Native 래퍼 |
-| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI         | SVG 렌더링 라이브러리        |
+| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리      | 설치 이유                     |
+| ---- | ------------------------------ | ----------- | --------- | ------------- | ----------------------------- |
+| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework     | Expo 프레임워크 코어          |
+| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation    | 파일 기반 라우팅 시스템       |
+| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework     | React 코어 라이브러리         |
+| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework     | React Native 코어             |
+| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling       | Tailwind CSS 기반 스타일링    |
+| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture       | 제스처 핸들링 라이브러리      |
+| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation     | 고성능 애니메이션 라이브러리  |
+| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI            | 캘린더 컴포넌트               |
+| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities     | 날짜 처리 라이브러리          |
+| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI            | Remix Icon React Native 래퍼  |
+| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI            | SVG 렌더링 라이브러리         |
+| 12   | `@tanstack/react-query`        | `^5.90.12`  | 25-12-17  | Data Fetching | 서버 상태 관리 및 데이터 페칭 |
+| 13   | `axios`                        | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리    |
+| 14   | `react-native-webview`         | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                 |
 
 ---
 
@@ -268,6 +271,43 @@
 | **카테고리**  | UI Components                                                                                |
 | **설치 이유** | React Native에서 SVG를 렌더링하기 위한 라이브러리로, react-native-remix-icon의 의존성 패키지 |
 
+#### 25. react-native-webview
+
+| 항목            | 내용                                                                                                               |
+| --------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **이름**        | `react-native-webview`                                                                                             |
+| **버전**        | `^13.16.0`                                                                                                         |
+| **설치 날짜**   | 25-12-17                                                                                                           |
+| **카테고리**    | UI Components                                                                                                      |
+| **설치 이유**   | React Native에서 웹뷰를 렌더링하기 위한 라이브러리. 웹 콘텐츠를 앱 내에서 표시하거나 웹 기반 기능을 통합할 때 사용 |
+| **주요 사용처** | 웹 콘텐츠 표시가 필요한 컴포넌트 및 화면                                                                           |
+
+---
+
+### 데이터 페칭 & API
+
+#### 23. @tanstack/react-query
+
+| 항목            | 내용                                                                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `@tanstack/react-query`                                                                                                                       |
+| **버전**        | `^5.90.12`                                                                                                                                    |
+| **설치 날짜**   | 25-12-17                                                                                                                                      |
+| **카테고리**    | Data Fetching                                                                                                                                 |
+| **설치 이유**   | 서버 상태 관리 및 데이터 페칭을 위한 라이브러리. 캐싱, 자동 리페칭, 에러 핸들링, 로딩 상태 관리 등을 제공하여 API 통신 로직을 효율적으로 관리 |
+| **주요 사용처** | API 호출 및 서버 상태 관리가 필요한 모든 컴포넌트 및 훅                                                                                       |
+
+#### 24. axios
+
+| 항목            | 내용                                                                                                                            |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `axios`                                                                                                                         |
+| **버전**        | `^1.13.2`                                                                                                                       |
+| **설치 날짜**   | 25-12-17                                                                                                                        |
+| **카테고리**    | HTTP Client                                                                                                                     |
+| **설치 이유**   | Promise 기반 HTTP 클라이언트 라이브러리. 인터셉터, 요청/응답 변환, 자동 JSON 변환 등의 기능을 제공하여 API 통신을 간편하게 처리 |
+| **주요 사용처** | `src/api/*` 디렉토리 내 API 호출 함수 및 @tanstack/react-query와 함께 사용하여 서버 통신 구현                                   |
+
 ---
 
 ### Expo 모듈
@@ -416,6 +456,17 @@
 | **카테고리**  | Development                    |
 | **설치 이유** | 모듈 경로 별칭(alias) 설정     |
 
+#### 35. ts-node
+
+| 항목            | 내용                                                                                                                                      |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `ts-node`                                                                                                                                 |
+| **버전**        | `^10.9.2`                                                                                                                                 |
+| **설치 날짜**   | 25-12-15                                                                                                                                  |
+| **카테고리**    | Development                                                                                                                               |
+| **설치 이유**   | TypeScript 파일을 직접 실행할 수 있게 해주는 도구. Node.js에서 TypeScript를 컴파일 없이 실행하거나 스크립트를 TypeScript로 작성할 때 사용 |
+| **주요 사용처** | TypeScript로 작성된 스크립트 실행 (예: scripts 디렉토리 내 스크립트 파일)                                                                 |
+
 ---
 
 ## 카테고리별 패키지 분류
@@ -437,19 +488,23 @@
 
 - react-native-gesture-handler, react-native-reanimated, react-native-worklets
 
-### UI Components (11개)
+### UI Components (12개)
 
 - @expo/vector-icons, expo-symbols, expo-font, expo-image
 - expo-splash-screen, expo-status-bar, expo-system-ui, expo-haptics
-- react-native-calendars, react-native-remix-icon, react-native-svg
+- react-native-calendars, react-native-remix-icon, react-native-svg, react-native-webview
 
 ### Utilities (3개)
 
 - expo-constants, expo-web-browser, dayjs
 
-### Development (4개)
+### Data Fetching & API (2개)
 
-- typescript, @types/react, eslint, eslint-config-expo
+- @tanstack/react-query, axios
+
+### Development (5개)
+
+- typescript, @types/react, eslint, eslint-config-expo, ts-node
 
 ---
 
@@ -464,6 +519,8 @@
 | 1.0.4 | 25-12-17 | remixicon 추가                                                                                                | 최지호 |
 | 1.0.5 | 25-12-17 | react-native-remix-icon, react-native-svg 추가 (TabLayout 아이콘 구현용)                                      | 최지호 |
 | 1.0.6 | 25-12-17 | remixicon 제거 (react-native-remix-icon 사용으로 대체)                                                        | 최지호 |
+| 1.0.7 | 25-12-17 | @tanstack/react-query, axios 추가 (서버 상태 관리 및 API 통신 구현용)                                         | 최지호 |
+| 1.0.8 | 25-12-17 | react-native-webview, ts-node 추가 (누락된 패키지 문서화)                                                     | 최지호 |
 
 ---
 
