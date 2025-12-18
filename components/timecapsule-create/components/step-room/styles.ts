@@ -1,7 +1,7 @@
 /**
  * components/timecapsule-create/components/step-room/styles.ts
  * StepRoom 컴포넌트 스타일 정의
- * 
+ *
  * 체크리스트:
  * - [✓] StyleSheet.create() 사용
  * - [✓] 색상 토큰만 사용 (하드코딩 금지)
@@ -9,16 +9,14 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
+import { Colors, FontFamily, FontSize, FontWeight, Spacing } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
-import { Colors } from '@/commons/constants/colors';
-import { Fonts } from '@/commons/constants/fonts';
-import { Spacing } from '@/commons/constants/spacing';
 
 export const styles = StyleSheet.create({
   // 메인 컨테이너
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     paddingHorizontal: Spacing.lg,
   },
 
@@ -38,7 +36,7 @@ export const styles = StyleSheet.create({
     height: 35,
     paddingHorizontal: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
     borderRadius: 9999,
   },
 
@@ -51,9 +49,10 @@ export const styles = StyleSheet.create({
   },
 
   roleBadgeText: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.15,
   },
 
@@ -85,9 +84,10 @@ export const styles = StyleSheet.create({
 
   // 타이틀
   title: {
-    fontSize: Fonts.size['2xl'],
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize['2xl'],
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     marginTop: 24,
     letterSpacing: 0.07,
   },
@@ -96,23 +96,25 @@ export const styles = StyleSheet.create({
   infoCard: {
     marginTop: 24,
     padding: 25,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     borderRadius: 16,
     gap: Spacing.md,
   },
 
   infoCardLabel: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
   },
 
   infoCardValue: {
-    fontSize: Fonts.size['3xl'],
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize['3xl'],
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: 0.4,
   },
 
@@ -133,16 +135,18 @@ export const styles = StyleSheet.create({
   },
 
   infoCardDetailLabel: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     marginBottom: 4,
   },
 
   infoCardDetailValue: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.15,
   },
 
@@ -159,31 +163,33 @@ export const styles = StyleSheet.create({
   },
 
   progressLabel: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.15,
   },
 
   progressValue: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.15,
   },
 
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: Colors.white[200],
     borderWidth: 1,
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
     borderRadius: 9999,
     overflow: 'hidden',
   },
 
   progressBarFill: {
     height: 6,
-    backgroundColor: Colors.black,
+    backgroundColor: Colors.black.darker,
     margin: 1,
   },
 
@@ -194,9 +200,10 @@ export const styles = StyleSheet.create({
   },
 
   participantLabel: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     letterSpacing: -0.15,
   },
 
@@ -211,14 +218,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 84,
     paddingHorizontal: 18,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
     borderRadius: 16,
   },
 
   participantCardActive: {
-    borderColor: Colors.black,
-    shadowColor: Colors.black,
+    borderColor: Colors.black.darker,
+    shadowColor: Colors.black.darker,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -226,7 +233,7 @@ export const styles = StyleSheet.create({
   },
 
   participantCardInactive: {
-    borderColor: '#E5E5E5',
+    borderColor: Colors.white[200],
   },
 
   participantInfo: {
@@ -240,18 +247,18 @@ export const styles = StyleSheet.create({
     height: 48,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    backgroundColor: '#FAFAFA',
+    borderColor: Colors.white[200],
+    backgroundColor: Colors.white[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   avatarActive: {
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
   },
 
   avatarEmoji: {
-    fontSize: Fonts.size['2xl'],
+    fontSize: FontSize['2xl'],
   },
 
   avatarEmojiDisabled: {
@@ -263,27 +270,29 @@ export const styles = StyleSheet.create({
   },
 
   participantName: {
-    fontSize: Fonts.size.base,
-    fontWeight: Fonts.weight.bold,
-    color: Colors.black,
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.61,
   },
 
   participantStatus: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
   },
 
   statusCompleted: {
-    color: '#999999',
+    color: Colors.black[500],
   },
 
   statusPending: {
-    color: '#1F59DB',
+    color: Colors.blue[500],
   },
 
   statusWaiting: {
-    color: '#999999',
+    color: Colors.black[500],
   },
 
   // 체크박스
@@ -295,11 +304,11 @@ export const styles = StyleSheet.create({
   },
 
   checkboxActive: {
-    borderColor: '#CCCCCC',
+    borderColor: Colors.black[500],
   },
 
   checkboxInactive: {
-    borderColor: '#E5E5E5',
+    borderColor: Colors.white[200],
   },
 
   checkboxChecked: {
@@ -314,9 +323,10 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#999999',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     textAlign: 'center',
   },
 
@@ -333,9 +343,10 @@ export const styles = StyleSheet.create({
   },
 
   deadlineText: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     letterSpacing: -0.15,
   },
 
@@ -353,30 +364,32 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonDisabled: {
-    backgroundColor: '#B3B3B3',
+    backgroundColor: Colors.black[500],
   },
 
   submitButtonEnabled: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.blue[500],
   },
 
   submitButtonText: {
-    fontSize: Fonts.size.lg,
-    fontWeight: Fonts.weight.bold,
-    color: '#FAFAFA',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.white[50],
     letterSpacing: -0.44,
   },
 
   buttonHint: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     textAlign: 'center',
   },
 
   // 크라운 아이콘 (참여자 이름 옆)
   crownEmoji: {
-    fontSize: Fonts.size.base,
+    fontSize: FontSize.base,
     marginLeft: 4,
   },
 });

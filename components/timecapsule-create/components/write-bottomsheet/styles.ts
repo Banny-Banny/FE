@@ -9,10 +9,8 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
+import { Colors, FontFamily, FontSize, FontWeight, Spacing } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
-import { Colors } from '@/commons/constants/colors';
-import { Fonts } from '@/commons/constants/fonts';
-import { Spacing } from '@/commons/constants/spacing';
 
 export const styles = StyleSheet.create({
   // 메인 컨테이너
@@ -28,16 +26,18 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: Fonts.size['2xl'],
-    fontWeight: Fonts.weight.bold,
-    color: '#0A0A0A',
+    fontSize: FontSize['2xl'],
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: 0.07,
   },
 
   subtitle: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     marginTop: Spacing.sm,
     letterSpacing: -0.15,
   },
@@ -60,17 +60,18 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: Fonts.size.base,
-    fontWeight: Fonts.weight.bold,
-    color: '#0A0A0A',
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.31,
   },
 
   // 텍스트 입력 영역
   textAreaContainer: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     borderRadius: 16,
     height: 120,
   },
@@ -78,9 +79,10 @@ export const styles = StyleSheet.create({
   textArea: {
     flex: 1,
     padding: Spacing.md,
-    fontSize: Fonts.size.base,
-    fontWeight: Fonts.weight.regular,
-    color: '#0A0A0A',
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.regular,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.31,
   },
 
@@ -91,9 +93,9 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.sm,
     height: 60,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     borderRadius: 16,
   },
 
@@ -103,9 +105,10 @@ export const styles = StyleSheet.create({
   },
 
   addButtonText: {
-    fontSize: Fonts.size.base,
-    fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    fontSize: FontSize.base,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     letterSpacing: -0.31,
     textAlign: 'center',
   },
@@ -121,16 +124,17 @@ export const styles = StyleSheet.create({
     height: 64,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     borderRadius: 16,
   },
 
   cancelButtonText: {
-    fontSize: Fonts.size.lg,
-    fontWeight: Fonts.weight.bold,
-    color: '#0A0A0A',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black.darker,
     letterSpacing: -0.44,
   },
 
@@ -139,23 +143,25 @@ export const styles = StyleSheet.create({
     height: 64,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: Colors.black.darker,
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: Colors.black.darker,
     borderRadius: 16,
   },
 
   saveButtonText: {
-    fontSize: Fonts.size.lg,
-    fontWeight: Fonts.weight.bold,
-    color: '#FAFAFA',
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.white[50],
     letterSpacing: -0.44,
   },
 
   hintText: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#999999',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.black[500],
     textAlign: 'center',
   },
 
@@ -176,10 +182,10 @@ export const styles = StyleSheet.create({
   photoPreview: {
     width: 107,
     height: 103,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: Colors.white[200],
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -196,7 +202,7 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 24,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.black.darker,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     justifyContent: 'center',
@@ -205,9 +211,10 @@ export const styles = StyleSheet.create({
   },
 
   photoPreviewText: {
-    fontSize: Fonts.size.xs,
-    fontWeight: Fonts.weight.bold,
-    color: '#FAFAFA',
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.white[50],
   },
 
   // 삭제 버튼
@@ -218,17 +225,18 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.black.darker,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FAFAFA',
+    borderColor: Colors.white[50],
   },
 
   deleteButtonText: {
     fontSize: 18,
-    fontWeight: Fonts.weight.bold,
-    color: '#FAFAFA',
+    fontWeight: FontWeight.bold,
+    fontFamily: FontFamily.variable,
+    color: Colors.white[50],
     lineHeight: 18,
   },
 });
