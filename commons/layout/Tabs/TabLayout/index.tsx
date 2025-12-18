@@ -17,8 +17,8 @@ const TAB_SCREENS = [
   {
     name: 'index',
     title: '홈',
-    iconName: 'ri-home-line',
-    iconNameFilled: 'ri-home-fill',
+    iconName: 'ri-map-line',
+    iconNameFilled: 'ri-map-fill',
   },
   {
     name: 'mypage',

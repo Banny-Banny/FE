@@ -51,7 +51,7 @@ export const TABS_SETTINGS = {
     paddingBottom: 8,
     paddingTop: 8,
   },
-  tabBarActiveTintColor: COLORS.primary[500],
+  tabBarActiveTintColor: COLORS.black,
   tabBarInactiveTintColor: COLORS.neutral[400],
   tabBarLabelStyle: {
     fontSize: 12,
