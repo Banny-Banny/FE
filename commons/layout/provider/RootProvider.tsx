@@ -6,6 +6,7 @@
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ReactQueryProvider } from './react-query/ReactQueryProvider';
 
 interface RootProviderProps {
   children: React.ReactNode;
@@ -14,8 +15,9 @@ interface RootProviderProps {
 export const RootProvider: React.FC<RootProviderProps> = ({ children }) => {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>{children}</GestureHandlerRootView>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <ReactQueryProvider>{children}</ReactQueryProvider>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 };
-
