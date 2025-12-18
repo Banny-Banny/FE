@@ -1,3 +1,4 @@
+import { Colors } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
@@ -5,64 +6,33 @@ import { StyleSheet } from 'react-native';
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *
- * 토큰 소스: /Users/jiho/Desktop/TimeEgg/FE/tailwind.config.js
+ * 토큰 소스: commons/constants/color.ts
  * 생성 시각: 2025-12-16
  * 버전: 1.0.0
  */
 
-// Tailwind 토큰 매핑
-const COLORS = {
-  neutral: {
-    50: '#fafafa',
-    100: '#f5f5f5',
-    200: '#e5e5e5',
-    300: '#d4d4d4',
-    400: '#a3a3a3',
-    500: '#737373',
-    600: '#525252',
-    700: '#404040',
-    800: '#262626',
-    900: '#171717',
-    950: '#0a0a0a',
-  },
-  primary: {
-    50: '#f0f9ff',
-    100: '#e0f2fe',
-    200: '#bae6fd',
-    300: '#7dd3fc',
-    400: '#38bdf8',
-    500: '#0ea5e9',
-    600: '#0284c7',
-    700: '#0369a1',
-    800: '#075985',
-    900: '#0c4a6e',
-  },
-  white: '#ffffff',
-  black: '#000000',
-};
-
 // Tabs 설정 상수 (토큰 기반)
 export const TABS_SETTINGS = {
   tabBarStyle: {
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.white[50],
     borderTopWidth: 1,
-    borderTopColor: COLORS.neutral[200],
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 8,
+    borderTopColor: Colors.grey[200],
+    height: 68,
+    paddingBottom: 12,
+    paddingTop: 12,
   },
-  tabBarActiveTintColor: COLORS.primary[500],
-  tabBarInactiveTintColor: COLORS.neutral[400],
+  tabBarActiveTintColor: Colors.black[500],
+  tabBarInactiveTintColor: Colors.grey[500],
   tabBarLabelStyle: {
     fontSize: 12,
     fontWeight: '600' as const,
   },
   headerStyle: {
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.white[50],
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.neutral[200],
+    borderBottomColor: Colors.grey[200],
   },
-  headerTintColor: COLORS.neutral[900],
+  headerTintColor: Colors.black[500],
   headerTitleStyle: {
     fontWeight: '700' as const,
     fontSize: 18,
@@ -82,12 +52,12 @@ export const styles = StyleSheet.create({
   // 탭 컨테이너
   tabContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.white[50],
   },
   // 페이지 컨테이너
   pageContainer: {
     flex: 1,
-    backgroundColor: COLORS.neutral[50],
+    backgroundColor: Colors.white[50],
   },
   // 컨텐츠 영역
   content: {
@@ -101,7 +71,7 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 32,
     fontWeight: '700',
-    color: COLORS.neutral[900],
+    color: Colors.black[500],
     marginBottom: 8,
   },
   // 서브타이틀
@@ -109,7 +79,7 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 24,
     fontWeight: '400',
-    color: COLORS.neutral[500],
+    color: Colors.grey[500],
     textAlign: 'center',
   },
 });
@@ -117,8 +87,8 @@ export const styles = StyleSheet.create({
 /**
  * ✅ 체크리스트
  * [✅] tailwind.config.js 수정 안 함
- * [✅] 색상값 직접 입력 0건 (모두 COLORS 토큰 사용)
- * [✅] 모든 색상은 tailwind.config.js의 토큰 기반
+ * [✅] 색상값 직접 입력 0건 (모두 Colors 토큰 사용)
+ * [✅] 모든 색상은 commons/constants/color.ts의 토큰 기반
  * [✅] 하드코딩 hex/rgb/hsl 사용 0건
  * [✅] 스타일은 styles.ts에서만 관리
  */

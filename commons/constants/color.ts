@@ -15,69 +15,133 @@
  * ```
  */
 export const Colors = {
-  // Black 팔레트
-  black: {
-    50: '#EEF1F4', // Light
-    100: '#E2E6EC', // Light Hover
-    200: '#CED4DB', // Light Active
-    500: '#2F3740', // Normal
-    600: '#242A30', // Normal Hover
-    700: '#1F2429', // Normal Active
-    800: '#0D1013', // Dark
-    900: '#0D1013', // Dark Hover
-    950: '#080A0C', // Dark Active
-    darker: '#000000', // Darker
-  },
-  // White 팔레트
+  // White 팔레트 (Figma에서 업데이트)
   white: {
     50: '#FFFFFF', // Light
-    100: '#F3F4F6', // Light Hover
-    200: '#E5E7EB', // Light Active
-    500: '#FFFFFF', // Normal
-    600: '#F3F4F6', // Normal Hover
-    700: '#E5E7EB', // Normal Active
-    800: '#DBDDDF', // Dark
-    900: '#CACBCD', // Dark Hover
-    950: '#B8B9BB', // Dark Active
-    darker: '#A6A7A9', // Darker
+    100: '#FDFDFD', // Light
+    200: '#FDFDFD', // Light
+    300: '#FCFCFC', // Light
+    400: '#FBFBFB', // Light
+    500: '#FAFAFA', // Normal
+    600: '#E4E4E4', // Normal Hover
+    700: '#B2B2B2', // Normal Active
+    800: '#8A8A8A', // Dark
+    900: '#696969', // Dark Hover
+    950: '#696969', // Dark Active
+    darker: '#696969', // Darker
   },
-  // Red 팔레트
+  // White Grey 팔레트 (Figma에서 추가)
+  whiteGrey: {
+    50: '#FCFCFC', // Light
+    100: '#F7F7F7', // Light Hover
+    200: '#F3F3F3', // Light Active
+    300: '#EDEDED', // Light
+    400: '#E9E9E9', // Light
+    500: '#E4E4E4', // Normal
+    600: '#CFCFCF', // Normal Hover
+    700: '#A2A2A2', // Normal Active
+    800: '#7D7D7D', // Dark
+    900: '#606060', // Dark Hover
+    950: '#606060', // Dark Active
+    darker: '#606060', // Darker
+  },
+  // Grey 팔레트 (Figma에서 추가)
+  grey: {
+    50: '#F7F7F7', // Light
+    100: '#E7E7E7', // Light Hover
+    200: '#DCDCDC', // Light Active
+    300: '#CBCBCB', // Light
+    400: '#C1C1C1', // Light
+    500: '#B2B2B2', // Normal
+    600: '#A2A2A2', // Normal Hover
+    700: '#7E7E7E', // Normal Active
+    800: '#626262', // Dark
+    900: '#4B4B4B', // Dark Hover
+    950: '#4B4B4B', // Dark Active
+    darker: '#4B4B4B', // Darker
+  },
+  // Dark Grey 팔레트 (Figma에서 추가)
+  darkGrey: {
+    50: '#F0F0F0', // Light
+    100: '#D1D1D1', // Light Hover
+    200: '#BABABA', // Light Active
+    300: '#9B9B9B', // Light
+    400: '#878787', // Light
+    500: '#696969', // Normal
+    600: '#606060', // Normal Hover
+    700: '#4B4B4B', // Normal Active
+    800: '#3A3A3A', // Dark
+    900: '#2C2C2C', // Dark Hover
+    950: '#2C2C2C', // Dark Active
+    darker: '#2C2C2C', // Darker
+  },
+  // Light Black 팔레트 (Figma에서 추가)
+  lightBlack: {
+    50: '#EBEBEB', // Light
+    100: '#C2C2C2', // Light Hover
+    200: '#A4A4A4', // Light Active
+    300: '#7B7B7B', // Light
+    400: '#616161', // Light
+    500: '#3A3A3A', // Normal
+    600: '#353535', // Normal Hover
+    700: '#292929', // Normal Active
+    800: '#202020', // Dark
+    900: '#181818', // Dark Hover
+    950: '#181818', // Dark Active
+    darker: '#181818', // Darker
+  },
+  // Black 팔레트 (Figma에서 업데이트)
+  black: {
+    50: '#E7E7E7', // Light
+    100: '#B3B3B3', // Light Hover
+    200: '#8E8E8E', // Light Active
+    300: '#5B5B5B', // Light
+    400: '#3B3B3B', // Light
+    500: '#0A0A0A', // Normal
+    600: '#090909', // Normal Hover
+    700: '#070707', // Normal Active
+    800: '#060606', // Dark
+    900: '#040404', // Dark Hover
+    950: '#040404', // Dark Active
+    darker: '#040404', // Darker
+  },
+  // Red 팔레트 (Figma에서 업데이트 - 포인트 색상)
   red: {
-    50: '#FCEEEE', // Light
-    100: '#FAE1E1', // Light Hover
-    200: '#F8D3D3', // Light Active
-    500: '#EB3434', // Normal
-    600: '#DE2F2F', // Normal Hover
-    700: '#CC2C2C', // Normal Active
-    800: '#8F0F0F', // Dark
-    900: '#820D0D', // Dark Hover
-    950: '#740C0C', // Dark Active
-    darker: '#660A0A', // Darker
+    50: '#FFEEEF', // Light
+    100: '#FFE5E6', // Light Hover
+    200: '#FFC9CC', // Light Active
+    500: '#FF515A', // Normal
+    600: '#E64951', // Normal Hover
+    700: '#CC4148', // Normal Active
+    800: '#BF3D44', // Dark
+    900: '#993136', // Dark Hover
+    950: '#732428', // Dark Active
+    darker: '#591C1F', // Darker
   },
-  // Green 팔레트
+  // Green 팔레트 (Figma에서 업데이트 - 포인트 색상)
   green: {
-    50: '#EDFAF2', // Light
-    100: '#E0F5E7', // Light Hover
-    200: '#D3F0DD', // Light Active
-    500: '#2DD75A', // Normal
-    600: '#29C652', // Normal Hover
-    700: '#26B64B', // Normal Active
-    800: '#0D7A2C', // Dark
-    900: '#0C6F27', // Dark Hover
-    950: '#0A6423', // Dark Active
-    darker: '#09591E', // Darker
+    50: '#E6F6EC', // Light
+    100: '#D9F2E2', // Light Hover
+    200: '#B1E3C3', // Light Active
+    500: '#02A63E', // Normal
+    600: '#029538', // Normal Hover
+    700: '#028532', // Normal Active
+    800: '#027D2F', // Dark
+    900: '#016425', // Dark Hover
+    950: '#014B1C', // Dark Active
+    darker: '#013A16', // Darker
   },
-  // Blue 팔레트
+  // Blue 팔레트 (Figma에서 업데이트 - 포인트 색상)
   blue: {
-    50: '#EEF4FC', // Light
-    100: '#E0EBF8', // Light Hover
-    200: '#D3E2F4', // Light Active
-    500: '#337BF3', // Normal
-    600: '#2F71DE', // Normal Hover
-    700: '#2B68CA', // Normal Active
-    800: '#0E3C8B', // Dark
-    900: '#0D367E', // Dark Hover
-    950: '#0B3072', // Dark Active
-    darker: '#0A2B66', // Darker
+    50: '#E9EEFB', // Light
+    100: '#DDE6FA', // Light Hover
+    200: '#BACCF4', // Light Active
+    500: '#1F59DB', // Normal
+    600: '#1C50C5', // Normal Hover
+    700: '#1947AF', // Normal Active
+    800: '#1743A4', // Dark
+    900: '#133583', // Dark Hover
+    950: '#0E2863', // Dark Active
+    darker: '#0B1F4D', // Darker
   },
 } as const;
