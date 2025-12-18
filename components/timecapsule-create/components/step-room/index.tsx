@@ -11,7 +11,9 @@
  */
 
 import React, { useState } from 'react';
-import { View, Text, Image, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, Share } from 'react-native';
+import Icon from 'react-native-remix-icon';
+import { Colors } from '@/commons/constants/colors';
 import { styles } from './styles';
 import { UserBottomSheet } from '../write-bottomsheet';
 
@@ -68,6 +70,25 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
+  // 공유 기능
+  const handleShare = async () => {
+    try {
+      const result = await Share.share({
+        title: '타임캡슐에 초대합니다',
+        message: `타임캡슐 이름: ㅋ\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
+      });
+
+      // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
+      if (result.action === Share.sharedAction) {
+        // 공유 완료
+      } else if (result.action === Share.dismissedAction) {
+        // 사용자가 취소
+      }
+    } catch (error) {
+      console.error('공유하기 실패:', error);
+    }
+  };
+
   // 진행 상황 계산
   const completedCount = mockParticipants.filter(p => p.status === 'completed').length;
   const totalCount = mockParticipants.filter(p => p.name).length;
@@ -104,7 +125,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           {/* 참여자 정보 */}
           <View style={styles.participantDetails}>
             <Pressable
-              style={{ flexDirection: 'row', alignItems: 'center' }}
+              style={styles.participantNameRow}
               onPress={() => {
                 if (participant.name) {
                   setSelectedParticipant(participant);
@@ -141,10 +162,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
             ]}
           >
             {participant.status === 'completed' && (
-              <Image
-                source={{ uri: 'http://localhost:3845/assets/1455ea22b06a869fb03b37b32abd782756a3d2c5.svg' }}
-                style={styles.checkboxChecked}
-              />
+              <Icon name="checkbox-circle-fill" size={20} color={Colors.success} />
             )}
           </View>
         )}
@@ -159,8 +177,10 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         {/* 역할 배지 */}
         <View style={[styles.roleBadge, isHost ? styles.roleBadgeHost : styles.roleBadgeGuest]}>
           {isHost && (
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/1f875e9b22d7c8d0622c09038ec62e695bda2110.svg' }}
+            <Icon
+              name="vip-crown-2-line"
+              size={24}
+              color={Colors.black}
               style={styles.crownIcon}
             />
           )}
@@ -170,18 +190,12 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         {/* 헤더 아이콘 */}
         <View style={styles.headerIcons}>
           {isHost && (
-            <View style={styles.iconButton}>
-              <Image
-                source={{ uri: 'http://localhost:3845/assets/2b85f143dbb5617dc71235137b4aee78446c358d.svg' }}
-                style={styles.icon}
-              />
-            </View>
+            <Pressable style={styles.iconButton} onPress={handleShare}>
+              <Icon name="share-line" size={24} color={Colors.black} />
+            </Pressable>
           )}
           <View style={styles.iconButton}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/4c02952bcd2c4e22c40d80f69612f998a9003c12.svg' }}
-              style={styles.icon}
-            />
+            <Icon name="close-line" size={24} color={Colors.black} />
           </View>
         </View>
       </View>
@@ -200,9 +214,10 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           {/* 개봉일 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Image
-                source={{ uri: 'http://localhost:3845/assets/7eb4946b787f0ad1ae41b5ffaca9b8a766b0d4ea.svg' }}
-                style={styles.infoCardDetailIcon}
+              <Icon
+                name="calendar-line"
+                size={16}
+                color={Colors.textSecondary}
               />
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
             </View>
@@ -212,9 +227,10 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           {/* 참여자 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Image
-                source={{ uri: 'http://localhost:3845/assets/778d8cc95130db179cb52f43c52ec2220117b67c.svg' }}
-                style={styles.infoCardDetailIcon}
+              <Icon
+                name="user-3-line"
+                size={16}
+                color={Colors.textSecondary}
               />
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
             </View>
@@ -251,10 +267,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         </Text>
 
         <View style={styles.deadlineContainer}>
-          <Image
-            source={{ uri: 'http://localhost:3845/assets/afeea765c879dab4b03d9207a68e204640aab75a.svg' }}
-            style={styles.deadlineIcon}
-          />
+          <Icon name="time-line" size={16} color={Colors.textSecondary} />
           <Text style={styles.deadlineText}>작성 마감: 23시간 59분 남음</Text>
         </View>
 

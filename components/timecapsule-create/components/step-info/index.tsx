@@ -8,20 +8,13 @@
  * - [x] 외부 라이브러리 설치 0건 (react-native-calendars, dayjs 사용)
  */
 
+import { Colors } from '@/commons/constants/colors';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Modal,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { Calendar } from 'react-native-calendars';
+import Icon from 'react-native-remix-icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   MAX_CAPSULE_NAME_LENGTH,
@@ -54,7 +47,7 @@ const TEXTS = {
   },
   personnel: {
     subLabel: 'PERSONNEL',
-    label: '최대 인원',
+    label: '인원수',
     unit: '명',
     hint: '1EA: ₩500',
   },
@@ -83,13 +76,12 @@ const TEXTS = {
 };
 
 // ============================================
-// 아이콘 이미지 URL (Figma MCP 제공)
+// 아이콘 이름 (Remix Icon)
 // ============================================
 const ICONS = {
-  minus: 'http://localhost:3845/assets/caa352d54da7870001b0a87620715ea564cc645f.svg',
-  plus: 'http://localhost:3845/assets/27ae7478f6e1a72ad0287abc028416f91b713402.svg',
-  music: 'http://localhost:3845/assets/331a6aec1bcb65239fadc0cfb43881f8f38556d4.svg',
-  video: 'http://localhost:3845/assets/d5f16bb854f8fd264307df3ab5abbcf7d8962031.svg',
+  music: 'music-2-line' as const,
+  // Figma 디자인 기준: 동영상 카메라 아이콘
+  video: 'video-on-line' as const,
 };
 
 // ============================================
@@ -296,7 +288,7 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
             <TextInput
               style={styles.inputPlaceholder}
               placeholder={TEXTS.capsuleName.placeholder}
-              placeholderTextColor="#99a1af"
+              placeholderTextColor={Colors.textDisabled}
               value={capsuleName}
               onChangeText={handleCapsuleNameChange}
               maxLength={MAX_CAPSULE_NAME_LENGTH}
@@ -344,70 +336,66 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
 
         {/* 최대 인원 섹션 */}
         <View style={[styles.section, styles.stepperSection]}>
-          <View style={[styles.sectionHeader, styles.sectionHeaderWithSub]}>
-            <View style={styles.sectionLabelContainer}>
-              <Text style={styles.sectionSubLabel}>{TEXTS.personnel.subLabel}</Text>
-              <Text style={[styles.sectionLabel, styles.sectionLabelBlack]}>
-                {TEXTS.personnel.label}
-              </Text>
+          <Text style={styles.stepperSectionPrice}>{formatPrice(personnelPrice)}</Text>
+          <View style={styles.stepperRow}>
+            <View style={styles.stepperLabelColumn}>
+              <View style={styles.stepperLabelRow}>
+                <Text style={styles.stepperLabel}>인원수</Text>
+                <Text style={styles.stepperSubLabel}>(최대 10명)</Text>
+              </View>
+              <Text style={styles.stepperHint}>{TEXTS.personnel.hint}</Text>
             </View>
-            <Text style={styles.sectionPrice}>{formatPrice(personnelPrice)}</Text>
-          </View>
-          <View style={styles.stepperContainer}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => handlePersonnelChange(personnelCount - 1)}
-              accessibilityRole="button"
-              accessibilityLabel="인원 감소">
-              <Text style={styles.stepperButtonText}>−</Text>
-            </TouchableOpacity>
-            <View style={styles.stepperValueContainer}>
+            <View style={styles.stepperContainer}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => handlePersonnelChange(personnelCount - 1)}
+                accessibilityRole="button"
+                accessibilityLabel="인원 감소">
+                <Text style={styles.stepperButtonText}>−</Text>
+              </TouchableOpacity>
               <Text style={styles.stepperValue}>{personnelCount}</Text>
               <Text style={styles.stepperUnit}>{TEXTS.personnel.unit}</Text>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => handlePersonnelChange(personnelCount + 1)}
+                accessibilityRole="button"
+                accessibilityLabel="인원 증가">
+                <Text style={styles.stepperButtonText}>+</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => handlePersonnelChange(personnelCount + 1)}
-              accessibilityRole="button"
-              accessibilityLabel="인원 증가">
-              <Text style={styles.stepperButtonText}>+</Text>
-            </TouchableOpacity>
           </View>
-          <Text style={styles.stepperHint}>{TEXTS.personnel.hint}</Text>
         </View>
 
         {/* 이미지 슬롯 섹션 */}
         <View style={[styles.section, styles.stepperSection]}>
-          <View style={[styles.sectionHeader, styles.sectionHeaderWithSub]}>
-            <View style={styles.sectionLabelContainer}>
-              <Text style={styles.sectionSubLabel}>{TEXTS.storage.subLabel}</Text>
-              <Text style={[styles.sectionLabel, styles.sectionLabelBlack]}>
-                {TEXTS.storage.label}
-              </Text>
+          <Text style={styles.stepperSectionPrice}>{formatPrice(storagePrice)}</Text>
+          <View style={styles.stepperRow}>
+            <View style={styles.stepperLabelColumn}>
+              <View style={styles.stepperLabelRow}>
+                <Text style={styles.stepperLabel}>이미지</Text>
+                <Text style={styles.stepperSubLabel}>(최대 5장)</Text>
+              </View>
+              <Text style={styles.stepperHint}>{TEXTS.storage.hint}</Text>
             </View>
-            <Text style={styles.sectionPrice}>{formatPrice(storagePrice)}</Text>
-          </View>
-          <View style={styles.stepperContainer}>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => handleStorageChange(storageCount - 1)}
-              accessibilityRole="button"
-              accessibilityLabel="슬롯 감소">
-              <Text style={styles.stepperButtonText}>−</Text>
-            </TouchableOpacity>
-            <View style={styles.stepperValueContainer}>
+            <View style={styles.stepperContainer}>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => handleStorageChange(storageCount - 1)}
+                accessibilityRole="button"
+                accessibilityLabel="슬롯 감소">
+                <Text style={styles.stepperButtonText}>−</Text>
+              </TouchableOpacity>
               <Text style={styles.stepperValue}>{storageCount}</Text>
               <Text style={styles.stepperUnit}>{TEXTS.storage.unit}</Text>
+              <TouchableOpacity
+                style={styles.stepperButton}
+                onPress={() => handleStorageChange(storageCount + 1)}
+                accessibilityRole="button"
+                accessibilityLabel="슬롯 증가">
+                <Text style={styles.stepperButtonText}>+</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.stepperButton}
-              onPress={() => handleStorageChange(storageCount + 1)}
-              accessibilityRole="button"
-              accessibilityLabel="슬롯 증가">
-              <Text style={styles.stepperButtonText}>+</Text>
-            </TouchableOpacity>
           </View>
-          <Text style={styles.stepperHint}>{TEXTS.storage.hint}</Text>
         </View>
 
         {/* 추가 옵션 섹션 */}
@@ -429,41 +417,40 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
                   accessibilityRole="button"
                   accessibilityLabel={`${option.title} ${option.price}`}>
                   <View style={styles.optionIconContainer}>
-                    <Image
-                      source={{ uri: index === 0 ? ICONS.music : ICONS.video }}
-                      style={styles.optionIcon}
+                    <Icon
+                      name={index === 0 ? ICONS.music : ICONS.video}
+                      size={24}
+                      color={isSelected ? Colors.black : Colors.gray500}
                     />
                   </View>
-                  <View style={styles.optionTextContainer}>
-                    <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
-                      {option.title}
-                    </Text>
-                    <Text style={[styles.optionPrice, isSelected && styles.optionPriceSelected]}>
-                      {option.price}
-                    </Text>
-                  </View>
+                  <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
+                    {option.title}
+                  </Text>
+                  <Text style={[styles.optionPrice, isSelected && styles.optionPriceSelected]}>
+                    {option.price}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
         </View>
-      </ScrollView>
 
-      {/* 하단 결제 영역 */}
-      <View style={styles.footer}>
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>{TEXTS.footer.totalLabel}</Text>
-          <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+        {/* 총 결제금액 및 결제 버튼 섹션 */}
+        <View style={styles.paymentSection}>
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>{TEXTS.footer.totalLabel}</Text>
+            <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
+            onPress={handleSubmitPress}
+            disabled={!isFormValid}
+            accessibilityRole="button"
+            accessibilityLabel={TEXTS.footer.submitButton}>
+            <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
-          onPress={handleSubmitPress}
-          disabled={!isFormValid}
-          accessibilityRole="button"
-          accessibilityLabel={TEXTS.footer.submitButton}>
-          <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* 달력 바텀시트 모달 */}
       <Modal

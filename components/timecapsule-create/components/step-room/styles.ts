@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
   // 메인 컨테이너
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.backgroundSecondary,
     paddingHorizontal: Spacing.lg,
   },
 
@@ -51,6 +51,7 @@ export const styles = StyleSheet.create({
   },
 
   roleBadgeText: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -85,6 +86,7 @@ export const styles = StyleSheet.create({
 
   // 타이틀
   title: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size['2xl'],
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -96,20 +98,22 @@ export const styles = StyleSheet.create({
   infoCard: {
     marginTop: 24,
     padding: 25,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.border,
     borderRadius: 16,
     gap: Spacing.md,
   },
 
   infoCardLabel: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.xs,
     fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    color: Colors.textSecondary,
   },
 
   infoCardValue: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size['3xl'],
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -133,13 +137,15 @@ export const styles = StyleSheet.create({
   },
 
   infoCardDetailLabel: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.xs,
     fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
 
   infoCardDetailValue: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -159,6 +165,7 @@ export const styles = StyleSheet.create({
   },
 
   progressLabel: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -166,6 +173,7 @@ export const styles = StyleSheet.create({
   },
 
   progressValue: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -174,7 +182,7 @@ export const styles = StyleSheet.create({
 
   progressBarContainer: {
     height: 8,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: Colors.gray300,
     borderWidth: 1,
     borderColor: Colors.black,
     borderRadius: 9999,
@@ -194,9 +202,10 @@ export const styles = StyleSheet.create({
   },
 
   participantLabel: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    color: Colors.textSecondary,
     letterSpacing: -0.15,
   },
 
@@ -211,7 +220,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 84,
     paddingHorizontal: 18,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
     borderRadius: 16,
   },
@@ -226,7 +235,7 @@ export const styles = StyleSheet.create({
   },
 
   participantCardInactive: {
-    borderColor: '#E5E5E5',
+    borderColor: Colors.border,
   },
 
   participantInfo: {
@@ -240,8 +249,8 @@ export const styles = StyleSheet.create({
     height: 48,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
-    backgroundColor: '#FAFAFA',
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -262,7 +271,13 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
 
+  participantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   participantName: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.base,
     fontWeight: Fonts.weight.bold,
     color: Colors.black,
@@ -270,20 +285,21 @@ export const styles = StyleSheet.create({
   },
 
   participantStatus: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.xs,
     fontWeight: Fonts.weight.bold,
   },
 
   statusCompleted: {
-    color: '#999999',
+    color: Colors.textDisabled,
   },
 
   statusPending: {
-    color: '#1F59DB',
+    color: Colors.success,
   },
 
   statusWaiting: {
-    color: '#999999',
+    color: Colors.textDisabled,
   },
 
   // 체크박스
@@ -295,11 +311,11 @@ export const styles = StyleSheet.create({
   },
 
   checkboxActive: {
-    borderColor: '#CCCCCC',
+    borderColor: Colors.gray400,
   },
 
   checkboxInactive: {
-    borderColor: '#E5E5E5',
+    borderColor: Colors.border,
   },
 
   checkboxChecked: {
@@ -314,9 +330,10 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.xs,
     fontWeight: Fonts.weight.bold,
-    color: '#999999',
+    color: Colors.textDisabled,
     textAlign: 'center',
   },
 
@@ -333,9 +350,10 @@ export const styles = StyleSheet.create({
   },
 
   deadlineText: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.sm,
     fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    color: Colors.textSecondary,
     letterSpacing: -0.15,
   },
 
@@ -353,7 +371,7 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonDisabled: {
-    backgroundColor: '#B3B3B3',
+    backgroundColor: Colors.gray400,
   },
 
   submitButtonEnabled: {
@@ -361,16 +379,18 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonText: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.lg,
     fontWeight: Fonts.weight.bold,
-    color: '#FAFAFA',
+    color: Colors.white,
     letterSpacing: -0.44,
   },
 
   buttonHint: {
+    fontFamily: 'Pretendard Variable',
     fontSize: Fonts.size.xs,
     fontWeight: Fonts.weight.bold,
-    color: '#666666',
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
 
