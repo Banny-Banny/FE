@@ -23,6 +23,8 @@
 | 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation  | 고성능 애니메이션 라이브러리 |
 | 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI         | 캘린더 컴포넌트              |
 | 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities  | 날짜 처리 라이브러리         |
+| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI         | Remix Icon React Native 래퍼 |
+| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI         | SVG 렌더링 라이브러리        |
 
 ---
 
@@ -246,6 +248,26 @@
 | **카테고리**  | Utilities                      |
 | **설치 이유** | 경량 날짜/시간 처리 라이브러리 |
 
+#### 21. react-native-remix-icon
+
+| 항목          | 내용                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| **이름**      | `react-native-remix-icon`                                                                              |
+| **버전**      | `^4.7.0`                                                                                               |
+| **설치 날짜** | 25-12-17                                                                                               |
+| **카테고리**  | UI Components                                                                                          |
+| **설치 이유** | Remix Icon을 React Native에서 사용하기 위한 래퍼 라이브러리로, TabLayout 등에서 아이콘 컴포넌트로 활용 |
+
+#### 22. react-native-svg
+
+| 항목          | 내용                                                                                         |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| **이름**      | `react-native-svg`                                                                           |
+| **버전**      | `^15.15.1`                                                                                   |
+| **설치 날짜** | 25-12-17                                                                                     |
+| **카테고리**  | UI Components                                                                                |
+| **설치 이유** | React Native에서 SVG를 렌더링하기 위한 라이브러리로, react-native-remix-icon의 의존성 패키지 |
+
 ---
 
 ### Expo 모듈
@@ -415,11 +437,11 @@
 
 - react-native-gesture-handler, react-native-reanimated, react-native-worklets
 
-### UI Components (9개)
+### UI Components (11개)
 
 - @expo/vector-icons, expo-symbols, expo-font, expo-image
 - expo-splash-screen, expo-status-bar, expo-system-ui, expo-haptics
-- react-native-calendars
+- react-native-calendars, react-native-remix-icon, react-native-svg
 
 ### Utilities (3개)
 
@@ -439,6 +461,26 @@
 | 1.0.1 | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지)                                 | 최지호 |
 | 1.0.2 | 25-12-17 | react-native-webview 제거, @react-native-kakao 패키지들 추가, 전체 패키지 목록 업데이트                       | 최지호 |
 | 1.0.3 | 25-12-17 | @react-native-kakao 패키지들 제거, expo-application, expo-build-properties, expo-crypto, expo-dev-client 제거 | 최지호 |
+| 1.0.4 | 25-12-17 | remixicon 추가                                                                                                | 최지호 |
+| 1.0.5 | 25-12-17 | react-native-remix-icon, react-native-svg 추가 (TabLayout 아이콘 구현용)                                      | 최지호 |
+| 1.0.6 | 25-12-17 | remixicon 제거 (react-native-remix-icon 사용으로 대체)                                                        | 최지호 |
+
+---
+
+## Archived (제거됨)
+
+### remixicon
+
+| 항목          | 내용                                                                                                                                                            |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**      | `remixicon` (Archived)                                                                                                                                          |
+| **버전**      | `^4.7.0`                                                                                                                                                        |
+| **설치 날짜** | 25-12-17                                                                                                                                                        |
+| **제거 날짜** | 25-12-17                                                                                                                                                        |
+| **카테고리**  | UI Components                                                                                                                                                   |
+| **설치 이유** | 오픈소스 아이콘 폰트 라이브러리로, 2,500개 이상의 벡터 아이콘을 제공하여 UI에서 일관된 아이콘 디자인 구현                                                       |
+| **제거 사유** | React Native에서 직접 사용 불가능하여 `react-native-remix-icon`으로 대체. `react-native-remix-icon`이 내부적으로 remixicon 아이콘을 사용하므로 별도 설치 불필요 |
+| **대체 수단** | `react-native-remix-icon` 사용                                                                                                                                  |
 
 ---
 
