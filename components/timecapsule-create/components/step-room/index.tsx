@@ -1,7 +1,7 @@
 /**
  * components/timecapsule-create/components/step-room/index.tsx
  * StepRoom 컴포넌트 - 타임캡슐 대기실 화면
- * 
+ *
  * 체크리스트:
  * - [✓] Props 인터페이스 정의 (role: 'host' | 'guest')
  * - [✓] 조건부 렌더링 구현 (호스트/게스트)
@@ -10,12 +10,12 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Share } from 'react-native';
-import Icon from 'react-native-remix-icon';
 import { Colors } from '@/commons/constants/colors';
-import { styles } from './styles';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, Share, Text, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
 import { UserBottomSheet } from '../write-bottomsheet';
+import { styles } from './styles';
 
 // Props 인터페이스 정의
 interface StepRoomProps {
@@ -90,8 +90,8 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
   };
 
   // 진행 상황 계산
-  const completedCount = mockParticipants.filter(p => p.status === 'completed').length;
-  const totalCount = mockParticipants.filter(p => p.name).length;
+  const completedCount = mockParticipants.filter((p) => p.status === 'completed').length;
+  const totalCount = mockParticipants.filter((p) => p.name).length;
 
   // 진행률 계산
   const progressPercentage = (completedCount / totalCount) * 100;
@@ -107,8 +107,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         style={[
           styles.participantCard,
           isActive ? styles.participantCardActive : styles.participantCardInactive,
-        ]}
-      >
+        ]}>
         <View style={styles.participantInfo}>
           {/* 아바타 */}
           <View style={[styles.avatar, isActive && styles.avatarActive]}>
@@ -116,8 +115,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
               style={[
                 styles.avatarEmoji,
                 participant.status === 'waiting' && styles.avatarEmojiDisabled,
-              ]}
-            >
+              ]}>
               {participant.emoji}
             </Text>
           </View>
@@ -131,9 +129,10 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
                   setSelectedParticipant(participant);
                   setIsBottomSheetVisible(true);
                 }
-              }}
-            >
-              <Text style={styles.participantName}>{participant.name || '초대한 친구 기다리는 중...'}</Text>
+              }}>
+              <Text style={styles.participantName}>
+                {participant.name || '초대한 친구 기다리는 중...'}
+              </Text>
               {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
             </Pressable>
             {participant.name && (
@@ -143,8 +142,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
                   participant.status === 'completed' && styles.statusCompleted,
                   participant.status === 'pending' && styles.statusPending,
                   participant.status === 'waiting' && styles.statusWaiting,
-                ]}
-              >
+                ]}>
                 {participant.status === 'completed' && '작성 완료'}
                 {participant.status === 'pending' && '클릭하여 작성하기'}
                 {participant.status === 'waiting' && '아직 작성하지 않았어요'}
@@ -156,11 +154,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         {/* 체크박스 */}
         {showCheckbox && (
           <View
-            style={[
-              styles.checkbox,
-              isActive ? styles.checkboxActive : styles.checkboxInactive,
-            ]}
-          >
+            style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
             {participant.status === 'completed' && (
               <Icon name="checkbox-circle-fill" size={20} color={Colors.success} />
             )}
@@ -177,12 +171,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
         {/* 역할 배지 */}
         <View style={[styles.roleBadge, isHost ? styles.roleBadgeHost : styles.roleBadgeGuest]}>
           {isHost && (
-            <Icon
-              name="vip-crown-2-line"
-              size={24}
-              color={Colors.black}
-              style={styles.crownIcon}
-            />
+            <Icon name="vip-crown-2-line" size={24} color={Colors.black} style={styles.crownIcon} />
           )}
           <Text style={styles.roleBadgeText}>{isHost ? 'HOST' : 'GUEST'}</Text>
         </View>
@@ -214,11 +203,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           {/* 개봉일 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon
-                name="calendar-line"
-                size={16}
-                color={Colors.textSecondary}
-              />
+              <Icon name="calendar-line" size={16} color={Colors.textSecondary} />
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>2025.06.10</Text>
@@ -227,11 +212,7 @@ export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
           {/* 참여자 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon
-                name="user-3-line"
-                size={16}
-                color={Colors.textSecondary}
-              />
+              <Icon name="user-3-line" size={16} color={Colors.textSecondary} />
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>4명</Text>

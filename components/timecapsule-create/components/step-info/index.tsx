@@ -11,8 +11,17 @@
 import { Colors } from '@/commons/constants/colors';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, Modal, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  Animated,
+  Modal,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Icon from 'react-native-remix-icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -119,6 +128,10 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
   /** 임시 선택 날짜 (달력에서 선택 중) */
   const [tempSelectedDate, setTempSelectedDate] = useState<Date | null>(null);
 
+  /** 바텀시트 애니메이션 값 */
+  const slideAnim = useRef(new Animated.Value(1000)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
   // ============================================
   // Custom Hooks
   // ============================================
@@ -142,6 +155,47 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
     storageCount,
     selectedOptions,
   );
+
+  // ============================================
+  // 바텀시트 애니메이션
+  // ============================================
+
+  useEffect(() => {
+    if (isCalendarVisible) {
+      // 열기 전에 항상 초기 위치로 리셋
+      slideAnim.setValue(1000);
+      fadeAnim.setValue(0);
+
+      // 바텀시트 열기 애니메이션
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          damping: 20,
+          stiffness: 90,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      // 바텀시트 닫기 애니메이션
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 1000,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isCalendarVisible, fadeAnim, slideAnim]);
 
   // ============================================
   // 이벤트 핸들러
@@ -286,7 +340,7 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
           <Text style={styles.sectionLabel}>{TEXTS.capsuleName.label}</Text>
           <View style={styles.inputContainer}>
             <TextInput
-              style={styles.inputPlaceholder}
+              style={styles.input}
               placeholder={TEXTS.capsuleName.placeholder}
               placeholderTextColor={Colors.textDisabled}
               value={capsuleName}
@@ -456,13 +510,27 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
       <Modal
         visible={isCalendarVisible}
         transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={handleCalendarClosePress}>
-        <TouchableOpacity
-          style={styles.calendarBottomSheetOverlay}
-          activeOpacity={1}
-          onPress={handleCalendarClosePress}>
-          <TouchableOpacity style={styles.calendarBottomSheetContainer} activeOpacity={1}>
+        <Animated.View
+          style={[
+            styles.calendarBottomSheetOverlay,
+            {
+              opacity: fadeAnim,
+            },
+          ]}>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={handleCalendarClosePress}
+          />
+          <Animated.View
+            style={[
+              styles.calendarBottomSheetContainer,
+              {
+                transform: [{ translateY: slideAnim }],
+              },
+            ]}>
             {/* 헤더 */}
             <View style={styles.calendarBottomSheetHeader}>
               <Text style={styles.calendarBottomSheetTitle}>{TEXTS.calendar.title}</Text>
@@ -499,8 +567,8 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
               disabled={!tempSelectedDate}>
               <Text style={styles.calendarConfirmButtonText}>{TEXTS.calendar.confirmButton}</Text>
             </TouchableOpacity>
-          </TouchableOpacity>
-        </TouchableOpacity>
+          </Animated.View>
+        </Animated.View>
       </Modal>
     </SafeAreaView>
   );

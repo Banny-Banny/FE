@@ -136,6 +136,13 @@ export const styles = StyleSheet.create({
     height: 56,
     justifyContent: 'center',
   },
+  input: {
+    fontFamily: 'Pretendard Variable',
+    fontWeight: '400',
+    fontSize: 16,
+    letterSpacing: -0.31,
+    color: Colors.black,
+  },
   inputPlaceholder: {
     fontFamily: 'Pretendard Variable',
     fontWeight: '400',
@@ -389,7 +396,7 @@ export const styles = StyleSheet.create({
     color: Colors.error,
   },
   submitButton: {
-    backgroundColor: Colors.gray300,
+    backgroundColor: Colors.gray900,
     borderRadius: 16,
     height: 64,
     justifyContent: 'center',
