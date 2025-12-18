@@ -56,7 +56,7 @@ export const styles = StyleSheet.create({
   handle: {
     width: 48,
     height: 4,
-    backgroundColor: Colors.white[200],
+    backgroundColor: Colors.grey[300], // 더 진한 회색으로 변경하여 가시성 향상
     borderRadius: 9999,
   },
 
