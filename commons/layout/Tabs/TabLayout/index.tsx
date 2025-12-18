@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import Icon, { IconName } from 'react-native-remix-icon';
 
 import { TABS_SCREEN_OPTIONS } from './styles';
 
@@ -11,14 +11,20 @@ const TAB_SCREENS = [
   {
     name: 'alarm',
     title: '소식',
+    iconName: 'ri-notification-line',
+    iconNameFilled: 'ri-notification-fill',
   },
   {
     name: 'index',
     title: '홈',
+    iconName: 'ri-home-line',
+    iconNameFilled: 'ri-home-fill',
   },
   {
     name: 'mypage',
     title: '마이',
+    iconName: 'ri-user-line',
+    iconNameFilled: 'ri-user-fill',
   },
 ] as const;
 
@@ -30,6 +36,8 @@ const HIDDEN_SCREENS = ['timecapsule/create', 'timecapsule/index'] as const;
 export interface TabScreenItem {
   name: string;
   title: string;
+  iconName: string;
+  iconNameFilled: string;
 }
 
 /**
@@ -46,8 +54,12 @@ export function TabsLayoutConfig() {
           name={screen.name}
           options={{
             title: screen.title,
-            tabBarIcon: ({ color, size }) => (
-              <View style={{ width: size, height: size, backgroundColor: color }} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Icon
+                name={focused ? (screen.iconNameFilled as IconName) : (screen.iconName as IconName)}
+                size={size}
+                color={color}
+              />
             ),
           }}
         />
