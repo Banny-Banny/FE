@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   // 메인 컨테이너
   container: {
     flex: 1,
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.backgroundSecondary,
     paddingHorizontal: Spacing.lg,
   },
 
@@ -49,10 +49,10 @@ export const styles = StyleSheet.create({
   },
 
   roleBadgeText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: -0.15,
   },
 
@@ -84,10 +84,10 @@ export const styles = StyleSheet.create({
 
   // 타이틀
   title: {
-    fontSize: FontSize['2xl'],
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size['2xl'],
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     marginTop: 24,
     letterSpacing: 0.07,
   },
@@ -96,25 +96,25 @@ export const styles = StyleSheet.create({
   infoCard: {
     marginTop: 24,
     padding: 25,
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
-    borderColor: Colors.white[200],
+    borderColor: Colors.border,
     borderRadius: 16,
     gap: Spacing.md,
   },
 
   infoCardLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.xs,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textSecondary,
   },
 
   infoCardValue: {
-    fontSize: FontSize['3xl'],
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size['3xl'],
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: 0.4,
   },
 
@@ -135,18 +135,18 @@ export const styles = StyleSheet.create({
   },
 
   infoCardDetailLabel: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.xs,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textSecondary,
     marginBottom: 4,
   },
 
   infoCardDetailValue: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: -0.15,
   },
 
@@ -163,24 +163,24 @@ export const styles = StyleSheet.create({
   },
 
   progressLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: -0.15,
   },
 
   progressValue: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: -0.15,
   },
 
   progressBarContainer: {
     height: 8,
-    backgroundColor: Colors.white[200],
+    backgroundColor: Colors.gray300,
     borderWidth: 1,
     borderColor: Colors.black.darker,
     borderRadius: 9999,
@@ -200,10 +200,10 @@ export const styles = StyleSheet.create({
   },
 
   participantLabel: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textSecondary,
     letterSpacing: -0.15,
   },
 
@@ -218,7 +218,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 84,
     paddingHorizontal: 18,
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.backgroundSecondary,
     borderWidth: 1,
     borderRadius: 16,
   },
@@ -233,7 +233,7 @@ export const styles = StyleSheet.create({
   },
 
   participantCardInactive: {
-    borderColor: Colors.white[200],
+    borderColor: Colors.border,
   },
 
   participantInfo: {
@@ -247,8 +247,8 @@ export const styles = StyleSheet.create({
     height: 48,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: Colors.white[200],
-    backgroundColor: Colors.white[100],
+    borderColor: Colors.border,
+    backgroundColor: Colors.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -269,30 +269,35 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
 
+  participantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
   participantName: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black.darker,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.base,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.black,
     letterSpacing: -0.61,
   },
 
   participantStatus: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.xs,
+    fontWeight: Fonts.weight.bold,
   },
 
   statusCompleted: {
-    color: Colors.black[500],
+    color: Colors.textDisabled,
   },
 
   statusPending: {
-    color: Colors.blue[500],
+    color: Colors.success,
   },
 
   statusWaiting: {
-    color: Colors.black[500],
+    color: Colors.textDisabled,
   },
 
   // 체크박스
@@ -304,11 +309,11 @@ export const styles = StyleSheet.create({
   },
 
   checkboxActive: {
-    borderColor: Colors.black[500],
+    borderColor: Colors.gray400,
   },
 
   checkboxInactive: {
-    borderColor: Colors.white[200],
+    borderColor: Colors.border,
   },
 
   checkboxChecked: {
@@ -323,10 +328,10 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.xs,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textDisabled,
     textAlign: 'center',
   },
 
@@ -343,10 +348,10 @@ export const styles = StyleSheet.create({
   },
 
   deadlineText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textSecondary,
     letterSpacing: -0.15,
   },
 
@@ -364,7 +369,7 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonDisabled: {
-    backgroundColor: Colors.black[500],
+    backgroundColor: Colors.gray400,
   },
 
   submitButtonEnabled: {
@@ -372,18 +377,18 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.white[50],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.lg,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.white,
     letterSpacing: -0.44,
   },
 
   buttonHint: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.black[500],
+    fontFamily: 'Pretendard Variable',
+    fontSize: Fonts.size.xs,
+    fontWeight: Fonts.weight.bold,
+    color: Colors.textSecondary,
     textAlign: 'center',
   },
 

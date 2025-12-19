@@ -1,0 +1,300 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/write-bottomsheet/index.tsx
+조건-파일경로) 스타일 파일은 수정하지 않음: components/timecapsule-create/components/write-bottomsheet/styles.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/write-bottomsheet/hooks/useMediaPicker.ts
+조건-파일경로) 구현될 TYPE 파일경로: components/timecapsule-create/components/write-bottomsheet/types.ts
+
+==============================================
+
+조건-패키지) expo-image-picker 라이브러리를 설치하여 사용할 것
+조건-패키지) 이미 설치되어 있으면 재설치 불필요
+조건-패키지) 다른 미디어 관련 라이브러리 추가 설치 금지 (expo-image-picker만 사용)
+
+==============================================
+
+조건-호환성) 기존 UI/UX 100% 유지 (디자인, 스타일, 애니메이션 모두 동일하게)
+조건-호환성) UserBottomSheetProps 인터페이스 변경 금지 (isVisible, onClose, participant)
+조건-호환성) react-hook-form 기반 폼 관리 유지
+조건-호환성) 기존 폼 데이터 타입 (UserContentFormData) 유지
+조건-호환성) BottomSheet 공통 컴포넌트는 그대로 사용
+조건-호환성) footer 렌더링 방식 그대로 유지
+
+==============================================
+
+조건-타입정의) 미디어 파일 타입 정의:
+interface MediaFile {
+  uri: string;
+  type: 'image' | 'video' | 'audio';
+  name: string;
+  size?: number;
+}
+
+조건-타입정의) useMediaPicker Hook 반환 타입:
+interface UseMediaPickerReturn {
+  pickImage: () => Promise<void>;
+  pickVideo: () => Promise<void>;
+  pickAudio: () => Promise<void>;
+  isPicking: boolean;
+  error: string | null;
+}
+
+==============================================
+
+핵심요구사항) 사진 추가 기능 구현
+            1) 유저시나리오
+                1. "사진 추가" 버튼 클릭
+                2. 이미지 피커 열기 (갤러리 또는 카메라 선택)
+                3. 이미지 선택 (최대 5개까지)
+                4. 선택한 이미지 미리보기 표시
+                5. 이미지 URI를 photos 배열에 추가
+                6. 5개 도달 시 추가 버튼 비활성화 또는 알림 표시
+
+            2) 기술 요구사항
+                - expo-image-picker의 launchImageLibraryAsync 사용
+                - allowsMultipleSelection: true (다중 선택 가능)
+                - mediaTypes: ImagePicker.MediaTypeOptions.Images
+                - quality: 0.8 (압축 품질)
+                - allowsEditing: false (편집 기능 없음)
+                - 최대 5개 제한 체크 (현재 개수 + 선택 개수)
+                - 선택 실패 시 에러 처리 (Alert 또는 Toast)
+
+            3) 파일 저장
+                - 선택한 이미지 URI를 react-hook-form의 photos 배열에 추가
+                - setValue('photos', [...currentPhotos, ...newPhotos]) 사용
+                - watch('photos')로 현재 개수 확인
+
+==============================================
+
+핵심요구사항) 동영상 추가 기능 구현
+            1) 유저시나리오
+                1. "동영상 추가" 버튼 클릭
+                2. 비디오 피커 열기 (갤러리에서 선택)
+                3. 동영상 1개 선택
+                4. 선택한 동영상 미리보기 표시 (썸네일 또는 아이콘)
+                5. 동영상 URI를 video 필드에 저장
+                6. 이미 동영상이 있으면 교체 또는 알림 표시
+
+            2) 기술 요구사항
+                - expo-image-picker의 launchImageLibraryAsync 사용
+                - mediaTypes: ImagePicker.MediaTypeOptions.Videos
+                - allowsMultipleSelection: false (단일 선택)
+                - quality: 1.0 (최고 품질)
+                - allowsEditing: false
+                - 최대 1개 제한
+                - 기존 동영상이 있으면 교체 확인 (Alert)
+
+            3) 파일 저장
+                - 선택한 동영상 URI를 react-hook-form의 video 필드에 저장
+                - setValue('video', videoUri) 사용
+                - watch('video')로 현재 상태 확인
+
+==============================================
+
+핵심요구사항) 음악 추가 기능 구현
+            1) 유저시나리오
+                1. "음악 추가" 버튼 클릭
+                2. 파일 피커 열기 (오디오 파일 선택)
+                3. 오디오 파일 1개 선택 (mp3, m4a 등)
+                4. 선택한 음악 파일 정보 표시 (파일명)
+                5. 음악 파일 URI를 music 필드에 저장
+                6. 이미 음악이 있으면 교체 또는 알림 표시
+
+            2) 기술 요구사항
+                - expo-image-picker의 launchImageLibraryAsync 사용
+                - mediaTypes: ImagePicker.MediaTypeOptions.All (오디오 파일도 포함)
+                - 또는 expo-document-picker 사용 고려 (오디오 전용)
+                - allowsMultipleSelection: false
+                - 최대 1개 제한
+                - 파일 확장자 검증 (mp3, m4a, wav 등)
+                - 기존 음악이 있으면 교체 확인 (Alert)
+
+            3) 파일 저장
+                - 선택한 음악 URI를 react-hook-form의 music 필드에 저장
+                - setValue('music', audioUri) 사용
+                - watch('music')로 현재 상태 확인
+
+==============================================
+
+추가요구사항) 권한 처리
+            1) 이미지/비디오 선택 시 권한 요청
+                - expo-image-picker는 자동으로 권한 처리
+                - 권한 거부 시 사용자에게 안내 메시지 표시
+                - Alert로 권한 설정 안내
+
+            2) 에러 처리
+                - 파일 선택 취소 시 에러 없이 처리
+                - 파일 크기 제한 초과 시 알림
+                - 지원하지 않는 파일 형식 시 알림
+
+==============================================
+
+추가요구사항) 미리보기 기능
+            1) 사진 미리보기
+                - 선택한 이미지 실제 미리보기 표시
+                - Image 컴포넌트의 source={{ uri: photoUri }} 사용
+                - 로딩 상태 표시 (선택사항)
+
+            2) 동영상 미리보기
+                - 동영상 썸네일 또는 비디오 아이콘 표시
+                - 파일명 표시
+                - 재생 버튼 (선택사항)
+
+            3) 음악 미리보기
+                - 음악 아이콘 표시
+                - 파일명 표시
+                - 재생 버튼 (선택사항)
+
+==============================================
+
+구현 가이드라인
+
+1. Types 파일 생성
+   - 파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+   - MediaFile 타입 정의
+   - UseMediaPickerReturn 타입 정의
+
+2. useMediaPicker Hook 구현
+   - 파일: components/timecapsule-create/components/write-bottomsheet/hooks/useMediaPicker.ts
+   - expo-image-picker import
+   - 이미지 선택 함수 (pickImage)
+   - 비디오 선택 함수 (pickVideo)
+   - 오디오 선택 함수 (pickAudio)
+   - 로딩 상태 관리 (isPicking)
+   - 에러 상태 관리 (error)
+   - 반환값:
+     - pickImage: () => Promise<void>
+     - pickVideo: () => Promise<void>
+     - pickAudio: () => Promise<void>
+     - isPicking: boolean
+     - error: string | null
+
+3. index.tsx 수정
+   - useMediaPicker Hook import 및 사용
+   - 사진 추가 버튼에 pickImage 연결
+   - 동영상 추가 버튼에 pickVideo 연결
+   - 음악 추가 버튼에 pickAudio 연결
+   - 미리보기 이미지 실제 URI 표시
+   - 에러 발생 시 Alert 표시
+   - 로딩 상태 표시 (선택사항)
+
+4. 사진 미리보기 개선
+   - 더미 이미지 대신 실제 선택한 이미지 표시
+   - Image 컴포넌트의 source prop에 실제 URI 사용
+   - 이미지 로딩 실패 시 플레이스홀더 표시
+
+5. 동영상/음악 표시
+   - 동영상이 선택되면 파일명 또는 썸네일 표시
+   - 음악이 선택되면 파일명 표시
+   - 삭제 버튼 추가 (선택사항)
+
+==============================================
+
+구현 순서
+
+1. expo-image-picker 패키지 설치 확인 및 설치 (필요시)
+2. Types 파일 작성 (MediaFile, UseMediaPickerReturn)
+3. useMediaPicker Hook 구현
+   - pickImage 함수 구현
+   - pickVideo 함수 구현
+   - pickAudio 함수 구현
+   - 상태 관리 (isPicking, error)
+4. index.tsx에 Hook 연결
+   - useMediaPicker import
+   - 사진 추가 버튼 핸들러 연결
+   - 동영상 추가 버튼 핸들러 연결
+   - 음악 추가 버튼 핸들러 연결
+5. 미리보기 기능 개선
+   - 사진 실제 이미지 표시
+   - 동영상/음악 파일명 표시
+6. 에러 처리 추가
+   - 권한 거부 처리
+   - 파일 크기 제한 처리
+   - 파일 형식 검증
+7. 테스트 및 디버깅
+8. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 UI 구조 유지
+   - index.tsx의 기본 구조는 최대한 유지
+   - styles.ts는 수정하지 않음
+   - 새로운 파일(hooks, types)로 로직 분리
+
+2. react-hook-form 통합
+   - 모든 미디어 파일은 react-hook-form으로 관리
+   - setValue, watch 사용
+   - 기존 폼 검증 로직 유지
+
+3. 사용자 경험
+   - 파일 선택 시 즉각적인 피드백
+   - 명확한 에러 메시지
+   - 로딩 상태 표시 (선택사항)
+   - 파일 크기/형식 제한 안내
+
+4. 코드 품질
+   - TypeScript 타입 안정성
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+   - 에러 처리 완벽 구현
+
+5. 성능 최적화
+   - 이미지 압축 품질 조절
+   - 대용량 파일 처리 고려
+   - 메모리 관리 (선택사항)
+
+6. 플랫폼 호환성
+   - iOS/Android 모두 지원
+   - 권한 처리 플랫폼별 대응
+   - 파일 형식 호환성 확인
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] expo-image-picker 설치 확인됨
+- [ ] MediaFile 타입 정의됨
+- [ ] UseMediaPickerReturn 타입 정의됨
+- [ ] useMediaPicker Hook 구현됨
+- [ ] pickImage 함수 정상 작동
+- [ ] pickVideo 함수 정상 작동
+- [ ] pickAudio 함수 정상 작동
+- [ ] 사진 추가 버튼 클릭 시 이미지 피커 열림
+- [ ] 이미지 다중 선택 가능 (최대 5개)
+- [ ] 선택한 이미지가 photos 배열에 추가됨
+- [ ] 이미지 미리보기 실제 이미지 표시됨
+- [ ] 5개 도달 시 추가 제한 작동
+- [ ] 동영상 추가 버튼 클릭 시 비디오 피커 열림
+- [ ] 동영상 단일 선택 가능 (최대 1개)
+- [ ] 선택한 동영상이 video 필드에 저장됨
+- [ ] 동영상 파일명 또는 썸네일 표시됨
+- [ ] 기존 동영상 교체 확인 작동
+- [ ] 음악 추가 버튼 클릭 시 파일 피커 열림
+- [ ] 음악 단일 선택 가능 (최대 1개)
+- [ ] 선택한 음악이 music 필드에 저장됨
+- [ ] 음악 파일명 표시됨
+- [ ] 기존 음악 교체 확인 작동
+- [ ] 권한 거부 시 안내 메시지 표시됨
+- [ ] 파일 선택 취소 시 에러 없이 처리됨
+- [ ] 파일 크기 제한 초과 시 알림 표시됨
+- [ ] 지원하지 않는 파일 형식 시 알림 표시됨
+- [ ] react-hook-form과 정상 통합됨
+- [ ] 기존 UI/스타일 100% 유지됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] ESLint 경고 0건
+- [ ] iOS에서 정상 작동
+- [ ] Android에서 정상 작동
+
+==============================================
+
