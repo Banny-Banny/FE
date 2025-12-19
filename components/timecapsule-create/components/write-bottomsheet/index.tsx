@@ -12,10 +12,11 @@
  * - [ ] 인라인 스타일 금지
  */
 
-import React from 'react';
-import { View, Text, TextInput, Pressable, Image, Alert } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
 import { BottomSheet } from '@/commons/components/bottom-sheet';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { useMediaPicker } from './hooks';
 import { styles } from './styles';
 
 // Participant 타입 정의
@@ -43,11 +44,7 @@ interface UserContentFormData {
   video: string | null;
 }
 
-export default function UserBottomSheet({
-  isVisible,
-  onClose,
-  participant,
-}: UserBottomSheetProps) {
+export default function UserBottomSheet({ isVisible, onClose, participant }: UserBottomSheetProps) {
   // react-hook-form 설정
   const {
     control,
@@ -59,26 +56,67 @@ export default function UserBottomSheet({
     mode: 'onChange',
     defaultValues: {
       textContent: '',
-      // 테스트용: 더미 사진 5개 추가 (그리드 테스트)
-      photos: ['dummy1.jpg', 'dummy2.jpg', 'dummy3.jpg', 'dummy4.jpg', 'dummy5.jpg'],
+      photos: [],
       music: null,
       video: null,
     },
   });
 
+  // 현재 폼 상태 감시
+  const currentPhotos = watch('photos');
+  const currentVideo = watch('video');
+  const currentMusic = watch('music');
+
+  // useMediaPicker Hook 사용
+  const { pickImage, pickVideo, pickAudio, isPickingImage, isPickingVideo, isPickingAudio, error } =
+    useMediaPicker(
+      // 이미지 선택 완료 콜백
+      (uris: string[]) => {
+        setValue('photos', [...currentPhotos, ...uris], { shouldDirty: true });
+      },
+      // 비디오 선택 완료 콜백
+      (uri: string) => {
+        setValue('video', uri, { shouldDirty: true });
+      },
+      // 오디오 선택 완료 콜백
+      (uri: string) => {
+        setValue('music', uri, { shouldDirty: true });
+      },
+      currentPhotos.length,
+      !!currentVideo,
+      !!currentMusic,
+    );
+
   // 사진 삭제 핸들러
   const handleDeletePhoto = (index: number) => {
     const currentPhotos = watch('photos');
-    setValue('photos', currentPhotos.filter((_, i) => i !== index));
+    setValue(
+      'photos',
+      currentPhotos.filter((_, i) => i !== index),
+    );
   };
 
   // 사진 추가 핸들러
-  const handleAddPhoto = (photoUri: string) => {
-    const currentPhotos = watch('photos');
-    if (currentPhotos.length < 5) {
-      setValue('photos', [...currentPhotos, photoUri]);
-    }
+  const handleAddPhoto = () => {
+    pickImage();
   };
+
+  // 동영상 추가 핸들러
+  const handleAddVideo = () => {
+    pickVideo();
+  };
+
+  // 음악 추가 핸들러
+  const handleAddMusic = () => {
+    pickAudio();
+  };
+
+  // 에러 발생 시 알림 표시
+  React.useEffect(() => {
+    if (error) {
+      Alert.alert('오류', error);
+    }
+  }, [error]);
 
   // 폼 제출 핸들러
   const onFormSubmit = (data: UserContentFormData) => {
@@ -166,12 +204,15 @@ export default function UserBottomSheet({
             />
             <Text style={styles.sectionTitle}>사진 ({watch('photos').length}/5)</Text>
           </View>
-          <Pressable style={styles.addButton} onPress={() => {}}>
+          <Pressable
+            style={styles.addButton}
+            onPress={handleAddPhoto}
+            disabled={isPickingImage || currentPhotos.length >= 5}>
             <Image
               source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
               style={styles.addButtonIcon}
             />
-            <Text style={styles.addButtonText}>사진 추가</Text>
+            <Text style={styles.addButtonText}>{isPickingImage ? '선택 중...' : '사진 추가'}</Text>
           </Pressable>
 
           {/* 추가된 사진 미리보기 - 그리드 배치 (3 + 2) */}
@@ -189,20 +230,20 @@ export default function UserBottomSheet({
                       <View key={index} style={styles.photoPreviewItem}>
                         <View style={styles.photoPreview}>
                           <Image
-                            source={{ uri: 'http://localhost:3845/assets/image-placeholder.svg' }}
-                            style={styles.photoPreviewImage}
+                            source={{ uri: photo }}
+                            style={[styles.photoPreviewImage, { width: '100%', height: '100%' }]}
+                            resizeMode="cover"
                           />
                         </View>
                         <View style={styles.photoPreviewLabel}>
                           <Text style={styles.photoPreviewText} numberOfLines={1}>
-                            {photo}
+                            사진 {index + 1}
                           </Text>
                         </View>
                         {/* 삭제 버튼 */}
                         <Pressable
                           style={styles.deleteButton}
-                          onPress={() => handleDeletePhoto(index)}
-                        >
+                          onPress={() => handleDeletePhoto(index)}>
                           <Text style={styles.deleteButtonText}>×</Text>
                         </Pressable>
                       </View>
@@ -221,15 +262,37 @@ export default function UserBottomSheet({
               source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>음악 ({watch('music') ? 1 : 0}/1)</Text>
+            <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
           </View>
-          <Pressable style={styles.addButton} onPress={() => {}}>
+          <Pressable style={styles.addButton} onPress={handleAddMusic} disabled={isPickingAudio}>
             <Image
               source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
               style={styles.addButtonIcon}
             />
-            <Text style={styles.addButtonText}>음악 추가</Text>
+            <Text style={styles.addButtonText}>
+              {isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
+            </Text>
           </Pressable>
+
+          {/* 선택된 음악 표시 */}
+          {currentMusic && (
+            <View style={styles.mediaFileContainer}>
+              <View style={styles.mediaFileInfo}>
+                <Image
+                  source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
+                  style={styles.mediaFileIcon}
+                />
+                <Text style={styles.mediaFileName} numberOfLines={1}>
+                  {currentMusic.split('/').pop() || '음악 파일'}
+                </Text>
+              </View>
+              <Pressable
+                style={styles.mediaDeleteButton}
+                onPress={() => setValue('music', null, { shouldDirty: true })}>
+                <Text style={styles.deleteButtonText}>×</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
 
         {/* 동영상 섹션 */}
@@ -239,17 +302,39 @@ export default function UserBottomSheet({
               source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>동영상 ({watch('video') ? 1 : 0}/1)</Text>
+            <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
           </View>
-          <Pressable style={styles.addButton} onPress={() => {}}>
+          <Pressable style={styles.addButton} onPress={handleAddVideo} disabled={isPickingVideo}>
             <Image
               source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
               style={styles.addButtonIcon}
             />
-            <Text style={styles.addButtonText}>동영상 추가</Text>
+            <Text style={styles.addButtonText}>
+              {isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
+            </Text>
           </Pressable>
+
+          {/* 선택된 동영상 표시 */}
+          {currentVideo && (
+            <View style={styles.mediaFileContainer}>
+              <View style={styles.mediaFileInfo}>
+                <Image
+                  source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
+                  style={styles.mediaFileIcon}
+                />
+                <Text style={styles.mediaFileName} numberOfLines={1}>
+                  {currentVideo.split('/').pop() || '동영상 파일'}
+                </Text>
+              </View>
+              <Pressable
+                style={styles.mediaDeleteButton}
+                onPress={() => setValue('video', null, { shouldDirty: true })}>
+                <Text style={styles.deleteButtonText}>×</Text>
+              </Pressable>
+            </View>
+          )}
         </View>
       </View>
     </BottomSheet>
   );
-};
+}

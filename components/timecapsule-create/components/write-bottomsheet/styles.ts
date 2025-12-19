@@ -231,4 +231,45 @@ export const styles = StyleSheet.create({
     color: '#FAFAFA',
     lineHeight: 18,
   },
+
+  // 미디어 파일 표시 (음악, 동영상)
+  mediaFileContainer: {
+    marginTop: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FAFAFA',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: Spacing.md,
+  },
+
+  mediaFileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+
+  mediaFileIcon: {
+    width: 24,
+    height: 24,
+  },
+
+  mediaFileName: {
+    fontSize: Fonts.size.sm,
+    fontWeight: Fonts.weight.regular,
+    color: '#0A0A0A',
+    flex: 1,
+  },
+
+  mediaDeleteButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
