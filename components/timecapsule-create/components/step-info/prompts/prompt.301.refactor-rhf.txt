@@ -1,0 +1,255 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/03-ui.mdc
+
+==============================================
+
+조건-패키지) react-hook-form 버전 7.68.0을 설치하여 사용할 것
+조건-패키지) 설치 명령어: npm install react-hook-form@^7.68.0
+조건-패키지) 다른 폼 관련 라이브러리 추가 설치 금지
+
+==============================================
+
+조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/step-info/index.tsx
+조건-파일경로) 스타일 파일은 수정하지 않음: components/timecapsule-create/components/step-info/styles.ts
+조건-파일경로) Custom Hooks 파일은 수정하지 않음: components/timecapsule-create/components/step-info/hooks/*
+
+==============================================
+
+조건-호환성) 기존 UI/UX 100% 유지 (디자인, 스타일, 애니메이션 모두 동일하게)
+조건-호환성) StepInfoProps 인터페이스 변경 금지 (onSubmit, onBack, initialData)
+조건-호환성) onSubmit으로 전달하는 데이터 구조 변경 금지
+조건-호환성) 기존 Custom Hooks 그대로 사용 (useDateSelection, usePriceCalculation)
+조건-호환성) 기존 상수 모두 유지 (TEXTS, ICONS, MAX_CAPSULE_NAME_LENGTH 등)
+조건-호환성) 달력 바텀시트 애니메이션 로직 그대로 유지
+조건-호환성) Accessibility 속성 모두 유지
+
+==============================================
+
+조건-타입정의) 폼 데이터 타입 정의:
+interface StepInfoFormData {
+  capsuleName: string;
+  selectedDateOptionIndex: number;
+  selectedDate: Date | null;
+  personnelCount: number;
+  storageCount: number;
+  selectedOptions: {
+    music: boolean;
+    video: boolean;
+  };
+}
+
+==============================================
+
+조건-useForm설정) mode: 'onChange' 사용하여 실시간 유효성 검사
+조건-useForm설정) defaultValues는 initialData에서 가져오기
+조건-useForm설정) formState의 isValid를 활용하여 버튼 활성화 제어
+
+조건-useForm설정) defaultValues 예시:
+const { control, handleSubmit, watch, setValue, formState: { errors, isValid } } = useForm<StepInfoFormData>({
+  mode: 'onChange',
+  defaultValues: {
+    capsuleName: initialData?.capsuleName || '',
+    selectedDateOptionIndex: initialData?.selectedDateOptionIndex || 0,
+    selectedDate: initialData?.selectedDate || null,
+    personnelCount: initialData?.personnelCount || 2,
+    storageCount: initialData?.storageCount || 3,
+    selectedOptions: {
+      music: initialData?.selectedOptions?.music || false,
+      video: initialData?.selectedOptions?.video || false,
+    },
+  },
+});
+
+==============================================
+
+조건-유효성검사-capsuleName) 필수 입력 체크
+조건-유효성검사-capsuleName) 최대 글자수 MAX_CAPSULE_NAME_LENGTH
+조건-유효성검사-capsuleName) 공백만 입력된 경우 에러 처리
+조건-유효성검사-capsuleName) Controller 사용:
+<Controller
+  control={control}
+  name="capsuleName"
+  rules={{
+    required: true,
+    maxLength: MAX_CAPSULE_NAME_LENGTH,
+    validate: (value) => value.trim().length > 0,
+  }}
+  render={({ field: { onChange, value } }) => (
+    <TextInput value={value} onChangeText={onChange} {...기존props} />
+  )}
+/>
+
+==============================================
+
+조건-유효성검사-selectedDate) 조건부 필수 입력 체크
+조건-유효성검사-selectedDate) selectedDateOptionIndex가 3(직접 선택)일 때만 필수
+조건-유효성검사-selectedDate) validate 함수 사용:
+rules={{
+  validate: (value) => {
+    const selectedOptionIndex = watch('selectedDateOptionIndex');
+    if (selectedOptionIndex === 3 && !value) {
+      return false;
+    }
+    return true;
+  },
+}}
+
+==============================================
+
+조건-유효성검사-personnelCount) 최소값 MIN_PERSONNEL (2)
+조건-유효성검사-personnelCount) 최대값 MAX_PERSONNEL (10)
+조건-유효성검사-personnelCount) rules: { min: MIN_PERSONNEL, max: MAX_PERSONNEL }
+
+조건-유효성검사-storageCount) 최소값 MIN_STORAGE (3)
+조건-유효성검사-storageCount) 최대값 MAX_STORAGE (5)
+조건-유효성검사-storageCount) rules: { min: MIN_STORAGE, max: MAX_STORAGE }
+
+==============================================
+
+조건-CustomHooks통합) useDateSelection Hook은 그대로 사용
+조건-CustomHooks통합) usePriceCalculation Hook은 그대로 사용
+조건-CustomHooks통합) watch()를 사용하여 폼 값을 Hook에 전달
+조건-CustomHooks통합) Hook에서 반환된 함수들과 setValue를 함께 사용
+
+조건-CustomHooks통합) 예시:
+const formValues = watch();
+const { handleDateSelect, ... } = useDateSelection(initialData);
+
+// 날짜 선택 시
+const handleDateSelectWrapper = (date: Date) => {
+  setValue('selectedDate', date);
+  handleDateSelect(date); // Custom Hook 함수 호출
+};
+
+==============================================
+
+조건-핸들러마이그레이션) handleCapsuleNameChange → Controller의 onChange 사용
+조건-핸들러마이그레이션) handlePersonnelChange → setValue 사용
+조건-핸들러마이그레이션) handleStorageChange → setValue 사용
+조건-핸들러마이그레이션) handleOptionToggle → setValue 사용
+
+조건-핸들러마이그레이션) 옵션 토글 예시:
+const handleOptionToggle = (optionId: 'music' | 'video') => {
+  const currentOptions = watch('selectedOptions');
+  setValue('selectedOptions', {
+    ...currentOptions,
+    [optionId]: !currentOptions[optionId],
+  });
+};
+
+==============================================
+
+조건-Submit처리) handleSubmit으로 폼 제출 처리
+조건-Submit처리) 기존 onSubmit 함수에 전달하는 데이터 구조 그대로 유지
+조건-Submit처리) totalPrice는 usePriceCalculation에서 가져와서 추가
+
+조건-Submit처리) 예시:
+const onFormSubmit = (data: StepInfoFormData) => {
+  if (onSubmit) {
+    onSubmit({
+      ...data,
+      totalPrice,
+    });
+  }
+};
+
+<TouchableOpacity
+  onPress={handleSubmit(onFormSubmit)}
+  disabled={!isValid}
+/>
+
+==============================================
+
+조건-버튼활성화) formState.isValid를 사용하여 버튼 활성화 제어
+조건-버튼활성화) 기존 isFormValid useMemo 제거
+조건-버튼활성화) 스타일은 그대로 사용 (submitButton, submitButtonDisabled)
+
+==============================================
+
+조건-State제거) useState로 관리하던 아래 state 모두 제거:
+- capsuleName
+- personnelCount
+- storageCount
+- selectedOptions
+- tempSelectedDate (이건 유지)
+
+조건-State제거) 제거한 state는 모두 useForm의 control로 대체
+조건-State제거) watch()를 사용하여 값 읽기
+
+==============================================
+
+조건-코드품질) console.log 디버깅 코드는 필요시 제거
+조건-코드품질) 기존 주석은 모두 유지
+조건-코드품질) TypeScript strict mode 준수
+조건-코드품질) ESLint 경고 0건
+
+==============================================
+
+핵심요구사항) useState 기반 폼 관리를 react-hook-form으로 완전 마이그레이션
+핵심요구사항) 기존 UI/UX/기능 100% 동일하게 유지
+핵심요구사항) 기존 Custom Hooks와 완벽히 통합
+핵심요구사항) 타입 안전성 보장
+
+==============================================
+
+사전분석단계)
+1. 현재 components/timecapsule-create/components/step-info/index.tsx 파일 분석
+2. 현재 사용 중인 useState 목록 확인
+3. Custom Hooks (useDateSelection, usePriceCalculation) 인터페이스 확인
+4. 기존 유효성 검사 로직 (isFormValid) 분석
+5. onSubmit으로 전달하는 데이터 구조 확인
+
+==============================================
+
+구현단계)
+1. react-hook-form import (useForm, Controller)
+2. StepInfoFormData 타입 정의
+3. useForm 설정 (mode, defaultValues)
+4. useState → Controller로 마이그레이션 (capsuleName, personnelCount, storageCount, selectedOptions)
+5. 각 필드별 유효성 검사 rules 추가
+6. 기존 핸들러를 setValue 기반으로 재작성
+7. Custom Hooks와 watch() 통합
+8. handleSubmit 연결
+9. isFormValid → formState.isValid로 변경
+10. 기존 기능 테스트 (캘린더, 옵션 토글, 인원/슬롯 증감 등)
+
+==============================================
+
+최종검토) 아래 체크리스트를 모두 통과해야 완료
+- [ ] react-hook-form@^7.68.0 설치됨
+- [ ] StepInfoFormData 타입 정의됨
+- [ ] useForm 설정 완료 (mode: 'onChange', defaultValues)
+- [ ] capsuleName 필드 Controller로 변환됨
+- [ ] capsuleName 유효성 검사 추가됨 (required, maxLength, validate)
+- [ ] personnelCount 필드 Controller로 변환됨
+- [ ] personnelCount 유효성 검사 추가됨 (min, max)
+- [ ] storageCount 필드 Controller로 변환됨
+- [ ] storageCount 유효성 검사 추가됨 (min, max)
+- [ ] selectedOptions 필드 Controller로 변환됨
+- [ ] selectedDate 조건부 유효성 검사 추가됨
+- [ ] handleOptionToggle setValue로 재작성됨
+- [ ] handlePersonnelChange setValue로 재작성됨
+- [ ] handleStorageChange setValue로 재작성됨
+- [ ] useDateSelection Hook 통합됨 (watch 사용)
+- [ ] usePriceCalculation Hook 통합됨 (watch 사용)
+- [ ] handleSubmit 연결됨
+- [ ] onSubmit 데이터 구조 유지됨
+- [ ] formState.isValid로 버튼 활성화 제어됨
+- [ ] 기존 useState 제거됨 (capsuleName, personnelCount, storageCount, selectedOptions)
+- [ ] 기존 isFormValid useMemo 제거됨
+- [ ] 기존 UI/스타일 100% 동일
+- [ ] 달력 바텀시트 정상 작동
+- [ ] 옵션 토글 정상 작동
+- [ ] 인원/슬롯 증감 정상 작동
+- [ ] initialData 복원 기능 정상 작동
+- [ ] Accessibility 속성 유지됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] ESLint 경고 0건
+
+==============================================

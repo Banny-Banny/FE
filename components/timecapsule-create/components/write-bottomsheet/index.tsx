@@ -6,13 +6,15 @@
  * - [✓] Props 인터페이스 정의 (isVisible, onClose, participant)
  * - [✓] Participant 타입 정의
  * - [✓] BottomSheet 공통 컴포넌트 사용
+ * - [✓] react-hook-form으로 폼 관리
  * - [ ] Figma 디자인과 동일하게 구현
  * - [ ] 색상/타이포그래피 토큰만 사용
  * - [ ] 인라인 스타일 금지
  */
 
-import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, Image } from 'react-native';
+import React from 'react';
+import { View, Text, TextInput, Pressable, Image, Alert } from 'react-native';
+import { useForm, Controller } from 'react-hook-form';
 import { BottomSheet } from '@/commons/components/bottom-sheet';
 import { styles } from './styles';
 
@@ -33,34 +35,71 @@ interface UserBottomSheetProps {
   participant: Participant;
 }
 
+// 폼 데이터 타입 정의
+interface UserContentFormData {
+  textContent: string;
+  photos: string[];
+  music: string | null;
+  video: string | null;
+}
+
 export default function UserBottomSheet({
   isVisible,
   onClose,
   participant,
 }: UserBottomSheetProps) {
-  const [textContent, setTextContent] = useState('');
-  // 테스트용: 더미 사진 5개 추가 (그리드 테스트)
-  const [photos, setPhotos] = useState<string[]>([
-    'dummy1.jpg',
-    'dummy2.jpg',
-    'dummy3.jpg',
-    'dummy4.jpg',
-    'dummy5.jpg',
-  ]);
-  const [music, setMusic] = useState<string | null>(null);
-  const [video, setVideo] = useState<string | null>(null);
+  // react-hook-form 설정
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { isDirty },
+  } = useForm<UserContentFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      textContent: '',
+      // 테스트용: 더미 사진 5개 추가 (그리드 테스트)
+      photos: ['dummy1.jpg', 'dummy2.jpg', 'dummy3.jpg', 'dummy4.jpg', 'dummy5.jpg'],
+      music: null,
+      video: null,
+    },
+  });
 
+  // 사진 삭제 핸들러
   const handleDeletePhoto = (index: number) => {
-    setPhotos(photos.filter((_, i) => i !== index));
+    const currentPhotos = watch('photos');
+    setValue('photos', currentPhotos.filter((_, i) => i !== index));
   };
 
+  // 사진 추가 핸들러
+  const handleAddPhoto = (photoUri: string) => {
+    const currentPhotos = watch('photos');
+    if (currentPhotos.length < 5) {
+      setValue('photos', [...currentPhotos, photoUri]);
+    }
+  };
+
+  // 폼 제출 핸들러
+  const onFormSubmit = (data: UserContentFormData) => {
+    // TODO: 저장 로직 구현 (API 호출 등)
+    console.log('저장할 데이터:', data);
+    onClose();
+  };
+
+  // 저장 버튼 핸들러
+  const handleSave = handleSubmit(onFormSubmit);
+
+  // 취소 버튼 핸들러
   const handleCancel = () => {
-    onClose();
-  };
-
-  const handleSave = () => {
-    // TODO: 저장 로직 구현
-    onClose();
+    if (isDirty) {
+      Alert.alert('작성 취소', '작성 중인 내용이 있습니다. 취소하시겠습니까?', [
+        { text: '계속 작성', style: 'cancel' },
+        { text: '취소', onPress: onClose },
+      ]);
+    } else {
+      onClose();
+    }
   };
 
   // 하단 고정 버튼 영역 (공통 컴포넌트의 footer 스타일 사용)
@@ -97,14 +136,23 @@ export default function UserBottomSheet({
             <Text style={styles.sectionTitle}>텍스트</Text>
           </View>
           <View style={styles.textAreaContainer}>
-            <TextInput
-              style={styles.textArea}
-              placeholder="당신의 이야기를 남겨주세요..."
-              placeholderTextColor="rgba(10, 10, 10, 0.5)"
-              multiline
-              value={textContent}
-              onChangeText={setTextContent}
-              textAlignVertical="top"
+            <Controller
+              control={control}
+              name="textContent"
+              rules={{
+                maxLength: { value: 500, message: '최대 500자까지 입력 가능합니다' },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.textArea}
+                  placeholder="당신의 이야기를 남겨주세요..."
+                  placeholderTextColor="rgba(10, 10, 10, 0.5)"
+                  multiline
+                  value={value}
+                  onChangeText={onChange}
+                  textAlignVertical="top"
+                />
+              )}
             />
           </View>
         </View>
@@ -116,7 +164,7 @@ export default function UserBottomSheet({
               source={{ uri: 'http://localhost:3845/assets/image-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>사진 ({photos.length}/5)</Text>
+            <Text style={styles.sectionTitle}>사진 ({watch('photos').length}/5)</Text>
           </View>
           <Pressable style={styles.addButton} onPress={() => {}}>
             <Image
@@ -127,32 +175,43 @@ export default function UserBottomSheet({
           </Pressable>
 
           {/* 추가된 사진 미리보기 - 그리드 배치 (3 + 2) */}
-          {photos.length > 0 && (
-            <View style={styles.photoGridContainer}>
-              {photos.map((photo, index) => (
-                <View key={index} style={styles.photoPreviewItem}>
-                  <View style={styles.photoPreview}>
-                    <Image
-                      source={{ uri: 'http://localhost:3845/assets/image-placeholder.svg' }}
-                      style={styles.photoPreviewImage}
-                    />
+          <Controller
+            control={control}
+            name="photos"
+            rules={{
+              validate: (value) => value.length <= 5 || '최대 5개까지 추가 가능합니다',
+            }}
+            render={({ field: { value } }) => (
+              <>
+                {value.length > 0 && (
+                  <View style={styles.photoGridContainer}>
+                    {value.map((photo, index) => (
+                      <View key={index} style={styles.photoPreviewItem}>
+                        <View style={styles.photoPreview}>
+                          <Image
+                            source={{ uri: 'http://localhost:3845/assets/image-placeholder.svg' }}
+                            style={styles.photoPreviewImage}
+                          />
+                        </View>
+                        <View style={styles.photoPreviewLabel}>
+                          <Text style={styles.photoPreviewText} numberOfLines={1}>
+                            {photo}
+                          </Text>
+                        </View>
+                        {/* 삭제 버튼 */}
+                        <Pressable
+                          style={styles.deleteButton}
+                          onPress={() => handleDeletePhoto(index)}
+                        >
+                          <Text style={styles.deleteButtonText}>×</Text>
+                        </Pressable>
+                      </View>
+                    ))}
                   </View>
-                  <View style={styles.photoPreviewLabel}>
-                    <Text style={styles.photoPreviewText} numberOfLines={1}>
-                      {photo}
-                    </Text>
-                  </View>
-                  {/* 삭제 버튼 */}
-                  <Pressable
-                    style={styles.deleteButton}
-                    onPress={() => handleDeletePhoto(index)}
-                  >
-                    <Text style={styles.deleteButtonText}>×</Text>
-                  </Pressable>
-                </View>
-              ))}
-            </View>
-          )}
+                )}
+              </>
+            )}
+          />
         </View>
 
         {/* 음악 섹션 */}
@@ -162,7 +221,7 @@ export default function UserBottomSheet({
               source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>음악 (0/1)</Text>
+            <Text style={styles.sectionTitle}>음악 ({watch('music') ? 1 : 0}/1)</Text>
           </View>
           <Pressable style={styles.addButton} onPress={() => {}}>
             <Image
@@ -180,7 +239,7 @@ export default function UserBottomSheet({
               source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>동영상 (0/1)</Text>
+            <Text style={styles.sectionTitle}>동영상 ({watch('video') ? 1 : 0}/1)</Text>
           </View>
           <Pressable style={styles.addButton} onPress={() => {}}>
             <Image
