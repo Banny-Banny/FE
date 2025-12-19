@@ -10,9 +10,8 @@
  * - [✓] 내부 스크롤 지원
  */
 
-import { StyleSheet, Dimensions } from 'react-native';
-import { Colors } from '@/commons/constants/colors';
-import { Spacing } from '@/commons/constants/spacing';
+import { Colors, Spacing } from '@/commons/constants';
+import { Dimensions, StyleSheet } from 'react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -40,7 +39,7 @@ export const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     // height는 동적으로 애니메이션됨
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     flexDirection: 'column',
@@ -57,7 +56,7 @@ export const styles = StyleSheet.create({
   handle: {
     width: 48,
     height: 4,
-    backgroundColor: '#E5E5E5',
+    backgroundColor: Colors.grey[300], // 더 진한 회색으로 변경하여 가시성 향상
     borderRadius: 9999,
   },
 
@@ -73,13 +72,13 @@ export const styles = StyleSheet.create({
 
   // 하단 고정 영역 (footer)
   footer: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
     gap: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: Colors.white[200],
   },
 });

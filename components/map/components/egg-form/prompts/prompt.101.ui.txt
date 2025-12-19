@@ -1,0 +1,34 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - 01-common.mdc
+            - 02-wireframe.mdc
+            - 03-ui.mdc
+            - figma.mdc
+
+==============================================
+
+조건-피그마) 활용할MCP: Figma Desktop MCP
+조건-피그마) 바텀시트 기존 폼: https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=291-183&m=dev
+조건-피그마) 바텀시트 입력 후 상태: https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=291-322&m=dev
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/egg-form/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/egg-form/styles.ts
+
+조건-공통컴포넌트) commons/components/bottom-sheet 공통컴포넌트 활용하여 구현할 것. 이때, 절대 공통컴포넌트를 수정하지 말 것.
+
+조건-아이콘) 설치되어 있는 'react-native-remix-icon'를 사용할 것.
+
+조건-상수) 이미 정의되어 있는 색상을 사용할 것. (하드코딩 금지)
+        경로) commons/constants/index.ts
+
+==============================================
+
+핵심요구사항) MCP를 연동하여 피그마의 디자인을 그대로 구현할 것.
+
+핵심요구사항) 피그마에 표시된 사이즈, 간격, 색상 그대로 적용
+
+핵심요구사항) 추가적인 기능이나 애니메이션 넣지 말고 디자인만 완벽히 구현

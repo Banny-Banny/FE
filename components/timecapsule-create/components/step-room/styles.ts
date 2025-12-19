@@ -1,7 +1,7 @@
 /**
  * components/timecapsule-create/components/step-room/styles.ts
  * StepRoom 컴포넌트 스타일 정의
- * 
+ *
  * 체크리스트:
  * - [✓] StyleSheet.create() 사용
  * - [✓] 색상 토큰만 사용 (하드코딩 금지)
@@ -9,10 +9,8 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
+import { Colors, FontFamily, FontSize, FontWeight, Spacing } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
-import { Colors } from '@/commons/constants/colors';
-import { Fonts } from '@/commons/constants/fonts';
-import { Spacing } from '@/commons/constants/spacing';
 
 export const styles = StyleSheet.create({
   // 메인 컨테이너
@@ -38,7 +36,7 @@ export const styles = StyleSheet.create({
     height: 35,
     paddingHorizontal: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
     borderRadius: 9999,
   },
 
@@ -184,14 +182,14 @@ export const styles = StyleSheet.create({
     height: 8,
     backgroundColor: Colors.gray300,
     borderWidth: 1,
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
     borderRadius: 9999,
     overflow: 'hidden',
   },
 
   progressBarFill: {
     height: 6,
-    backgroundColor: Colors.black,
+    backgroundColor: Colors.black.darker,
     margin: 1,
   },
 
@@ -226,8 +224,8 @@ export const styles = StyleSheet.create({
   },
 
   participantCardActive: {
-    borderColor: Colors.black,
-    shadowColor: Colors.black,
+    borderColor: Colors.black.darker,
+    shadowColor: Colors.black.darker,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
@@ -256,11 +254,11 @@ export const styles = StyleSheet.create({
   },
 
   avatarActive: {
-    borderColor: Colors.black,
+    borderColor: Colors.black.darker,
   },
 
   avatarEmoji: {
-    fontSize: Fonts.size['2xl'],
+    fontSize: FontSize['2xl'],
   },
 
   avatarEmojiDisabled: {
@@ -375,7 +373,7 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonEnabled: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.blue[500],
   },
 
   submitButtonText: {
@@ -396,7 +394,7 @@ export const styles = StyleSheet.create({
 
   // 크라운 아이콘 (참여자 이름 옆)
   crownEmoji: {
-    fontSize: Fonts.size.base,
+    fontSize: FontSize.base,
     marginLeft: 4,
   },
 });
