@@ -132,7 +132,7 @@ const formatCurrency = (value: number): string => {
 // ============================================
 // 컴포넌트
 // ============================================
-export const StepPayment = ({ formData, onSubmit, onBack }: StepPaymentProps) => {
+export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -357,6 +357,4 @@ export const StepPayment = ({ formData, onSubmit, onBack }: StepPaymentProps) =>
       </Modal>
     </SafeAreaView>
   );
-};
-
-export default StepPayment;
+}

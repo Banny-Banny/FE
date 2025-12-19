@@ -14,7 +14,7 @@ import { Colors } from '@/commons/constants/colors';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { UserBottomSheet } from '../write-bottomsheet';
+import UserBottomSheet from '../write-bottomsheet';
 import { styles } from './styles';
 
 // Props 인터페이스 정의
@@ -62,7 +62,7 @@ const mockParticipants: Participant[] = [
   },
 ];
 
-export const StepRoom: React.FC<StepRoomProps> = ({ role }) => {
+export default function StepRoom({ role }: StepRoomProps) {
   // 호스트 여부 확인
   const isHost = role === 'host';
 

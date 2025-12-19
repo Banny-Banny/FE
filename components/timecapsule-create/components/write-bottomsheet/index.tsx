@@ -33,11 +33,11 @@ interface UserBottomSheetProps {
   participant: Participant;
 }
 
-export const UserBottomSheet: React.FC<UserBottomSheetProps> = ({
+export default function UserBottomSheet({
   isVisible,
   onClose,
   participant,
-}) => {
+}: UserBottomSheetProps) {
   const [textContent, setTextContent] = useState('');
   // 테스트용: 더미 사진 5개 추가 (그리드 테스트)
   const [photos, setPhotos] = useState<string[]>([

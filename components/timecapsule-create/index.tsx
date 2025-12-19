@@ -5,11 +5,11 @@
 
 import { useNavigation } from '@/commons/hooks';
 import React, { useState } from 'react';
-import { StepInfo } from './components/step-info';
+import StepInfo from './components/step-info';
 import { StepInfoFormData } from './components/step-info/types';
 import { mapFormToApiRequest } from './components/step-info/utils/formToApiMapper';
-import { StepPayment } from './components/step-payment';
-import { StepRoom } from './components/step-room';
+import StepPayment from './components/step-payment';
+import StepRoom from './components/step-room';
 
 export default function TimeCapsuleCreate() {
   const navigation = useNavigation();

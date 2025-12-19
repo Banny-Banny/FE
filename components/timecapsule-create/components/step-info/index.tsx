@@ -105,7 +105,7 @@ interface StepInfoProps {
 // ============================================
 // 컴포넌트
 // ============================================
-export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
+export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProps) {
   // ============================================
   // 상태 관리
   // ============================================
@@ -572,6 +572,4 @@ export const StepInfo = ({ onSubmit, onBack, initialData }: StepInfoProps) => {
       </Modal>
     </SafeAreaView>
   );
-};
-
-export default StepInfo;
+}
