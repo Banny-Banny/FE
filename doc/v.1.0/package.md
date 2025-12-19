@@ -12,22 +12,23 @@
 
 ## 주요 패키지 목록
 
-| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리      | 설치 이유                     |
-| ---- | ------------------------------ | ----------- | --------- | ------------- | ----------------------------- |
-| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework     | Expo 프레임워크 코어          |
-| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation    | 파일 기반 라우팅 시스템       |
-| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework     | React 코어 라이브러리         |
-| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework     | React Native 코어             |
-| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling       | Tailwind CSS 기반 스타일링    |
-| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture       | 제스처 핸들링 라이브러리      |
-| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation     | 고성능 애니메이션 라이브러리  |
-| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI            | 캘린더 컴포넌트               |
-| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities     | 날짜 처리 라이브러리          |
-| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI            | Remix Icon React Native 래퍼  |
-| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI            | SVG 렌더링 라이브러리         |
-| 12   | `@tanstack/react-query`        | `^5.90.12`  | 25-12-17  | Data Fetching | 서버 상태 관리 및 데이터 페칭 |
-| 13   | `axios`                        | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리    |
-| 14   | `react-native-webview`         | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                 |
+| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리      | 설치 이유                       |
+| ---- | ------------------------------ | ----------- | --------- | ------------- | ------------------------------- |
+| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework     | Expo 프레임워크 코어            |
+| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation    | 파일 기반 라우팅 시스템         |
+| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework     | React 코어 라이브러리           |
+| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework     | React Native 코어               |
+| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling       | Tailwind CSS 기반 스타일링      |
+| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture       | 제스처 핸들링 라이브러리        |
+| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation     | 고성능 애니메이션 라이브러리    |
+| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI            | 캘린더 컴포넌트                 |
+| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities     | 날짜 처리 라이브러리            |
+| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI            | Remix Icon React Native 래퍼    |
+| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI            | SVG 렌더링 라이브러리           |
+| 12   | `@tanstack/react-query`        | `^5.90.12`  | 25-12-17  | Data Fetching | 서버 상태 관리 및 데이터 페칭   |
+| 13   | `axios`                        | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리      |
+| 14   | `react-native-webview`         | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                   |
+| 15   | `react-hook-form`              | `^7.68.0`   | 25-12-18  | Form          | 폼 상태 관리 및 검증 라이브러리 |
 
 ---
 
@@ -310,6 +311,54 @@
 
 ---
 
+### 폼 관리
+
+#### 25. react-hook-form
+
+| 항목            | 내용                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `react-hook-form`                                                                                                                                 |
+| **버전**        | `^7.68.0`                                                                                                                                         |
+| **설치 날짜**   | 25-12-18                                                                                                                                          |
+| **카테고리**    | Form Management                                                                                                                                   |
+| **설치 이유**   | React에서 폼 상태 관리 및 검증을 위한 경량 라이브러리. 최소한의 리렌더링으로 성능 최적화를 제공하며, zod와 함께 사용하여 타입 안전한 폼 검증 구현 |
+| **주요 사용처** | 프로젝트 내 모든 폼 컴포넌트 (예: `components/map/components/egg-form`, `components/timecapsule-create` 등)에서 폼 상태 관리 및 검증 로직 구현    |
+
+#### 26. expo-image-picker
+
+| 항목            | 내용                                                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `expo-image-picker`                                                                                                        |
+| **버전**        | `^17.0.10`                                                                                                                 |
+| **설치 날짜**   | 25-01-XX                                                                                                                   |
+| **카테고리**    | File Management                                                                                                            |
+| **설치 이유**   | Expo에서 이미지 선택 기능을 제공하는 라이브러리. 갤러리에서 이미지를 선택하거나 카메라로 사진을 촬영할 수 있는 기능을 제공 |
+| **주요 사용처** | `components/map/components/egg-form/hooks/useFileUpload.ts`에서 사진 첨부 기능 구현                                        |
+
+#### 27. expo-document-picker
+
+| 항목            | 내용                                                                                                                 |
+| --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `expo-document-picker`                                                                                               |
+| **버전**        | `^14.0.8`                                                                                                            |
+| **설치 날짜**   | 25-01-XX                                                                                                             |
+| **카테고리**    | File Management                                                                                                      |
+| **설치 이유**   | Expo에서 문서 및 파일 선택 기능을 제공하는 라이브러리. 음악, 동영상 등 다양한 파일 형식을 선택할 수 있는 기능을 제공 |
+| **주요 사용처** | `components/map/components/egg-form/hooks/useFileUpload.ts`에서 음악 및 동영상 첨부 기능 구현                        |
+
+#### 28. expo-video-thumbnails
+
+| 항목            | 내용                                                                                                  |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| **이름**        | `expo-video-thumbnails`                                                                               |
+| **버전**        | `~14.0.0`                                                                                             |
+| **설치 날짜**   | 25-01-XX                                                                                              |
+| **카테고리**    | File Management                                                                                       |
+| **설치 이유**   | Expo에서 동영상 파일로부터 썸네일 이미지를 추출하는 라이브러리. 동영상 미리보기 기능 구현을 위해 사용 |
+| **주요 사용처** | `components/map/components/egg-form/hooks/useVideoThumbnail.ts`에서 동영상 썸네일 추출 기능 구현      |
+
+---
+
 ### Expo 모듈
 
 #### 21. expo-constants
@@ -502,6 +551,10 @@
 
 - @tanstack/react-query, axios
 
+### Form Management (1개)
+
+- react-hook-form
+
 ### Development (5개)
 
 - typescript, @types/react, eslint, eslint-config-expo, ts-node
@@ -510,17 +563,20 @@
 
 ## 변경 이력
 
-| 버전  | 날짜     | 변경 내용                                                                                                     | 작성자 |
-| ----- | -------- | ------------------------------------------------------------------------------------------------------------- | ------ |
-| 1.0.0 | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성)                                                             | 최지호 |
-| 1.0.1 | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지)                                 | 최지호 |
-| 1.0.2 | 25-12-17 | react-native-webview 제거, @react-native-kakao 패키지들 추가, 전체 패키지 목록 업데이트                       | 최지호 |
-| 1.0.3 | 25-12-17 | @react-native-kakao 패키지들 제거, expo-application, expo-build-properties, expo-crypto, expo-dev-client 제거 | 최지호 |
-| 1.0.4 | 25-12-17 | remixicon 추가                                                                                                | 최지호 |
-| 1.0.5 | 25-12-17 | react-native-remix-icon, react-native-svg 추가 (TabLayout 아이콘 구현용)                                      | 최지호 |
-| 1.0.6 | 25-12-17 | remixicon 제거 (react-native-remix-icon 사용으로 대체)                                                        | 최지호 |
-| 1.0.7 | 25-12-17 | @tanstack/react-query, axios 추가 (서버 상태 관리 및 API 통신 구현용)                                         | 최지호 |
-| 1.0.8 | 25-12-17 | react-native-webview, ts-node 추가 (누락된 패키지 문서화)                                                     | 최지호 |
+| 버전   | 날짜     | 변경 내용                                                                                                     | 작성자 |
+| ------ | -------- | ------------------------------------------------------------------------------------------------------------- | ------ |
+| 1.0.0  | 25-12-15 | 초기 문서 작성 (실제 설치된 패키지 기준으로 작성)                                                             | 최지호 |
+| 1.0.1  | 25-12-16 | react-native-webview 추가, @react-navigation/drawer 제거 (실제 미설치 패키지)                                 | 최지호 |
+| 1.0.2  | 25-12-17 | react-native-webview 제거, @react-native-kakao 패키지들 추가, 전체 패키지 목록 업데이트                       | 최지호 |
+| 1.0.3  | 25-12-17 | @react-native-kakao 패키지들 제거, expo-application, expo-build-properties, expo-crypto, expo-dev-client 제거 | 최지호 |
+| 1.0.4  | 25-12-17 | remixicon 추가                                                                                                | 최지호 |
+| 1.0.5  | 25-12-17 | react-native-remix-icon, react-native-svg 추가 (TabLayout 아이콘 구현용)                                      | 최지호 |
+| 1.0.6  | 25-12-17 | remixicon 제거 (react-native-remix-icon 사용으로 대체)                                                        | 최지호 |
+| 1.0.7  | 25-12-17 | @tanstack/react-query, axios 추가 (서버 상태 관리 및 API 통신 구현용)                                         | 최지호 |
+| 1.0.8  | 25-12-17 | react-native-webview, ts-node 추가 (누락된 패키지 문서화)                                                     | 최지호 |
+| 1.0.9  | 25-12-18 | react-hook-form 추가 (폼 상태 관리 및 검증 구현용)                                                            | 최지호 |
+| 1.0.10 | 25-01-XX | expo-image-picker, expo-document-picker 추가 (이스터에그 폼 파일 첨부 기능 구현용)                            | 최지호 |
+| 1.0.11 | 25-01-XX | expo-video-thumbnails 추가 (동영상 썸네일 추출 기능 구현용)                                                   | 최지호 |
 
 ---
 
