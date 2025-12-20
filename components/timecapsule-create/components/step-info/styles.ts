@@ -7,7 +7,7 @@
  * - [x] 인라인 스타일 금지 준수
  */
 
-import { Colors } from '@/commons/constants/colors';
+import { Colors } from '@/commons/constants/color';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({

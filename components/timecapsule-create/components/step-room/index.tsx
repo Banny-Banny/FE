@@ -10,7 +10,7 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import { Colors } from '@/commons/constants/colors';
+import { Colors } from '@/commons/constants/color';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';

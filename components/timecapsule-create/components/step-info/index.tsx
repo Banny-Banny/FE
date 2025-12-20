@@ -9,7 +9,7 @@
  * - [x] react-hook-form@^7.68.0 사용
  */
 
-import { Colors } from '@/commons/constants/colors';
+import { Colors } from '@/commons/constants/color';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
