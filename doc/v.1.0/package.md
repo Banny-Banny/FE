@@ -12,24 +12,24 @@
 
 ## 주요 패키지 목록
 
-| 번호 | 이름                           | 버전        | 설치 날짜 | 카테고리      | 설치 이유                       |
-| ---- | ------------------------------ | ----------- | --------- | ------------- | ------------------------------- |
-| 1    | `expo`                         | `~54.0.29`  | 25-12-15  | Framework     | Expo 프레임워크 코어            |
-| 2    | `expo-router`                  | `~6.0.19`   | 25-12-15  | Navigation    | 파일 기반 라우팅 시스템         |
-| 3    | `react`                        | `19.1.0`    | 25-12-15  | Framework     | React 코어 라이브러리           |
-| 4    | `react-native`                 | `0.81.5`    | 25-12-15  | Framework     | React Native 코어               |
-| 5    | `nativewind`                   | `^4.2.1`    | 25-12-15  | Styling       | Tailwind CSS 기반 스타일링      |
-| 6    | `react-native-gesture-handler` | `~2.28.0`   | 25-12-15  | Gesture       | 제스처 핸들링 라이브러리        |
-| 7    | `react-native-reanimated`      | `~4.1.1`    | 25-12-15  | Animation     | 고성능 애니메이션 라이브러리    |
-| 8    | `react-native-calendars`       | `^1.1313.0` | 25-12-16  | UI            | 캘린더 컴포넌트                 |
-| 9    | `dayjs`                        | `^1.11.19`  | 25-12-16  | Utilities     | 날짜 처리 라이브러리            |
-| 10   | `react-native-remix-icon`      | `^4.7.0`    | 25-12-17  | UI            | Remix Icon React Native 래퍼    |
-| 11   | `react-native-svg`             | `^15.15.1`  | 25-12-17  | UI            | SVG 렌더링 라이브러리           |
-| 12   | `@tanstack/react-query`        | `^5.90.12`  | 25-12-17  | Data Fetching | 서버 상태 관리 및 데이터 페칭   |
-| 13   | `axios`                        | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리      |
-| 14   | `react-native-webview`         | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                   |
-| 15   | `react-hook-form`              | `^7.68.0`   | 25-12-18  | Form          | 폼 상태 관리 및 검증 라이브러리 |
-| 16   | `@react-native-async-storage/async-storage` | `^2.2.0` | 25-12-15  | Utilities     | 비동기 키-값 저장소 (인증 토큰 저장용) |
+| 번호 | 이름                                        | 버전        | 설치 날짜 | 카테고리      | 설치 이유                              |
+| ---- | ------------------------------------------- | ----------- | --------- | ------------- | -------------------------------------- |
+| 1    | `expo`                                      | `~54.0.29`  | 25-12-15  | Framework     | Expo 프레임워크 코어                   |
+| 2    | `expo-router`                               | `~6.0.19`   | 25-12-15  | Navigation    | 파일 기반 라우팅 시스템                |
+| 3    | `react`                                     | `19.1.0`    | 25-12-15  | Framework     | React 코어 라이브러리                  |
+| 4    | `react-native`                              | `0.81.5`    | 25-12-15  | Framework     | React Native 코어                      |
+| 5    | `nativewind`                                | `^4.2.1`    | 25-12-15  | Styling       | Tailwind CSS 기반 스타일링             |
+| 6    | `react-native-gesture-handler`              | `~2.28.0`   | 25-12-15  | Gesture       | 제스처 핸들링 라이브러리               |
+| 7    | `react-native-reanimated`                   | `~4.1.1`    | 25-12-15  | Animation     | 고성능 애니메이션 라이브러리           |
+| 8    | `react-native-calendars`                    | `^1.1313.0` | 25-12-16  | UI            | 캘린더 컴포넌트                        |
+| 9    | `dayjs`                                     | `^1.11.19`  | 25-12-16  | Utilities     | 날짜 처리 라이브러리                   |
+| 10   | `react-native-remix-icon`                   | `^4.7.0`    | 25-12-17  | UI            | Remix Icon React Native 래퍼           |
+| 11   | `react-native-svg`                          | `^15.15.1`  | 25-12-17  | UI            | SVG 렌더링 라이브러리                  |
+| 12   | `@tanstack/react-query`                     | `^5.90.12`  | 25-12-17  | Data Fetching | 서버 상태 관리 및 데이터 페칭          |
+| 13   | `axios`                                     | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리             |
+| 14   | `react-native-webview`                      | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                          |
+| 15   | `react-hook-form`                           | `^7.68.0`   | 25-12-18  | Form          | 폼 상태 관리 및 검증 라이브러리        |
+| 16   | `@react-native-async-storage/async-storage` | `^2.2.0`    | 25-12-15  | Utilities     | 비동기 키-값 저장소 (인증 토큰 저장용) |
 
 ---
 
@@ -360,14 +360,14 @@
 
 #### 29. @react-native-async-storage/async-storage
 
-| 항목            | 내용                                                                                                                                    |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **이름**        | `@react-native-async-storage/async-storage`                                                                                             |
-| **버전**        | `^2.2.0`                                                                                                                                |
-| **설치 날짜**   | 25-12-15                                                                                                                                |
-| **카테고리**    | Utilities                                                                                                                               |
+| 항목            | 내용                                                                                                                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **이름**        | `@react-native-async-storage/async-storage`                                                                                                      |
+| **버전**        | `^2.2.0`                                                                                                                                         |
+| **설치 날짜**   | 25-12-15                                                                                                                                         |
+| **카테고리**    | Utilities                                                                                                                                        |
 | **설치 이유**   | React Native에서 비동기 키-값 저장소를 제공하는 라이브러리. 앱 재시작 후에도 데이터를 유지할 수 있어 인증 토큰, 사용자 정보 등을 저장하는데 사용 |
-| **주요 사용처** | `commons/layout/provider/auth/auth.provider.tsx`에서 인증 토큰 및 사용자 정보를 AsyncStorage에 저장하고 복구하는 용도로 사용            |
+| **주요 사용처** | `commons/layout/provider/auth/auth.provider.tsx`에서 인증 토큰 및 사용자 정보를 AsyncStorage에 저장하고 복구하는 용도로 사용                     |
 
 ---
 
