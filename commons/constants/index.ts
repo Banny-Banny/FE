@@ -26,5 +26,5 @@ export { BorderRadius } from './borderRadius';
 export { Colors } from './color';
 export { FontFamily, FontSize, FontWeight, LineHeight } from './fonts';
 export { Spacing } from './spacing';
-export { Typography, getTypographyStyle } from './typography';
+export { getTypographyStyle, Typography } from './typography';
 export type { TypographyKey } from './typography';
