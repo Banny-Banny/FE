@@ -29,6 +29,7 @@
 | 13   | `axios`                        | `^1.13.2`   | 25-12-17  | HTTP Client   | HTTP 클라이언트 라이브러리      |
 | 14   | `react-native-webview`         | `^13.16.0`  | 25-12-17  | UI            | 웹뷰 컴포넌트                   |
 | 15   | `react-hook-form`              | `^7.68.0`   | 25-12-18  | Form          | 폼 상태 관리 및 검증 라이브러리 |
+| 16   | `@react-native-async-storage/async-storage` | `^2.2.0` | 25-12-15  | Utilities     | 비동기 키-값 저장소 (인증 토큰 저장용) |
 
 ---
 
@@ -351,11 +352,22 @@
 | 항목            | 내용                                                                                                  |
 | --------------- | ----------------------------------------------------------------------------------------------------- |
 | **이름**        | `expo-video-thumbnails`                                                                               |
-| **버전**        | `~14.0.0`                                                                                             |
+| **버전**        | `~10.0.8`                                                                                             |
 | **설치 날짜**   | 25-01-XX                                                                                              |
 | **카테고리**    | File Management                                                                                       |
 | **설치 이유**   | Expo에서 동영상 파일로부터 썸네일 이미지를 추출하는 라이브러리. 동영상 미리보기 기능 구현을 위해 사용 |
 | **주요 사용처** | `components/map/components/egg-form/hooks/useVideoThumbnail.ts`에서 동영상 썸네일 추출 기능 구현      |
+
+#### 29. @react-native-async-storage/async-storage
+
+| 항목            | 내용                                                                                                                                    |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `@react-native-async-storage/async-storage`                                                                                             |
+| **버전**        | `^2.2.0`                                                                                                                                |
+| **설치 날짜**   | 25-12-15                                                                                                                                |
+| **카테고리**    | Utilities                                                                                                                               |
+| **설치 이유**   | React Native에서 비동기 키-값 저장소를 제공하는 라이브러리. 앱 재시작 후에도 데이터를 유지할 수 있어 인증 토큰, 사용자 정보 등을 저장하는데 사용 |
+| **주요 사용처** | `commons/layout/provider/auth/auth.provider.tsx`에서 인증 토큰 및 사용자 정보를 AsyncStorage에 저장하고 복구하는 용도로 사용            |
 
 ---
 
@@ -543,9 +555,9 @@
 - expo-splash-screen, expo-status-bar, expo-system-ui, expo-haptics
 - react-native-calendars, react-native-remix-icon, react-native-svg, react-native-webview
 
-### Utilities (3개)
+### Utilities (4개)
 
-- expo-constants, expo-web-browser, dayjs
+- expo-constants, expo-web-browser, dayjs, @react-native-async-storage/async-storage
 
 ### Data Fetching & API (2개)
 
@@ -577,6 +589,7 @@
 | 1.0.9  | 25-12-18 | react-hook-form 추가 (폼 상태 관리 및 검증 구현용)                                                            | 최지호 |
 | 1.0.10 | 25-01-XX | expo-image-picker, expo-document-picker 추가 (이스터에그 폼 파일 첨부 기능 구현용)                            | 최지호 |
 | 1.0.11 | 25-01-XX | expo-video-thumbnails 추가 (동영상 썸네일 추출 기능 구현용)                                                   | 최지호 |
+| 1.0.12 | 25-01-XX | @react-native-async-storage/async-storage 추가 (인증 토큰 및 사용자 정보 저장용)                              | 최지호 |
 
 ---
 
