@@ -1,9 +1,12 @@
 import { API_ENDPOINTS } from '@/commons/constants';
-import { buildApiUrl } from '@/utils';
+import { ROUTES } from '@/commons/constants/routes';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { buildApiUrl, getUserFromToken } from '@/utils';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
 /**
@@ -11,9 +14,41 @@ import { Alert, Platform } from 'react-native';
  */
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+  const searchParams = useLocalSearchParams<{ token?: string; isNewUser?: string }>();
+  const { login } = useAuth();
 
   // API Base URL 가져오기
   const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl || '';
+
+  // URL 파라미터에서 토큰 확인 및 처리 (콜백 처리)
+  useEffect(() => {
+    const handleCallback = async () => {
+      const token = searchParams.token;
+
+      if (token) {
+        try {
+          // 토큰에서 사용자 정보 추출
+          const userData = getUserFromToken(token);
+
+          if (userData) {
+            // AuthProvider의 login 함수를 통해 토큰 저장 및 상태 업데이트
+            // login 함수 내부에서 이미 메인으로 리다이렉트함
+            await login(token, userData);
+          } else {
+            Alert.alert('오류', '사용자 정보를 가져올 수 없습니다.');
+          }
+        } catch (error) {
+          if (__DEV__) {
+            console.error('로그인 콜백 처리 오류:', error);
+          }
+          Alert.alert('오류', '로그인 처리 중 오류가 발생했습니다.');
+        }
+      }
+    };
+
+    handleCallback();
+  }, [searchParams.token, login]);
 
   // 카카오 로그인 시작 (OAuth 2.0 플로우)
   const handleKakaoLogin = useCallback(async () => {
@@ -23,28 +58,21 @@ export function useLogin() {
       console.log('카카오 로그인 URL:', loginUrl);
 
       // 웹 환경: 브라우저에서 직접 이동
+      // 콜백 URL은 자동으로 /auth/callback 라우트로 리다이렉트됨
       if (Platform.OS === 'web') {
-        // expo-linking을 사용하여 웹에서도 안전하게 처리
-        await Linking.openURL(loginUrl);
+        window.location.href = loginUrl;
         return;
       }
 
       // 모바일 환경: 인앱 브라우저로 열기
-      const result = await WebBrowser.openAuthSessionAsync(loginUrl, Linking.createURL('/'));
+      // 콜백 URL은 로그인 페이지로 리다이렉트되며, URL 파라미터로 토큰이 전달됨
+      const callbackUrl = Linking.createURL(ROUTES.AUTH_LOGIN);
+      const result = await WebBrowser.openAuthSessionAsync(loginUrl, callbackUrl);
 
       if (result.type === 'success' && result.url) {
-        // 콜백 URL에서 토큰 추출
-        const url = new URL(result.url);
-        const token = url.searchParams.get('token');
-        const isNewUser = url.searchParams.get('isNewUser') === 'true';
-
-        if (token) {
-          console.log('로그인 성공:', { token, isNewUser });
-          // TODO: 토큰 저장 및 사용자 정보 처리
-          Alert.alert('성공', `로그인에 성공했습니다. ${isNewUser ? '(신규 사용자)' : ''}`);
-        } else {
-          Alert.alert('오류', '토큰을 받지 못했습니다.');
-        }
+        // 콜백 URL로 리다이렉트되면 로그인 페이지의 useEffect에서 처리
+        // URL 파라미터에 토큰이 포함되어 있으면 자동으로 처리됨
+        console.log('로그인 성공, 콜백 처리 중...');
       } else if (result.type === 'cancel') {
         console.log('사용자가 로그인을 취소했습니다.');
       } else {
@@ -56,7 +84,7 @@ export function useLogin() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, [apiBaseUrl, router]);
 
   return {
     isLoading,
