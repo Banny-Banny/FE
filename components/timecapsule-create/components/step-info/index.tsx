@@ -13,6 +13,7 @@ import { Colors } from '@/commons/constants/color';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
   Animated,
@@ -24,7 +25,6 @@ import {
   View,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Controller, useForm } from 'react-hook-form';
 import Icon from 'react-native-remix-icon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -37,7 +37,6 @@ import {
 import { useDateSelection } from './hooks/useDateSelection';
 import { usePriceCalculation } from './hooks/usePriceCalculation';
 import { styles } from './styles';
-import type { AdditionalOptionsState } from './types';
 
 // ============================================
 // 텍스트 상수 (국제화 대비)
@@ -379,7 +378,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                 <TextInput
                   style={styles.input}
                   placeholder={TEXTS.capsuleName.placeholder}
-                  placeholderTextColor={Colors.textDisabled}
+                  placeholderTextColor={Colors.grey[400]}
                   value={value}
                   onChangeText={(text) => {
                     if (text.length <= MAX_CAPSULE_NAME_LENGTH) {
@@ -541,7 +540,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                         <Icon
                           name={index === 0 ? ICONS.music : ICONS.video}
                           size={24}
-                          color={isSelected ? Colors.black : Colors.gray500}
+                          color={isSelected ? Colors.black[500] : Colors.grey[500]}
                         />
                       </View>
                       <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
@@ -589,11 +588,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
           }}
           render={() => <></>}
         />
-        <Controller
-          control={control}
-          name="selectedDateOptionIndex"
-          render={() => <></>}
-        />
+        <Controller control={control} name="selectedDateOptionIndex" render={() => <></>} />
       </ScrollView>
 
       {/* 달력 바텀시트 모달 */}

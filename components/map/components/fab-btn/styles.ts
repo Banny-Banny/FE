@@ -13,6 +13,7 @@
  * - [x] 접근성: 탭타겟 44px 이상
  */
 
+import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -34,7 +35,7 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(10, 10, 10, 0.5)', // Colors.black[500] with 50% opacity
     zIndex: 1,
   },
 
@@ -66,12 +67,10 @@ export const styles = StyleSheet.create({
 
   /* === Sub Button Label === */
   subButtonLabel: {
-    fontFamily: 'Pretendard_Variable',
-    fontWeight: '800',
+    ...Typography.header.h5,
     fontSize: 15,
     lineHeight: 22.5,
-    letterSpacing: 0.1406,
-    color: '#FFFFFF',
+    color: Colors.white[50],
     textAlign: 'right',
   },
 
@@ -80,10 +79,10 @@ export const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 9999,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Colors.white[50],
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000000',
+    shadowColor: Colors.black[500],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
@@ -120,10 +119,10 @@ export const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 9999,
-    backgroundColor: '#FFC107',
+    backgroundColor: '#FFC107', // Yellow - Colors에 없으므로 유지
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000000',
+    shadowColor: Colors.black[500],
     shadowOffset: { width: 8, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
@@ -164,4 +163,3 @@ export const styles = StyleSheet.create({
     // This would need a custom solution or library if critical
   },
 });
-

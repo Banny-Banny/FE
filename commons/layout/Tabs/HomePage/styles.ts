@@ -1,3 +1,4 @@
+import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
@@ -5,21 +6,15 @@ import { StyleSheet } from 'react-native';
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *
- * 토큰 소스: /Users/jiho/Desktop/TimeEgg/FE/tailwind.config.js
+ * 토큰 소스: commons/constants/color.ts
  * 생성 시각: 2025-12-16
  * 버전: 1.0.0
  */
 
-// Tailwind 토큰 매핑
-const COLORS = {
-  white: '#ffffff',
-  black: '#000000',
-};
-
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: Colors.white[50],
   },
 
   // 타임캡슐 만들기 플로팅 버튼
@@ -29,11 +24,11 @@ export const styles = StyleSheet.create({
     right: 24,
     left: 24,
     height: 60,
-    backgroundColor: COLORS.black,
+    backgroundColor: Colors.black[500],
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: COLORS.black,
+    shadowColor: Colors.black[500],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -41,12 +36,8 @@ export const styles = StyleSheet.create({
   },
 
   floatingButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 18,
-    lineHeight: 28,
-    letterSpacing: -0.4,
-    color: COLORS.white,
+    ...Typography.caption.button,
+    color: Colors.white[50],
   },
 });
 
