@@ -2,7 +2,7 @@ import { LoginView } from './components/login-view';
 
 /**
  * 로그인 Feature Container
- * 비즈니스 로직은 login-view 내부 hooks에서 관리
+ * login-view가 복잡한 컴포넌트이므로 내부에서 hooks를 관리
  */
 export default function LoginFeature() {
   return <LoginView />;

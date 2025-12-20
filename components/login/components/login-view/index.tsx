@@ -5,7 +5,7 @@ import { styles } from './styles';
 
 /**
  * 로그인 뷰 컴포넌트
- * 비즈니스 로직은 내부 hooks에서 관리
+ * 복잡한 컴포넌트이므로 내부에 hooks를 가짐 (규칙: "Must be separated into folders if they are complex")
  */
 export function LoginView() {
   const { isLoading, handleKakaoLogin } = useLogin();
