@@ -1,3 +1,4 @@
+import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
@@ -5,25 +6,15 @@ import { StyleSheet } from 'react-native';
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *
- * 토큰 소스: /Users/jiho/Desktop/TimeEgg/FE/tailwind.config.js
+ * 토큰 소스: commons/constants/color.ts
  * 생성 시각: 2025-12-16
  * 버전: 1.0.0
  */
 
-// Tailwind 토큰 매핑
-const COLORS = {
-  neutral: {
-    50: '#fafafa',
-    500: '#737373',
-    900: '#171717',
-  },
-  white: '#ffffff',
-};
-
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.neutral[50],
+    backgroundColor: Colors.white[500],
   },
   content: {
     flex: 1,
@@ -32,17 +23,13 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   title: {
-    fontSize: 24,
-    lineHeight: 32,
-    fontWeight: '700',
-    color: COLORS.neutral[900],
+    ...Typography.header.h1,
+    color: Colors.darkGrey[900],
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontWeight: '400',
-    color: COLORS.neutral[500],
+    ...Typography.body.body4,
+    color: Colors.grey[500],
     textAlign: 'center',
   },
 });

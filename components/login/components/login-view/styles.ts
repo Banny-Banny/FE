@@ -2,7 +2,7 @@ import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
- * MyPage 스타일
+ * LoginView 스타일
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *
@@ -27,11 +27,6 @@ export const styles = StyleSheet.create({
     color: Colors.darkGrey[900],
     marginBottom: 8,
   },
-  subtitle: {
-    ...Typography.body.body4,
-    color: Colors.grey[500],
-    textAlign: 'center',
-  },
 });
 
 /**
@@ -42,3 +37,4 @@ export const styles = StyleSheet.create({
  * [✅] 하드코딩 hex/rgb/hsl 사용 0건
  * [✅] 스타일은 styles.ts에서만 관리
  */
+

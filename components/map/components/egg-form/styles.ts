@@ -9,14 +9,7 @@
  * - [x] 인라인 스타일 0건
  */
 
-import {
-  BorderRadius,
-  Colors,
-  FontFamily,
-  FontSize,
-  FontWeight,
-  Spacing,
-} from '@/commons/constants';
+import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -33,16 +26,13 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   title: {
-    fontSize: FontSize['2xl'],
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.header.h5,
+    fontSize: 24,
     color: Colors.black[500],
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body6,
     color: Colors.grey[500],
   },
 
@@ -51,9 +41,7 @@ export const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   label: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.medium,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body11,
     color: Colors.black[500],
     marginBottom: Spacing.sm,
   },
@@ -68,9 +56,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   input: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body4,
     color: Colors.black[500],
     padding: 0,
   },
@@ -86,9 +72,7 @@ export const styles = StyleSheet.create({
     position: 'relative',
   },
   textArea: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body4,
     color: Colors.black[500],
     padding: 0,
     flex: 1,
@@ -99,9 +83,7 @@ export const styles = StyleSheet.create({
     right: Spacing.md,
   },
   charCount: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body7,
     color: Colors.grey[500],
   },
 
@@ -137,15 +119,13 @@ export const styles = StyleSheet.create({
     borderColor: Colors.red[200],
   },
   attachmentButtonText: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.medium,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body9,
     color: Colors.black[500],
     marginTop: Spacing.xs,
   },
   attachmentButtonDisabled: {
-    opacity: 0.5,
     borderColor: Colors.grey[300],
+    backgroundColor: Colors.grey[100],
   },
   attachmentButtonTextDisabled: {
     color: Colors.grey[400],
@@ -183,9 +163,7 @@ export const styles = StyleSheet.create({
     zIndex: 1, // 삭제 버튼보다 아래에 표시
   },
   attachmentPreviewText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body7,
     color: Colors.white[100],
   },
   deleteButton: {
@@ -213,18 +191,14 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.whiteGrey[300],
   },
   hideButtonInactiveText: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body11,
     color: Colors.grey[500],
   },
   hideButtonActive: {
     backgroundColor: Colors.black[500],
   },
   hideButtonText: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.semibold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body11,
     color: Colors.white[100],
   },
 });

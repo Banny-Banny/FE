@@ -13,6 +13,7 @@
  */
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
+import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
@@ -184,7 +185,7 @@ export default function UserBottomSheet({ isVisible, onClose, participant }: Use
                 <TextInput
                   style={styles.textArea}
                   placeholder="당신의 이야기를 남겨주세요..."
-                  placeholderTextColor="rgba(10, 10, 10, 0.5)"
+                  placeholderTextColor={Colors.grey[400]}
                   multiline
                   value={value}
                   onChangeText={onChange}
