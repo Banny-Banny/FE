@@ -9,14 +9,14 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import { Colors, FontSize, FontWeight, Spacing } from '@/commons/constants';
+import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   // 메인 컨테이너
   container: {
     flex: 1,
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     paddingHorizontal: Spacing.lg,
   },
 
@@ -49,11 +49,8 @@ export const styles = StyleSheet.create({
   },
 
   roleBadgeText: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body6,
     color: Colors.black[500],
-    letterSpacing: -0.15,
   },
 
   crownIcon: {
@@ -84,38 +81,30 @@ export const styles = StyleSheet.create({
 
   // 타이틀
   title: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize['2xl'],
-    fontWeight: FontWeight.bold,
+    ...Typography.header.h5,
     color: Colors.black[500],
     marginTop: 24,
-    letterSpacing: 0.07,
   },
 
   // 정보 카드
   infoCard: {
     marginTop: 24,
     padding: 25,
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: Colors.grey[300],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     gap: Spacing.md,
   },
 
   infoCardLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[600],
+    ...Typography.body.body3,
+    color: Colors.grey[500],
   },
 
   infoCardValue: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize['3xl'],
-    fontWeight: FontWeight.bold,
+    ...Typography.header.h5,
     color: Colors.black[500],
-    letterSpacing: 0.4,
   },
 
   infoCardDetails: {
@@ -135,19 +124,14 @@ export const styles = StyleSheet.create({
   },
 
   infoCardDetailLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[600],
+    ...Typography.body.body3,
+    color: Colors.grey[500],
     marginBottom: 4,
   },
 
   infoCardDetailValue: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body6,
     color: Colors.black[500],
-    letterSpacing: -0.15,
   },
 
   // 진행 상황 바
@@ -163,19 +147,13 @@ export const styles = StyleSheet.create({
   },
 
   progressLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body6,
     color: Colors.black[500],
-    letterSpacing: -0.15,
   },
 
   progressValue: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body6,
     color: Colors.black[500],
-    letterSpacing: -0.15,
   },
 
   progressBarContainer: {
@@ -200,11 +178,8 @@ export const styles = StyleSheet.create({
   },
 
   participantLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[600],
-    letterSpacing: -0.15,
+    ...Typography.body.body6,
+    color: Colors.grey[500],
   },
 
   participantList: {
@@ -218,7 +193,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     height: 84,
     paddingHorizontal: 18,
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
     borderRadius: 16,
   },
@@ -233,7 +208,7 @@ export const styles = StyleSheet.create({
   },
 
   participantCardInactive: {
-    borderColor: Colors.grey[300],
+    borderColor: Colors.grey[200],
   },
 
   participantInfo: {
@@ -247,8 +222,8 @@ export const styles = StyleSheet.create({
     height: 48,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: Colors.grey[300],
-    backgroundColor: Colors.white[500],
+    borderColor: Colors.grey[200],
+    backgroundColor: Colors.white[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -258,11 +233,11 @@ export const styles = StyleSheet.create({
   },
 
   avatarEmoji: {
-    fontSize: FontSize['2xl'],
+    fontSize: 24, // Typography.header.h1의 fontSize
   },
 
   avatarEmojiDisabled: {
-    opacity: 0.3,
+    color: Colors.grey[400],
   },
 
   participantDetails: {
@@ -275,21 +250,16 @@ export const styles = StyleSheet.create({
   },
 
   participantName: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body1,
     color: Colors.black[500],
-    letterSpacing: -0.61,
   },
 
   participantStatus: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
+    ...Typography.body.body3,
   },
 
   statusCompleted: {
-    color: Colors.grey[500],
+    color: Colors.grey[400],
   },
 
   statusPending: {
@@ -297,7 +267,7 @@ export const styles = StyleSheet.create({
   },
 
   statusWaiting: {
-    color: Colors.grey[500],
+    color: Colors.grey[400],
   },
 
   // 체크박스
@@ -313,7 +283,7 @@ export const styles = StyleSheet.create({
   },
 
   checkboxInactive: {
-    borderColor: Colors.grey[300],
+    borderColor: Colors.grey[200],
   },
 
   checkboxChecked: {
@@ -328,10 +298,8 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[500],
+    ...Typography.body.body3,
+    color: Colors.grey[400],
     textAlign: 'center',
   },
 
@@ -348,11 +316,8 @@ export const styles = StyleSheet.create({
   },
 
   deadlineText: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[600],
-    letterSpacing: -0.15,
+    ...Typography.body.body6,
+    color: Colors.grey[500],
   },
 
   // 버튼 영역
@@ -377,24 +342,19 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
+    ...Typography.caption.button,
     color: Colors.white[50],
-    letterSpacing: -0.44,
   },
 
   buttonHint: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    color: Colors.grey[600],
+    ...Typography.body.body3,
+    color: Colors.grey[500],
     textAlign: 'center',
   },
 
   // 크라운 아이콘 (참여자 이름 옆)
   crownEmoji: {
-    fontSize: FontSize.base,
+    fontSize: 16, // Typography.body.body1의 fontSize
     marginLeft: 4,
   },
 });

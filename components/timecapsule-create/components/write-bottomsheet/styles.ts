@@ -9,7 +9,7 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import { Colors, FontFamily, FontSize, FontWeight, Spacing } from '@/commons/constants';
+import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -26,20 +26,15 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: FontSize['2xl'],
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.header.h5,
+    fontSize: 24,
     color: Colors.black.darker,
-    letterSpacing: 0.07,
   },
 
   subtitle: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body6,
     color: Colors.black[500],
     marginTop: Spacing.sm,
-    letterSpacing: -0.15,
   },
 
   // 섹션
@@ -60,11 +55,8 @@ export const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body1,
     color: Colors.black.darker,
-    letterSpacing: -0.31,
   },
 
   // 텍스트 입력 영역
@@ -79,11 +71,8 @@ export const styles = StyleSheet.create({
   textArea: {
     flex: 1,
     padding: Spacing.md,
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.regular,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body4,
     color: Colors.black.darker,
-    letterSpacing: -0.31,
   },
 
   // 추가 버튼
@@ -105,11 +94,8 @@ export const styles = StyleSheet.create({
   },
 
   addButtonText: {
-    fontSize: FontSize.base,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body1,
     color: Colors.black[500],
-    letterSpacing: -0.31,
     textAlign: 'center',
   },
 
@@ -131,11 +117,8 @@ export const styles = StyleSheet.create({
   },
 
   cancelButtonText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.caption.button,
     color: Colors.black.darker,
-    letterSpacing: -0.44,
   },
 
   saveButton: {
@@ -150,17 +133,12 @@ export const styles = StyleSheet.create({
   },
 
   saveButtonText: {
-    fontSize: FontSize.lg,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.caption.button,
     color: Colors.white[50],
-    letterSpacing: -0.44,
   },
 
   hintText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body3,
     color: Colors.black[500],
     textAlign: 'center',
   },
@@ -211,9 +189,7 @@ export const styles = StyleSheet.create({
   },
 
   photoPreviewText: {
-    fontSize: FontSize.xs,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
+    ...Typography.body.body3,
     color: Colors.white[50],
   },
 
@@ -233,11 +209,10 @@ export const styles = StyleSheet.create({
   },
 
   deleteButtonText: {
+    ...Typography.caption.button,
     fontSize: 18,
-    fontWeight: FontWeight.bold,
-    fontFamily: FontFamily.variable,
-    color: Colors.white[50],
     lineHeight: 18,
+    color: Colors.white[50],
   },
 
   // 미디어 파일 표시 (음악, 동영상)
@@ -246,9 +221,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.white[500],
     borderWidth: 1,
-    borderColor: Colors.white[200],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     padding: Spacing.md,
   },
@@ -266,9 +241,8 @@ export const styles = StyleSheet.create({
   },
 
   mediaFileName: {
-    fontSize: FontSize.sm,
-    fontWeight: FontWeight.regular,
-    color: Colors.black.darker,
+    ...Typography.body.body6,
+    color: Colors.black[500],
     flex: 1,
   },
 
@@ -276,7 +250,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.black.darker,
+    backgroundColor: Colors.black[500],
     justifyContent: 'center',
     alignItems: 'center',
   },

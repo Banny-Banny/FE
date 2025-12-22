@@ -8,6 +8,7 @@
  * - [x] Figma 디자인 사이즈 그대로 적용
  */
 
+import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -16,7 +17,7 @@ export const styles = StyleSheet.create({
   // ============================================
   container: {
     flex: 1,
-    backgroundColor: '#ffffff', // neutral-50에 가까운 흰색
+    backgroundColor: Colors.white[50],
   },
 
   // ============================================
@@ -40,7 +41,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 73,
     borderBottomWidth: 0.613,
-    borderBottomColor: '#e0e0e0', // neutral-200
+    borderBottomColor: Colors.grey[200],
     pointerEvents: 'none', // 터치 이벤트 무시 (뒤로가기 버튼 클릭 가능하도록)
   },
 
@@ -50,9 +51,9 @@ export const styles = StyleSheet.create({
     top: 14,
     width: 43.663,
     height: 43.663,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white[50],
     borderWidth: 1.838,
-    borderColor: '#000000', // neutral-950
+    borderColor: Colors.black[500],
     borderRadius: 21.8315,
     justifyContent: 'center',
     alignItems: 'center',
@@ -60,10 +61,9 @@ export const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
+    ...Typography.body.body4,
     fontSize: 26,
-    color: '#000000',
+    color: Colors.black[500],
     includeFontPadding: false,
   },
 
@@ -71,12 +71,8 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: 79.98,
     top: 22.8,
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 24,
-    lineHeight: 26.4,
-    letterSpacing: -0.4097,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.header.h1,
+    color: Colors.darkGrey[900],
   },
 
   // ============================================
@@ -98,7 +94,7 @@ export const styles = StyleSheet.create({
   orderSummaryCard: {
     width: '100%',
     height: 280,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white[50],
     borderRadius: 20,
     marginBottom: 20,
   },
@@ -110,7 +106,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderWidth: 1,
-    borderColor: '#e5e7eb', // neutral-200
+    borderColor: Colors.grey[200],
     borderRadius: 20,
   },
 
@@ -128,12 +124,10 @@ export const styles = StyleSheet.create({
   },
 
   orderSummaryTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
+    ...Typography.body.body1,
     fontSize: 20,
     lineHeight: 28,
-    letterSpacing: -0.4492,
-    color: '#1a1a1a', // neutral-900
+    color: Colors.darkGrey[900],
   },
 
   // 참여 인원
@@ -141,7 +135,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 17,
     height: 37,
     borderBottomWidth: 0.613,
-    borderBottomColor: '#e0e0e0', // neutral-200
+    borderBottomColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -156,21 +150,13 @@ export const styles = StyleSheet.create({
   },
 
   participantLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.1504,
-    color: '#666666', // neutral-500
+    ...Typography.body.body6,
+    color: Colors.grey[500],
   },
 
   participantValue: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.1504,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body6,
+    color: Colors.darkGrey[900],
   },
 
   // 상품 목록
@@ -193,30 +179,19 @@ export const styles = StyleSheet.create({
   },
 
   itemLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.1504,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body6,
+    color: Colors.darkGrey[900],
     marginRight: 8,
   },
 
   itemDetail: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 12,
-    lineHeight: 16,
-    color: '#999999', // neutral-400
+    ...Typography.body.body3,
+    color: Colors.grey[400],
   },
 
   itemPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.1504,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body6,
+    color: Colors.darkGrey[900],
   },
 
   // 합계
@@ -224,7 +199,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 17,
     height: 37,
     borderTopWidth: 0.613,
-    borderTopColor: '#e0e0e0', // neutral-200
+    borderTopColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -235,21 +210,15 @@ export const styles = StyleSheet.create({
   },
 
   totalLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body1,
+    color: Colors.darkGrey[900],
   },
 
   totalPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
+    ...Typography.caption.button,
     fontSize: 18,
     lineHeight: 20,
-    letterSpacing: -0.7995,
-    color: '#1a1a1a', // neutral-900
+    color: Colors.darkGrey[900],
   },
 
   // ============================================
@@ -258,7 +227,7 @@ export const styles = StyleSheet.create({
   agreementsCard: {
     position: 'relative',
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white[50],
     borderRadius: 20,
   },
 
@@ -268,7 +237,7 @@ export const styles = StyleSheet.create({
     paddingTop: 17,
     paddingBottom: 17,
     borderBottomWidth: 0.613,
-    borderBottomColor: '#e0e0e0', // neutral-200
+    borderBottomColor: Colors.grey[200],
     justifyContent: 'center',
   },
 
@@ -284,7 +253,7 @@ export const styles = StyleSheet.create({
   checkbox: {
     width: 23.996,
     height: 23.996,
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white[50],
     borderRadius: 20,
     marginRight: 12,
     justifyContent: 'center',
@@ -298,30 +267,25 @@ export const styles = StyleSheet.create({
     width: 23.996,
     height: 23.996,
     borderWidth: 0.613,
-    borderColor: '#1a1a1a', // neutral-900
+    borderColor: Colors.darkGrey[900],
     borderRadius: 20,
   },
 
   checkboxChecked: {
-    backgroundColor: '#ffffff', // 체크되어도 흰색 유지
+    backgroundColor: Colors.white[50], // 체크되어도 흰색 유지
   },
 
   checkboxCheckmark: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.body.body1,
     fontSize: 16,
     lineHeight: 16,
-    color: '#1a1a1a', // neutral-900
+    color: Colors.darkGrey[900],
     zIndex: 1,
   },
 
   allAgreeText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body1,
+    color: Colors.darkGrey[900],
   },
 
   // 개별 약관 목록
@@ -338,12 +302,8 @@ export const styles = StyleSheet.create({
   },
 
   agreementText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.1504,
-    color: '#1a1a1a', // neutral-900
+    ...Typography.body.body6,
+    color: Colors.darkGrey[900],
   },
 
   chevronButton: {
@@ -354,11 +314,10 @@ export const styles = StyleSheet.create({
   },
 
   chevronText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
+    ...Typography.body.body4,
     fontSize: 24,
     lineHeight: 24,
-    color: '#666666', // neutral-500
+    color: Colors.grey[500],
   },
 
   // ============================================
@@ -367,7 +326,7 @@ export const styles = StyleSheet.create({
   footer: {
     width: '100%',
     borderTopWidth: 0.66,
-    borderTopColor: '#e0e0e0', // neutral-200
+    borderTopColor: Colors.grey[200],
     paddingHorizontal: 24,
     paddingTop: 25,
     paddingBottom: 34,
@@ -384,7 +343,7 @@ export const styles = StyleSheet.create({
   submitButton: {
     width: '100%',
     height: 60,
-    backgroundColor: '#1a1a1a', // neutral-900
+    backgroundColor: Colors.darkGrey[900],
     borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'center',
@@ -393,25 +352,19 @@ export const styles = StyleSheet.create({
   },
 
   submitButtonDisabled: {
-    backgroundColor: '#d4d4d4', // neutral-300 (비활성화 상태)
-    opacity: 0.6,
+    backgroundColor: Colors.grey[300],
   },
 
   submitButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700', // bold
-    fontSize: 18,
-    lineHeight: 28,
-    letterSpacing: -0.4395,
-    color: '#ffffff',
+    ...Typography.caption.button,
+    color: Colors.white[50],
   },
 
   submitButtonArrow: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.caption.button,
     fontSize: 20,
     lineHeight: 28,
-    color: '#ffffff',
+    color: Colors.white[50],
   },
 
   // ============================================
@@ -419,7 +372,7 @@ export const styles = StyleSheet.create({
   // ============================================
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(10, 10, 10, 0.5)', // Colors.black[500] with 50% opacity
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -427,7 +380,7 @@ export const styles = StyleSheet.create({
   modalContainer: {
     width: '85%',
     maxHeight: '70%',
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.white[50],
     borderRadius: 20,
     overflow: 'hidden',
   },
@@ -437,19 +390,17 @@ export const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
 
   modalTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.caption.button,
     fontSize: 18,
     lineHeight: 24,
-    letterSpacing: -0.3,
-    color: '#1a1a1a',
+    color: Colors.darkGrey[900],
     flex: 1,
   },
 
@@ -461,11 +412,8 @@ export const styles = StyleSheet.create({
   },
 
   modalCloseText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 24,
-    lineHeight: 24,
-    color: '#666666',
+    ...Typography.header.h1,
+    color: Colors.grey[500],
   },
 
   modalContent: {
@@ -474,12 +422,9 @@ export const styles = StyleSheet.create({
   },
 
   modalText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
-    fontSize: 14,
+    ...Typography.body.body6,
     lineHeight: 22,
-    letterSpacing: -0.2,
-    color: '#333333',
+    color: Colors.darkGrey[800],
   },
 
   modalSection: {
@@ -487,12 +432,8 @@ export const styles = StyleSheet.create({
   },
 
   modalSectionTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3,
-    color: '#1a1a1a',
+    ...Typography.body.body1,
+    color: Colors.darkGrey[900],
     marginBottom: 8,
   },
 });

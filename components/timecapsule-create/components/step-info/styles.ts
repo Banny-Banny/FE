@@ -7,7 +7,7 @@
  * - [x] 인라인 스타일 금지 준수
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
   // ============================================
   container: {
     flex: 1,
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
   },
 
   // ============================================
@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
   headerBorder: {
     width: '100%',
     height: 1,
-    backgroundColor: Colors.grey[500],
+    backgroundColor: Colors.grey[200],
   },
 
   backButton: {
@@ -51,20 +51,15 @@ export const styles = StyleSheet.create({
   },
 
   backButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
+    ...Typography.body.body4,
     fontSize: 20,
     color: Colors.black[500],
     includeFontPadding: false,
   },
 
   headerTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 24,
-    lineHeight: 28,
-    letterSpacing: -0.31,
-    color: Colors.black[500],
+    ...Typography.header.h1,
+    color: Colors.darkGrey[900],
   },
   scrollContent: {
     paddingTop: 32,
@@ -92,32 +87,22 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   sectionSubLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 12,
-    lineHeight: 18,
+    ...Typography.body.body10,
     color: Colors.black[500],
   },
   sectionLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.31,
-    color: Colors.black[500],
+    ...Typography.body.body1,
+    color: Colors.darkGrey[900],
   },
   sectionLabelBlack: {
     color: Colors.black[500],
   },
   sectionPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 12,
-    lineHeight: 18,
+    ...Typography.body.body10,
     color: Colors.red[500],
   },
   sectionPriceMuted: {
-    color: Colors.grey[500],
+    color: Colors.grey[400],
   },
 
   // ============================================
@@ -129,7 +114,7 @@ export const styles = StyleSheet.create({
   inputContainer: {
     backgroundColor: Colors.whiteGrey[100],
     borderWidth: 1,
-    borderColor: Colors.grey[500],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -137,18 +122,12 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   input: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
-    fontSize: 16,
-    letterSpacing: -0.31,
+    ...Typography.body.body4,
     color: Colors.black[500],
   },
   inputPlaceholder: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
-    fontSize: 16,
-    letterSpacing: -0.31,
-    color: Colors.grey[500],
+    ...Typography.body.body4,
+    color: Colors.grey[400],
   },
 
   // ============================================
@@ -158,8 +137,7 @@ export const styles = StyleSheet.create({
     gap: 16,
   },
   openDateText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '500',
+    ...Typography.body.body9,
     fontSize: 13,
     lineHeight: 19.5,
     color: Colors.grey[700],
@@ -173,9 +151,9 @@ export const styles = StyleSheet.create({
   },
   dateButton: {
     width: '48%',
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     borderWidth: 2,
-    borderColor: Colors.grey[500],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     paddingTop: 18,
     paddingBottom: 2,
@@ -193,27 +171,20 @@ export const styles = StyleSheet.create({
     elevation: 4,
   },
   dateButtonTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 21,
-    letterSpacing: -0.5,
-    color: Colors.black[500],
+    ...Typography.header.h3,
+    color: Colors.darkGrey[900],
   },
   dateButtonTitleSelected: {
     color: Colors.black[500],
   },
   dateButtonPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.body.body3,
     fontSize: 10,
     lineHeight: 15,
-    letterSpacing: 0.62,
     color: Colors.grey[500],
   },
   dateButtonPriceSelected: {
-    color: Colors.black[500],
-    opacity: 0.6,
+    color: Colors.grey[500],
   },
 
   // ============================================
@@ -237,42 +208,29 @@ export const styles = StyleSheet.create({
     gap: 4,
   },
   stepperLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
+    ...Typography.body.body1,
     color: Colors.black[500],
   },
   stepperSubLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.body.body3,
     fontSize: 11,
     lineHeight: 20,
-    letterSpacing: -0.150390625,
     color: Colors.grey[500],
   },
   stepperHint: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.150390625,
+    ...Typography.body.body6,
     color: Colors.grey[600],
     textAlign: 'right',
     marginTop: 6,
   },
   stepperSectionPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 12,
-    lineHeight: 18,
+    ...Typography.body.body10,
     color: Colors.red[500],
     textAlign: 'right',
     marginBottom: 16,
   },
   stepperContainer: {
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -290,8 +248,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepperButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.header.h5,
     fontSize: 28,
     lineHeight: 28,
     color: Colors.black[500],
@@ -302,19 +259,13 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   stepperValue: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.header.h5,
     fontSize: 28,
     lineHeight: 36,
-    letterSpacing: 0.3955078125,
     color: Colors.black[500],
   },
   stepperUnit: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
+    ...Typography.body.body1,
     color: Colors.grey[600],
   },
 
@@ -330,9 +281,9 @@ export const styles = StyleSheet.create({
   },
   optionCard: {
     flex: 1,
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.white[100],
     borderWidth: 2,
-    borderColor: Colors.grey[500],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     paddingVertical: 32,
     paddingHorizontal: 18,
@@ -348,20 +299,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   optionTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
-    color: Colors.black[500],
+    ...Typography.body.body1,
+    color: Colors.darkGrey[900],
     textAlign: 'center',
   },
   optionPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 14,
-    lineHeight: 20,
-    letterSpacing: -0.150390625,
+    ...Typography.body.body6,
     color: Colors.grey[500],
     textAlign: 'center',
   },
@@ -380,23 +323,19 @@ export const styles = StyleSheet.create({
     height: 32,
   },
   totalLabel: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.body.body1,
     fontSize: 20,
     lineHeight: 24,
-    letterSpacing: -0.3125,
     color: Colors.black[500],
   },
   totalPrice: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.header.h1,
     fontSize: 24,
     lineHeight: 32,
-    letterSpacing: 0.0703125,
     color: Colors.red[500],
   },
   submitButton: {
-    backgroundColor: Colors.black[500],
+    backgroundColor: Colors.darkGrey[900],
     borderRadius: 16,
     height: 64,
     justifyContent: 'center',
@@ -404,14 +343,9 @@ export const styles = StyleSheet.create({
   },
   submitButtonDisabled: {
     backgroundColor: Colors.grey[300],
-    opacity: 1,
   },
   submitButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 18,
-    lineHeight: 24,
-    letterSpacing: -0.3125,
+    ...Typography.caption.button,
     color: Colors.white[50],
     textAlign: 'center',
   },
@@ -421,7 +355,7 @@ export const styles = StyleSheet.create({
   // ============================================
   calendarBottomSheetOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(10, 10, 10, 0.5)', // Colors.black[500] with 50% opacity
     justifyContent: 'flex-end',
   },
   calendarBottomSheetContainer: {
@@ -441,27 +375,23 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   calendarBottomSheetTitle: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
+    ...Typography.caption.button,
     fontSize: 18,
     lineHeight: 27,
-    letterSpacing: -0.5,
-    color: Colors.black[500],
+    color: Colors.darkGrey[900],
   },
   calendarBottomSheetCloseButton: {
     padding: 8,
   },
   calendarBottomSheetCloseText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '600',
-    fontSize: 16,
+    ...Typography.body.body11,
     color: Colors.grey[600],
   },
   calendarContainer: {
     marginBottom: 20,
   },
   calendarConfirmButton: {
-    backgroundColor: Colors.black[500],
+    backgroundColor: Colors.darkGrey[900],
     borderRadius: 16,
     height: 56,
     justifyContent: 'center',
@@ -469,10 +399,7 @@ export const styles = StyleSheet.create({
     marginTop: 12,
   },
   calendarConfirmButtonText: {
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '700',
-    fontSize: 16,
-    lineHeight: 24,
+    ...Typography.body.body1,
     color: Colors.white[50],
   },
 
@@ -481,9 +408,9 @@ export const styles = StyleSheet.create({
   // ============================================
   optionCardSelected: {
     borderWidth: 2,
-    borderColor: Colors.black[500],
+    borderColor: Colors.darkGrey[900],
     backgroundColor: Colors.whiteGrey[100],
-    shadowColor: Colors.black[500],
+    shadowColor: Colors.darkGrey[900],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -493,7 +420,6 @@ export const styles = StyleSheet.create({
     color: Colors.black[500],
   },
   optionPriceSelected: {
-    color: Colors.black[500],
-    opacity: 0.7,
+    color: Colors.grey[600],
   },
 });

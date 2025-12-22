@@ -9,7 +9,7 @@
  * - [x] react-hook-form@^7.68.0 사용
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors } from '@/commons/constants/color';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -398,7 +398,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                 <TextInput
                   style={styles.input}
                   placeholder={TEXTS.capsuleName.placeholder}
-                  placeholderTextColor={Colors.grey[500]}
+                  placeholderTextColor={Colors.grey[400]}
                   value={value}
                   onChangeText={(text) => {
                     if (text.length <= MAX_CAPSULE_NAME_LENGTH) {

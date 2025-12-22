@@ -10,7 +10,7 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors } from '@/commons/constants/color';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
@@ -208,7 +208,7 @@ export default function StepRoom({ role }: StepRoomProps) {
           {/* 개봉일 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon name="calendar-line" size={16} color={Colors.grey[600]} />
+              <Icon name="calendar-line" size={16} color={Colors.grey[500]} />
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>2025.06.10</Text>
@@ -217,7 +217,7 @@ export default function StepRoom({ role }: StepRoomProps) {
           {/* 참여자 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon name="user-3-line" size={16} color={Colors.grey[600]} />
+              <Icon name="user-3-line" size={16} color={Colors.grey[500]} />
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>4명</Text>
@@ -253,7 +253,7 @@ export default function StepRoom({ role }: StepRoomProps) {
         </Text>
 
         <View style={styles.deadlineContainer}>
-          <Icon name="time-line" size={16} color={Colors.grey[600]} />
+          <Icon name="time-line" size={16} color={Colors.grey[500]} />
           <Text style={styles.deadlineText}>작성 마감: 23시간 59분 남음</Text>
         </View>
 

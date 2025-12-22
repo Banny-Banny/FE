@@ -5,6 +5,7 @@
 
 export const ROUTES = {
   // 메인 탭
+  MAIN: '/(tabs)',
   HOME: '/',
   ALARM: '/alarm',
   CALENDAR: '/calendar',
@@ -21,4 +22,3 @@ export const ROUTES = {
 
 export type RouteKey = keyof typeof ROUTES;
 export type RoutePath = (typeof ROUTES)[RouteKey];
-

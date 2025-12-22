@@ -1,9 +1,10 @@
+import { Colors } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: Colors.whiteGrey[50],
   },
   webview: {
     flex: 1,

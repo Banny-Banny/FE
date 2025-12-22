@@ -11,6 +11,7 @@
  * @see {@link ./commons/constants/fonts.ts} 폰트 토큰
  * @see {@link ./commons/constants/spacing.ts} 간격 토큰
  * @see {@link ./commons/constants/borderRadius.ts} Border Radius 토큰
+ * @see {@link ./commons/constants/typography.ts} Typography 스타일 (React Native StyleSheet용)
  */
 
 /** @type {import('tailwindcss').Config} */
@@ -26,6 +27,9 @@ const {
 } = require('./commons/constants/fonts');
 const { Spacing } = require('./commons/constants/spacing');
 const { BorderRadius } = require('./commons/constants/borderRadius');
+// Typography는 React Native StyleSheet 객체이므로 Tailwind 유틸리티로 변환하지 않음
+// 직접 import하여 사용: import { Typography } from '@/commons/constants';
+const { Typography } = require('./commons/constants/typography');
 
 // Spacing과 BorderRadius를 Tailwind 형식으로 변환 (px 단위 문자열)
 const tailwindSpacing = Object.fromEntries(
