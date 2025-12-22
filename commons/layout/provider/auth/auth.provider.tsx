@@ -9,6 +9,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { ROUTES } from '@/commons/constants/routes';
 import { User } from './types';
 
+// 개발 모드에서 인증 체크 우회 (백엔드 연결 없이 개발 시 true로 설정)
+const SKIP_AUTH_CHECK = __DEV__ && true; // true로 설정하면 인증 체크를 건너뜁니다
+
 // AsyncStorage 키 상수
 const STORAGE_KEYS = {
   ACCESS_TOKEN: '@auth/accessToken',
@@ -85,6 +88,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 인증되지 않은 사용자가 보호된 라우트에 접근할 때 로그인 페이지로 리다이렉트합니다.
    */
   useEffect(() => {
+    // 개발 모드에서 인증 체크 우회 설정이 켜져 있으면 리다이렉트하지 않음
+    if (SKIP_AUTH_CHECK) {
+      return;
+    }
+
     // 로딩 중이면 리다이렉트하지 않음
     if (isLoading) {
       return;
