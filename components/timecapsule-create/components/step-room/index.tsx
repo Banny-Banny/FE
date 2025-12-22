@@ -10,7 +10,7 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
-import { Colors } from '@/commons/constants/colors';
+import { Colors } from '@/commons/constants';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
@@ -156,7 +156,7 @@ export default function StepRoom({ role }: StepRoomProps) {
           <View
             style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
             {participant.status === 'completed' && (
-              <Icon name="checkbox-circle-fill" size={20} color={Colors.success} />
+              <Icon name="checkbox-circle-fill" size={20} color={Colors.green[500]} />
             )}
           </View>
         )}
@@ -171,7 +171,12 @@ export default function StepRoom({ role }: StepRoomProps) {
         {/* 역할 배지 */}
         <View style={[styles.roleBadge, isHost ? styles.roleBadgeHost : styles.roleBadgeGuest]}>
           {isHost && (
-            <Icon name="vip-crown-2-line" size={24} color={Colors.black} style={styles.crownIcon} />
+            <Icon
+              name="vip-crown-2-line"
+              size={24}
+              color={Colors.black[500]}
+              style={styles.crownIcon}
+            />
           )}
           <Text style={styles.roleBadgeText}>{isHost ? 'HOST' : 'GUEST'}</Text>
         </View>
@@ -180,11 +185,11 @@ export default function StepRoom({ role }: StepRoomProps) {
         <View style={styles.headerIcons}>
           {isHost && (
             <Pressable style={styles.iconButton} onPress={handleShare}>
-              <Icon name="share-line" size={24} color={Colors.black} />
+              <Icon name="share-line" size={24} color={Colors.black[500]} />
             </Pressable>
           )}
           <View style={styles.iconButton}>
-            <Icon name="close-line" size={24} color={Colors.black} />
+            <Icon name="close-line" size={24} color={Colors.black[500]} />
           </View>
         </View>
       </View>
@@ -203,7 +208,7 @@ export default function StepRoom({ role }: StepRoomProps) {
           {/* 개봉일 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon name="calendar-line" size={16} color={Colors.textSecondary} />
+              <Icon name="calendar-line" size={16} color={Colors.grey[600]} />
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>2025.06.10</Text>
@@ -212,7 +217,7 @@ export default function StepRoom({ role }: StepRoomProps) {
           {/* 참여자 */}
           <View>
             <View style={styles.infoCardDetailItem}>
-              <Icon name="user-3-line" size={16} color={Colors.textSecondary} />
+              <Icon name="user-3-line" size={16} color={Colors.grey[600]} />
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
             </View>
             <Text style={styles.infoCardDetailValue}>4명</Text>
@@ -248,7 +253,7 @@ export default function StepRoom({ role }: StepRoomProps) {
         </Text>
 
         <View style={styles.deadlineContainer}>
-          <Icon name="time-line" size={16} color={Colors.textSecondary} />
+          <Icon name="time-line" size={16} color={Colors.grey[600]} />
           <Text style={styles.deadlineText}>작성 마감: 23시간 59분 남음</Text>
         </View>
 
@@ -273,4 +278,4 @@ export default function StepRoom({ role }: StepRoomProps) {
       )}
     </ScrollView>
   );
-};
+}

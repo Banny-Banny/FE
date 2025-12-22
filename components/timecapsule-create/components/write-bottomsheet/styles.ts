@@ -246,9 +246,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAFAFA',
+    backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: Colors.white[200],
     borderRadius: 16,
     padding: Spacing.md,
   },
@@ -266,9 +266,9 @@ export const styles = StyleSheet.create({
   },
 
   mediaFileName: {
-    fontSize: Fonts.size.sm,
-    fontWeight: Fonts.weight.regular,
-    color: '#0A0A0A',
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.regular,
+    color: Colors.black.darker,
     flex: 1,
   },
 
@@ -276,7 +276,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#000000',
+    backgroundColor: Colors.black.darker,
     justifyContent: 'center',
     alignItems: 'center',
   },
