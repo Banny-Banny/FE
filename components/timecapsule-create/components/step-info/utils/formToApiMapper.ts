@@ -16,17 +16,18 @@ import type { StepInfoFormData } from '../types';
  * 프론트엔드 개봉일 옵션 인덱스를 API time_option으로 변환
  * @param optionIndex 선택된 옵션 인덱스 (0: 1주일, 1: 1년, 2: 3년, 3: 직접선택)
  * @returns API time_option 값
+ * @note 3년 후(인덱스 2)는 CUSTOM으로 전송하며 custom_open_at에 계산된 날짜를 포함
  */
 function mapDateOptionToTimeOption(
   optionIndex: number,
-): '1_WEEK' | '1_MONTH' | '1_YEAR' | '3_YEAR' | 'CUSTOM' {
+): '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM' {
   const optionMap: Record<
     number,
-    '1_WEEK' | '1_MONTH' | '1_YEAR' | '3_YEAR' | 'CUSTOM'
+    '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM'
   > = {
     0: '1_WEEK', // 1주일 후
     1: '1_YEAR', // 1년 후
-    2: '3_YEAR', // 3년 후
+    2: 'CUSTOM', // 3년 후 (CUSTOM으로 전송)
     3: 'CUSTOM', // 직접 선택
   };
 
@@ -72,8 +73,14 @@ export function mapFormToApiRequest(
   };
 
   // CUSTOM 옵션인 경우 custom_open_at 추가
-  if (timeOption === 'CUSTOM' && formData.selectedDate) {
-    apiRequest.custom_open_at = formatDateToISO(formData.selectedDate);
+  if (timeOption === 'CUSTOM') {
+    if (formData.selectedDateOptionIndex === 2) {
+      // "3년 후" 옵션: 오늘 + 3년 계산
+      apiRequest.custom_open_at = dayjs().add(3, 'year').toISOString();
+    } else if (formData.selectedDate) {
+      // "직접 선택" 옵션: 선택된 날짜 사용
+      apiRequest.custom_open_at = formatDateToISO(formData.selectedDate);
+    }
   }
 
   return apiRequest;

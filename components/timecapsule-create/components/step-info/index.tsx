@@ -36,6 +36,7 @@ import {
 } from './constants';
 import { useDateSelection } from './hooks/useDateSelection';
 import { usePriceCalculation } from './hooks/usePriceCalculation';
+import { useCreateOrder } from './hooks/useCreateOrder';
 import { styles } from './styles';
 
 // ============================================
@@ -189,6 +190,9 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
     formValues.selectedOptions,
   );
 
+  /** 주문 생성 Hook */
+  const { isLoading, error, submitOrder } = useCreateOrder();
+
   // ============================================
   // 바텀시트 애니메이션
   // ============================================
@@ -229,6 +233,16 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
       ]).start();
     }
   }, [isCalendarVisible, fadeAnim, slideAnim]);
+
+  // ============================================
+  // 에러 Alert 처리
+  // ============================================
+
+  useEffect(() => {
+    if (error) {
+      Alert.alert('주문 생성 실패', error);
+    }
+  }, [error]);
 
   // ============================================
   // 이벤트 핸들러 (setValue 기반)
@@ -312,19 +326,25 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
 
   /** 결제하기 버튼 핸들러 */
   const onFormSubmit = useCallback(
-    (data: StepInfoFormData) => {
-      // 부모 컴포넌트로 전달
-      if (onSubmit) {
-        onSubmit({
-          ...data,
-          totalPrice,
-        });
-      } else {
-        // 임시: 콘솔에 출력
-        Alert.alert('제출 완료', `총 결제금액: ${formatPrice(totalPrice)}`);
+    async (data: StepInfoFormData) => {
+      try {
+        // 주문 생성 API 호출
+        const orderResponse = await submitOrder(data);
+
+        // 성공 시 부모 컴포넌트로 전달
+        if (onSubmit) {
+          onSubmit({
+            ...data,
+            totalPrice,
+            orderData: orderResponse,
+          });
+        }
+      } catch (err) {
+        // 에러는 Hook에서 처리되며 error 상태로 저장됨
+        console.error('주문 생성 실패:', err);
       }
     },
-    [onSubmit, totalPrice],
+    [submitOrder, onSubmit, totalPrice],
   );
 
   // ============================================
@@ -564,12 +584,14 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
             <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.submitButton, !isValid && styles.submitButtonDisabled]}
+            style={[styles.submitButton, (!isValid || isLoading) && styles.submitButtonDisabled]}
             onPress={handleSubmit(onFormSubmit)}
-            disabled={!isValid}
+            disabled={!isValid || isLoading}
             accessibilityRole="button"
             accessibilityLabel={TEXTS.footer.submitButton}>
-            <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
+            <Text style={styles.submitButtonText}>
+              {isLoading ? '처리 중...' : TEXTS.footer.submitButton}
+            </Text>
           </TouchableOpacity>
         </View>
 

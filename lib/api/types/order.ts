@@ -2,7 +2,18 @@
  * lib/api/types/order.ts
  * 타임캡슐 주문 API 타입 정의
  * 생성 시각: 2024-12-18
+ * 수정 시각: 2024-12-19 (TimeOption 타입 추가)
  */
+
+// ============================================
+// 개봉일 옵션 타입
+// ============================================
+
+/**
+ * 개봉일 옵션 (API 형식)
+ * 주의: "3년 후"는 CUSTOM으로 전송하며 custom_open_at에 계산된 날짜를 포함
+ */
+export type TimeOption = '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM';
 
 // ============================================
 // API 요청 타입
@@ -15,7 +26,7 @@ export interface CreateOrderRequest {
   /** 상품 ID (UUID) */
   product_id: string;
   /** 개봉 시간 옵션 */
-  time_option: '1_WEEK' | '1_MONTH' | '1_YEAR' | '3_YEAR' | 'CUSTOM';
+  time_option: TimeOption;
   /** 직접 선택한 개봉일 (ISO 8601 형식) */
   custom_open_at?: string;
   /** 인원 수 (1~10) */
