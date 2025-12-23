@@ -15,6 +15,7 @@ import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Modal,
@@ -34,6 +35,7 @@ import {
   MIN_PERSONNEL,
   MIN_STORAGE,
 } from './constants';
+import { useCreateOrder } from './hooks/useCreateOrder';
 import { useDateSelection } from './hooks/useDateSelection';
 import { usePriceCalculation } from './hooks/usePriceCalculation';
 import { styles } from './styles';
@@ -159,6 +161,13 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // ============================================
+  // 백엔드 API Hook
+  // ============================================
+
+  /** 주문 생성 Hook */
+  const { isLoading, error, submitOrder, clearError } = useCreateOrder();
+
+  // ============================================
   // 폼 값 watch (Custom Hooks 통합을 위해)
   // ============================================
 
@@ -181,7 +190,11 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
     handleCalendarClose,
   } = useDateSelection(initialData);
 
-  /** 가격 계산 Hook */
+  /**
+   * UI 표시용 예상 가격 Hook
+   * ⚠️ 주의: 이 값은 사용자에게 보여주는 "예상 금액"일 뿐입니다.
+   * 실제 결제 금액은 백엔드 API(submitOrder)의 응답(orderData.total_amount)을 사용합니다.
+   */
   const { personnelPrice, storagePrice, optionsPrice, totalPrice } = usePriceCalculation(
     datePrice,
     formValues.personnelCount,
@@ -307,24 +320,54 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   }, [handleCalendarClose]);
 
   // ============================================
+  // 에러 클리어 (컴포넌트 언마운트 시)
+  // ============================================
+
+  useEffect(() => {
+    return () => {
+      if (error) {
+        clearError();
+      }
+    };
+  }, [error, clearError]);
+
+  // ============================================
   // 폼 제출 핸들러 (handleSubmit 사용)
   // ============================================
 
   /** 결제하기 버튼 핸들러 */
   const onFormSubmit = useCallback(
-    (data: StepInfoFormData) => {
-      // 부모 컴포넌트로 전달
-      if (onSubmit) {
-        onSubmit({
-          ...data,
-          totalPrice,
-        });
-      } else {
-        // 임시: 콘솔에 출력
-        Alert.alert('제출 완료', `총 결제금액: ${formatPrice(totalPrice)}`);
+    async (data: StepInfoFormData) => {
+      try {
+        console.log('🚀 [StepInfo] 주문 생성 시작!');
+        console.log('📦 [StepInfo] 폼 데이터:', data);
+
+        // 1단계: 백엔드 API 호출하여 주문 생성
+        // ⚠️ 중요: 여기서 백엔드가 실제 결제 금액을 계산합니다!
+        const orderData = await submitOrder(data);
+
+        console.log('✅ [StepInfo] 주문 생성 성공!');
+        console.log('📦 [StepInfo] 주문 데이터:', orderData);
+        console.log('💰 [StepInfo] 백엔드 계산 금액:', orderData.total_amount);
+
+        // 2단계: 부모 컴포넌트로 전달 (폼 데이터 + 백엔드 응답)
+        // ⚠️ totalPrice는 UI 표시용이었으며, 실제 금액은 orderData.total_amount입니다.
+        if (onSubmit) {
+          onSubmit({
+            ...data,
+            orderData, // 백엔드 응답 (실제 결제 금액 포함)
+            totalPrice, // UI 표시용 (참고용)
+          });
+        }
+      } catch (err) {
+        console.error('❌ [StepInfo] 주문 생성 실패:', err);
+
+        // 에러 메시지 표시
+        const errorMessage = err instanceof Error ? err.message : '주문 생성에 실패했습니다';
+        Alert.alert('주문 생성 실패', errorMessage);
       }
     },
-    [onSubmit, totalPrice],
+    [onSubmit, totalPrice, submitOrder],
   );
 
   // ============================================
@@ -343,6 +386,35 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* 로딩 오버레이 */}
+      {isLoading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 24,
+              borderRadius: 12,
+              alignItems: 'center',
+            }}>
+            <ActivityIndicator size="large" color={Colors.black[500]} />
+            <Text style={{ marginTop: 16, fontSize: 16, color: Colors.black[500] }}>
+              주문을 생성하는 중...
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerContainer}>
@@ -378,7 +450,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                 <TextInput
                   style={styles.input}
                   placeholder={TEXTS.capsuleName.placeholder}
-                  placeholderTextColor={Colors.textDisabled}
+                  placeholderTextColor={Colors.grey[500]}
                   value={value}
                   onChangeText={(text) => {
                     if (text.length <= MAX_CAPSULE_NAME_LENGTH) {
@@ -540,7 +612,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                         <Icon
                           name={index === 0 ? ICONS.music : ICONS.video}
                           size={24}
-                          color={isSelected ? Colors.black : Colors.gray500}
+                          color={isSelected ? Colors.black[500] : Colors.grey[500]}
                         />
                       </View>
                       <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
@@ -564,12 +636,14 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
             <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
           </View>
           <TouchableOpacity
-            style={[styles.submitButton, !isValid && styles.submitButtonDisabled]}
+            style={[styles.submitButton, (!isValid || isLoading) && styles.submitButtonDisabled]}
             onPress={handleSubmit(onFormSubmit)}
-            disabled={!isValid}
+            disabled={!isValid || isLoading}
             accessibilityRole="button"
             accessibilityLabel={TEXTS.footer.submitButton}>
-            <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
+            <Text style={styles.submitButtonText}>
+              {isLoading ? '처리 중...' : TEXTS.footer.submitButton}
+            </Text>
           </TouchableOpacity>
         </View>
 

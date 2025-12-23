@@ -331,14 +331,11 @@ export const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.darkGrey[900], // 기본 색상: 진한 회색/검정
   },
 
   submitButtonDisabled: {
     backgroundColor: Colors.grey[400],
-  },
-
-  submitButtonEnabled: {
-    backgroundColor: Colors.blue[500],
   },
 
   submitButtonText: {

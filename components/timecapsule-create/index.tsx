@@ -22,12 +22,20 @@ export default function TimeCapsuleCreate() {
 
   // 1단계: 타임캡슐 정보 입력
   if (step === 1) {
-    const handleSubmit = (data: { orderData: CreateOrderResponse } & StepInfoFormData) => {
-      console.log('✅ 1단계 완료! 폼 데이터:', data);
-      console.log('📦 백엔드 주문 데이터:', data.orderData);
+    const handleSubmit = (data: any) => {
+      console.log('✅ [TimeCapsuleCreate] 1단계 완료!');
+      console.log('📦 [TimeCapsuleCreate] 전체 데이터:', data);
+      console.log('📦 [TimeCapsuleCreate] orderData:', data.orderData);
+
+      if (!data.orderData) {
+        console.error('❌ [TimeCapsuleCreate] orderData가 없습니다!');
+        return;
+      }
 
       setStepInfoData(data); // formData 저장
       setOrderData(data.orderData); // 백엔드 응답 저장
+
+      console.log('🚀 [TimeCapsuleCreate] 2단계로 이동!');
       setStep(2); // 2단계로 이동
     };
 
@@ -42,14 +50,26 @@ export default function TimeCapsuleCreate() {
   }
 
   // 2단계: 결제
-  if (step === 2 && stepInfoData && orderData) {
+  if (step === 2) {
+    console.log('🎯 [TimeCapsuleCreate] 2단계 렌더링!');
+    console.log('📦 [TimeCapsuleCreate] stepInfoData:', stepInfoData);
+    console.log('📦 [TimeCapsuleCreate] orderData:', orderData);
+
+    if (!stepInfoData || !orderData) {
+      console.error('❌ [TimeCapsuleCreate] 필수 데이터가 없습니다!');
+      return null;
+    }
+
     return (
       <StepPayment
         formData={stepInfoData} // 1단계 폼 데이터 전달
         orderData={orderData} // 백엔드 주문 데이터 전달
-        onBack={() => setStep(1)} // 1단계로 돌아가기
+        onBack={() => {
+          console.log('🔙 [TimeCapsuleCreate] 1단계로 돌아가기');
+          setStep(1);
+        }}
         onSubmit={(paymentData) => {
-          console.log('✅ 결제 완료:', paymentData);
+          console.log('✅ [TimeCapsuleCreate] 결제 완료:', paymentData);
           setStep(3); // 3단계로 이동
         }}
       />
@@ -62,7 +82,16 @@ export default function TimeCapsuleCreate() {
     // 현재는 임시로 호스트로 설정
     const userRole: 'host' | 'guest' = 'host';
 
-    return <StepRoom role={userRole} />;
+    return (
+      <StepRoom
+        role={userRole}
+        onSubmit={() => {
+          console.log('✅ [TimeCapsuleCreate] 타임캡슐 제출 완료!');
+          // TODO: 메인 화면으로 이동 또는 완료 페이지로 이동
+          navigation.back();
+        }}
+      />
+    );
   }
 
   return null;

@@ -12,14 +12,16 @@
 
 import { Colors } from '@/commons/constants/color';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
+import ConfirmModal from '../confirm-modal';
 import UserBottomSheet from '../write-bottomsheet';
 import { styles } from './styles';
 
 // Props 인터페이스 정의
 interface StepRoomProps {
   role: 'host' | 'guest';
+  onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
 }
 
 // 참여자 데이터 타입
@@ -62,13 +64,17 @@ const mockParticipants: Participant[] = [
   },
 ];
 
-export default function StepRoom({ role }: StepRoomProps) {
+export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   // 호스트 여부 확인
   const isHost = role === 'host';
 
   // 바텀시트 상태 관리
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+
+  // 모달 상태 관리
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false); // 1단계: 정말 묻겠습니까?
+  const [showSubmitCompleteModal, setShowSubmitCompleteModal] = useState(false); // 2단계: 묻었습니다!
 
   // 공유 기능
   const handleShare = async () => {
@@ -257,13 +263,20 @@ export default function StepRoom({ role }: StepRoomProps) {
           <Text style={styles.deadlineText}>작성 마감: 23시간 59분 남음</Text>
         </View>
 
-        {/* 타임캡슐 묻기 버튼 (호스트만) */}
+        {/* 타임캡슐 묻기 버튼 (호스트만, 테스트용: 항상 활성화) */}
         {isHost && (
           <View style={styles.buttonSection}>
-            <View style={[styles.submitButton, styles.submitButtonDisabled]}>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={() => {
+                console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
+                setShowSubmitConfirmModal(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="타임캡슐 묻기">
               <Text style={styles.submitButtonText}>타임캡슐 묻기</Text>
-            </View>
-            <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
+            </TouchableOpacity>
+            <Text style={styles.buttonHint}>테스트용: 버튼 활성화됨</Text>
           </View>
         )}
       </View>
@@ -276,6 +289,43 @@ export default function StepRoom({ role }: StepRoomProps) {
           participant={selectedParticipant}
         />
       )}
+
+      {/* 1단계 모달: 정말 묻겠습니까? (SUBMIT_CONFIRM) */}
+      <ConfirmModal
+        visible={showSubmitConfirmModal}
+        type="SUBMIT_CONFIRM"
+        onConfirm={() => {
+          console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
+          setShowSubmitConfirmModal(false);
+          // 2단계 모달 표시
+          setShowSubmitCompleteModal(true);
+        }}
+        onCancel={() => {
+          console.log('❌ [StepRoom] 타임캡슐 묻기 취소!');
+          setShowSubmitConfirmModal(false);
+        }}
+        onClose={() => setShowSubmitConfirmModal(false)}
+      />
+
+      {/* 2단계 모달: 제출 완료! (SUBMIT_COMPLETE) */}
+      <ConfirmModal
+        visible={showSubmitCompleteModal}
+        type="SUBMIT_COMPLETE"
+        onConfirm={() => {
+          console.log('✅ [StepRoom] 제출 완료 모달 확인!');
+          setShowSubmitCompleteModal(false);
+          if (onSubmit) {
+            onSubmit();
+          }
+        }}
+        onClose={() => setShowSubmitCompleteModal(false)}
+        data={{
+          capsuleName: 'ㅋ',
+          openDate: '2025.06.10',
+          dDay: 169,
+          participantCount: 4,
+        }}
+      />
     </ScrollView>
   );
 }
