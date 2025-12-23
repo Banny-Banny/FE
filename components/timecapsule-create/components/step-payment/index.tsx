@@ -14,6 +14,7 @@ import React, { useCallback, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmModal from '../confirm-modal';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
 import { styles } from './styles';
@@ -138,6 +139,9 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
   // Hooks
   // ============================================
 
+  /** 모달 제어 Hook */
+  const { openModal, closeModal } = useModal();
+
   /** 약관 동의 및 검증 Hook */
   const { allAgreed, agreements, isPaymentEnabled, handleAllAgreeToggle, handleAgreementToggle } =
     usePaymentValidation();
@@ -147,9 +151,6 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
 
   /** 약관 상세 모달 상태 */
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
-
-  /** 결제 완료 모달 상태 (테스트용) */
-  const [showPaymentCompleteModal, setShowPaymentCompleteModal] = useState(false);
 
   // ============================================
   // 이벤트 핸들러
@@ -180,14 +181,14 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
   /** 결제 완료 모달 확인 핸들러 */
   const handlePaymentCompleteConfirm = useCallback(() => {
     console.log('✅ [StepPayment] 결제 완료 모달 확인 버튼 클릭!');
-    setShowPaymentCompleteModal(false);
+    closeModal();
 
     // 다음 단계로 이동 (onSubmit 호출)
     if (onSubmit) {
       console.log('✅ [StepPayment] onSubmit 호출!');
       onSubmit(orderSummary);
     }
-  }, [onSubmit, orderSummary]);
+  }, [closeModal, onSubmit, orderSummary]);
 
   /** 결제하기 버튼 핸들러 (테스트용: 약관 검증 제거, 바로 모달 표시) */
   const handleSubmitPress = useCallback(() => {
@@ -201,8 +202,18 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
 
     // 테스트용: 바로 결제 완료 모달 표시
     console.log('💳 [StepPayment] 결제 완료 모달 표시!');
-    setShowPaymentCompleteModal(true);
-  }, []);
+    openModal({
+      width: 344,
+      height: 'auto',
+      closeOnBackdropPress: true,
+      children: (
+        <ConfirmModal
+          type="PAYMENT_COMPLETE"
+          onConfirm={handlePaymentCompleteConfirm}
+        />
+      ),
+    });
+  }, [openModal, handlePaymentCompleteConfirm]);
 
   // ============================================
   // 렌더링
@@ -370,14 +381,6 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
-
-      {/* 결제 완료 모달 (테스트용) */}
-      <ConfirmModal
-        visible={showPaymentCompleteModal}
-        type="PAYMENT_COMPLETE"
-        onConfirm={handlePaymentCompleteConfirm}
-        onClose={() => setShowPaymentCompleteModal(false)}
-      />
     </SafeAreaView>
   );
 }

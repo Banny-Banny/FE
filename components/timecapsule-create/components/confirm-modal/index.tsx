@@ -3,26 +3,23 @@
  * ConfirmModal 컴포넌트 구현
  *
  * @description
- * - 타임캡슐 생성 플로우에서 사용되는 재사용 가능한 확인(Confirm) 모달
+ * - 타임캡슐 생성 플로우에서 사용되는 재사용 가능한 확인(Confirm) 모달 내용
  * - 3가지 타입: PAYMENT_COMPLETE, SUBMIT_CONFIRM, SUBMIT_COMPLETE
- * - 공통 Modal 컴포넌트 사용
+ * - ModalProvider와 함께 사용
  * - react-native-remix-icon 사용
  */
 
 import React, { useCallback, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import Modal from '@/commons/components/modal';
 import Icon from 'react-native-remix-icon';
 import { ConfirmModalProps } from './types';
 import { MODAL_CONTENTS } from './constants';
 import { styles } from './styles';
 
 export default function ConfirmModal({
-  visible,
   type,
   onConfirm,
   onCancel,
-  onClose,
   data,
 }: ConfirmModalProps) {
   // type에 따라 constants에서 설정 가져오기
@@ -39,13 +36,6 @@ export default function ConfirmModal({
       onCancel();
     }
   }, [onCancel]);
-
-  // 모달 닫기 핸들러
-  const handleClose = useCallback(() => {
-    if (config.closeOnBackdropPress && onClose) {
-      onClose();
-    }
-  }, [config.closeOnBackdropPress, onClose]);
 
   /**
    * SUBMIT_COMPLETE 타입에서 정보 카드 렌더링
@@ -66,7 +56,7 @@ export default function ConfirmModal({
         {data.openDate && (
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
-              <Icon name="ri-calendar-2-fill" size={16} color="#999" />
+              <Icon name="calendar-2-fill" size={16} color="#999" />
               <Text style={styles.infoLabel}>오픈일</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -87,7 +77,7 @@ export default function ConfirmModal({
         {data.participantCount !== undefined && (
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
-              <Icon name="ri-group-fill" size={16} color="#999" />
+              <Icon name="group-fill" size={16} color="#999" />
               <Text style={styles.infoLabel}>참여 인원</Text>
             </View>
             <Text style={styles.infoValue}>{data.participantCount}명</Text>
@@ -98,14 +88,7 @@ export default function ConfirmModal({
   };
 
   return (
-    <Modal
-      visible={visible}
-      onClose={handleClose}
-      width={config.width}
-      height={config.height}
-      closeOnBackdropPress={config.closeOnBackdropPress}
-    >
-      <View style={styles.container}>
+    <View style={styles.container}>
         {/* 아이콘 영역 */}
         <View
           style={[
@@ -169,6 +152,5 @@ export default function ConfirmModal({
           )}
         </View>
       </View>
-    </Modal>
   );
 }

@@ -15,6 +15,7 @@ import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import ConfirmModal from '../confirm-modal';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import UserBottomSheet from '../write-bottomsheet';
 import { styles } from './styles';
 
@@ -68,13 +69,12 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   // 호스트 여부 확인
   const isHost = role === 'host';
 
+  // 모달 제어 Hook
+  const { openModal, closeModal } = useModal();
+
   // 바텀시트 상태 관리
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
-
-  // 모달 상태 관리
-  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false); // 1단계: 정말 묻겠습니까?
-  const [showSubmitCompleteModal, setShowSubmitCompleteModal] = useState(false); // 2단계: 묻었습니다!
 
   // 공유 기능
   const handleShare = async () => {
@@ -270,7 +270,49 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
               style={styles.submitButton}
               onPress={() => {
                 console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
-                setShowSubmitConfirmModal(true);
+                // 1단계: 정말 묻겠습니까?
+                openModal({
+                  width: 344,
+                  height: 'auto',
+                  closeOnBackdropPress: false,
+                  children: (
+                    <ConfirmModal
+                      type="SUBMIT_CONFIRM"
+                      onConfirm={() => {
+                        console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
+                        closeModal();
+                        // 2단계: 제출 완료!
+                        openModal({
+                          width: 344,
+                          height: 'auto',
+                          closeOnBackdropPress: true,
+                          children: (
+                            <ConfirmModal
+                              type="SUBMIT_COMPLETE"
+                              onConfirm={() => {
+                                console.log('✅ [StepRoom] 제출 완료 모달 확인!');
+                                closeModal();
+                                if (onSubmit) {
+                                  onSubmit();
+                                }
+                              }}
+                              data={{
+                                capsuleName: 'ㅋ',
+                                openDate: '2025.06.10',
+                                dDay: 169,
+                                participantCount: 4,
+                              }}
+                            />
+                          ),
+                        });
+                      }}
+                      onCancel={() => {
+                        console.log('❌ [StepRoom] 타임캡슐 묻기 취소!');
+                        closeModal();
+                      }}
+                    />
+                  ),
+                });
               }}
               accessibilityRole="button"
               accessibilityLabel="타임캡슐 묻기">
@@ -289,43 +331,6 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
           participant={selectedParticipant}
         />
       )}
-
-      {/* 1단계 모달: 정말 묻겠습니까? (SUBMIT_CONFIRM) */}
-      <ConfirmModal
-        visible={showSubmitConfirmModal}
-        type="SUBMIT_CONFIRM"
-        onConfirm={() => {
-          console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
-          setShowSubmitConfirmModal(false);
-          // 2단계 모달 표시
-          setShowSubmitCompleteModal(true);
-        }}
-        onCancel={() => {
-          console.log('❌ [StepRoom] 타임캡슐 묻기 취소!');
-          setShowSubmitConfirmModal(false);
-        }}
-        onClose={() => setShowSubmitConfirmModal(false)}
-      />
-
-      {/* 2단계 모달: 제출 완료! (SUBMIT_COMPLETE) */}
-      <ConfirmModal
-        visible={showSubmitCompleteModal}
-        type="SUBMIT_COMPLETE"
-        onConfirm={() => {
-          console.log('✅ [StepRoom] 제출 완료 모달 확인!');
-          setShowSubmitCompleteModal(false);
-          if (onSubmit) {
-            onSubmit();
-          }
-        }}
-        onClose={() => setShowSubmitCompleteModal(false)}
-        data={{
-          capsuleName: 'ㅋ',
-          openDate: '2025.06.10',
-          dDay: 169,
-          participantCount: 4,
-        }}
-      />
     </ScrollView>
   );
 }

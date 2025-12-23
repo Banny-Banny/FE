@@ -15,16 +15,12 @@ export type ConfirmModalType = 'PAYMENT_COMPLETE' | 'SUBMIT_CONFIRM' | 'SUBMIT_C
  * ConfirmModal 컴포넌트 Props
  */
 export interface ConfirmModalProps {
-  /** 모달 표시 여부 */
-  visible: boolean;
   /** 모달 타입 (3가지 중 선택) */
   type: ConfirmModalType;
   /** 확인 버튼 클릭 시 콜백 */
   onConfirm: () => void;
   /** 취소 버튼 클릭 시 콜백 (SUBMIT_CONFIRM 타입에서만 사용) */
   onCancel?: () => void;
-  /** 모달 닫기 콜백 (backdrop 클릭 또는 기타 닫기 이벤트) */
-  onClose?: () => void;
   /** 추가 데이터 (SUBMIT_COMPLETE에서 개봉일, 참여인원 표시용) */
   data?: {
     openDate?: string; // 개봉일 (예: "2026년 1월 16일")

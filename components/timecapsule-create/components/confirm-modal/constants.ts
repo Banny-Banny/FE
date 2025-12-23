@@ -26,8 +26,9 @@ export const MODAL_CONTENTS = {
    */
   PAYMENT_COMPLETE: {
     title: '결제가 완료되었습니다!',
+    subtitle: undefined,
     description: '',
-    iconName: 'ri-bank-card-2-fill' as const, // 카드 결제 아이콘
+    iconName: 'bank-card-2-fill' as const, // 카드 결제 아이콘
     iconColor: Colors.black[500], // 피그마: #0a0a0a (검정 아이콘)
     iconBackgroundColor: Colors.grey[50], // 피그마: #f5f5f5 (회색 배경)
     confirmText: '확인',
@@ -44,8 +45,9 @@ export const MODAL_CONTENTS = {
    */
   SUBMIT_CONFIRM: {
     title: '이대로 타임캡슐을 묻을까요?',
+    subtitle: undefined,
     description: '한 번 닫힌 타임캡슐은 수정할 수 없어요',
-    iconName: 'ri-error-warning-fill' as const, // 경고 아이콘
+    iconName: 'error-warning-fill' as const, // 경고 아이콘
     iconColor: Colors.red[500], // 피그마: 경고 색상
     iconBackgroundColor: Colors.grey[50], // 피그마: #f5f5f5
     confirmText: '묻기',
@@ -65,7 +67,7 @@ export const MODAL_CONTENTS = {
     title: '타임캡슐이',
     subtitle: '성공적으로 묻혔습니다!',
     description: '',
-    iconName: 'ri-archive-fill' as const, // 캡슐/보관함 아이콘
+    iconName: 'archive-fill' as const, // 캡슐/보관함 아이콘
     iconColor: Colors.black[500], // 피그마: #0a0a0a
     iconBackgroundColor: Colors.grey[50], // 피그마: #f5f5f5
     confirmText: '확인',
