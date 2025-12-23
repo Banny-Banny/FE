@@ -1,34 +1,30 @@
 /**
  * step-info/hooks/usePriceCalculation.ts
  * 생성 시각: 2024-12-16
+ * 수정 시각: 2024-12-23 (백엔드 계산 로직에 맞게 수정)
  * 가격 계산 Hook
  */
 
 import { useMemo } from 'react';
-import {
-  PERSONNEL_UNIT_PRICE,
-  STORAGE_UNIT_PRICE,
-  ADDITIONAL_OPTIONS,
-} from '../constants';
+import { PHOTO_PRICE, MUSIC_PRICE, VIDEO_PRICE } from '../constants';
 import type { AdditionalOptionsState, UsePriceCalculationReturn } from '../types';
 
+const BASE_PRICE = 1000; // 기본 금액
+
 /**
- * 전체 가격 계산 Hook
+ * 전체 가격 계산 Hook (백엔드 로직 기반)
  *
- * @param datePrice 개봉일 금액
+ * @param datePrice 개봉일 금액 (현재 미사용, 추후 백엔드 추가 예정)
  * @param personnelCount 인원 수
  * @param storageCount 이미지 슬롯 수
  * @param selectedOptions 선택된 추가 옵션
  * @returns {UsePriceCalculationReturn} 계산된 가격 정보
  *
- * @example
- * const {
- *   personnelPrice,
- *   storagePrice,
- *   optionsPrice,
- *   totalPrice,
- *   priceBreakdown
- * } = usePriceCalculation(datePrice, personnelCount, storageCount, selectedOptions);
+ * 백엔드 계산 로직:
+ * - 기본: 1000원
+ * - 사진: photo_count × 500
+ * - 음악: headcount × 1000 (선택 시)
+ * - 비디오: headcount × 2000 (선택 시)
  */
 export const usePriceCalculation = (
   datePrice: number,
@@ -37,36 +33,44 @@ export const usePriceCalculation = (
   selectedOptions: AdditionalOptionsState
 ): UsePriceCalculationReturn => {
   // ============================================
-  // 인원 금액 계산 (useMemo로 최적화)
+  // 인원 금액 (백엔드에서는 별도 인원 요금 없음)
   // ============================================
 
-  const personnelPrice = useMemo(() => {
-    return calculatePersonnelPrice(personnelCount);
-  }, [personnelCount]);
+  const personnelPrice = 0;
 
   // ============================================
-  // 이미지 슬롯 금액 계산 (useMemo로 최적화)
+  // 이미지 슬롯 금액 계산
   // ============================================
 
   const storagePrice = useMemo(() => {
-    return calculateStoragePrice(storageCount);
+    return storageCount * PHOTO_PRICE;
   }, [storageCount]);
 
   // ============================================
-  // 추가 옵션 금액 계산 (useMemo로 최적화)
+  // 추가 옵션 금액 계산 (인원수 × 단가)
   // ============================================
 
   const optionsPrice = useMemo(() => {
-    return calculateOptionsPrice(selectedOptions);
-  }, [selectedOptions]);
+    let total = 0;
+
+    if (selectedOptions.music) {
+      total += personnelCount * MUSIC_PRICE;
+    }
+
+    if (selectedOptions.video) {
+      total += personnelCount * VIDEO_PRICE;
+    }
+
+    return total;
+  }, [selectedOptions, personnelCount]);
 
   // ============================================
-  // 총 금액 계산 (useMemo로 최적화)
+  // 총 금액 계산
   // ============================================
 
   const totalPrice = useMemo(() => {
-    return datePrice + personnelPrice + storagePrice + optionsPrice;
-  }, [datePrice, personnelPrice, storagePrice, optionsPrice]);
+    return BASE_PRICE + storagePrice + optionsPrice;
+  }, [storagePrice, optionsPrice]);
 
   // ============================================
   // 가격 상세 내역
@@ -74,13 +78,13 @@ export const usePriceCalculation = (
 
   const priceBreakdown = useMemo(
     () => ({
-      datePrice,
-      personnelPrice,
+      datePrice: 0, // 현재 개봉일 요금 없음
+      personnelPrice: 0, // 백엔드에 인원 요금 없음
       storagePrice,
       optionsPrice,
       totalPrice,
     }),
-    [datePrice, personnelPrice, storagePrice, optionsPrice, totalPrice]
+    [storagePrice, optionsPrice, totalPrice]
   );
 
   // ============================================
@@ -97,16 +101,15 @@ export const usePriceCalculation = (
 };
 
 // ============================================
-// 유틸리티 함수
+// 유틸리티 함수 (하위 호환성 유지)
 // ============================================
 
 /**
- * 인원 금액 계산
- * @param count 인원 수
- * @returns 계산된 인원 금액
+ * 인원 금액 계산 (현재 사용 안 함)
+ * @deprecated 백엔드에 인원 요금이 없어 항상 0 반환
  */
 export const calculatePersonnelPrice = (count: number): number => {
-  return count * PERSONNEL_UNIT_PRICE;
+  return 0;
 };
 
 /**
@@ -115,25 +118,27 @@ export const calculatePersonnelPrice = (count: number): number => {
  * @returns 계산된 슬롯 금액
  */
 export const calculateStoragePrice = (count: number): number => {
-  return count * STORAGE_UNIT_PRICE;
+  return count * PHOTO_PRICE;
 };
 
 /**
- * 추가 옵션 금액 계산
+ * 추가 옵션 금액 계산 (인원수 곱하기)
  * @param selectedOptions 선택된 옵션 상태
+ * @param personnelCount 인원 수
  * @returns 계산된 옵션 금액
  */
 export const calculateOptionsPrice = (
-  selectedOptions: AdditionalOptionsState
+  selectedOptions: AdditionalOptionsState,
+  personnelCount: number
 ): number => {
   let total = 0;
 
   if (selectedOptions.music) {
-    total += ADDITIONAL_OPTIONS.MUSIC.price;
+    total += personnelCount * MUSIC_PRICE;
   }
 
   if (selectedOptions.video) {
-    total += ADDITIONAL_OPTIONS.VIDEO.price;
+    total += personnelCount * VIDEO_PRICE;
   }
 
   return total;

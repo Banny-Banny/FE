@@ -6,6 +6,7 @@
 import { useNavigation } from '@/commons/hooks';
 import React, { useState } from 'react';
 import StepInfo from './components/step-info';
+import { CreateOrderResponse } from './components/step-info/api/types/order';
 import { StepInfoFormData } from './components/step-info/types';
 import { mapFormToApiRequest } from './components/step-info/utils/formToApiMapper';
 import StepPayment from './components/step-payment';
@@ -15,27 +16,18 @@ export default function TimeCapsuleCreate() {
   const navigation = useNavigation();
   const [step, setStep] = useState(1);
   const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(null);
+  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
 
   console.log('🎯 TimeCapsuleCreate 렌더링! step:', step);
 
   // 1단계: 타임캡슐 정보 입력
   if (step === 1) {
-    const handleSubmit = (formData: StepInfoFormData) => {
-      console.log('✅ 1단계 완료 (원본 폼 데이터):', formData);
+    const handleSubmit = (data: { orderData: CreateOrderResponse } & StepInfoFormData) => {
+      console.log('✅ 1단계 완료! 폼 데이터:', data);
+      console.log('📦 백엔드 주문 데이터:', data.orderData);
 
-      // 환경변수에서 product_id 가져오기
-      const productId =
-        process.env.EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID ||
-        '550e8400-e29b-41d4-a716-446655440000';
-
-      // API 요청 형식으로 변환
-      const apiRequestData = mapFormToApiRequest(formData, productId);
-
-      // 변환된 API 요청 데이터 콘솔 출력
-      console.log('📤 API 요청 형식으로 변환된 데이터:');
-      console.log(JSON.stringify(apiRequestData, null, 2));
-
-      setStepInfoData(formData); // formData 저장
+      setStepInfoData(data); // formData 저장
+      setOrderData(data.orderData); // 백엔드 응답 저장
       setStep(2); // 2단계로 이동
     };
 
@@ -50,13 +42,14 @@ export default function TimeCapsuleCreate() {
   }
 
   // 2단계: 결제
-  if (step === 2 && stepInfoData) {
+  if (step === 2 && stepInfoData && orderData) {
     return (
       <StepPayment
-        formData={stepInfoData} // 1단계 데이터 전달
+        formData={stepInfoData} // 1단계 폼 데이터 전달
+        orderData={orderData} // 백엔드 주문 데이터 전달
         onBack={() => setStep(1)} // 1단계로 돌아가기
-        onSubmit={(orderSummary) => {
-          console.log('✅ 결제 완료:', orderSummary);
+        onSubmit={(paymentData) => {
+          console.log('✅ 결제 완료:', paymentData);
           setStep(3); // 3단계로 이동
         }}
       />

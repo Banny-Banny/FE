@@ -1,0 +1,647 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-피그마) 활용할MCP: CursorTalkToFigmaMCP(채널명: 7z16ac4h)
+조건-피그마) 구현된 컴포넌트 참고 노드ID: 214:1721
+조건-피그마) 구현된 컴포넌트 참고 노드ID: 370:2795
+조건-피그마) 구현된 컴포넌트 참고 노드ID: 370:2921
+조건-피그마) 3가지 타입(결제완료, 제출확인, 제출완료)의 세부 내용은 constants에서 정의
+https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=214-1721&t=RjKNT6vU6YyWtD0A-4
+==============================================
+
+조건-파일경로) 참고할 공통 MODAL 컴포넌트: commons/components/modal/index.tsx
+조건-파일경로) 참고할 공통 MODAL 타입: commons/components/modal/types.ts
+조건-파일경로) 구현될 CONFIRM MODAL 컴포넌트 파일경로: components/timecapsule-create/components/confirm-modal/index.tsx
+조건-파일경로) 구현될 STYLES 파일경로: components/timecapsule-create/components/confirm-modal/styles.ts
+조건-파일경로) 구현될 TYPE 파일경로: components/timecapsule-create/components/confirm-modal/types.ts
+조건-파일경로) 구현될 CONSTANTS 파일경로: components/timecapsule-create/components/confirm-modal/constants.ts
+
+==============================================
+
+조건-디자인시스템) 기존 디자인 시스템 사용
+                  - 색상: @commons/constants/color.ts의 Colors 사용
+                  - 타이포그래피: @commons/constants/typography.ts의 Typography 사용
+                  - 아이콘: react-native-remix-icon 사용 (이미 설치됨)
+                  - 새로운 색상이나 타이포 정의 금지
+
+==============================================
+
+핵심요구사항) 타임캡슐 생성 플로우에서 사용되는 재사용 가능한 확인(Confirm) 모달 컴포넌트를 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) 라이브러리 조건
+                - 공통 컴포넌트: commons/components/modal/index.tsx의 Modal 컴포넌트 사용
+                - 아이콘: react-native-remix-icon 사용 (이미 설치되어 있음)
+                - UI Framework: React Native 기본 컴포넌트 사용
+                - 상태관리: React hooks (useState, useCallback) 사용할 것
+
+            2) 모달 타입 및 사용 시나리오 (총 3가지)
+
+               A) PAYMENT_COMPLETE (결제완료 확인 모달)
+                  - 사용 시점: step-info에서 결제 성공 후 자동 표시
+                  - 제목: "결제가 완료되었습니다"
+                  - 설명: "타임캡슐이 생성되었습니다"
+                  - 아이콘: 성공/완료 아이콘 (react-native-remix-icon에서 적절한 아이콘 선택, 예: "ri-checkbox-circle-fill")
+                  - 버튼 개수: 1개 (확인)
+                  - 확인 버튼 클릭 시: 모달 닫기 및 다음 화면 이동
+                  - 뒷배경 클릭: 모달 닫기 가능 (closeOnBackdropPress: true)
+
+               B) SUBMIT_CONFIRM (제출 전 재확인 모달)
+                  - 사용 시점: 사용자가 타임캡슐 제출 버튼 클릭 시 표시
+                  - 제목: "타임캡슐을 제출하시겠습니까?"
+                  - 설명: "제출 후에는 수정할 수 없습니다"
+                  - 아이콘: 경고/확인 아이콘 (react-native-remix-icon에서 적절한 아이콘 선택, 예: "ri-alert-fill" 또는 "ri-question-fill")
+                  - 버튼 개수: 2개 (취소, 제출)
+                  - 버튼 배치:
+                    - 좌측: 취소 버튼 (secondary 스타일)
+                    - 우측: 제출 버튼 (primary 스타일)
+                  - 취소 버튼 클릭 시: 모달만 닫기
+                  - 제출 버튼 클릭 시: 제출 로직 실행 및 모달 닫기
+                  - 뒷배경 클릭: 모달 닫히지 않음 (closeOnBackdropPress: false) - 실수 방지
+
+               C) SUBMIT_COMPLETE (제출완료 확인 모달)
+                  - 사용 시점: 타임캡슐 제출 성공 후 자동 표시
+                  - 제목: "제출이 완료되었습니다"
+                  - 설명: "타임캡슐이 성공적으로 제출되었습니다"
+                  - 아이콘: 성공/완료 아이콘 (react-native-remix-icon에서 적절한 아이콘 선택, 예: "ri-checkbox-circle-fill")
+                  - 버튼 개수: 1개 (확인)
+                  - 확인 버튼 클릭 시: 모달 닫기 및 이전 화면으로 이동
+                  - 뒷배경 클릭: 모달 닫기 가능 (closeOnBackdropPress: true)
+
+            3) 타임캡슐 생성 플로우에서 모달 연결 시나리오
+               [step-info 화면]
+               ↓ 사용자가 "결제하기" 버튼 클릭
+               ↓ 결제 처리 (step-payment 화면으로 이동 또는 결제 API 호출)
+               ↓ 결제 성공
+               → PAYMENT_COMPLETE 모달 표시
+               ↓ 사용자가 "확인" 버튼 클릭
+               ↓ 모달 닫기, 다음 단계로 이동
+
+               [타임캡슐 작성 완료 후]
+               ↓ 사용자가 "제출하기" 버튼 클릭
+               → SUBMIT_CONFIRM 모달 표시 (2개 버튼)
+               ↓ 사용자가 "제출" 버튼 클릭
+               ↓ 타임캡슐 제출 API 호출
+               ↓ 제출 성공
+               → SUBMIT_COMPLETE 모달 표시
+               ↓ 사용자가 "확인" 버튼 클릭
+               ↓ 모달 닫기, 홈 화면 또는 목록 화면으로 이동
+
+==============================================
+
+구현 가이드라인
+
+1. Constants 파일 생성
+   - 파일: components/timecapsule-create/components/confirm-modal/constants.ts
+   - CRITICAL: 피그마 노드 3개를 각각 확인하여 각 타입별 디자인 값 추출
+     - 노드 214:1721 → PAYMENT_COMPLETE 타입 확인
+     - 노드 370:2795 → SUBMIT_CONFIRM 타입 확인
+     - 노드 370:2921 → SUBMIT_COMPLETE 타입 확인
+   - IMPORTANT: 각 노드에서 확인할 사항
+     - 모달 크기 (width, height) - 각 타입별로 다를 수 있음
+     - 텍스트 내용 (제목, 설명, 버튼 텍스트)
+     - 아이콘 (종류, 크기, 색상)
+     - 패딩, 간격, 버튼 스타일
+     - 색상, 타이포그래피
+
+   - 각 모달 타입별 설정 정의 (피그마에서 확인한 값 사용)
+     ```typescript
+     import { Colors } from '@/commons/constants/color';
+     import { IconName } from 'react-native-remix-icon';
+
+     export const MODAL_CONTENTS = {
+       PAYMENT_COMPLETE: {
+         // 노드 214:1721에서 확인한 값
+         title: '피그마에서 확인한 제목 텍스트',
+         description: '피그마에서 확인한 설명 텍스트',
+         iconName: 'ri-checkbox-circle-fill' as IconName, // 피그마 디자인과 가장 유사한 아이콘 선택
+         iconColor: Colors.green[500], // 피그마 색상을 Colors에서 매칭
+         confirmText: '피그마에서 확인한 버튼 텍스트',
+         buttonCount: 1 as const,
+         closeOnBackdropPress: true,
+         width: 320, // 피그마에서 확인한 이 타입의 모달 가로 크기
+         height: 'auto' as const, // 또는 피그마에서 확인한 세로 크기
+       },
+       SUBMIT_CONFIRM: {
+         // 노드 370:2795에서 확인한 값
+         title: '피그마에서 확인한 제목 텍스트',
+         description: '피그마에서 확인한 설명 텍스트',
+         iconName: 'ri-alert-fill' as IconName, // 피그마 디자인과 가장 유사한 아이콘 선택
+         iconColor: Colors.yellow[500], // 피그마 색상을 Colors에서 매칭
+         confirmText: '피그마에서 확인한 확인 버튼 텍스트',
+         cancelText: '피그마에서 확인한 취소 버튼 텍스트',
+         buttonCount: 2 as const,
+         closeOnBackdropPress: false, // 실수 방지
+         width: 340, // 피그마에서 확인한 이 타입의 모달 가로 크기 (예시)
+         height: 'auto' as const,
+       },
+       SUBMIT_COMPLETE: {
+         // 노드 370:2921에서 확인한 값
+         title: '피그마에서 확인한 제목 텍스트',
+         description: '피그마에서 확인한 설명 텍스트',
+         iconName: 'ri-checkbox-circle-fill' as IconName, // 피그마 디자인과 가장 유사한 아이콘 선택
+         iconColor: Colors.green[500], // 피그마 색상을 Colors에서 매칭
+         confirmText: '피그마에서 확인한 버튼 텍스트',
+         buttonCount: 1 as const,
+         closeOnBackdropPress: true,
+         width: 320, // 피그마에서 확인한 이 타입의 모달 가로 크기 (예시)
+         height: 'auto' as const,
+       },
+     } as const;
+     ```
+
+   - 공통 디자인 값 정의 (피그마에서 확인, 모든 타입에서 공통적으로 사용)
+     ```typescript
+     export const MODAL_DESIGN = {
+       iconSize: 64, // 피그마에서 확인한 아이콘 크기
+       spacing: {
+         iconToTitle: 16, // 피그마에서 확인: 아이콘과 제목 사이 간격
+         titleToDescription: 8, // 피그마에서 확인: 제목과 설명 사이 간격
+         descriptionToButton: 24, // 피그마에서 확인: 설명과 버튼 사이 간격
+         buttonGap: 8, // 피그마에서 확인: 버튼 2개일 때 버튼 사이 간격
+       },
+       padding: {
+         vertical: 24, // 피그마에서 확인: 모달 상하 패딩
+         horizontal: 20, // 피그마에서 확인: 모달 좌우 패딩
+       },
+     };
+     ```
+
+2. Types 파일 생성
+   - 파일: components/timecapsule-create/components/confirm-modal/types.ts
+
+   ```typescript
+   /**
+    * 모달 타입 정의
+    */
+   export type ConfirmModalType = 'PAYMENT_COMPLETE' | 'SUBMIT_CONFIRM' | 'SUBMIT_COMPLETE';
+
+   /**
+    * ConfirmModal 컴포넌트 Props
+    */
+   export interface ConfirmModalProps {
+     /** 모달 표시 여부 */
+     visible: boolean;
+     /** 모달 타입 (3가지 중 선택) */
+     type: ConfirmModalType;
+     /** 확인 버튼 클릭 시 콜백 */
+     onConfirm: () => void;
+     /** 취소 버튼 클릭 시 콜백 (SUBMIT_CONFIRM 타입에서만 사용) */
+     onCancel?: () => void;
+     /** 모달 닫기 콜백 (backdrop 클릭 또는 기타 닫기 이벤트) */
+     onClose?: () => void;
+   }
+
+   /**
+    * 모달 내용 설정 타입
+    */
+   export interface ModalContentConfig {
+     title: string;
+     description: string;
+     iconName: string;
+     iconColor: string;
+     confirmText: string;
+     cancelText?: string;
+     buttonCount: 1 | 2;
+     closeOnBackdropPress: boolean;
+     width: number; // 각 타입별로 다른 모달 가로 크기
+     height: 'auto' | number; // 각 타입별로 다른 모달 세로 크기
+   }
+   ```
+
+3. ConfirmModal 컴포넌트 구현
+   - 파일: components/timecapsule-create/components/confirm-modal/index.tsx
+
+   구조:
+   ```typescript
+   import React, { useCallback, useMemo } from 'react';
+   import { View, Text, Pressable } from 'react-native';
+   import Modal from '@/commons/components/modal';
+   import Icon from 'react-native-remix-icon';
+   import { ConfirmModalProps, ConfirmModalType } from './types';
+   import { MODAL_CONTENTS, MODAL_DESIGN } from './constants';
+   import { styles } from './styles';
+
+   export default function ConfirmModal({
+     visible,
+     type,
+     onConfirm,
+     onCancel,
+     onClose,
+   }: ConfirmModalProps) {
+     // type에 따라 constants에서 설정 가져오기
+     const config = useMemo(() => MODAL_CONTENTS[type], [type]);
+
+     // 확인 버튼 핸들러
+     const handleConfirm = useCallback(() => {
+       onConfirm();
+     }, [onConfirm]);
+
+     // 취소 버튼 핸들러 (SUBMIT_CONFIRM에서만 사용)
+     const handleCancel = useCallback(() => {
+       if (onCancel) {
+         onCancel();
+       }
+     }, [onCancel]);
+
+     // 모달 닫기 핸들러
+     const handleClose = useCallback(() => {
+       if (config.closeOnBackdropPress && onClose) {
+         onClose();
+       }
+     }, [config.closeOnBackdropPress, onClose]);
+
+     return (
+       <Modal
+         visible={visible}
+         onClose={handleClose}
+         width={config.width} // 각 타입별로 다른 width 사용
+         height={config.height}
+         closeOnBackdropPress={config.closeOnBackdropPress}
+       >
+         <View style={styles.container}>
+           {/* 아이콘 영역 */}
+           <View style={styles.iconContainer}>
+             <Icon
+               name={config.iconName}
+               size={MODAL_DESIGN.iconSize}
+               color={config.iconColor}
+             />
+           </View>
+
+           {/* 텍스트 영역 */}
+           <View style={styles.textContainer}>
+             <Text style={styles.title}>{config.title}</Text>
+             <Text style={styles.description}>{config.description}</Text>
+           </View>
+
+           {/* 버튼 영역 */}
+           <View style={styles.buttonContainer}>
+             {config.buttonCount === 1 ? (
+               // 버튼 1개: 확인만
+               <Pressable
+                 style={[styles.button, styles.buttonPrimary]}
+                 onPress={handleConfirm}
+               >
+                 <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
+                   {config.confirmText}
+                 </Text>
+               </Pressable>
+             ) : (
+               // 버튼 2개: 취소, 확인
+               <View style={styles.buttonRow}>
+                 <Pressable
+                   style={[styles.button, styles.buttonSecondary, styles.buttonHalf]}
+                   onPress={handleCancel}
+                 >
+                   <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
+                     {config.cancelText}
+                   </Text>
+                 </Pressable>
+                 <Pressable
+                   style={[styles.button, styles.buttonPrimary, styles.buttonHalf]}
+                   onPress={handleConfirm}
+                 >
+                   <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
+                     {config.confirmText}
+                   </Text>
+                 </Pressable>
+               </View>
+             )}
+           </View>
+         </View>
+       </Modal>
+     );
+   }
+   ```
+
+4. Styles 파일 구현
+   - 파일: components/timecapsule-create/components/confirm-modal/styles.ts
+   - CRITICAL: 먼저 피그마 노드를 확인하여 디자인 값 추출
+   - Constants와 Colors, Typography import하여 사용
+
+   ```typescript
+   import { StyleSheet } from 'react-native';
+   import { Colors } from '@/commons/constants/color';
+   import { Typography } from '@/commons/constants/typography';
+   import { MODAL_DESIGN } from './constants';
+
+   export const styles = StyleSheet.create({
+     container: {
+       paddingVertical: 24, // 피그마에서 확인
+       paddingHorizontal: 20, // 피그마에서 확인
+       alignItems: 'center',
+     },
+     iconContainer: {
+       marginBottom: MODAL_DESIGN.spacing.iconToTitle,
+       alignItems: 'center',
+     },
+     textContainer: {
+       alignItems: 'center',
+       marginBottom: MODAL_DESIGN.spacing.descriptionToButton,
+     },
+     title: {
+       ...Typography.header.h3, // 또는 피그마에서 확인한 타이포그래피
+       color: Colors.grey[900], // 피그마에서 확인한 색상
+       textAlign: 'center',
+       marginBottom: MODAL_DESIGN.spacing.titleToDescription,
+     },
+     description: {
+       ...Typography.body.body5, // 또는 피그마에서 확인한 타이포그래피
+       color: Colors.grey[600], // 피그마에서 확인한 색상
+       textAlign: 'center',
+     },
+     buttonContainer: {
+       width: '100%',
+     },
+     buttonRow: {
+       flexDirection: 'row',
+       gap: MODAL_DESIGN.spacing.buttonGap,
+     },
+     button: {
+       paddingVertical: 12, // 피그마에서 확인
+       paddingHorizontal: 24, // 피그마에서 확인
+       borderRadius: 8, // 피그마에서 확인
+       alignItems: 'center',
+       justifyContent: 'center',
+     },
+     buttonPrimary: {
+       backgroundColor: Colors.red[500], // 피그마에서 확인 (primary 색상)
+     },
+     buttonSecondary: {
+       backgroundColor: Colors.grey[200], // 피그마에서 확인 (secondary 색상)
+     },
+     buttonHalf: {
+       flex: 1,
+     },
+     buttonText: {
+       ...Typography.caption.button, // 또는 피그마에서 확인한 타이포그래피
+     },
+     buttonTextPrimary: {
+       color: Colors.white[50], // primary 버튼 텍스트 색상
+     },
+     buttonTextSecondary: {
+       color: Colors.grey[700], // secondary 버튼 텍스트 색상
+     },
+   });
+   ```
+
+==============================================
+
+구현 순서
+
+1. 피그마 노드 3개 각각 확인하여 타입별 디자인 값 추출
+   - 노드 214:1721 → PAYMENT_COMPLETE 확인
+   - 노드 370:2795 → SUBMIT_CONFIRM 확인
+   - 노드 370:2921 → SUBMIT_COMPLETE 확인
+   - 각 노드에서 확인: 모달 크기, 텍스트, 아이콘, 패딩, 간격, 버튼 스타일, 색상, 타이포그래피
+2. Constants 파일 작성
+   - MODAL_CONTENTS: 3가지 타입별 피그마에서 확인한 모든 값 정의
+     - 각 타입별로 다른 텍스트, 아이콘, 크기 설정
+   - MODAL_DESIGN: 공통으로 사용하는 디자인 값
+   - Colors import하여 사용
+3. Types 파일 작성 (타입 정의)
+4. Styles 파일 작성
+   - Constants, Colors, Typography import
+   - 피그마 디자인 기준으로 스타일 정의
+5. ConfirmModal 컴포넌트 구현
+   - 공통 Modal 컴포넌트 import
+   - type에 따른 조건부 렌더링
+   - 각 타입별 width, height 적용
+   - react-native-remix-icon 사용
+6. 사용처에서 모달 연결 테스트
+   - step-info나 다른 화면에서 useState로 모달 상태 관리
+   - 3가지 타입 모두 테스트
+7. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 디자인 시스템 준수
+   - CRITICAL: 반드시 피그마 노드 3개를 각각 확인할 것
+     - 214:1721 → PAYMENT_COMPLETE
+     - 370:2795 → SUBMIT_CONFIRM
+     - 370:2921 → SUBMIT_COMPLETE
+   - CRITICAL: 각 노드에서 텍스트, 아이콘, 크기, 색상, 간격 모두 확인
+   - CRITICAL: commons/constants/color.ts의 Colors만 사용
+   - CRITICAL: commons/constants/typography.ts의 Typography만 사용
+   - CRITICAL: 피그마 색상을 Colors에서 가장 가까운 값으로 매칭
+   - 새로운 색상 코드나 폰트 스타일 직접 정의 금지
+
+2. 아이콘 라이브러리 사용
+   - react-native-remix-icon 사용 (이미 설치됨)
+   - 적절한 아이콘 선택:
+     - 성공/완료: ri-checkbox-circle-fill, ri-check-fill 등
+     - 경고/확인: ri-alert-fill, ri-question-fill, ri-information-fill 등
+   - IconName 타입 사용하여 타입 안정성 확보
+
+3. 공통 컴포넌트 활용
+   - commons/components/modal/index.tsx의 Modal 컴포넌트 반드시 사용
+   - Modal의 children으로 모달 내용 전달
+   - Modal의 props(visible, onClose, width, height, closeOnBackdropPress) 활용
+
+4. 타입 안정성
+   - 모든 props에 타입 정의
+   - TypeScript strict mode 준수
+   - type에 따른 조건부 렌더링 시 타입 안정성 확보
+
+5. 재사용성 및 확장성
+   - 하나의 컴포넌트로 3가지 모달 모두 처리
+   - type prop으로 모달 내용 구분
+   - constants에서 설정 관리로 확장성 확보
+   - 새로운 모달 타입 추가 시 constants에만 추가하면 됨
+
+6. 사용자 경험
+   - SUBMIT_CONFIRM은 closeOnBackdropPress: false (실수 방지)
+   - 나머지는 closeOnBackdropPress: true (편의성)
+   - 버튼 텍스트 명확하게 작성
+   - 설명 문구로 사용자에게 충분한 정보 제공
+
+7. 성능 최적화
+   - useCallback으로 이벤트 핸들러 최적화
+   - useMemo로 config 계산 최적화
+   - 불필요한 리렌더링 방지
+
+8. 코드 품질
+   - 명확한 함수명 및 변수명
+   - 재사용 가능한 구조
+   - 주석으로 복잡한 로직 설명
+
+==============================================
+
+사용 예시 (실제 화면에서 모달 연결)
+
+```typescript
+// components/timecapsule-create/components/step-info/index.tsx
+import React, { useState } from 'react';
+import ConfirmModal from '@/components/timecapsule-create/components/confirm-modal';
+
+function StepInfo() {
+  // 모달 상태 관리
+  const [showPaymentComplete, setShowPaymentComplete] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [showSubmitComplete, setShowSubmitComplete] = useState(false);
+
+  // 결제 처리
+  const handlePayment = async () => {
+    try {
+      // 결제 API 호출
+      await paymentAPI();
+      // 결제 성공 → PAYMENT_COMPLETE 모달 표시
+      setShowPaymentComplete(true);
+    } catch (error) {
+      console.error('결제 실패:', error);
+    }
+  };
+
+  // 제출 버튼 클릭
+  const handleSubmitClick = () => {
+    // SUBMIT_CONFIRM 모달 표시 (2개 버튼)
+    setShowSubmitConfirm(true);
+  };
+
+  // 제출 확인 후 실제 제출 처리
+  const handleSubmit = async () => {
+    // 모달 먼저 닫기
+    setShowSubmitConfirm(false);
+
+    try {
+      // 제출 API 호출
+      await submitTimeCapsule();
+      // 제출 성공 → SUBMIT_COMPLETE 모달 표시
+      setShowSubmitComplete(true);
+    } catch (error) {
+      console.error('제출 실패:', error);
+    }
+  };
+
+  return (
+    <View>
+      {/* 결제하기 버튼 */}
+      <Pressable onPress={handlePayment}>
+        <Text>결제하기</Text>
+      </Pressable>
+
+      {/* 제출하기 버튼 */}
+      <Pressable onPress={handleSubmitClick}>
+        <Text>제출하기</Text>
+      </Pressable>
+
+      {/* ==================== 모달들 ==================== */}
+
+      {/* 1. 결제완료 확인 모달 (버튼 1개) */}
+      <ConfirmModal
+        visible={showPaymentComplete}
+        type="PAYMENT_COMPLETE"
+        onConfirm={() => {
+          setShowPaymentComplete(false);
+          // 다음 화면으로 이동 (예: navigation.navigate('NextStep'))
+        }}
+        onClose={() => setShowPaymentComplete(false)}
+      />
+
+      {/* 2. 제출 전 재확인 모달 (버튼 2개) */}
+      <ConfirmModal
+        visible={showSubmitConfirm}
+        type="SUBMIT_CONFIRM"
+        onConfirm={handleSubmit} // 제출 버튼 클릭 시 실제 제출 처리
+        onCancel={() => setShowSubmitConfirm(false)} // 취소 버튼 클릭 시 모달만 닫기
+        // closeOnBackdropPress: false이므로 onClose 생략 가능
+      />
+
+      {/* 3. 제출완료 확인 모달 (버튼 1개) */}
+      <ConfirmModal
+        visible={showSubmitComplete}
+        type="SUBMIT_COMPLETE"
+        onConfirm={() => {
+          setShowSubmitComplete(false);
+          // 홈 화면 또는 목록 화면으로 이동 (예: navigation.navigate('Home'))
+        }}
+        onClose={() => setShowSubmitComplete(false)}
+      />
+    </View>
+  );
+}
+```
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] 피그마 노드 3개를 각각 확인하여 디자인 값 추출함
+  - [ ] 노드 214:1721 (PAYMENT_COMPLETE) 확인 완료
+  - [ ] 노드 370:2795 (SUBMIT_CONFIRM) 확인 완료
+  - [ ] 노드 370:2921 (SUBMIT_COMPLETE) 확인 완료
+- [ ] 각 노드에서 텍스트 내용 확인하여 constants에 정의함
+- [ ] 각 노드에서 모달 크기 확인하여 각 타입별로 다른 width/height 설정함
+- [ ] 각 노드의 아이콘을 확인하고 react-native-remix-icon에서 유사한 아이콘 선택함
+- [ ] Constants 파일에 MODAL_CONTENTS 정의됨 (3가지 타입, 각각 다른 값)
+- [ ] Constants 파일에 MODAL_DESIGN 정의됨 (공통 디자인 값)
+- [ ] Constants에서 Colors를 import하여 사용함
+- [ ] 피그마 색상을 Colors에서 가장 가까운 값으로 매칭함
+- [ ] 새로운 색상 코드를 직접 정의하지 않았음
+- [ ] Types 파일에 모든 타입 정의됨 (ConfirmModalType, ConfirmModalProps, ModalContentConfig)
+- [ ] 공통 Modal 컴포넌트를 import하여 사용함
+- [ ] react-native-remix-icon을 import하여 사용함
+- [ ] 각 타입별로 적절한 아이콘 선택됨
+- [ ] ConfirmModal 컴포넌트 구현 완료
+- [ ] type prop에 따라 올바른 설정을 가져옴 (useMemo 사용)
+- [ ] PAYMENT_COMPLETE 타입 정상 작동 (버튼 1개, 성공 아이콘)
+- [ ] SUBMIT_CONFIRM 타입 정상 작동 (버튼 2개, 경고 아이콘)
+- [ ] SUBMIT_COMPLETE 타입 정상 작동 (버튼 1개, 성공 아이콘)
+- [ ] 아이콘 영역 구현 완료 (Icon 컴포넌트 사용)
+- [ ] 텍스트 영역 구현 완료 (title, description)
+- [ ] 버튼 1개일 때 레이아웃 정상 작동 (전체 너비)
+- [ ] 버튼 2개일 때 레이아웃 정상 작동 (좌: 취소 secondary, 우: 확인 primary)
+- [ ] Styles 파일에서 Constants의 MODAL_DESIGN 사용함
+- [ ] Styles 파일에서 Colors 사용함
+- [ ] Styles 파일에서 Typography 사용함
+- [ ] onConfirm 콜백 정상 작동
+- [ ] onCancel 콜백 정상 작동 (SUBMIT_CONFIRM)
+- [ ] onClose 콜백 정상 작동
+- [ ] SUBMIT_CONFIRM에서 closeOnBackdropPress: false 적용됨
+- [ ] PAYMENT_COMPLETE에서 closeOnBackdropPress: true 적용됨
+- [ ] SUBMIT_COMPLETE에서 closeOnBackdropPress: true 적용됨
+- [ ] 뒷배경 클릭 시 동작 정상 (타입별로 다름)
+- [ ] useCallback으로 이벤트 핸들러 최적화됨
+- [ ] useMemo로 config 계산 최적화됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] 코드 가독성 및 유지보수성 확보
+- [ ] 3가지 타입 모두 테스트 완료
+- [ ] 실제 사용처에서 모달 연결 테스트 완료
+
+==============================================
+
+추가 고려사항
+
+1) 아이콘 선택 가이드
+   - react-native-remix-icon에서 적절한 아이콘 찾기
+   - 성공/완료: ri-checkbox-circle-fill, ri-check-fill, ri-check-double-fill
+   - 경고/확인: ri-alert-fill, ri-question-fill, ri-information-fill, ri-error-warning-fill
+   - 아이콘 색상도 타입별로 다르게 설정 (성공: green, 경고: yellow/orange)
+
+2) 애니메이션
+   - 공통 Modal 컴포넌트가 기본 애니메이션 제공 (FadeIn, SlideInUp)
+   - 추가 애니메이션 필요 시 react-native-reanimated 활용
+
+3) 다국어 지원
+   - constants의 텍스트를 i18n 라이브러리로 교체 가능
+   - 추후 확장 고려
+
+4) 커스텀 확장
+   - 새로운 모달 타입 추가 시 constants의 MODAL_CONTENTS에만 추가
+   - 커스텀 아이콘이나 버튼 스타일 필요 시 쉽게 확장 가능
+
+5) 에러 처리
+   - 결제/제출 실패 시 에러 모달도 추가 가능
+   - 타입: 'PAYMENT_ERROR', 'SUBMIT_ERROR' 등
+
+==============================================

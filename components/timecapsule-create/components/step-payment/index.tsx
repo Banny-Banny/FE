@@ -132,7 +132,7 @@ const formatCurrency = (value: number): string => {
 // ============================================
 // 컴포넌트
 // ============================================
-export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentProps) {
+export default function StepPayment({ formData, orderData, onSubmit, onBack }: StepPaymentProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -141,8 +141,8 @@ export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentP
   const { allAgreed, agreements, isPaymentEnabled, handleAllAgreeToggle, handleAgreementToggle } =
     usePaymentValidation();
 
-  /** 주문 요약 정보 계산 Hook */
-  const orderSummary = useOrderSummary(formData);
+  /** 주문 요약 정보 (백엔드 응답 데이터 기반) */
+  const orderSummary = useOrderSummary(orderData);
 
   /** 약관 상세 모달 상태 */
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
