@@ -6,8 +6,8 @@
 
 import { useCallback, useState } from 'react';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
-import { createOrder, mapFormToOrderRequest } from '@/lib/api/orders';
-import type { CreateOrderResponse } from '@/lib/api/types/order';
+import { createOrder, mapFormToOrderRequest } from '../api/orders';
+import type { CreateOrderResponse } from '../api/types/order';
 import type { StepInfoFormData } from '../types';
 
 // ============================================

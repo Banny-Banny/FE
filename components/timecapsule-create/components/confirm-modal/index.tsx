@@ -10,18 +10,13 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { ConfirmModalProps } from './types';
 import { MODAL_CONTENTS } from './constants';
 import { styles } from './styles';
+import { ConfirmModalProps } from './types';
 
-export default function ConfirmModal({
-  type,
-  onConfirm,
-  onCancel,
-  data,
-}: ConfirmModalProps) {
+export default function ConfirmModal({ type, onConfirm, onCancel, data }: ConfirmModalProps) {
   // type에 따라 constants에서 설정 가져오기
   const config = useMemo(() => MODAL_CONTENTS[type], [type]);
 
@@ -89,68 +84,48 @@ export default function ConfirmModal({
 
   return (
     <View style={styles.container}>
-        {/* 아이콘 영역 */}
-        <View
-          style={[
-            styles.iconContainer,
-            { backgroundColor: config.iconBackgroundColor },
-          ]}
-        >
-          <Icon
-            name={config.iconName}
-            size={34}
-            color={config.iconColor}
-          />
-        </View>
+      {/* 아이콘 영역 */}
+      <View style={[styles.iconContainer, { backgroundColor: config.iconBackgroundColor }]}>
+        <Icon name={config.iconName} size={34} color={config.iconColor} />
+      </View>
 
-        {/* 텍스트 영역 */}
-        <View style={styles.textContainer}>
-          <Text style={styles.title}>{config.title}</Text>
-          {config.subtitle && (
-            <Text style={styles.subtitle}>{config.subtitle}</Text>
-          )}
-          {config.description && (
-            <Text style={styles.description}>{config.description}</Text>
-          )}
-        </View>
+      {/* 텍스트 영역 */}
+      <View style={styles.textContainer}>
+        <Text style={styles.title}>{config.title}</Text>
+        {config.subtitle && <Text style={styles.subtitle}>{config.subtitle}</Text>}
+        {config.description && <Text style={styles.description}>{config.description}</Text>}
+      </View>
 
-        {/* 정보 카드 (SUBMIT_COMPLETE 타입에서만 표시) */}
-        {renderInfoCard()}
+      {/* 정보 카드 (SUBMIT_COMPLETE 타입에서만 표시) */}
+      {renderInfoCard()}
 
-        {/* 버튼 영역 */}
-        <View style={styles.buttonContainer}>
-          {config.buttonCount === 1 ? (
-            // 버튼 1개: 확인만
+      {/* 버튼 영역 */}
+      <View style={styles.buttonContainer}>
+        {config.buttonCount === 1 ? (
+          // 버튼 1개: 확인만
+          <Pressable style={[styles.button, styles.buttonPrimary]} onPress={handleConfirm}>
+            <Text style={[styles.buttonText, styles.buttonTextPrimary]}>{config.confirmText}</Text>
+          </Pressable>
+        ) : (
+          // 버튼 2개: 취소, 확인
+          <View style={styles.buttonRow}>
             <Pressable
-              style={[styles.button, styles.buttonPrimary]}
-              onPress={handleConfirm}
-            >
+              style={[styles.button, styles.buttonSecondary, styles.buttonHalf]}
+              onPress={handleCancel}>
+              <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
+                {config.cancelText}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.button, styles.buttonPrimary, styles.buttonHalf]}
+              onPress={handleConfirm}>
               <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
                 {config.confirmText}
               </Text>
             </Pressable>
-          ) : (
-            // 버튼 2개: 취소, 확인
-            <View style={styles.buttonRow}>
-              <Pressable
-                style={[styles.button, styles.buttonSecondary, styles.buttonHalf]}
-                onPress={handleCancel}
-              >
-                <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
-                  {config.cancelText}
-                </Text>
-              </Pressable>
-              <Pressable
-                style={[styles.button, styles.buttonPrimary, styles.buttonHalf]}
-                onPress={handleConfirm}
-              >
-                <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
-                  {config.confirmText}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
+          </View>
+        )}
       </View>
+    </View>
   );
 }

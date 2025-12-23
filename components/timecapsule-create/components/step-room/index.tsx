@@ -10,12 +10,12 @@
  * - [✓] Figma 디자인 1:1 대응
  */
 
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants/color';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import ConfirmModal from '../confirm-modal';
-import { useModal } from '@/commons/components/modal/hooks/useModal';
 import UserBottomSheet from '../write-bottomsheet';
 import { styles } from './styles';
 
