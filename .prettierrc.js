@@ -8,4 +8,5 @@ module.exports = {
   printWidth: 100, // 한 줄의 길이가 100자를 넘으면 자동으로 줄바꿈
   tabWidth: 2, // 들여쓰기 간격은 스페이스 2칸
   endOfLine: 'auto', // OS(맥/윈도우)에 따른 줄바꿈 문자(LF/CRLF) 차이 자동 처리
+  insertFinalNewline: false, // 파일 끝에 빈 줄 추가하지 않음
 };
