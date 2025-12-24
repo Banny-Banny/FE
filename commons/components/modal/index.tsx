@@ -12,8 +12,7 @@ import React, { useMemo } from 'react';
 import { View, Pressable, Modal as RNModal } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import { ModalConfig } from './types';
-import { DEFAULT_CONFIG } from './constants';
-import { styles } from './styles';
+import { DEFAULT_CONFIG, styles } from './styles';
 
 interface ModalProps extends ModalConfig {
   /** 모달 표시 여부 */
