@@ -7,6 +7,7 @@ import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './auth/auth.provider';
+import { ModalProvider } from './modal/modal.provider';
 import { ReactQueryProvider } from './react-query/react-query.provider';
 
 interface RootProviderProps {
@@ -18,7 +19,9 @@ export const RootProvider: React.FC<RootProviderProps> = ({ children }) => {
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <AuthProvider>
-          <ReactQueryProvider>{children}</ReactQueryProvider>
+          <ReactQueryProvider>
+            <ModalProvider>{children}</ModalProvider>
+          </ReactQueryProvider>
         </AuthProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>

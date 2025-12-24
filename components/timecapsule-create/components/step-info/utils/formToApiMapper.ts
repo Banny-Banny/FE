@@ -5,7 +5,7 @@
  */
 
 import dayjs from 'dayjs';
-import type { CreateOrderRequest } from '@/lib/api/types/order';
+import type { CreateOrderRequest } from '../api/types/order';
 import type { StepInfoFormData } from '../types';
 
 // ============================================

@@ -14,6 +14,10 @@ import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './type
 
 /**
  * 타임캡슐 주문 생성 API 호출
+ *
+ * ⚠️ 현재 백엔드 서버 연결이 주석처리되어 있습니다.
+ * 백엔드 서버가 다시 열리면 useCreateOrder.ts의 주석을 해제하세요.
+ *
  * @param data 주문 생성 요청 데이터
  * @param token JWT 토큰
  * @returns 주문 생성 응답
@@ -29,7 +33,13 @@ export async function createOrder(
     throw new Error('API 베이스 URL이 설정되지 않았습니다');
   }
 
-  const response = await fetch(`${baseUrl}api/orders`, {
+  const url = `${baseUrl}api/orders`;
+  console.log('🌐 [API 요청 정보]');
+  console.log('  - URL:', url);
+  console.log('  - 토큰 받음:', token ? '✅' : '❌');
+  console.log('  - Authorization 헤더:', `Bearer ${token.substring(0, 20)}...`);
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -38,11 +48,16 @@ export async function createOrder(
     body: JSON.stringify(data),
   });
 
+  console.log('📥 [API 응답]');
+  console.log('  - 상태 코드:', response.status);
+  console.log('  - 상태 텍스트:', response.statusText);
+
   if (!response.ok) {
     let errorMessage = '주문 생성에 실패했습니다';
 
     try {
       const errorData = await response.json();
+      console.log('❌ [서버 에러 응답]', JSON.stringify(errorData, null, 2));
 
       // 에러 메시지 매핑
       if (response.status === 400) {

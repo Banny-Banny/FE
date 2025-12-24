@@ -13,6 +13,8 @@
 import React, { useCallback, useState } from 'react';
 import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ConfirmModal from '../confirm-modal';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
 import { styles } from './styles';
@@ -132,17 +134,20 @@ const formatCurrency = (value: number): string => {
 // ============================================
 // 컴포넌트
 // ============================================
-export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentProps) {
+export default function StepPayment({ formData, orderData, onSubmit, onBack }: StepPaymentProps) {
   // ============================================
   // Hooks
   // ============================================
+
+  /** 모달 제어 Hook */
+  const { openModal, closeModal } = useModal();
 
   /** 약관 동의 및 검증 Hook */
   const { allAgreed, agreements, isPaymentEnabled, handleAllAgreeToggle, handleAgreementToggle } =
     usePaymentValidation();
 
-  /** 주문 요약 정보 계산 Hook */
-  const orderSummary = useOrderSummary(formData);
+  /** 주문 요약 정보 (백엔드 응답 데이터 기반) */
+  const orderSummary = useOrderSummary(orderData);
 
   /** 약관 상세 모달 상태 */
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
@@ -173,19 +178,42 @@ export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentP
     setSelectedAgreementIndex(null);
   }, []);
 
-  /** 결제하기 버튼 핸들러 */
-  const handleSubmitPress = useCallback(() => {
-    // 약관 동의 검증
-    if (!isPaymentEnabled) {
-      Alert.alert('알림', TEXTS.alerts.agreementRequired);
-      return;
-    }
+  /** 결제 완료 모달 확인 핸들러 */
+  const handlePaymentCompleteConfirm = useCallback(() => {
+    console.log('✅ [StepPayment] 결제 완료 모달 확인 버튼 클릭!');
+    closeModal();
 
-    // 검증 통과 시 onSubmit 호출 (주문 정보 전달)
+    // 다음 단계로 이동 (onSubmit 호출)
     if (onSubmit) {
+      console.log('✅ [StepPayment] onSubmit 호출!');
       onSubmit(orderSummary);
     }
-  }, [isPaymentEnabled, onSubmit, orderSummary]);
+  }, [closeModal, onSubmit, orderSummary]);
+
+  /** 결제하기 버튼 핸들러 (테스트용: 약관 검증 제거, 바로 모달 표시) */
+  const handleSubmitPress = useCallback(() => {
+    console.log('💳 [StepPayment] 결제하기 버튼 클릭!');
+
+    // 테스트용: 약관 동의 검증 주석 처리
+    // if (!isPaymentEnabled) {
+    //   Alert.alert('알림', TEXTS.alerts.agreementRequired);
+    //   return;
+    // }
+
+    // 테스트용: 바로 결제 완료 모달 표시
+    console.log('💳 [StepPayment] 결제 완료 모달 표시!');
+    openModal({
+      width: 344,
+      height: 'auto',
+      closeOnBackdropPress: true,
+      children: (
+        <ConfirmModal
+          type="PAYMENT_COMPLETE"
+          onConfirm={handlePaymentCompleteConfirm}
+        />
+      ),
+    });
+  }, [openModal, handlePaymentCompleteConfirm]);
 
   // ============================================
   // 렌더링
@@ -301,15 +329,13 @@ export default function StepPayment({ formData, onSubmit, onBack }: StepPaymentP
         </View>
       </ScrollView>
 
-      {/* 하단 결제 버튼 */}
+      {/* 하단 결제 버튼 (테스트용: 항상 활성화) */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.submitButton, !isPaymentEnabled && styles.submitButtonDisabled]}
+          style={styles.submitButton}
           onPress={handleSubmitPress}
-          disabled={!isPaymentEnabled}
           accessibilityRole="button"
-          accessibilityLabel={TEXTS.footer.submitButton}
-          accessibilityState={{ disabled: !isPaymentEnabled }}>
+          accessibilityLabel={TEXTS.footer.submitButton}>
           <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
           <Text style={styles.submitButtonArrow}>→</Text>
         </TouchableOpacity>

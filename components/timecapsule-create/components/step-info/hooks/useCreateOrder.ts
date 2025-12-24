@@ -5,8 +5,9 @@
  */
 
 import { useCallback, useState } from 'react';
-import { createOrder, mapFormToOrderRequest } from '@/lib/api/orders';
-import type { CreateOrderResponse } from '@/lib/api/types/order';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { createOrder, mapFormToOrderRequest } from '../api/orders';
+import type { CreateOrderResponse } from '../api/types/order';
 import type { StepInfoFormData } from '../types';
 
 // ============================================
@@ -47,6 +48,13 @@ interface UseCreateOrderReturn {
  */
 export const useCreateOrder = (): UseCreateOrderReturn => {
   // ============================================
+  // 인증 정보
+  // ============================================
+
+  /** 로그인된 사용자의 토큰 */
+  const { accessToken } = useAuth();
+
+  // ============================================
   // 상태 관리
   // ============================================
 
@@ -74,9 +82,8 @@ export const useCreateOrder = (): UseCreateOrderReturn => {
       setIsLoading(true);
       setError(null);
 
-      // JWT 토큰 가져오기
-      const token = process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN;
-      if (!token) {
+      // 로그인된 사용자의 토큰 확인
+      if (!accessToken) {
         throw new Error('인증 토큰이 없습니다');
       }
 
@@ -84,7 +91,7 @@ export const useCreateOrder = (): UseCreateOrderReturn => {
       const requestData = mapFormToOrderRequest(formData);
 
       // API 호출
-      const response = await createOrder(requestData, token);
+      const response = await createOrder(requestData, accessToken);
 
       // 응답 데이터 저장
       setOrderData(response);
@@ -102,7 +109,7 @@ export const useCreateOrder = (): UseCreateOrderReturn => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [accessToken]);
 
   // ============================================
   // 에러 클리어 함수

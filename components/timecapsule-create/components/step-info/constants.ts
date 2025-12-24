@@ -4,55 +4,32 @@
  */
 
 // ============================================
-// 가격 상수
+// 가격 상수 (백엔드 계산 로직 기반)
 // ============================================
 
-/** 텍스트 가격 (무료) */
-export const TEXT_PRICE = 0;
+/** 기본 금액 */
+export const BASE_PRICE = 1000;
 
 /** 사진 1개당 가격 */
 export const PHOTO_PRICE = 500;
 
-/** 음악 가격 */
+/** 음악 인원당 가격 */
 export const MUSIC_PRICE = 1000;
 
-/** 동영상 가격 */
+/** 동영상 인원당 가격 */
 export const VIDEO_PRICE = 2000;
 
 /**
- * 개봉일 옵션별 가격 정의
+ * 개봉일 옵션별 추가 요금
+ * - 1_WEEK: +1,000원
+ * - 1_YEAR: +5,000원
+ * - CUSTOM: 기간별 백엔드에서 계산
  */
-export const DATE_PRICE_OPTIONS = {
-  ONE_WEEK: 1000, // 1주일 후
-  ONE_YEAR: 5000, // 1년 후
-  THREE_YEARS: 10000, // 3년 후
-  CUSTOM_BASE: 3000, // 직접 선택 기본 금액
-} as const;
-
-/**
- * 인원당 단가
- */
-export const PERSONNEL_UNIT_PRICE = 500;
-
-/**
- * 이미지 슬롯당 단가
- */
-export const STORAGE_UNIT_PRICE = 500;
-
-/**
- * 추가 옵션 정보 및 가격
- */
-export const ADDITIONAL_OPTIONS = {
-  MUSIC: {
-    id: 'music',
-    title: '음악 파일',
-    price: MUSIC_PRICE,
-  },
-  VIDEO: {
-    id: 'video',
-    title: '영상 추가',
-    price: VIDEO_PRICE,
-  },
+export const TIME_OPTION_PRICES = {
+  '1_WEEK': 1000,
+  '1_MONTH': 0,
+  '1_YEAR': 5000,
+  CUSTOM: 0, // 백엔드에서 기간별로 계산
 } as const;
 
 // ============================================

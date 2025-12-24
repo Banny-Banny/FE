@@ -9,12 +9,13 @@
  * - [x] react-hook-form@^7.68.0 사용
  */
 
-import { Colors } from '@/commons/constants/color';
+import { Colors } from '@/commons/constants';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
+  ActivityIndicator,
   Alert,
   Animated,
   Modal,
@@ -34,9 +35,9 @@ import {
   MIN_PERSONNEL,
   MIN_STORAGE,
 } from './constants';
+import { useCreateOrder } from './hooks/useCreateOrder';
 import { useDateSelection } from './hooks/useDateSelection';
 import { usePriceCalculation } from './hooks/usePriceCalculation';
-import { useCreateOrder } from './hooks/useCreateOrder';
 import { styles } from './styles';
 
 // ============================================
@@ -160,6 +161,13 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   // ============================================
+  // 백엔드 API Hook
+  // ============================================
+
+  /** 주문 생성 Hook */
+  const { isLoading, error, submitOrder, clearError } = useCreateOrder();
+
+  // ============================================
   // 폼 값 watch (Custom Hooks 통합을 위해)
   // ============================================
 
@@ -182,16 +190,17 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
     handleCalendarClose,
   } = useDateSelection(initialData);
 
-  /** 가격 계산 Hook */
+  /**
+   * UI 표시용 예상 가격 Hook
+   * ⚠️ 주의: 이 값은 사용자에게 보여주는 "예상 금액"일 뿐입니다.
+   * 실제 결제 금액은 백엔드 API(submitOrder)의 응답(orderData.total_amount)을 사용합니다.
+   */
   const { personnelPrice, storagePrice, optionsPrice, totalPrice } = usePriceCalculation(
     datePrice,
     formValues.personnelCount,
     formValues.storageCount,
     formValues.selectedOptions,
   );
-
-  /** 주문 생성 Hook */
-  const { isLoading, error, submitOrder } = useCreateOrder();
 
   // ============================================
   // 바텀시트 애니메이션
@@ -233,16 +242,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
       ]).start();
     }
   }, [isCalendarVisible, fadeAnim, slideAnim]);
-
-  // ============================================
-  // 에러 Alert 처리
-  // ============================================
-
-  useEffect(() => {
-    if (error) {
-      Alert.alert('주문 생성 실패', error);
-    }
-  }, [error]);
 
   // ============================================
   // 이벤트 핸들러 (setValue 기반)
@@ -321,6 +320,18 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   }, [handleCalendarClose]);
 
   // ============================================
+  // 에러 클리어 (컴포넌트 언마운트 시)
+  // ============================================
+
+  useEffect(() => {
+    return () => {
+      if (error) {
+        clearError();
+      }
+    };
+  }, [error, clearError]);
+
+  // ============================================
   // 폼 제출 핸들러 (handleSubmit 사용)
   // ============================================
 
@@ -328,23 +339,35 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   const onFormSubmit = useCallback(
     async (data: StepInfoFormData) => {
       try {
-        // 주문 생성 API 호출
-        const orderResponse = await submitOrder(data);
+        console.log('🚀 [StepInfo] 주문 생성 시작!');
+        console.log('📦 [StepInfo] 폼 데이터:', data);
 
-        // 성공 시 부모 컴포넌트로 전달
+        // 1단계: 백엔드 API 호출하여 주문 생성
+        // ⚠️ 중요: 여기서 백엔드가 실제 결제 금액을 계산합니다!
+        const orderData = await submitOrder(data);
+
+        console.log('✅ [StepInfo] 주문 생성 성공!');
+        console.log('📦 [StepInfo] 주문 데이터:', orderData);
+        console.log('💰 [StepInfo] 백엔드 계산 금액:', orderData.total_amount);
+
+        // 2단계: 부모 컴포넌트로 전달 (폼 데이터 + 백엔드 응답)
+        // ⚠️ totalPrice는 UI 표시용이었으며, 실제 금액은 orderData.total_amount입니다.
         if (onSubmit) {
           onSubmit({
             ...data,
-            totalPrice,
-            orderData: orderResponse,
+            orderData, // 백엔드 응답 (실제 결제 금액 포함)
+            totalPrice, // UI 표시용 (참고용)
           });
         }
       } catch (err) {
-        // 에러는 Hook에서 처리되며 error 상태로 저장됨
-        console.error('주문 생성 실패:', err);
+        console.error('❌ [StepInfo] 주문 생성 실패:', err);
+
+        // 에러 메시지 표시
+        const errorMessage = err instanceof Error ? err.message : '주문 생성에 실패했습니다';
+        Alert.alert('주문 생성 실패', errorMessage);
       }
     },
-    [submitOrder, onSubmit, totalPrice],
+    [onSubmit, totalPrice, submitOrder],
   );
 
   // ============================================
@@ -363,6 +386,35 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* 로딩 오버레이 */}
+      {isLoading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 9999,
+          }}>
+          <View
+            style={{
+              backgroundColor: 'white',
+              padding: 24,
+              borderRadius: 12,
+              alignItems: 'center',
+            }}>
+            <ActivityIndicator size="large" color={Colors.black[500]} />
+            <Text style={{ marginTop: 16, fontSize: 16, color: Colors.black[500] }}>
+              주문을 생성하는 중...
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerContainer}>
@@ -398,7 +450,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                 <TextInput
                   style={styles.input}
                   placeholder={TEXTS.capsuleName.placeholder}
-                  placeholderTextColor={Colors.grey[400]}
+                  placeholderTextColor={Colors.grey[500]}
                   value={value}
                   onChangeText={(text) => {
                     if (text.length <= MAX_CAPSULE_NAME_LENGTH) {

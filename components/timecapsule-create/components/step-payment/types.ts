@@ -4,6 +4,7 @@
  * 타임캡슐 결제 화면 타입 정의
  */
 
+import { CreateOrderResponse } from '../step-info/api/types/order';
 import { StepInfoFormData } from '../step-info/types';
 
 // ============================================
@@ -64,6 +65,8 @@ export interface AgreementsState {
 export interface StepPaymentProps {
   /** 이전 단계(step-info)에서 전달받은 폼 데이터 */
   formData: StepInfoFormData;
+  /** 백엔드에서 받은 주문 데이터 */
+  orderData: CreateOrderResponse;
   /** 뒤로가기 핸들러 */
   onBack?: () => void;
   /** 결제하기 핸들러 (주문 요약 정보 전달) */

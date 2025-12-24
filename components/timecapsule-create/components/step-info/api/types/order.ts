@@ -59,6 +59,8 @@ export interface CreateOrderResponse {
   music_amount: number;
   /** 영상 추가 금액 */
   video_amount: number;
+  /** 개봉일 옵션 추가 금액 (1_WEEK: +1,000원, 1_YEAR: +5,000원, CUSTOM: 기간별 계산) */
+  time_option_amount: number;
   /** 개봉 시간 옵션 */
   time_option: string;
   /** 직접 선택한 개봉일 */
