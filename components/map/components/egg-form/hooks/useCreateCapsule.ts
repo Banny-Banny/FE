@@ -10,7 +10,10 @@
  * - [x] hooks 폴더 내 커스텀 훅으로 분리 (04-func.mdc 규칙)
  */
 
-import { convertToMediaType, normalizeApiBaseUrl } from '@/utils';
+import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { useMediaUpload } from '@/commons/hooks';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Alert } from 'react-native';
@@ -20,32 +23,13 @@ import {
   CreateCapsuleRequest,
   CreateCapsuleResponse,
 } from '../types';
-import { useFileUpload } from './useFileUpload';
-
-/**
- * JWT 토큰 가져오기
- * 테스트 환경에서는 환경변수에서 토큰을 가져옵니다.
- * TODO: 실제 인증 시스템 구현 시 AsyncStorage 또는 SecureStore에서 가져오도록 수정
- */
-const getAuthToken = async (): Promise<string | null> => {
-  // 테스트용: 환경변수에서 토큰 가져오기
-  const testToken = process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN;
-  if (testToken) {
-    return testToken;
-  }
-
-  // TODO: 실제 인증 시스템 구현 시 아래 코드 사용
-  // return await AsyncStorage.getItem('auth_token');
-  // 또는: return await SecureStore.getItemAsync('auth_token');
-
-  return null;
-};
 
 /**
  * 캡슐 생성 Hook
  */
 export const useCreateCapsule = () => {
-  const { uploadFileToServer } = useFileUpload();
+  const { accessToken } = useAuth();
+  const { upload } = useMediaUpload();
 
   /**
    * 캡슐 생성 API 호출
@@ -58,7 +42,11 @@ export const useCreateCapsule = () => {
     },
   ): Promise<CreateCapsuleResponse | null> => {
     try {
-      const token = await getAuthToken();
+      if (!accessToken) {
+        Alert.alert('인증 오류', '로그인이 필요합니다.');
+        return null;
+      }
+
       const rawApiBaseUrl =
         Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -73,22 +61,26 @@ export const useCreateCapsule = () => {
         return null;
       }
 
-      // 파일 업로드 및 URL 수집
-      const mediaUrls: string[] = [];
+      // 파일 업로드 및 미디어 ID 수집
+      const mediaIds: string[] = [];
       const mediaTypes: ('IMAGE' | 'VIDEO' | 'MUSIC')[] = [];
 
       for (const attachment of data.attachments) {
         if (attachment.uri) {
-          const uploadedUrl = await uploadFileToServer(attachment.uri, attachment.type, token);
-          if (uploadedUrl) {
-            mediaUrls.push(uploadedUrl);
-            mediaTypes.push(convertToMediaType(attachment.type));
+          const mediaId = await upload(attachment.uri, attachment.type);
+
+          if (mediaId) {
+            mediaIds.push(mediaId);
+            mediaTypes.push(attachment.type);
           } else {
             Alert.alert('오류', `파일 업로드에 실패했습니다: ${attachment.name}`);
             return null;
           }
         }
       }
+
+      // mediaIds를 media_urls로 변환 (API는 URL을 요구함)
+      const mediaUrls = await getMediaUrls(mediaIds, accessToken);
 
       // 캡슐 생성 요청 데이터 구성
       const requestData: CreateCapsuleRequest = {
@@ -103,12 +95,12 @@ export const useCreateCapsule = () => {
 
       // API 호출
       const response = await axios.post<CreateCapsuleResponse>(
-        `${apiBaseUrl}/api/capsule`,
+        buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
         requestData,
         {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );

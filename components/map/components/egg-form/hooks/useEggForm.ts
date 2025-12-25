@@ -6,7 +6,10 @@
  * 통신 테스트를 위해 간소화된 버전
  */
 
-import { convertToMediaType, normalizeApiBaseUrl } from '@/utils';
+import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { useMediaUpload } from '@/commons/hooks';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
@@ -27,28 +30,11 @@ interface UseEggFormProps {
 }
 
 /**
- * JWT 토큰 가져오기
- * 테스트 환경에서는 환경변수에서 토큰을 가져옵니다.
- * TODO: 실제 인증 시스템 구현 시 AsyncStorage 또는 SecureStore에서 가져오도록 수정
- */
-const getAuthToken = async (): Promise<string | null> => {
-  // 테스트용: 환경변수에서 토큰 가져오기
-  const testToken = process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN;
-  if (testToken) {
-    return testToken;
-  }
-
-  // TODO: 실제 인증 시스템 구현 시 아래 코드 사용
-  // return await AsyncStorage.getItem('auth_token');
-  // 또는: return await SecureStore.getItemAsync('auth_token');
-
-  return null;
-};
-
-/**
  * 이스터에그 폼 관리 통합 Hook
  */
 export const useEggForm = ({ onClose }: UseEggFormProps) => {
+  const { accessToken } = useAuth();
+  const { upload: uploadMedia, isUploading: isMediaUploading } = useMediaUpload();
   const { control, handleSubmit, watch, setValue } = useForm<EggFormData>({
     defaultValues: {
       title: '',
@@ -63,14 +49,15 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 폼 유효성 검사
-  const isFormValid = title.trim().length > 0 && content.trim().length > 0 && !isSubmitting;
+  const isFormValid =
+    title.trim().length > 0 && content.trim().length > 0 && !isSubmitting && !isMediaUploading;
 
   // 파일 선택 핸들러 (간소화)
-  const handleAddAttachment = async (type: 'photo' | 'music' | 'video') => {
+  const handleAddAttachment = async (type: 'IMAGE' | 'VIDEO' | 'MUSIC') => {
     try {
       let file: { name: string; uri: string } | null = null;
 
-      if (type === 'photo') {
+      if (type === 'IMAGE') {
         const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다.');
@@ -88,7 +75,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           };
         }
       } else {
-        const mimeTypes = type === 'music' ? ['audio/*'] : ['video/*'];
+        const mimeTypes = type === 'MUSIC' ? ['audio/*'] : ['video/*'];
         const result = await DocumentPicker.getDocumentAsync({
           type: mimeTypes,
           copyToCacheDirectory: true,
@@ -131,7 +118,12 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     setIsSubmitting(true);
 
     try {
-      const token = await getAuthToken();
+      if (!accessToken) {
+        Alert.alert('인증 오류', '로그인이 필요합니다.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const rawApiBaseUrl =
         Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
 
@@ -143,12 +135,31 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.\n예: http://172.16.2.94:3000',
         );
         console.error('API Base URL이 설정되지 않았습니다:', rawApiBaseUrl);
+        setIsSubmitting(false);
         return;
       }
 
-      // 간소화: 파일 URI를 그대로 전송 (실제로는 업로드 후 URL을 받아야 함)
-      const mediaUrls = attachments.filter((att) => att.uri).map((att) => att.uri!);
-      const mediaTypes = attachments.map((att) => convertToMediaType(att.type));
+      // 파일 업로드 및 미디어 ID 수집
+      const mediaIds: string[] = [];
+      const mediaTypes: ('IMAGE' | 'VIDEO' | 'MUSIC')[] = [];
+
+      for (const attachment of attachments) {
+        if (attachment.uri) {
+          const mediaId = await uploadMedia(attachment.uri, attachment.type);
+
+          if (mediaId) {
+            mediaIds.push(mediaId);
+            mediaTypes.push(attachment.type);
+          } else {
+            Alert.alert('오류', `파일 업로드에 실패했습니다: ${attachment.name}`);
+            setIsSubmitting(false);
+            return;
+          }
+        }
+      }
+
+      // mediaIds를 media_urls로 변환 (API는 URL을 요구함)
+      const mediaUrls = await getMediaUrls(mediaIds, accessToken);
 
       const requestData: CreateCapsuleRequest = {
         title: data.title,
@@ -158,12 +169,12 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
       };
 
       const response = await axios.post<CreateCapsuleResponse>(
-        `${apiBaseUrl}/api/capsule`,
+        buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
         requestData,
         {
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` }),
+            Authorization: `Bearer ${accessToken}`,
           },
         },
       );
@@ -207,9 +218,9 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   };
 
   // 각 타입별 첨부파일 확인
-  const photoAttachment = attachments.find((att) => att.type === 'photo');
-  const musicAttachment = attachments.find((att) => att.type === 'music');
-  const videoAttachment = attachments.find((att) => att.type === 'video');
+  const photoAttachment = attachments.find((att) => att.type === 'IMAGE');
+  const musicAttachment = attachments.find((att) => att.type === 'MUSIC');
+  const videoAttachment = attachments.find((att) => att.type === 'VIDEO');
 
   return {
     control,
@@ -223,5 +234,3 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     videoAttachment,
   };
 };
-
-

@@ -132,7 +132,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 사진 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.photoButton]}
-              onPress={() => handleAddAttachment('photo')}>
+              onPress={() => handleAddAttachment('IMAGE')}>
               {photoAttachment ? (
                 <>
                   {/* 이미지 미리보기 */}
@@ -163,7 +163,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 음악 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.musicButton]}
-              onPress={() => handleAddAttachment('music')}>
+              onPress={() => handleAddAttachment('MUSIC')}>
               {musicAttachment ? (
                 <>
                   {/* 음악 아이콘 */}
@@ -197,7 +197,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 동영상 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.videoButton, styles.attachmentButtonLast]}
-              onPress={() => handleAddAttachment('video')}>
+              onPress={() => handleAddAttachment('VIDEO')}>
               {videoAttachment ? (
                 <>
                   {/* 동영상 썸네일 미리보기 */}
@@ -238,5 +238,3 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
     </BottomSheet>
   );
 };
-
-
