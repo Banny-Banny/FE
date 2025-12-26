@@ -6,6 +6,7 @@
 
 import dayjs from 'dayjs';
 import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { DATE_OPTION_INDEX } from '@/components/timecapsule-create/components/step-info/constants';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
 
 // ============================================
@@ -112,20 +113,22 @@ export function mapFormToOrderRequest(formData: StepInfoFormData): CreateOrderRe
   let timeOption: TimeOption;
   let customOpenAt: string | undefined;
 
-  if (formData.selectedDateOptionIndex === 0) {
-    // "1주일 후"
+  if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
+    // "1주일" → 1_WEEK
     timeOption = '1_WEEK';
-  } else if (formData.selectedDateOptionIndex === 1) {
-    // "1년 후"
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+    // "1개월" → 1_MONTH
+    timeOption = '1_MONTH';
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
+    // "1년" → 1_YEAR
     timeOption = '1_YEAR';
-  } else if (formData.selectedDateOptionIndex === 2) {
-    // "3년 후" → CUSTOM with calculated date
-    timeOption = 'CUSTOM';
-    customOpenAt = dayjs().add(3, 'year').toISOString();
-  } else {
-    // 인덱스 3: "직접 선택" → CUSTOM with selected date
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.CUSTOM) {
+    // "직접 선택" → CUSTOM
     timeOption = 'CUSTOM';
     customOpenAt = formData.selectedDate ? dayjs(formData.selectedDate).toISOString() : undefined;
+  } else {
+    // 기본값 (예외 처리)
+    timeOption = '1_YEAR';
   }
 
   return {

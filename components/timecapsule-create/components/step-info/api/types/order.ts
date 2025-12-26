@@ -51,12 +51,10 @@ export interface CreateOrderResponse {
   order_id: string;
   /** 총 결제 금액 */
   total_amount: number;
-  /** 기본 금액 */
-  base_amount: number;
-  /** 사진 추가 금액 */
-  photo_amount: number;
+  /** 이미지 추가 금액 */
+  image_amount: number;
   /** 음악 추가 금액 */
-  music_amount: number;
+  audio_amount: number;
   /** 영상 추가 금액 */
   video_amount: number;
   /** 개봉일 옵션 추가 금액 (1_WEEK: +1,000원, 1_YEAR: +5,000원, CUSTOM: 기간별 계산) */

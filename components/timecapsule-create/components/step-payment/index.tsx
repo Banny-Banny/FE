@@ -1,20 +1,22 @@
 /**
  * step-payment/index.tsx
  * 생성 시각: 2024-12-16
- * 수정 시각: 2024-12-16
+ * 수정 시각: 2024-12-24
  * 규칙 준수 체크리스트:
  * - [x] 인라인 스타일 0건
  * - [x] 색상 하드코딩 0건 (styles.ts에서 토큰 사용)
  * - [x] 외부 라이브러리 설치 0건
  * - [x] Figma 디자인과 1:1 대응
  * - [x] 기능 구현 완료 (약관 동의, 주문 상품 계산, 검증)
+ * - [x] 카카오페이 결제 연동 완료
  */
 
-import React, { useCallback, useState } from 'react';
-import { Alert, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ConfirmModal from '../confirm-modal';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { useKakaoPayment } from './hooks/useKakaoPayment';
 import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
 import { styles } from './styles';
@@ -134,7 +136,13 @@ const formatCurrency = (value: number): string => {
 // ============================================
 // 컴포넌트
 // ============================================
-export default function StepPayment({ formData, orderData, onSubmit, onBack }: StepPaymentProps) {
+export default function StepPayment({
+  formData,
+  orderData,
+  onSubmit,
+  onBack,
+  onPaymentSuccess,
+}: StepPaymentProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -148,6 +156,10 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
 
   /** 주문 요약 정보 (백엔드 응답 데이터 기반) */
   const orderSummary = useOrderSummary(orderData);
+
+  /** 카카오페이 결제 Hook */
+  const { isLoading, error, readyPayment, approvePayment, openKakaoPayBrowser, clearError } =
+    useKakaoPayment();
 
   /** 약관 상세 모달 상태 */
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
@@ -190,30 +202,134 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
     }
   }, [closeModal, onSubmit, orderSummary]);
 
-  /** 결제하기 버튼 핸들러 (테스트용: 약관 검증 제거, 바로 모달 표시) */
-  const handleSubmitPress = useCallback(() => {
+  /** 결제하기 버튼 핸들러 */
+  const handleSubmitPress = useCallback(async () => {
     console.log('💳 [StepPayment] 결제하기 버튼 클릭!');
 
-    // 테스트용: 약관 동의 검증 주석 처리
-    // if (!isPaymentEnabled) {
-    //   Alert.alert('알림', TEXTS.alerts.agreementRequired);
-    //   return;
-    // }
+    // 약관 동의 검증
+    if (!isPaymentEnabled) {
+      Alert.alert('알림', TEXTS.alerts.agreementRequired);
+      return;
+    }
 
-    // 테스트용: 바로 결제 완료 모달 표시
-    console.log('💳 [StepPayment] 결제 완료 모달 표시!');
-    openModal({
-      width: 344,
-      height: 'auto',
-      closeOnBackdropPress: true,
-      children: (
-        <ConfirmModal
-          type="PAYMENT_COMPLETE"
-          onConfirm={handlePaymentCompleteConfirm}
-        />
-      ),
+    try {
+      // 결제 준비 API 호출
+      console.log('💳 [StepPayment] 결제 준비 시작');
+      const { redirect_url } = await readyPayment(orderData.order_id);
+
+      // 받은 redirect_url 확인
+      console.log('🔗 [StepPayment] 받은 redirect_url:', redirect_url);
+
+      // redirect_url 검증
+      if (!redirect_url) {
+        throw new Error('결제 URL을 받지 못했습니다.');
+      }
+
+      // Mock URL 체크 - 실제 카카오페이 API 사용 필요
+      if (redirect_url.includes('mock.kakao')) {
+        throw new Error(
+          '백엔드가 Mock 모드로 설정되어 있습니다.\n백엔드 개발자에게 실제 카카오페이 API를 사용하도록 요청해주세요.',
+        );
+      }
+
+      // 카카오페이 결제 페이지 열기
+      console.log('💳 [StepPayment] 카카오페이 브라우저 열기');
+      await openKakaoPayBrowser(redirect_url);
+    } catch (err) {
+      // 에러 처리
+      const errorMessage = err instanceof Error ? err.message : '결제 준비에 실패했습니다';
+      console.error('❌ [StepPayment] 결제 준비 실패:', errorMessage);
+      Alert.alert('결제 준비 실패', errorMessage);
+    }
+  }, [isPaymentEnabled, readyPayment, openKakaoPayBrowser, orderData.order_id]);
+
+  /** 결제 승인 처리 핸들러 (앱 복귀 시 호출) */
+  const handlePaymentApproval = useCallback(
+    async (pgToken: string) => {
+      try {
+        console.log('💳 [StepPayment] 결제 승인 시작');
+        const paymentData = await approvePayment(orderData.order_id, pgToken);
+
+        console.log('✅ [StepPayment] 결제 승인 성공');
+
+        // 결제 완료 모달 표시
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />
+          ),
+        });
+
+        // 부모 컴포넌트로 결제 성공 이벤트 전달
+        if (onPaymentSuccess) {
+          onPaymentSuccess(paymentData);
+        }
+      } catch (err) {
+        // 에러 처리
+        const errorMessage = err instanceof Error ? err.message : '결제 승인에 실패했습니다';
+        console.error('❌ [StepPayment] 결제 승인 실패:', errorMessage);
+        Alert.alert('결제 승인 실패', errorMessage);
+      }
+    },
+    [approvePayment, orderData.order_id, openModal, handlePaymentCompleteConfirm, onPaymentSuccess],
+  );
+
+  // ============================================
+  // 딥링크 처리 (카카오페이 복귀 시)
+  // ============================================
+
+  useEffect(() => {
+    /**
+     * 딥링크 URL 처리 함수
+     * 카카오페이 결제 완료/취소/실패 시 앱으로 복귀할 때 호출됨
+     */
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('🔗 [DeepLink] URL 수신:', url);
+
+      // URL 파라미터 추출
+      const urlObj = new URL(url);
+      const pgToken = urlObj.searchParams.get('pg_token');
+      const path = urlObj.pathname;
+
+      console.log('🔗 [DeepLink] Path:', path);
+      console.log('🔗 [DeepLink] pg_token:', pgToken);
+
+      // 결제 성공 (pg_token 존재)
+      if (pgToken && path.includes('/payment/success')) {
+        console.log('✅ [DeepLink] 결제 성공 - 승인 처리 시작');
+        handlePaymentApproval(pgToken);
+      }
+      // 결제 취소
+      else if (path.includes('/payment/cancel')) {
+        console.log('⚠️ [DeepLink] 결제 취소');
+        Alert.alert('결제 취소', '결제가 취소되었습니다. 다시 시도해주세요.');
+      }
+      // 결제 실패
+      else if (path.includes('/payment/fail')) {
+        console.log('❌ [DeepLink] 결제 실패');
+        Alert.alert('결제 실패', '결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    };
+
+    // 딥링크 리스너 등록
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // 앱이 닫혀있다가 딥링크로 열린 경우 처리
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        console.log('🔗 [DeepLink] Initial URL:', url);
+        handleDeepLink({ url });
+      }
     });
-  }, [openModal, handlePaymentCompleteConfirm]);
+
+    // 클린업
+    return () => {
+      subscription.remove();
+    };
+  }, [handlePaymentApproval]);
 
   // ============================================
   // 렌더링
@@ -329,15 +445,18 @@ export default function StepPayment({ formData, orderData, onSubmit, onBack }: S
         </View>
       </ScrollView>
 
-      {/* 하단 결제 버튼 (테스트용: 항상 활성화) */}
+      {/* 하단 결제 버튼 */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.submitButton}
+          style={[styles.submitButton, (isLoading || !isPaymentEnabled) && styles.submitButtonDisabled]}
           onPress={handleSubmitPress}
+          disabled={isLoading || !isPaymentEnabled}
           accessibilityRole="button"
           accessibilityLabel={TEXTS.footer.submitButton}>
-          <Text style={styles.submitButtonText}>{TEXTS.footer.submitButton}</Text>
-          <Text style={styles.submitButtonArrow}>→</Text>
+          <Text style={styles.submitButtonText}>
+            {isLoading ? '결제 처리 중...' : TEXTS.footer.submitButton}
+          </Text>
+          {!isLoading && <Text style={styles.submitButtonArrow}>→</Text>}
         </TouchableOpacity>
       </View>
 

@@ -51,23 +51,23 @@ const TEXTS = {
   dateSelection: {
     label: '개봉일 선택',
     options: [
-      { title: '1주일 후', price: '₩1,000' },
-      { title: '1년 후', price: '₩5,000' },
-      { title: '3년 후', price: '₩10,000' },
-      { title: '직접 선택', price: '기본 금액' },
+      { title: '1주일', price: '₩1,000' },
+      { title: '1개월', price: '₩5,000' },
+      { title: '1년', price: '₩10,000' },
+      { title: '직접 선택', price: '날짜별' },
     ],
   },
   personnel: {
     subLabel: 'PERSONNEL',
     label: '인원수',
     unit: '명',
-    hint: '1EA: ₩500',
+    hint: '',
   },
   storage: {
     subLabel: 'STORAGE',
     label: '이미지 슬롯',
     unit: '장',
-    hint: '1EA: ₩500',
+    hint: '1장당: ₩500',
   },
   additionalOptions: {
     label: '추가 옵션',

@@ -1,11 +1,12 @@
 /**
  * step-payment/hooks/useOrderSummary.ts
  * 생성 시각: 2024-12-17
- * 수정 시각: 2024-12-23 (백엔드 응답 데이터 사용하도록 변경)
+ * 수정 시각: 2024-12-26 (백엔드 가격 정책 변경에 따른 로직 수정)
  * 주문 상품 계산 Hook
  */
 
 import { formatCurrency } from '@/utils';
+import dayjs from 'dayjs';
 import { useMemo } from 'react';
 import { CreateOrderResponse } from '../../step-info/api/types/order';
 import { OrderItem, OrderSummary } from '../types';
@@ -25,67 +26,70 @@ export const useOrderSummary = (orderData: CreateOrderResponse): OrderSummary =>
   return useMemo(() => {
     const {
       headcount,
-      base_amount,
-      photo_amount,
-      music_amount,
+      image_amount,
+      audio_amount,
       video_amount,
       time_option_amount,
       time_option,
+      custom_open_at,
       total_amount,
       photo_count,
     } = orderData;
 
     const items: OrderItem[] = [];
 
-    // 1. 기본 금액 (항상 포함)
-    if (base_amount > 0) {
+    // 1. 개봉일 옵션 금액 (time_option_amount)
+    if (time_option_amount > 0) {
+      let optionLabel = '개봉일 옵션';
+
+      // time_option에 따라 레이블 변경
+      if (time_option === '1_WEEK') {
+        optionLabel = '개봉일 (1주일)';
+      } else if (time_option === '1_MONTH') {
+        optionLabel = '개봉일 (1개월)';
+      } else if (time_option === '1_YEAR') {
+        optionLabel = '개봉일 (1년)';
+      } else if (time_option === 'CUSTOM') {
+        // custom_open_at 날짜 파싱해서 표시
+        if (custom_open_at) {
+          const openDate = dayjs(custom_open_at).format('YYYY.MM.DD');
+          optionLabel = `개봉일 (${openDate})`;
+        } else {
+          optionLabel = '개봉일 (직접 선택)';
+        }
+      }
+
       items.push({
-        label: '기본 금액',
-        detail: `${headcount}명`,
-        price: base_amount,
+        label: optionLabel,
+        detail: '',
+        price: time_option_amount,
       });
     }
 
-    // 2. 사진 항목 (photo_amount > 0일 때만)
-    if (photo_amount > 0) {
+    // 2. 이미지 슬롯
+    if (image_amount > 0) {
       items.push({
-        label: '사진',
-        detail: `${photo_count}장 × ${formatCurrency(photo_amount / photo_count)}`,
-        price: photo_amount,
+        label: `이미지 (${photo_count}장)`,
+        detail: '',
+        price: image_amount,
       });
     }
 
-    // 3. 음악 항목 (music_amount > 0일 때만)
-    if (music_amount > 0) {
+    // 3. 음악 파일 (파일당 고정 금액)
+    if (audio_amount > 0) {
       items.push({
-        label: '음악',
-        detail: `${headcount}명 × ${formatCurrency(music_amount / headcount)}`,
-        price: music_amount,
+        label: '음악 파일',
+        detail: '',
+        price: audio_amount,
       });
     }
 
-    // 4. 동영상 항목 (video_amount > 0일 때만)
+    // 4. 영상 추가 (파일당 고정 금액)
     if (video_amount > 0) {
       items.push({
-        label: '동영상',
-        detail: `${headcount}명 × ${formatCurrency(video_amount / headcount)}`,
+        label: '영상 파일',
+        detail: '',
         price: video_amount,
-      });
-    }
-
-    // 5. 개봉일 옵션 항목 (time_option_amount > 0일 때만)
-    if (time_option_amount > 0) {
-      const timeOptionLabels: Record<string, string> = {
-        '1_WEEK': '1주일 후',
-        '1_MONTH': '1개월 후',
-        '1_YEAR': '1년 후',
-        CUSTOM: '직접 선택',
-      };
-
-      items.push({
-        label: '개봉일 옵션',
-        detail: timeOptionLabels[time_option] || time_option,
-        price: time_option_amount,
       });
     }
 
