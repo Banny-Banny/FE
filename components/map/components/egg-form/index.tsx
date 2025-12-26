@@ -47,7 +47,15 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
         styles.hideButton,
         isFormValid && !isSubmitting ? styles.hideButtonActive : styles.hideButtonInactive,
       ]}
-      onPress={handleSubmit}
+      onPress={() => {
+        console.log('🔘 숨기기 버튼 클릭됨');
+        console.log('📊 버튼 상태:', {
+          isFormValid,
+          isSubmitting,
+          disabled: !isFormValid || isSubmitting,
+        });
+        handleSubmit();
+      }}
       disabled={!isFormValid || isSubmitting}>
       <Text
         style={[
@@ -140,6 +148,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
                     <Image
                       source={{ uri: photoAttachment.uri }}
                       style={styles.attachmentPreviewImage}
+                      resizeMode="cover"
                     />
                   )}
                   {/* 삭제 버튼 */}
@@ -205,6 +214,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
                     <Image
                       source={{ uri: videoAttachment.thumbnailUri }}
                       style={styles.attachmentPreviewImage}
+                      resizeMode="cover"
                     />
                   ) : videoAttachment.uri ? (
                     <View style={styles.attachmentPreviewImagePlaceholder}>

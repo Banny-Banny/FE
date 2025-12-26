@@ -56,7 +56,7 @@ export const useFileUpload = () => {
 
       // 이미지 선택
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: false,
         quality: 1,
       });

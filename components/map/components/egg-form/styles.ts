@@ -138,7 +138,6 @@ export const styles = StyleSheet.create({
     left: 0,
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
   },
   // 플레이스홀더 (썸네일 생성 중 또는 음악)
   attachmentPreviewImagePlaceholder: {

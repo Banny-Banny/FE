@@ -19,9 +19,14 @@ interface UseMediaUploadReturn {
    * 미디어 업로드 실행
    * @param uri 파일 URI
    * @param type 미디어 타입 (IMAGE, VIDEO, MUSIC)
+   * @param filename 파일명 (선택적)
    * @returns 업로드된 미디어 ID
    */
-  upload: (uri: string, type: 'IMAGE' | 'VIDEO' | 'MUSIC') => Promise<string | null>;
+  upload: (
+    uri: string,
+    type: 'IMAGE' | 'VIDEO' | 'MUSIC',
+    filename?: string,
+  ) => Promise<string | null>;
   /**
    * 업로드 진행 중 여부
    */
@@ -46,9 +51,15 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const upload = useCallback(
-    async (uri: string, type: 'IMAGE' | 'VIDEO' | 'MUSIC'): Promise<string | null> => {
+    async (
+      uri: string,
+      type: 'IMAGE' | 'VIDEO' | 'MUSIC',
+      filename?: string,
+    ): Promise<string | null> => {
       if (!accessToken) {
-        setError('로그인이 필요합니다.');
+        const errorMsg = '로그인이 필요합니다.';
+        console.error('❌ 업로드 실패: 토큰 없음');
+        setError(errorMsg);
         return null;
       }
 
@@ -56,11 +67,17 @@ export const useMediaUpload = (): UseMediaUploadReturn => {
       setError(null);
 
       try {
-        const mediaId = await uploadMedia(uri, type, accessToken);
+        console.log(
+          `📤 useMediaUpload: 업로드 시작 (${type})${filename ? `, 파일명: ${filename}` : ''}`,
+        );
+        const mediaId = await uploadMedia(uri, type, accessToken, filename);
+        console.log(`✅ useMediaUpload: 업로드 성공, mediaId: ${mediaId}`);
         setIsUploading(false);
         return mediaId;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : '미디어 업로드에 실패했습니다.';
+        console.error('❌ useMediaUpload: 업로드 실패', err);
+        console.error('❌ 에러 메시지:', errorMessage);
         setError(errorMessage);
         setIsUploading(false);
         return null;

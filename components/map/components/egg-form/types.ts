@@ -54,4 +54,9 @@ export interface ApiErrorResponse {
   error?: string;
   message?: string;
   code?: string;
+  details?: {
+    used_slots?: number;
+    max_slots?: number;
+    remaining_slots?: number;
+  };
 }

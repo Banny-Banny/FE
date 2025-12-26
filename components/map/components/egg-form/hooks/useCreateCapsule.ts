@@ -114,8 +114,37 @@ export const useCreateCapsule = () => {
       // 에러 처리
       switch (status) {
         case 409:
-          // 슬롯 부족
-          Alert.alert('알림', '남은 슬롯이 없습니다.');
+          // 슬롯 부족 에러 처리
+          const errorCode = errorData?.code;
+          const details = errorData?.details;
+
+          if (errorCode === 'EGG_SLOTS_EXCEEDED') {
+            // 서버에서 슬롯 정보를 제공하는 경우
+            if (details?.max_slots !== undefined && details?.used_slots !== undefined) {
+              const remaining = (details.max_slots || 0) - (details.used_slots || 0);
+              Alert.alert(
+                '슬롯 부족',
+                `이스터에그 작성 슬롯이 모두 사용되었습니다.\n\n사용된 슬롯: ${details.used_slots}개\n최대 슬롯: ${details.max_slots}개\n남은 슬롯: ${remaining}개`,
+              );
+            } else if (details?.remaining_slots !== undefined) {
+              Alert.alert(
+                '슬롯 부족',
+                `남은 슬롯이 없습니다.\n(남은 슬롯: ${details.remaining_slots}개)`,
+              );
+            } else {
+              // 서버 메시지가 있으면 사용, 없으면 기본 메시지
+              const serverMessage = errorData?.message || errorData?.error;
+              Alert.alert(
+                '슬롯 부족',
+                serverMessage ||
+                  '이스터에그 작성 슬롯이 모두 사용되었습니다.\n더 이상 작성할 수 없습니다.',
+              );
+            }
+          } else {
+            // 다른 409 에러인 경우 서버 메시지 사용
+            const serverMessage = errorData?.message || errorData?.error || '요청이 충돌했습니다.';
+            Alert.alert('알림', serverMessage);
+          }
           break;
         case 400:
           // 유효성 실패

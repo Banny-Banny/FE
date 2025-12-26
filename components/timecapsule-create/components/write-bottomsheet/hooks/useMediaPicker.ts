@@ -76,7 +76,7 @@ export function useMediaPicker(
 
       // 이미지 피커 실행
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         quality: 0.8,
         allowsEditing: false,
@@ -162,7 +162,7 @@ export function useMediaPicker(
 
     // 비디오 피커 실행
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: ['videos'],
       allowsMultipleSelection: false,
       quality: 1.0,
       allowsEditing: false,
@@ -229,9 +229,9 @@ export function useMediaPicker(
 
     // 오디오 파일 선택
     // 참고: expo-image-picker는 오디오를 직접 지원하지 않으므로
-    // All 옵션을 사용하거나, 추후 expo-document-picker 사용 권장
+    // images와 videos를 모두 포함하거나, 추후 expo-document-picker 사용 권장
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ['images', 'videos'],
       allowsMultipleSelection: false,
       allowsEditing: false,
     });
