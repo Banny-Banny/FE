@@ -1,0 +1,297 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 TSX 파일경로: components/timecapsule-create/components/step-payment/index.tsx
+조건-파일경로) 참고할 TYPE 파일경로: components/timecapsule-create/components/step-payment/types.ts
+조건-파일경로) 구현될 API 파일경로: components/timecapsule-create/components/step-payment/api/payment.ts
+조건-파일경로) 구현될 API TYPE 파일경로: components/timecapsule-create/components/step-payment/api/types/payment.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/step-payment/hooks/useKakaoPayment.ts
+
+==============================================
+
+핵심요구사항) 병렬처리 구현을 위한 작업 방식 조건
+            - 다른 채팅에서 개발중인 파일을 수정 및 삭제 하지 말 것.
+            - 기존 UI 구조(index.tsx, styles.ts)는 최소한으로 수정하고, API 및 hook 파일만 추가할 것.
+
+==============================================
+
+핵심요구사항) 카카오페이 결제 연동 기능을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) 백엔드 API 스펙
+                A. 결제 준비 API
+                   - Method: POST
+                   - URL: /api/payments/kakao/ready
+                   - Headers: { Authorization: "Bearer {JWT}" }
+                   - Body: { order_id: string }
+                   - Response: { order_id: string, tid: string, redirect_url: string }
+                   - Status: 201 (성공), 400 (파라미터 오류/상태 불일치), 401 (인증 오류), 404 (주문 미존재)
+
+                B. 결제 승인 API
+                   - Method: POST
+                   - URL: /api/payments/kakao/approve
+                   - Headers: { Authorization: "Bearer {JWT}" }
+                   - Body: { order_id: string, pg_token: string }
+                   - Response: { order_id: string, status: string, amount: number, approved_at: string }
+                   - Status: 201 (성공), 400 (파라미터 오류/상태 불일치), 401 (인증 오류), 404 (주문/결제 미존재)
+
+            2) 라이브러리 조건
+                - HTTP 클라이언트: fetch 또는 axios (이미 설치된 것 사용)
+                - 상태관리: React hooks (useState, useCallback, useMemo) 사용할 것.
+                - 알림: React Native의 Alert 사용할 것.
+                - 브라우저 연동: expo-web-browser 또는 Linking 사용 (이미 설치된 것 사용)
+
+            3) 유저시나리오 (결제하기 버튼 클릭)
+                1. 사용자가 모든 약관에 동의하고 "카카오페이로 결제하기" 버튼 클릭
+                2. 로딩 상태 표시 시작
+                3. POST /api/payments/kakao/ready API 호출
+                   - orderData.id를 order_id로 전달
+                   - JWT 토큰은 자동으로 헤더에 포함 (기존 API 클라이언트 사용)
+                4. 성공 시:
+                   - tid, redirect_url 받음
+                   - 카카오페이 결제 페이지로 리다이렉트 (redirect_url 사용)
+                   - 웹뷰 또는 브라우저에서 결제 진행
+                5. 실패 시:
+                   - 에러 메시지 표시 (Alert)
+                   - 로딩 상태 종료
+
+            4) 유저시나리오 (카카오페이 결제 완료 후 복귀)
+                1. 사용자가 카카오페이 결제를 완료하면 앱으로 복귀
+                2. URL에서 pg_token 파라미터 추출
+                3. POST /api/payments/kakao/approve API 호출
+                   - orderData.id와 pg_token 전달
+                4. 성공 시:
+                   - 결제 완료 상태 업데이트
+                   - 부모 컴포넌트로 결제 성공 이벤트 전달 (onPaymentSuccess 콜백)
+                   - 타임캡슐 생성 완료 화면으로 이동
+                5. 실패 시:
+                   - 에러 메시지 표시 (Alert)
+                   - 결제 화면으로 복귀
+
+            5) 유저시나리오 (결제 취소/실패)
+                1. 사용자가 카카오페이 결제를 취소하거나 실패하면 앱으로 복귀
+                2. 에러 메시지 표시 (Alert)
+                3. 결제 화면 유지 (재시도 가능)
+
+==============================================
+
+추가요구사항) 에러 처리
+            1) 네트워크 에러
+                - "네트워크 연결을 확인해주세요" 메시지 표시
+                - 재시도 가능 상태 유지
+
+            2) 400 에러 (잘못된 요청)
+                - 백엔드 응답의 에러 메시지 표시
+                - 예: "주문 상태가 유효하지 않습니다"
+
+            3) 401 에러 (인증 오류)
+                - "로그인이 필요합니다" 메시지 표시
+                - 로그인 화면으로 이동 (선택사항)
+
+            4) 404 에러 (주문 미존재)
+                - "주문 정보를 찾을 수 없습니다" 메시지 표시
+                - 이전 화면으로 이동
+
+            5) 500 에러 (서버 오류)
+                - "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요" 메시지 표시
+
+==============================================
+
+구현 가이드라인
+
+1. API Types 파일 생성
+   - 파일: components/timecapsule-create/components/step-payment/api/types/payment.ts
+   - KakaoPayReadyRequest: 결제 준비 요청 타입
+     - order_id: string
+   - KakaoPayReadyResponse: 결제 준비 응답 타입
+     - order_id: string
+     - tid: string
+     - redirect_url: string
+   - KakaoPayApproveRequest: 결제 승인 요청 타입
+     - order_id: string
+     - pg_token: string
+   - KakaoPayApproveResponse: 결제 승인 응답 타입
+     - order_id: string
+     - status: string
+     - amount: number
+     - approved_at: string
+   - PaymentError: 결제 에러 타입
+     - status: number
+     - message: string
+
+2. API 함수 구현
+   - 파일: components/timecapsule-create/components/step-payment/api/payment.ts
+   - readyKakaoPay(orderId: string): Promise<KakaoPayReadyResponse>
+     - POST /api/payments/kakao/ready 호출
+     - JWT 토큰 자동 포함 (lib/api의 apiClient 사용)
+     - 에러 처리 및 타입 변환
+   - approveKakaoPay(orderId: string, pgToken: string): Promise<KakaoPayApproveResponse>
+     - POST /api/payments/kakao/approve 호출
+     - JWT 토큰 자동 포함
+     - 에러 처리 및 타입 변환
+
+3. useKakaoPayment Hook 구현
+   - 파일: components/timecapsule-create/components/step-payment/hooks/useKakaoPayment.ts
+   - 결제 준비 상태 관리 (loading, error)
+   - readyPayment(orderId: string): 결제 준비 함수
+     - readyKakaoPay API 호출
+     - 성공 시 tid, redirect_url 반환
+     - 에러 시 에러 상태 업데이트
+   - approvePayment(orderId: string, pgToken: string): 결제 승인 함수
+     - approveKakaoPay API 호출
+     - 성공 시 결제 결과 반환
+     - 에러 시 에러 상태 업데이트
+   - openKakaoPayBrowser(redirectUrl: string): 카카오페이 브라우저 열기
+     - expo-web-browser 또는 Linking 사용
+     - 리다이렉트 URL로 이동
+   - 반환값:
+     - isLoading: boolean
+     - error: PaymentError | null
+     - readyPayment: (orderId: string) => Promise<KakaoPayReadyResponse>
+     - approvePayment: (orderId: string, pgToken: string) => Promise<KakaoPayApproveResponse>
+     - openKakaoPayBrowser: (redirectUrl: string) => Promise<void>
+
+4. index.tsx 수정
+   - Props에 onPaymentSuccess 추가
+     - onPaymentSuccess?: (paymentData: KakaoPayApproveResponse) => void
+   - useKakaoPayment Hook 연결
+   - 결제하기 버튼 핸들러 수정:
+     1. 약관 동의 검증 (기존 로직 유지)
+     2. 검증 통과 시:
+        - readyPayment(orderData.id) 호출
+        - 성공 시 openKakaoPayBrowser(redirect_url) 호출
+        - 실패 시 Alert로 에러 메시지 표시
+   - 결제 승인 처리 (앱 복귀 시):
+     - URL 파라미터에서 pg_token 추출
+     - approvePayment(orderData.id, pg_token) 호출
+     - 성공 시 onPaymentSuccess 콜백 호출
+     - 실패 시 Alert로 에러 메시지 표시
+   - 로딩 상태 표시:
+     - isLoading이 true일 때 버튼 비활성화 및 로딩 표시
+
+5. types.ts 수정
+   - StepPaymentProps에 onPaymentSuccess 추가
+     - onPaymentSuccess?: (paymentData: KakaoPayApproveResponse) => void
+
+==============================================
+
+구현 순서
+
+1. API Types 파일 작성 (payment.ts의 타입 정의)
+2. API 함수 구현 (readyKakaoPay, approveKakaoPay)
+3. useKakaoPayment Hook 구현
+4. types.ts Props 타입 수정 (onPaymentSuccess 추가)
+5. index.tsx에 useKakaoPayment Hook 연결
+6. 결제하기 버튼 핸들러 수정 (결제 준비 호출)
+7. 카카오페이 브라우저 열기 기능 구현
+8. 결제 승인 처리 로직 구현 (앱 복귀 시)
+9. 로딩 상태 및 에러 처리 UI 적용
+10. 테스트 및 디버깅
+11. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 코드 유지
+   - index.tsx의 기본 UI 구조는 최대한 유지
+   - 기존 hooks (usePaymentValidation, useOrderSummary) 유지
+   - styles.ts는 필요한 스타일만 추가 (로딩 상태 등)
+
+2. API 클라이언트 재사용
+   - lib/api/client.ts의 apiClient 사용 (이미 JWT 토큰 자동 포함)
+   - 에러 처리 표준화 (lib/api의 에러 처리 방식 따름)
+   - 타입 안정성 확보
+
+3. 결제 플로우 안정성
+   - 네트워크 에러 재시도 가능하도록 구현
+   - 결제 취소 시 사용자가 재시도 가능
+   - 결제 승인 실패 시 명확한 에러 메시지
+
+4. 모바일 환경 고려
+   - expo-web-browser 우선 사용 (웹뷰 지원)
+   - Linking은 fallback으로 사용
+   - 앱 복귀 시 딥링크 처리 (URL 파라미터 추출)
+
+5. 사용자 경험
+   - 로딩 중 명확한 피드백 (버튼 비활성화, 로딩 인디케이터)
+   - 에러 시 명확한 안내 메시지
+   - 결제 완료 시 성공 피드백
+
+6. 코드 품질
+   - TypeScript 타입 안정성
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+   - 재사용 가능한 함수 작성
+
+7. 보안
+   - JWT 토큰은 자동으로 헤더에 포함 (apiClient 사용)
+   - pg_token은 URL 파라미터로만 전달 (저장하지 않음)
+   - 민감한 정보 로그 출력 금지
+
+==============================================
+
+추가 고려사항
+
+1) 딥링크 처리
+   - app.json에 URL scheme 설정 필요 (예: myapp://)
+   - 카카오페이 승인/취소/실패 URL 설정:
+     - 승인: myapp://payment/success?pg_token={pg_token}
+     - 취소: myapp://payment/cancel
+     - 실패: myapp://payment/fail
+
+2) 결제 상태 관리
+   - 결제 진행 중 상태 저장 (AsyncStorage 또는 Context)
+   - 앱 종료 후 재시작 시에도 결제 상태 복원 가능
+
+3) 테스트 모드
+   - 개발 환경에서는 mock 결제 가능
+   - 환경 변수로 API URL 전환 (dev/prod)
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] API Types 파일 작성 완료 (payment.ts)
+- [ ] readyKakaoPay API 함수 구현 완료
+- [ ] approveKakaoPay API 함수 구현 완료
+- [ ] useKakaoPayment Hook 구현 완료
+- [ ] StepPaymentProps에 onPaymentSuccess 추가 완료
+- [ ] 결제하기 버튼에 결제 준비 로직 연결
+- [ ] 카카오페이 브라우저 열기 기능 구현 완료
+- [ ] 결제 승인 처리 로직 구현 완료 (앱 복귀 시)
+- [ ] 로딩 상태 UI 구현 완료
+- [ ] 에러 처리 및 Alert 메시지 구현 완료
+- [ ] 네트워크 에러 재시도 가능
+- [ ] 결제 취소 시 재시도 가능
+- [ ] TypeScript 타입 에러 0건
+- [ ] JWT 토큰 자동 포함 확인 (apiClient 사용)
+- [ ] 민감한 정보 로그 출력 0건
+- [ ] 코드 가독성 및 유지보수성 확보
+
+==============================================
+
+참고사항
+
+1) 기존 API 클라이언트 구조 확인
+   - lib/api/client.ts 파일 참고
+   - 기존 타임캡슐 API와 동일한 패턴 사용
+   - 에러 처리 방식 통일
+
+2) 기존 step-info API 참고
+   - components/timecapsule-create/components/step-info/api/ 폴더 구조 참고
+   - 동일한 폴더 구조 및 네이밍 컨벤션 따름
+
+3) expo-web-browser 사용법
+   - import * as WebBrowser from 'expo-web-browser';
+   - WebBrowser.openBrowserAsync(url);
+   - 앱 복귀 시 Linking.addEventListener로 URL 감지
+
+==============================================

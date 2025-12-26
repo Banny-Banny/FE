@@ -4,8 +4,10 @@
  * 타임캡슐 주문 API 함수
  */
 
+import axios from 'axios';
 import dayjs from 'dayjs';
 import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { DATE_OPTION_INDEX } from '@/components/timecapsule-create/components/step-info/constants';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
 
 // ============================================
@@ -39,31 +41,31 @@ export async function createOrder(
   console.log('  - 토큰 받음:', token ? '✅' : '❌');
   console.log('  - Authorization 헤더:', `Bearer ${token.substring(0, 20)}...`);
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+  try {
+    const response = await axios.post<CreateOrderResponse>(url, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  console.log('📥 [API 응답]');
-  console.log('  - 상태 코드:', response.status);
-  console.log('  - 상태 텍스트:', response.statusText);
+    console.log('📥 [API 응답]');
+    console.log('  - 상태 코드:', response.status);
+    console.log('  - 상태 텍스트:', response.statusText);
 
-  if (!response.ok) {
-    let errorMessage = '주문 생성에 실패했습니다';
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      const response = error.response;
+      let errorMessage = '주문 생성에 실패했습니다';
 
-    try {
-      const errorData = await response.json();
-      console.log('❌ [서버 에러 응답]', JSON.stringify(errorData, null, 2));
+      console.log('❌ [서버 에러 응답]', JSON.stringify(response.data, null, 2));
 
       // 에러 메시지 매핑
       if (response.status === 400) {
-        if (errorData.message === 'PHOTO_COUNT_EXCEEDS_LIMIT') {
+        if (response.data.message === 'PHOTO_COUNT_EXCEEDS_LIMIT') {
           errorMessage = '사진 개수가 인원당 제한(최대 인원 × 5)을 초과했습니다';
-        } else if (errorData.message === 'CUSTOM_OPEN_AT_MUST_BE_FUTURE') {
+        } else if (response.data.message === 'CUSTOM_OPEN_AT_MUST_BE_FUTURE') {
           errorMessage = '개봉일은 현재 시각보다 미래여야 합니다';
         } else {
           errorMessage = '입력값이 올바르지 않습니다. 다시 확인해주세요';
@@ -71,25 +73,22 @@ export async function createOrder(
       } else if (response.status === 401) {
         errorMessage = '로그인이 필요한 서비스입니다';
       } else if (response.status === 404) {
-        if (errorData.message === 'PRODUCT_NOT_FOUND_OR_INVALID') {
+        if (response.data.message === 'PRODUCT_NOT_FOUND_OR_INVALID') {
           errorMessage = '유효하지 않은 상품입니다';
         } else {
           errorMessage = '요청한 리소스를 찾을 수 없습니다';
         }
       } else if (response.status === 500) {
         errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
-      } else if (errorData.message) {
-        errorMessage = errorData.message;
+      } else if (response.data.message) {
+        errorMessage = response.data.message;
       }
-    } catch (parseError) {
-      // JSON 파싱 실패 시 기본 에러 메시지 사용
-      console.error('에러 응답 파싱 실패:', parseError);
+
+      throw new Error(errorMessage);
     }
 
-    throw new Error(errorMessage);
+    throw error;
   }
-
-  return response.json();
 }
 
 // ============================================
@@ -112,20 +111,22 @@ export function mapFormToOrderRequest(formData: StepInfoFormData): CreateOrderRe
   let timeOption: TimeOption;
   let customOpenAt: string | undefined;
 
-  if (formData.selectedDateOptionIndex === 0) {
-    // "1주일 후"
+  if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
+    // "1주일" → 1_WEEK
     timeOption = '1_WEEK';
-  } else if (formData.selectedDateOptionIndex === 1) {
-    // "1년 후"
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+    // "1개월" → 1_MONTH
+    timeOption = '1_MONTH';
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
+    // "1년" → 1_YEAR
     timeOption = '1_YEAR';
-  } else if (formData.selectedDateOptionIndex === 2) {
-    // "3년 후" → CUSTOM with calculated date
-    timeOption = 'CUSTOM';
-    customOpenAt = dayjs().add(3, 'year').toISOString();
-  } else {
-    // 인덱스 3: "직접 선택" → CUSTOM with selected date
+  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.CUSTOM) {
+    // "직접 선택" → CUSTOM
     timeOption = 'CUSTOM';
     customOpenAt = formData.selectedDate ? dayjs(formData.selectedDate).toISOString() : undefined;
+  } else {
+    // 기본값 (예외 처리)
+    timeOption = '1_YEAR';
   }
 
   return {

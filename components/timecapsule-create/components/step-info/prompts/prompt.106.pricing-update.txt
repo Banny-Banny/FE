@@ -1,0 +1,511 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 파일들:
+            - components/timecapsule-create/components/step-info/index.tsx
+            - components/timecapsule-create/components/step-info/constants.ts
+            - components/timecapsule-create/components/step-info/hooks/usePriceCalculation.ts
+            - components/timecapsule-create/components/step-info/hooks/useDateSelection.ts
+            - components/timecapsule-create/components/step-info/api/orders.ts
+            - components/timecapsule-create/components/step-info/api/types/order.ts
+
+==============================================
+
+핵심요구사항) 백엔드 가격 정책 변경에 따른 프론트엔드 수정
+
+배경:
+- 기존: 프론트엔드에 가격 하드코딩
+- 문제: 백엔드 가격 변경 시 프론트도 수정 필요
+- 해결: 백엔드 계산 로직을 프론트에 복제 (백엔드 수정 불가)
+
+백엔드 가격 정책 (JSON 형식):
+```json
+{
+  "policy": {
+    "currency": "KRW",
+    "max_storage_years": 5
+  },
+  "duration_options": [
+    { "id": "week_1",  "label": "1주일", "duration_days": 7,   "price": 1000 },
+    { "id": "month_1", "label": "1개월", "duration_days": 30,  "price": 5000 },
+    { "id": "year_1",  "label": "1년",   "duration_days": 365, "price": 10000 },
+    { "id": "year_2",  "label": "2년",   "duration_days": 730, "price": 20000 },
+    { "id": "year_3",  "label": "3년",   "duration_days": 1095, "price": 30000 }
+  ],
+  "media_options": {
+    "image": {
+      "price_per_unit": 500,
+      "max_quantity": 10,
+      "unit": "sheet"
+    },
+    "audio": {
+      "price_per_unit": 1000,
+      "max_quantity": 1,
+      "unit": "file"
+    },
+    "video": {
+      "price_per_unit": 2000,
+      "max_quantity": 1,
+      "unit": "file"
+    }
+  }
+}
+```
+
+==============================================
+
+수정사항 1) UI 버튼 구조 변경
+
+기존:
+- "1주일 후" (₩1,000)
+- "1년 후" (₩5,000)
+- "3년 후" (₩10,000)
+- "직접 선택" (기본 금액)
+
+변경:
+- "1주일" (₩1,000)
+- "1개월" (₩5,000)
+- "1년" (₩10,000)
+- "직접 선택" (날짜별 계산)
+
+index.tsx 수정:
+```typescript
+const TEXTS = {
+  dateSelection: {
+    label: '개봉일 선택',
+    options: [
+      { title: '1주일', price: '₩1,000' },
+      { title: '1개월', price: '₩5,000' },
+      { title: '1년', price: '₩10,000' },
+      { title: '직접 선택', price: '날짜별' },
+    ],
+  },
+  // ...
+};
+```
+
+==============================================
+
+수정사항 2) constants.ts 가격 상수 업데이트
+
+기존 (components/timecapsule-create/components/step-info/constants.ts):
+```typescript
+export const BASE_PRICE = 1000;
+export const PHOTO_PRICE = 500;
+export const MUSIC_PRICE = 1000; // 인원당
+export const VIDEO_PRICE = 2000; // 인원당
+
+export const TIME_OPTION_PRICES = {
+  '1_WEEK': 1000,
+  '1_MONTH': 0,
+  '1_YEAR': 5000,
+  CUSTOM: 0,
+} as const;
+```
+
+변경:
+```typescript
+// ============================================
+// 백엔드 가격 정책 (복제)
+// ⚠️ 백엔드 가격 변경 시 이 파일도 함께 수정 필요
+// ============================================
+
+/** 기본 금액 (없음) */
+export const BASE_PRICE = 0;
+
+/** 이미지 1장당 가격 */
+export const PHOTO_PRICE = 500;
+
+/** 음악 파일 가격 (파일당, 인원 무관) */
+export const MUSIC_PRICE = 1000;
+
+/** 동영상 파일 가격 (파일당, 인원 무관) */
+export const VIDEO_PRICE = 2000;
+
+/**
+ * 개봉일 옵션별 가격 (duration_options 기반)
+ * 백엔드 API 응답과 동일한 구조
+ */
+export const DURATION_OPTIONS = [
+  { id: 'week_1', label: '1주일', duration_days: 7, price: 1000 },
+  { id: 'month_1', label: '1개월', duration_days: 30, price: 5000 },
+  { id: 'year_1', label: '1년', duration_days: 365, price: 10000 },
+  { id: 'year_2', label: '2년', duration_days: 730, price: 20000 },
+  { id: 'year_3', label: '3년', duration_days: 1095, price: 30000 },
+] as const;
+
+/**
+ * 개봉일 선택 옵션 (UI 버튼 인덱스)
+ */
+export const DATE_OPTION_INDEX = {
+  ONE_WEEK: 0,
+  ONE_MONTH: 1,
+  ONE_YEAR: 2,
+  CUSTOM: 3,
+} as const;
+```
+
+==============================================
+
+수정사항 3) useDateSelection.ts 수정
+
+개봉일 선택 시 가격 계산 로직 추가
+
+변경 사항:
+```typescript
+/**
+ * 직접 선택한 날짜의 가격 계산
+ * duration_days에 따라 DURATION_OPTIONS에서 매칭되는 가격 반환
+ */
+const calculateCustomDatePrice = (selectedDate: Date): number => {
+  const today = dayjs();
+  const targetDate = dayjs(selectedDate);
+  const durationDays = targetDate.diff(today, 'days');
+
+  // duration_days 기준으로 오름차순 정렬된 DURATION_OPTIONS에서 찾기
+  // 선택한 날짜의 일수보다 크거나 같은 첫 번째 옵션의 가격 사용
+  const matchedOption = DURATION_OPTIONS.find(
+    (opt) => durationDays <= opt.duration_days
+  );
+
+  // 매칭되는 옵션이 없으면 마지막 옵션(3년) 가격 사용
+  return matchedOption?.price || DURATION_OPTIONS[DURATION_OPTIONS.length - 1].price;
+};
+
+// datePrice 계산 로직 수정
+const datePrice = useMemo(() => {
+  if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
+    return DURATION_OPTIONS[0].price; // 1000
+  } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+    return DURATION_OPTIONS[1].price; // 5000
+  } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
+    return DURATION_OPTIONS[2].price; // 10000
+  } else if (selectedOptionIndex === DATE_OPTION_INDEX.CUSTOM && selectedDate) {
+    return calculateCustomDatePrice(selectedDate);
+  }
+  return 0;
+}, [selectedOptionIndex, selectedDate]);
+```
+
+==============================================
+
+수정사항 4) usePriceCalculation.ts 수정
+
+기존 (인원당 가격 계산):
+```typescript
+const optionsPrice = useMemo(() => {
+  let total = 0;
+
+  if (selectedOptions.music) {
+    total += personnelCount * MUSIC_PRICE; // 인원당
+  }
+
+  if (selectedOptions.video) {
+    total += personnelCount * VIDEO_PRICE; // 인원당
+  }
+
+  return total;
+}, [selectedOptions, personnelCount]);
+```
+
+변경 (파일당 가격):
+```typescript
+/**
+ * UI 표시용 예상 가격 Hook
+ *
+ * ⚠️ 이 함수는 UI 표시 목적으로만 사용됩니다.
+ * 실제 결제 금액은 백엔드 API 응답(orderData.total_amount)을 사용해야 합니다.
+ */
+export const usePriceCalculation = (
+  datePrice: number,
+  personnelCount: number,
+  storageCount: number,
+  selectedOptions: AdditionalOptionsState
+): UsePriceCalculationReturn => {
+  // 인원 요금 없음
+  const personnelPrice = 0;
+
+  // 이미지: 500원 × 개수
+  const storagePrice = useMemo(() => {
+    return storageCount * PHOTO_PRICE;
+  }, [storageCount]);
+
+  // 추가 옵션: 파일당 가격 (인원 무관)
+  const optionsPrice = useMemo(() => {
+    let total = 0;
+
+    if (selectedOptions.music) {
+      total += MUSIC_PRICE; // 1000원 (파일당)
+    }
+
+    if (selectedOptions.video) {
+      total += VIDEO_PRICE; // 2000원 (파일당)
+    }
+
+    return total;
+  }, [selectedOptions]);
+
+  // 총 가격 = 개봉일 가격 + 이미지 가격 + 옵션 가격
+  const totalPrice = useMemo(() => {
+    return datePrice + storagePrice + optionsPrice;
+  }, [datePrice, storagePrice, optionsPrice]);
+
+  const priceBreakdown = useMemo(
+    () => ({
+      datePrice,
+      personnelPrice: 0,
+      storagePrice,
+      optionsPrice,
+      totalPrice,
+    }),
+    [datePrice, storagePrice, optionsPrice, totalPrice]
+  );
+
+  return {
+    personnelPrice,
+    storagePrice,
+    optionsPrice,
+    totalPrice,
+    priceBreakdown,
+  };
+};
+```
+
+==============================================
+
+수정사항 5) index.tsx UI 텍스트 수정
+
+기존:
+```typescript
+personnel: {
+  hint: '1EA: ₩500',
+},
+storage: {
+  hint: '1EA: ₩500',
+},
+additionalOptions: {
+  options: [
+    { title: '음악 파일', price: '+₩1,000' },
+    { title: '영상 추가', price: '+₩2,000' },
+  ],
+},
+```
+
+변경 (인원당 → 파일당):
+```typescript
+personnel: {
+  hint: '', // 인원당 요금 없음
+},
+storage: {
+  hint: '1장당: ₩500',
+},
+additionalOptions: {
+  options: [
+    { title: '음악 파일', price: '+₩1,000' }, // 파일당
+    { title: '영상 추가', price: '+₩2,000' }, // 파일당
+  ],
+},
+```
+
+==============================================
+
+수정사항 6) API 요청 매핑 수정 (orders.ts)
+
+mapFormToOrderRequest 함수 수정:
+
+기존:
+```typescript
+if (formData.selectedDateOptionIndex === 0) {
+  timeOption = '1_WEEK';
+} else if (formData.selectedDateOptionIndex === 1) {
+  timeOption = '1_YEAR';
+} else if (formData.selectedDateOptionIndex === 2) {
+  timeOption = 'CUSTOM';
+  customOpenAt = dayjs().add(3, 'year').toISOString();
+}
+```
+
+변경:
+```typescript
+if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
+  // "1주일" → 1_WEEK
+  timeOption = '1_WEEK';
+} else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+  // "1개월" → 1_MONTH
+  timeOption = '1_MONTH';
+} else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
+  // "1년" → 1_YEAR
+  timeOption = '1_YEAR';
+} else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.CUSTOM) {
+  // "직접 선택" → CUSTOM
+  timeOption = 'CUSTOM';
+  customOpenAt = formData.selectedDate ? dayjs(formData.selectedDate).toISOString() : undefined;
+}
+```
+
+==============================================
+
+수정사항 7) API Types 수정 (order.ts)
+
+TimeOption 타입 수정:
+
+기존:
+```typescript
+export type TimeOption = '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM';
+```
+
+유지 (변경 없음):
+```typescript
+export type TimeOption = '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM';
+```
+
+CreateOrderResponse 타입 확인:
+```typescript
+export interface CreateOrderResponse {
+  order_id: string;
+  total_amount: number;
+  base_amount: number;
+  photo_amount: number;
+  music_amount: number;
+  video_amount: number;
+  time_option_amount: number; // 개봉일 옵션 금액
+  time_option: string;
+  custom_open_at: string | null;
+  headcount: number;
+  photo_count: number;
+  add_music: boolean;
+  add_video: boolean;
+  status: 'PENDING_PAYMENT' | 'COMPLETED' | 'CANCELLED';
+}
+```
+
+==============================================
+
+구현 순서
+
+1. constants.ts 수정
+   - BASE_PRICE = 0
+   - DURATION_OPTIONS 배열 추가
+   - MUSIC_PRICE, VIDEO_PRICE 주석 수정 (파일당)
+
+2. useDateSelection.ts 수정
+   - calculateCustomDatePrice 함수 추가
+   - datePrice 계산 로직 수정 (4개 옵션 대응)
+
+3. usePriceCalculation.ts 수정
+   - optionsPrice 계산 수정 (인원 무관, 파일당)
+   - totalPrice 계산 수정 (BASE_PRICE 제거)
+
+4. index.tsx 수정
+   - TEXTS.dateSelection.options 배열 수정 (4개 버튼)
+   - TEXTS.personnel.hint 제거
+   - TEXTS.storage.hint 수정 ("1장당")
+
+5. orders.ts 수정
+   - mapFormToOrderRequest 함수 수정 (4개 옵션 매핑)
+
+6. 테스트
+   - 1주일 선택 → 가격 1000원 확인
+   - 1개월 선택 → 가격 5000원 확인
+   - 1년 선택 → 가격 10000원 확인
+   - 직접 선택 (2년 후) → 가격 20000원 확인
+   - 직접 선택 (3년 후) → 가격 30000원 확인
+   - 음악/영상 옵션 → 인원 변경해도 가격 고정 확인
+
+7. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 백엔드 계산 로직 정확히 복제
+   - duration_days 계산: dayjs(selectedDate).diff(dayjs(), 'days')
+   - DURATION_OPTIONS에서 매칭: duration_days <= opt.duration_days
+   - 매칭 안 되면 마지막 옵션 사용
+
+2. UI 가격은 참고용
+   - UI에 표시되는 가격은 "예상 금액"
+   - 실제 결제 금액은 백엔드 응답(orderData.total_amount) 사용
+   - 결제 직전에 금액 불일치 시 경고 (선택사항)
+
+3. 기존 코드 최소 수정
+   - UI 구조 유지
+   - 기존 hooks 흐름 유지
+   - styles.ts 수정 불필요
+
+4. 날짜 계산 정확성
+   - 타임존 고려
+   - dayjs 사용
+   - 백엔드와 일수 계산 방식 동일해야 함
+
+5. 코드 주석
+   - "백엔드 가격 정책 복제" 명시
+   - "백엔드 수정 시 여기도 수정" 경고 주석
+   - UI 표시용 vs 실제 결제 금액 구분
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] constants.ts DURATION_OPTIONS 배열 추가 완료
+- [ ] constants.ts BASE_PRICE = 0 수정 완료
+- [ ] constants.ts MUSIC_PRICE, VIDEO_PRICE 주석 수정 (파일당)
+- [ ] useDateSelection.ts calculateCustomDatePrice 함수 추가 완료
+- [ ] useDateSelection.ts datePrice 계산 로직 수정 완료 (4개 옵션)
+- [ ] usePriceCalculation.ts optionsPrice 계산 수정 완료 (인원 무관)
+- [ ] usePriceCalculation.ts totalPrice 계산 수정 완료
+- [ ] index.tsx TEXTS.dateSelection.options 수정 완료 (4개 버튼)
+- [ ] index.tsx TEXTS.personnel.hint 제거 완료
+- [ ] index.tsx TEXTS.storage.hint 수정 완료
+- [ ] orders.ts mapFormToOrderRequest 수정 완료 (4개 옵션 매핑)
+- [ ] 1주일 선택 시 가격 1000원 확인
+- [ ] 1개월 선택 시 가격 5000원 확인
+- [ ] 1년 선택 시 가격 10000원 확인
+- [ ] 직접 선택 (2년 후) 시 가격 20000원 확인
+- [ ] 직접 선택 (3년 후) 시 가격 30000원 확인
+- [ ] 음악 옵션 가격 1000원 고정 확인 (인원 무관)
+- [ ] 영상 옵션 가격 2000원 고정 확인 (인원 무관)
+- [ ] TypeScript 타입 에러 0건
+- [ ] 백엔드 API 호출 시 올바른 time_option 전송 확인
+
+==============================================
+
+테스트 시나리오
+
+1. 개봉일 옵션 테스트
+   - "1주일" 버튼 클릭 → UI에 ₩1,000 표시
+   - "1개월" 버튼 클릭 → UI에 ₩5,000 표시
+   - "1년" 버튼 클릭 → UI에 ₩10,000 표시
+   - "직접 선택" 클릭 → 달력 오픈
+
+2. 직접 선택 테스트
+   - 오늘로부터 100일 후 선택 → ₩5,000 (1개월 기준)
+   - 오늘로부터 500일 후 선택 → ₩10,000 (1년 기준)
+   - 오늘로부터 800일 후 선택 → ₩20,000 (2년 기준)
+   - 오늘로부터 1200일 후 선택 → ₩30,000 (3년 기준)
+
+3. 추가 옵션 테스트
+   - 인원 2명, 음악 선택 → 옵션 가격 ₩1,000
+   - 인원 10명, 음악 선택 → 옵션 가격 ₩1,000 (동일)
+   - 인원 2명, 영상 선택 → 옵션 가격 ₩2,000
+   - 인원 10명, 영상 선택 → 옵션 가격 ₩2,000 (동일)
+
+4. 총 가격 계산 테스트
+   - 1주일 + 이미지 3장 + 음악 → ₩1,000 + ₩1,500 + ₩1,000 = ₩3,500
+   - 1년 + 이미지 5장 + 영상 → ₩10,000 + ₩2,500 + ₩2,000 = ₩14,500
+
+5. API 요청 테스트
+   - "1주일" 선택 → time_option: "1_WEEK"
+   - "1개월" 선택 → time_option: "1_MONTH"
+   - "1년" 선택 → time_option: "1_YEAR"
+   - "직접 선택" → time_option: "CUSTOM", custom_open_at: ISO 8601
+
+==============================================

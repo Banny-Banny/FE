@@ -1,0 +1,367 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 파일들:
+            - components/timecapsule-create/components/step-payment/index.tsx
+            - components/timecapsule-create/components/step-payment/hooks/useOrderSummary.ts
+            - components/timecapsule-create/components/step-payment/types.ts
+
+==============================================
+
+핵심요구사항) 백엔드 가격 정책 변경에 따른 결제 화면 수정
+
+배경:
+- step-info에서 백엔드 가격 정책이 변경됨
+- step-payment는 orderData를 받아서 결제 정보 표시
+- orderData 구조 변경에 따라 표시 로직 수정 필요
+
+백엔드 가격 정책 변경 사항:
+1. 기본 금액(BASE_PRICE) 제거 → 0원
+2. 개봉일 옵션 가격 변경:
+   - 1주일: 1,000원
+   - 1개월: 5,000원 (신규)
+   - 1년: 10,000원
+   - 직접 선택: 날짜별 계산 (2년: 20,000원, 3년: 30,000원)
+3. 추가 옵션 가격 계산 방식 변경:
+   - 기존: 인원당 가격 (music: 1000 × 인원, video: 2000 × 인원)
+   - 변경: 파일당 고정 가격 (music: 1000원, video: 2000원)
+
+==============================================
+
+수정사항 1) orderData 응답 구조 확인
+
+CreateOrderResponse (step-info에서 받아옴):
+```typescript
+{
+  order_id: string;
+  total_amount: number;          // 총 결제 금액
+  base_amount: number;            // 0 (제거됨)
+  photo_amount: number;           // 이미지 금액 (500 × 개수)
+  music_amount: number;           // 음악 금액 (1000 또는 0)
+  video_amount: number;           // 영상 금액 (2000 또는 0)
+  time_option_amount: number;     // 개봉일 옵션 금액 (1000, 5000, 10000, 20000, 30000 등)
+  time_option: string;            // "1_WEEK", "1_MONTH", "1_YEAR", "CUSTOM"
+  custom_open_at: string | null;
+  headcount: number;
+  photo_count: number;
+  add_music: boolean;
+  add_video: boolean;
+  status: "PENDING_PAYMENT";
+}
+```
+
+중요 변경사항:
+- base_amount는 항상 0
+- time_option_amount에 개봉일 옵션 금액 포함
+- music_amount, video_amount는 인원 무관 (고정 금액)
+
+==============================================
+
+수정사항 2) useOrderSummary.ts 수정
+
+기존 로직:
+```typescript
+const summaryItems = useMemo(() => {
+  const items = [];
+
+  // 기본 금액
+  items.push({
+    label: '기본 금액',
+    value: formatPrice(orderData.base_amount),
+  });
+
+  // 이미지 슬롯
+  if (orderData.photo_count > 0) {
+    items.push({
+      label: `이미지 슬롯 (${orderData.photo_count}장)`,
+      value: formatPrice(orderData.photo_amount),
+    });
+  }
+
+  // 음악 파일
+  if (orderData.add_music) {
+    items.push({
+      label: '음악 파일',
+      value: formatPrice(orderData.music_amount),
+    });
+  }
+
+  // 영상 추가
+  if (orderData.add_video) {
+    items.push({
+      label: '영상 추가',
+      value: formatPrice(orderData.video_amount),
+    });
+  }
+
+  return items;
+}, [orderData]);
+```
+
+변경 로직:
+```typescript
+const summaryItems = useMemo(() => {
+  const items = [];
+
+  // 개봉일 옵션 금액 (time_option_amount)
+  if (orderData.time_option_amount > 0) {
+    let optionLabel = '개봉일 옵션';
+
+    // time_option에 따라 레이블 변경
+    if (orderData.time_option === '1_WEEK') {
+      optionLabel = '개봉일 (1주일)';
+    } else if (orderData.time_option === '1_MONTH') {
+      optionLabel = '개봉일 (1개월)';
+    } else if (orderData.time_option === '1_YEAR') {
+      optionLabel = '개봉일 (1년)';
+    } else if (orderData.time_option === 'CUSTOM') {
+      // custom_open_at 날짜 파싱해서 표시
+      if (orderData.custom_open_at) {
+        const openDate = dayjs(orderData.custom_open_at).format('YYYY.MM.DD');
+        optionLabel = `개봉일 (${openDate})`;
+      } else {
+        optionLabel = '개봉일 (직접 선택)';
+      }
+    }
+
+    items.push({
+      label: optionLabel,
+      value: formatPrice(orderData.time_option_amount),
+    });
+  }
+
+  // 이미지 슬롯
+  if (orderData.photo_count > 0) {
+    items.push({
+      label: `이미지 (${orderData.photo_count}장)`,
+      value: formatPrice(orderData.photo_amount),
+    });
+  }
+
+  // 음악 파일 (파일당 고정 금액)
+  if (orderData.add_music) {
+    items.push({
+      label: '음악 파일',
+      value: formatPrice(orderData.music_amount),
+    });
+  }
+
+  // 영상 추가 (파일당 고정 금액)
+  if (orderData.add_video) {
+    items.push({
+      label: '영상 파일',
+      value: formatPrice(orderData.video_amount),
+    });
+  }
+
+  return items;
+}, [orderData]);
+
+// 총 금액은 orderData.total_amount 사용
+const totalAmount = useMemo(() => {
+  return formatPrice(orderData.total_amount);
+}, [orderData.total_amount]);
+```
+
+==============================================
+
+수정사항 3) index.tsx UI 텍스트 수정
+
+결제 요약 섹션:
+
+기존:
+```typescript
+<View style={styles.summarySection}>
+  <Text style={styles.sectionTitle}>결제 정보</Text>
+  {summaryItems.map((item, index) => (
+    <View key={index} style={styles.summaryRow}>
+      <Text style={styles.summaryLabel}>{item.label}</Text>
+      <Text style={styles.summaryValue}>{item.value}</Text>
+    </View>
+  ))}
+  <View style={styles.totalRow}>
+    <Text style={styles.totalLabel}>총 결제금액</Text>
+    <Text style={styles.totalValue}>{totalAmount}</Text>
+  </View>
+</View>
+```
+
+변경 (UI 구조 유지, 데이터만 변경):
+- summaryItems에서 자동으로 업데이트되므로 UI 코드는 수정 불필요
+- useOrderSummary Hook에서 처리
+
+==============================================
+
+수정사항 4) types.ts 타입 확인
+
+OrderData 타입이 CreateOrderResponse와 일치하는지 확인:
+
+```typescript
+export interface OrderData {
+  order_id: string;
+  total_amount: number;
+  base_amount: number;            // 0 (사용 안 함)
+  photo_amount: number;
+  music_amount: number;
+  video_amount: number;
+  time_option_amount: number;     // 중요: 개봉일 옵션 금액
+  time_option: string;
+  custom_open_at: string | null;
+  headcount: number;
+  photo_count: number;
+  add_music: boolean;
+  add_video: boolean;
+  status: string;
+}
+```
+
+==============================================
+
+구현 순서
+
+1. useOrderSummary.ts 수정
+   - summaryItems 계산 로직 수정
+   - time_option_amount 항목 추가
+   - base_amount 항목 제거
+   - time_option에 따른 레이블 분기 처리
+   - custom_open_at 날짜 파싱 및 표시
+
+2. types.ts 확인
+   - OrderData 타입이 CreateOrderResponse와 일치하는지 확인
+   - time_option_amount 필드 존재 확인
+
+3. index.tsx 확인
+   - UI 코드는 수정 불필요 (summaryItems가 자동 업데이트)
+   - totalAmount는 orderData.total_amount 사용 확인
+
+4. 테스트
+   - 1주일 옵션 → "개봉일 (1주일)" 표시
+   - 1개월 옵션 → "개봉일 (1개월)" 표시
+   - 1년 옵션 → "개봉일 (1년)" 표시
+   - 직접 선택 → "개봉일 (2025.12.31)" 형식 표시
+   - 음악/영상 → 인원 무관 고정 금액 표시
+
+5. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 백엔드 응답 데이터 신뢰
+   - orderData는 step-info에서 백엔드 API 응답으로 받아옴
+   - 백엔드가 계산한 금액을 그대로 표시
+   - 프론트엔드에서 재계산하지 않음
+
+2. base_amount 제거
+   - base_amount는 항상 0이므로 표시하지 않음
+   - time_option_amount에 개봉일 옵션 금액 포함
+
+3. time_option 분기 처리
+   - "1_WEEK", "1_MONTH", "1_YEAR", "CUSTOM" 4가지 케이스
+   - CUSTOM일 때는 custom_open_at 날짜 파싱
+
+4. 날짜 표시 형식
+   - custom_open_at: ISO 8601 → "YYYY.MM.DD" 형식
+   - dayjs 사용
+
+5. UI 구조 유지
+   - index.tsx UI 코드는 최소한만 수정
+   - 로직은 useOrderSummary Hook에서 처리
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] useOrderSummary.ts summaryItems 로직 수정 완료
+- [ ] time_option_amount 항목 추가 완료
+- [ ] base_amount 항목 제거 완료
+- [ ] time_option 분기 처리 완료 (1_WEEK, 1_MONTH, 1_YEAR, CUSTOM)
+- [ ] custom_open_at 날짜 파싱 및 표시 완료
+- [ ] types.ts OrderData 타입 확인 완료
+- [ ] totalAmount는 orderData.total_amount 사용 확인
+- [ ] 1주일 옵션 시 "개봉일 (1주일)" 표시 확인
+- [ ] 1개월 옵션 시 "개봉일 (1개월)" 표시 확인
+- [ ] 1년 옵션 시 "개봉일 (1년)" 표시 확인
+- [ ] 직접 선택 시 "개봉일 (YYYY.MM.DD)" 표시 확인
+- [ ] 음악 파일 금액 1000원 고정 확인
+- [ ] 영상 파일 금액 2000원 고정 확인
+- [ ] TypeScript 타입 에러 0건
+- [ ] UI 구조 유지 확인
+
+==============================================
+
+테스트 시나리오
+
+1. 개봉일 옵션 표시 테스트
+   - time_option: "1_WEEK" → "개봉일 (1주일) ₩1,000"
+   - time_option: "1_MONTH" → "개봉일 (1개월) ₩5,000"
+   - time_option: "1_YEAR" → "개봉일 (1년) ₩10,000"
+   - time_option: "CUSTOM", custom_open_at: "2025-12-31" → "개봉일 (2025.12.31) ₩20,000"
+
+2. 추가 옵션 표시 테스트
+   - add_music: true, headcount: 2 → "음악 파일 ₩1,000" (인원 무관)
+   - add_video: true, headcount: 10 → "영상 파일 ₩2,000" (인원 무관)
+
+3. 총 금액 계산 테스트
+   - 1주일 + 이미지 3장 + 음악 → ₩3,500
+   - 1년 + 이미지 5장 + 영상 → ₩14,500
+   - 직접 선택 (2년) + 이미지 10장 + 음악 + 영상 → ₩28,000
+
+4. UI 표시 테스트
+   - base_amount 항목이 표시되지 않는지 확인
+   - time_option_amount 항목이 올바르게 표시되는지 확인
+   - 총 금액이 orderData.total_amount와 일치하는지 확인
+
+==============================================
+
+참고: orderData 예시
+
+1주일 + 이미지 3장 + 음악:
+```json
+{
+  "order_id": "xxx",
+  "total_amount": 3500,
+  "base_amount": 0,
+  "photo_amount": 1500,
+  "music_amount": 1000,
+  "video_amount": 0,
+  "time_option_amount": 1000,
+  "time_option": "1_WEEK",
+  "custom_open_at": null,
+  "headcount": 2,
+  "photo_count": 3,
+  "add_music": true,
+  "add_video": false,
+  "status": "PENDING_PAYMENT"
+}
+```
+
+직접 선택 (2년 후) + 이미지 10장 + 음악 + 영상:
+```json
+{
+  "order_id": "xxx",
+  "total_amount": 28000,
+  "base_amount": 0,
+  "photo_amount": 5000,
+  "music_amount": 1000,
+  "video_amount": 2000,
+  "time_option_amount": 20000,
+  "time_option": "CUSTOM",
+  "custom_open_at": "2027-12-26T00:00:00.000Z",
+  "headcount": 5,
+  "photo_count": 10,
+  "add_music": true,
+  "add_video": true,
+  "status": "PENDING_PAYMENT"
+}
+```
+
+==============================================

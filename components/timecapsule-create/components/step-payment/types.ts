@@ -1,11 +1,13 @@
 /**
  * step-payment/types.ts
  * 생성 시각: 2024-12-16
+ * 수정 시각: 2024-12-26
  * 타임캡슐 결제 화면 타입 정의
  */
 
 import { CreateOrderResponse } from '../step-info/api/types/order';
 import { StepInfoFormData } from '../step-info/types';
+import { TossPaymentConfirmResponse } from './api/types/payment';
 
 // ============================================
 // 주문 항목 타입
@@ -71,5 +73,7 @@ export interface StepPaymentProps {
   onBack?: () => void;
   /** 결제하기 핸들러 (주문 요약 정보 전달) */
   onSubmit?: (orderSummary: OrderSummary) => void;
+  /** 결제 성공 핸들러 (결제 승인 응답 전달) */
+  onPaymentSuccess?: (paymentData: TossPaymentConfirmResponse) => void;
 }
 

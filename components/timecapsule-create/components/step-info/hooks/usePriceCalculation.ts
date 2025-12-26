@@ -1,7 +1,7 @@
 /**
  * step-info/hooks/usePriceCalculation.ts
  * 생성 시각: 2024-12-16
- * 수정 시각: 2024-12-23 (백엔드 계산 의존으로 변경)
+ * 수정 시각: 2024-12-26 (백엔드 가격 정책 적용)
  * UI 표시용 가격 정보 Hook
  *
  * ⚠️ 주의: 이 Hook은 UI 표시용 "예상 금액"만 보여줍니다.
@@ -12,15 +12,13 @@ import { useMemo } from 'react';
 import { PHOTO_PRICE, MUSIC_PRICE, VIDEO_PRICE } from '../constants';
 import type { AdditionalOptionsState, UsePriceCalculationReturn } from '../types';
 
-const BASE_PRICE = 1000; // 기본 금액
-
 /**
  * UI 표시용 예상 가격 Hook
  *
  * ⚠️ 이 함수는 UI 표시 목적으로만 사용됩니다.
  * 실제 결제 금액은 백엔드 API 응답(orderData.total_amount)을 사용해야 합니다.
  *
- * @param datePrice 개봉일 금액 (현재 미사용)
+ * @param datePrice 개봉일 금액
  * @param personnelCount 인원 수
  * @param storageCount 이미지 슬롯 수
  * @param selectedOptions 선택된 추가 옵션
@@ -36,39 +34,43 @@ export const usePriceCalculation = (
   // UI 표시용 예상 금액 계산
   // ============================================
 
-  const personnelPrice = 0; // 인원 요금 없음
+  // 인원 요금 없음
+  const personnelPrice = 0;
 
+  // 이미지: 500원 × 개수
   const storagePrice = useMemo(() => {
     return storageCount * PHOTO_PRICE;
   }, [storageCount]);
 
+  // 추가 옵션: 파일당 가격 (인원 무관)
   const optionsPrice = useMemo(() => {
     let total = 0;
 
     if (selectedOptions.music) {
-      total += personnelCount * MUSIC_PRICE;
+      total += MUSIC_PRICE; // 1000원 (파일당)
     }
 
     if (selectedOptions.video) {
-      total += personnelCount * VIDEO_PRICE;
+      total += VIDEO_PRICE; // 2000원 (파일당)
     }
 
     return total;
-  }, [selectedOptions, personnelCount]);
+  }, [selectedOptions]);
 
+  // 총 가격 = 개봉일 가격 + 이미지 가격 + 옵션 가격
   const totalPrice = useMemo(() => {
-    return BASE_PRICE + storagePrice + optionsPrice;
-  }, [storagePrice, optionsPrice]);
+    return datePrice + storagePrice + optionsPrice;
+  }, [datePrice, storagePrice, optionsPrice]);
 
   const priceBreakdown = useMemo(
     () => ({
-      datePrice: 0,
+      datePrice,
       personnelPrice: 0,
       storagePrice,
       optionsPrice,
       totalPrice,
     }),
-    [storagePrice, optionsPrice, totalPrice]
+    [datePrice, storagePrice, optionsPrice, totalPrice]
   );
 
   // ============================================

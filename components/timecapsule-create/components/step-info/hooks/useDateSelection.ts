@@ -1,13 +1,13 @@
 /**
  * step-info/hooks/useDateSelection.ts
  * 생성 시각: 2024-12-16
- * 수정 시각: 2024-12-23 (개봉일 가격 제거)
+ * 수정 시각: 2024-12-26 (백엔드 가격 정책 적용)
  * 개봉일 선택 Hook
  */
 
 import dayjs from 'dayjs';
 import { useCallback, useMemo, useState } from 'react';
-import { DATE_OPTION_INDEX } from '../constants';
+import { DATE_OPTION_INDEX, DURATION_OPTIONS } from '../constants';
 import type { UseDateSelectionReturn } from '../types';
 
 /**
@@ -40,11 +40,43 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
   /** 선택된 날짜 (직접 선택 시) */
   const [selectedDate, setSelectedDate] = useState<Date | null>(initialData?.selectedDate || null);
 
-  /** 개봉일 가격 (현재 백엔드에서 계산 안 함, 항상 0) */
-  const datePrice = 0;
-
   /** 달력 바텀시트 표시 여부 */
   const [isCalendarVisible, setIsCalendarVisible] = useState<boolean>(false);
+
+  // ============================================
+  // 가격 계산
+  // ============================================
+
+  /**
+   * 직접 선택한 날짜의 가격 계산
+   * duration_days에 따라 DURATION_OPTIONS에서 매칭되는 가격 반환
+   */
+  const calculateCustomDatePrice = useCallback((selectedDate: Date): number => {
+    const today = dayjs();
+    const targetDate = dayjs(selectedDate);
+    const durationDays = targetDate.diff(today, 'days');
+
+    // duration_days 기준으로 오름차순 정렬된 DURATION_OPTIONS에서 찾기
+    // 선택한 날짜의 일수보다 크거나 같은 첫 번째 옵션의 가격 사용
+    const matchedOption = DURATION_OPTIONS.find((opt) => durationDays <= opt.duration_days);
+
+    // 매칭되는 옵션이 없으면 마지막 옵션(3년) 가격 사용
+    return matchedOption?.price || DURATION_OPTIONS[DURATION_OPTIONS.length - 1].price;
+  }, []);
+
+  /** 개봉일 가격 계산 */
+  const datePrice = useMemo(() => {
+    if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
+      return DURATION_OPTIONS[0].price; // 1000
+    } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+      return DURATION_OPTIONS[1].price; // 5000
+    } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
+      return DURATION_OPTIONS[2].price; // 10000
+    } else if (selectedOptionIndex === DATE_OPTION_INDEX.CUSTOM && selectedDate) {
+      return calculateCustomDatePrice(selectedDate);
+    }
+    return 0;
+  }, [selectedOptionIndex, selectedDate, calculateCustomDatePrice]);
 
   // ============================================
   // 이벤트 핸들러
@@ -103,10 +135,10 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
     // 선택된 옵션에 따라 개봉일 계산
     if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
       openDate = dayjs().add(7, 'day');
+    } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
+      openDate = dayjs().add(1, 'month');
     } else if (selectedOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
       openDate = dayjs().add(1, 'year');
-    } else if (selectedOptionIndex === DATE_OPTION_INDEX.THREE_YEARS) {
-      openDate = dayjs().add(3, 'year');
     } else if (selectedOptionIndex === DATE_OPTION_INDEX.CUSTOM && selectedDate) {
       openDate = dayjs(selectedDate);
     }
