@@ -1,164 +1,212 @@
 /**
  * step-payment/api/payment.ts
  * 생성 시각: 2024-12-24
- * 카카오페이 결제 API 함수
+ * 수정 시각: 2024-12-26
+ * 토스페이먼츠 결제 API 함수
  */
 
 import axios from 'axios';
 import type {
-  KakaoPayApproveRequest,
-  KakaoPayApproveResponse,
-  KakaoPayReadyRequest,
-  KakaoPayReadyResponse,
+  TossPaymentConfirmRequest,
+  TossPaymentConfirmResponse,
+  TossPaymentResponse,
+  TossPaymentCancelResponse,
   PaymentError,
 } from './types/payment';
+
+// ============================================
+// axios 인스턴스
+// ============================================
+
+const apiClient = axios.create({
+  baseURL: process.env.EXPO_PUBLIC_API_BASE_URL,
+  timeout: 10000,
+});
 
 // ============================================
 // API 함수
 // ============================================
 
 /**
- * 카카오페이 결제 준비 API 호출
- *
+ * 토스페이먼츠 결제 승인
+ * @param paymentKey 결제 키
  * @param orderId 주문 ID
- * @param token JWT 토큰
- * @returns 결제 준비 응답
- * @throws 요청 실패 시 PaymentError
+ * @param amount 결제 금액
+ * @param accessToken JWT 토큰
+ * @returns 결제 승인 결과
  */
-export async function readyKakaoPay(
+export const confirmTossPayment = async (
+  paymentKey: string,
   orderId: string,
-  token: string,
-): Promise<KakaoPayReadyResponse> {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error('API 베이스 URL이 설정되지 않았습니다');
-  }
-
-  const url = `${baseUrl}api/payments/kakao/ready`;
-  console.log('🌐 [카카오페이 준비 API 요청]');
-  console.log('  - URL:', url);
-  console.log('  - 주문 ID:', orderId);
-  console.log('  - 토큰 받음:', token ? '✅' : '❌');
-
-  const requestBody: KakaoPayReadyRequest = {
-    order_id: orderId,
-  };
-
+  amount: number,
+  accessToken: string,
+): Promise<TossPaymentConfirmResponse> => {
   try {
-    const response = await axios.post<KakaoPayReadyResponse>(url, requestBody, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    console.log('🌐 [토스페이먼츠 승인 API 요청]');
+    console.log('  - paymentKey:', paymentKey);
+    console.log('  - orderId:', orderId);
+    console.log('  - amount:', amount);
 
-    console.log('📥 [카카오페이 준비 API 응답]');
+    const response = await apiClient.post<TossPaymentConfirmResponse>(
+      '/api/payments/toss/confirm',
+      {
+        paymentKey,
+        orderId,
+        amount,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    console.log('📥 [토스페이먼츠 승인 API 응답]');
     console.log('  - 상태 코드:', response.status);
-    console.log('  - 상태 텍스트:', response.statusText);
+    console.log('  - 주문 ID:', response.data.order_id);
+    console.log('  - 결제 상태:', response.data.status);
 
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const paymentError = handleApiError(error.response.status, error.response.data);
-      throw paymentError;
+  } catch (error: any) {
+    // 에러 메시지 매핑
+    const status = error.response?.status || 0;
+    let message = '결제 승인에 실패했습니다';
+
+    console.log('❌ [서버 에러 응답]', JSON.stringify(error.response?.data, null, 2));
+
+    if (status === 400) {
+      const errorCode = error.response?.data?.code;
+      if (errorCode === 'AMOUNT_MISMATCH') {
+        message = '결제 금액이 일치하지 않습니다';
+      } else if (errorCode === 'ORDER_ALREADY_PAID') {
+        message = '이미 결제가 완료된 주문입니다';
+      } else if (errorCode === 'TOSS_SECRET_KEY_REQUIRED') {
+        message = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요';
+      } else if (errorCode === 'TOSS_CONFIRM_FAILED') {
+        message = `결제 승인에 실패했습니다: ${error.response?.data?.message || ''}`;
+      } else {
+        message = error.response?.data?.message || message;
+      }
+    } else if (status === 401) {
+      const errorCode = error.response?.data?.code;
+      if (errorCode === 'ORDER_NOT_OWNED') {
+        message = '다른 사용자의 주문입니다';
+      } else {
+        message = '로그인이 필요합니다';
+      }
+    } else if (status === 404) {
+      const errorCode = error.response?.data?.code;
+      if (errorCode === 'ORDER_NOT_FOUND') {
+        message = '주문 정보를 찾을 수 없습니다';
+      } else if (errorCode === 'PRODUCT_NOT_FOUND_OR_INVALID') {
+        message = '상품 정보가 유효하지 않습니다';
+      }
+    } else if (status === 500) {
+      message = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+    } else if (!status) {
+      message = '네트워크 연결을 확인해주세요';
     }
-    throw error;
+
+    const paymentError: PaymentError = { status, message };
+    throw paymentError;
   }
-}
+};
 
 /**
- * 카카오페이 결제 승인 API 호출
- *
- * @param orderId 주문 ID
- * @param pgToken 카카오페이 pg_token
- * @param token JWT 토큰
- * @returns 결제 승인 응답
- * @throws 요청 실패 시 PaymentError
+ * 토스페이먼츠 결제 조회 (paymentKey) - 선택사항
  */
-export async function approveKakaoPay(
-  orderId: string,
-  pgToken: string,
-  token: string,
-): Promise<KakaoPayApproveResponse> {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error('API 베이스 URL이 설정되지 않았습니다');
-  }
-
-  const url = `${baseUrl}api/payments/kakao/approve`;
-  console.log('🌐 [카카오페이 승인 API 요청]');
-  console.log('  - URL:', url);
-  console.log('  - 주문 ID:', orderId);
-  console.log('  - pg_token 받음:', pgToken ? '✅' : '❌');
-  console.log('  - 토큰 받음:', token ? '✅' : '❌');
-
-  const requestBody: KakaoPayApproveRequest = {
-    order_id: orderId,
-    pg_token: pgToken,
-  };
-
-  try {
-    const response = await axios.post<KakaoPayApproveResponse>(url, requestBody, {
+export const getTossPaymentByKey = async (
+  paymentKey: string,
+  accessToken: string,
+): Promise<TossPaymentResponse> => {
+  const response = await apiClient.get<TossPaymentResponse>(
+    `/api/payments/toss/${paymentKey}`,
+    {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
       },
-    });
+    },
+  );
 
-    console.log('📥 [카카오페이 승인 API 응답]');
-    console.log('  - 상태 코드:', response.status);
-    console.log('  - 상태 텍스트:', response.statusText);
+  return response.data;
+};
+
+/**
+ * 토스페이먼츠 결제 조회 (orderNo) - 선택사항
+ */
+export const getTossPaymentByOrderNo = async (
+  orderNo: string,
+  accessToken: string,
+): Promise<TossPaymentResponse> => {
+  const response = await apiClient.get<TossPaymentResponse>(
+    `/api/payments/toss/orders/${orderNo}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  return response.data;
+};
+
+/**
+ * 토스페이먼츠 결제 취소 - 선택사항
+ * @param paymentKey 결제 키
+ * @param cancelReason 취소 사유
+ * @param cancelAmount 취소 금액 (선택, 없으면 전액 취소)
+ * @param accessToken JWT 토큰
+ * @returns 결제 취소 결과
+ */
+export const cancelTossPayment = async (
+  paymentKey: string,
+  cancelReason: string,
+  cancelAmount: number | undefined,
+  accessToken: string,
+): Promise<TossPaymentCancelResponse> => {
+  try {
+    const response = await apiClient.post<TossPaymentCancelResponse>(
+      `/api/payments/toss/${paymentKey}/cancel`,
+      {
+        cancelReason,
+        ...(cancelAmount !== undefined && { cancelAmount }),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
 
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const paymentError = handleApiError(error.response.status, error.response.data);
-      throw paymentError;
+  } catch (error: any) {
+    // 에러 메시지 매핑
+    const status = error.response?.status || 0;
+    let message = '결제 취소에 실패했습니다';
+
+    if (status === 400) {
+      const errorCode = error.response?.data?.code;
+      if (errorCode === 'TOSS_SECRET_KEY_REQUIRED') {
+        message = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요';
+      } else if (errorCode === 'TOSS_CANCEL_FAILED') {
+        message = `결제 취소에 실패했습니다: ${error.response?.data?.message || ''}`;
+      } else {
+        message = error.response?.data?.message || message;
+      }
+    } else if (status === 401) {
+      const errorCode = error.response?.data?.code;
+      if (errorCode === 'ORDER_NOT_OWNED') {
+        message = '다른 사용자의 결제는 취소할 수 없습니다';
+      } else {
+        message = '로그인이 필요합니다';
+      }
+    } else if (status === 404) {
+      message = '결제 정보를 찾을 수 없습니다';
+    } else if (!status) {
+      message = '네트워크 연결을 확인해주세요';
     }
-    throw error;
+
+    const paymentError: PaymentError = { status, message };
+    throw paymentError;
   }
-}
-
-// ============================================
-// 에러 처리 함수
-// ============================================
-
-/**
- * API 에러 응답을 PaymentError로 변환
- *
- * @param status HTTP 상태 코드
- * @param errorData 에러 응답 데이터
- * @returns PaymentError 객체
- */
-function handleApiError(status: number, errorData?: any): PaymentError {
-  let errorMessage = '결제 처리 중 오류가 발생했습니다';
-
-  console.log('❌ [서버 에러 응답]', JSON.stringify(errorData, null, 2));
-
-  // 상태 코드별 에러 메시지 매핑
-  if (status === 400) {
-    errorMessage = errorData?.message || '입력값이 올바르지 않습니다';
-  } else if (status === 401) {
-    errorMessage = '로그인이 필요합니다';
-  } else if (status === 404) {
-    errorMessage = '주문 정보를 찾을 수 없습니다';
-  } else if (status === 409) {
-    // 중복 결제 시도
-    if (errorData?.message === 'PAYMENT_ALREADY_READY_OR_PAID') {
-      errorMessage = '이미 결제가 진행 중이거나 완료되었습니다.\n페이지를 새로고침 후 다시 시도해주세요.';
-    } else {
-      errorMessage = errorData?.message || '중복된 결제 요청입니다';
-    }
-  } else if (status === 500) {
-    errorMessage = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
-  } else if (errorData?.message) {
-    errorMessage = errorData.message;
-  }
-
-  return {
-    status,
-    message: errorMessage,
-  };
-}
+};
