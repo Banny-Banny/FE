@@ -5,7 +5,8 @@
 
 export const ROUTES = {
   // 메인 탭
-  MAIN: '/(tabs)',
+  // ⚠️ 중요: MAIN은 '/(tabs)'로 설정하여 로그인 성공 시 무조건 tabs의 index.tsx로 이동
+  MAIN: '/(tabs)', // (tabs)/index.tsx로 이동
   HOME: '/',
   ALARM: '/alarm',
   CALENDAR: '/calendar',

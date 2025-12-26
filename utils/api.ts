@@ -15,12 +15,16 @@ export const normalizeApiBaseUrl = (url: string | undefined): string | null => {
   }
 
   // 이미 프로토콜이 포함되어 있으면 그대로 반환
+  let normalizedUrl: string;
   if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url;
+    normalizedUrl = url;
+  } else {
+    // 프로토콜이 없으면 http:// 추가
+    normalizedUrl = `http://${url}`;
   }
 
-  // 프로토콜이 없으면 http:// 추가
-  return `http://${url}`;
+  // 끝의 슬래시 제거 (buildApiUrl에서 처리하므로)
+  return normalizedUrl.endsWith('/') ? normalizedUrl.slice(0, -1) : normalizedUrl;
 };
 
 /**

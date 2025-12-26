@@ -35,10 +35,10 @@ export const useAttachments = ({ attachments, setValue, watch }: UseAttachmentsP
 
   /**
    * 첨부파일 추가 핸들러
-   * @param type 첨부파일 타입 (photo, music, video)
+   * @param type 첨부파일 타입 (IMAGE, VIDEO, MUSIC)
    * 각 타입별로 하나씩만 업로드 가능 (기존 파일이 있으면 교체)
    */
-  const handleAddAttachment = async (type: 'photo' | 'music' | 'video') => {
+  const handleAddAttachment = async (type: 'IMAGE' | 'VIDEO' | 'MUSIC') => {
     try {
       const file = await handleFileSelect(type);
       if (file) {

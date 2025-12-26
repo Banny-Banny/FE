@@ -19,7 +19,7 @@ export interface EggFormData {
 // 첨부파일 타입 정의
 export interface AttachmentFile {
   id: string;
-  type: 'photo' | 'music' | 'video';
+  type: 'IMAGE' | 'VIDEO' | 'MUSIC';
   name: string;
   uri?: string; // 실제 파일 URI (선택적)
   thumbnailUri?: string; // 동영상 썸네일 URI (동영상만, 선택적)
@@ -54,6 +54,9 @@ export interface ApiErrorResponse {
   error?: string;
   message?: string;
   code?: string;
+  details?: {
+    used_slots?: number;
+    max_slots?: number;
+    remaining_slots?: number;
+  };
 }
-
-

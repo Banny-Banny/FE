@@ -47,7 +47,15 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
         styles.hideButton,
         isFormValid && !isSubmitting ? styles.hideButtonActive : styles.hideButtonInactive,
       ]}
-      onPress={handleSubmit}
+      onPress={() => {
+        console.log('🔘 숨기기 버튼 클릭됨');
+        console.log('📊 버튼 상태:', {
+          isFormValid,
+          isSubmitting,
+          disabled: !isFormValid || isSubmitting,
+        });
+        handleSubmit();
+      }}
       disabled={!isFormValid || isSubmitting}>
       <Text
         style={[
@@ -132,7 +140,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 사진 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.photoButton]}
-              onPress={() => handleAddAttachment('photo')}>
+              onPress={() => handleAddAttachment('IMAGE')}>
               {photoAttachment ? (
                 <>
                   {/* 이미지 미리보기 */}
@@ -140,6 +148,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
                     <Image
                       source={{ uri: photoAttachment.uri }}
                       style={styles.attachmentPreviewImage}
+                      resizeMode="cover"
                     />
                   )}
                   {/* 삭제 버튼 */}
@@ -163,7 +172,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 음악 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.musicButton]}
-              onPress={() => handleAddAttachment('music')}>
+              onPress={() => handleAddAttachment('MUSIC')}>
               {musicAttachment ? (
                 <>
                   {/* 음악 아이콘 */}
@@ -197,7 +206,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 동영상 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.videoButton, styles.attachmentButtonLast]}
-              onPress={() => handleAddAttachment('video')}>
+              onPress={() => handleAddAttachment('VIDEO')}>
               {videoAttachment ? (
                 <>
                   {/* 동영상 썸네일 미리보기 */}
@@ -205,6 +214,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
                     <Image
                       source={{ uri: videoAttachment.thumbnailUri }}
                       style={styles.attachmentPreviewImage}
+                      resizeMode="cover"
                     />
                   ) : videoAttachment.uri ? (
                     <View style={styles.attachmentPreviewImagePlaceholder}>
@@ -238,5 +248,3 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
     </BottomSheet>
   );
 };
-
-
