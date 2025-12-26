@@ -150,46 +150,95 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         return;
       }
 
-      // 파일 업로드 및 미디어 ID 수집
-      const mediaIds: string[] = [];
-      const mediaTypes: ('IMAGE' | 'VIDEO' | 'MUSIC')[] = [];
-
+      // 파일 업로드 및 미디어 ID 수집 (Promise.all로 병렬 업로드, 원본 순서 보장)
       console.log('📤 파일 업로드 시작, 첨부파일 개수:', attachments.length);
 
-      for (const attachment of attachments) {
-        if (attachment.uri) {
-          console.log(`📤 파일 업로드 중: ${attachment.name} (${attachment.type})`);
-          console.log(`📤 파일 URI: ${attachment.uri.substring(0, 50)}...`);
-
-          try {
-            const mediaId = await uploadMedia(attachment.uri, attachment.type, attachment.name);
-
-            if (mediaId) {
-              console.log(`✅ 파일 업로드 성공: ${attachment.name}, mediaId: ${mediaId}`);
-              mediaIds.push(mediaId);
-              mediaTypes.push(attachment.type);
-            } else {
-              console.error(`❌ 파일 업로드 실패: ${attachment.name} - mediaId가 null입니다.`);
-              Alert.alert('오류', `파일 업로드에 실패했습니다: ${attachment.name}`);
-              setIsSubmitting(false);
-              return;
-            }
-          } catch (uploadError) {
-            console.error(`❌ 파일 업로드 중 에러 발생: ${attachment.name}`, uploadError);
-            const errorMessage =
-              uploadError instanceof Error
-                ? uploadError.message
-                : '파일 업로드 중 오류가 발생했습니다.';
-            Alert.alert('업로드 오류', `${attachment.name}\n${errorMessage}`);
-            setIsSubmitting(false);
-            return;
-          }
+      // 모든 파일을 병렬로 업로드 시도 (각 파일은 독립적으로 처리)
+      const uploadPromises = attachments.map(async (attachment, index) => {
+        if (!attachment.uri) {
+          return {
+            index,
+            name: attachment.name,
+            type: attachment.type,
+            success: false,
+            error: '파일 URI가 없습니다.',
+          };
         }
+
+        console.log(`📤 파일 업로드 중: ${attachment.name} (${attachment.type})`);
+        console.log(`📤 파일 URI: ${attachment.uri.substring(0, 50)}...`);
+
+        try {
+          const mediaId = await uploadMedia(attachment.uri, attachment.type, attachment.name);
+
+          if (mediaId) {
+            console.log(`✅ 파일 업로드 성공: ${attachment.name}, mediaId: ${mediaId}`);
+            return {
+              index,
+              name: attachment.name,
+              type: attachment.type,
+              success: true,
+              mediaId,
+            };
+          } else {
+            console.error(`❌ 파일 업로드 실패: ${attachment.name} - mediaId가 null입니다.`);
+            return {
+              index,
+              name: attachment.name,
+              type: attachment.type,
+              success: false,
+              error: '업로드 결과를 받을 수 없습니다.',
+            };
+          }
+        } catch (uploadError) {
+          console.error(`❌ 파일 업로드 중 에러 발생: ${attachment.name}`, uploadError);
+          const errorMessage =
+            uploadError instanceof Error
+              ? uploadError.message
+              : '파일 업로드 중 오류가 발생했습니다.';
+          return {
+            index,
+            name: attachment.name,
+            type: attachment.type,
+            success: false,
+            error: errorMessage,
+          };
+        }
+      });
+
+      // 모든 업로드를 병렬로 실행하고 결과 수집 (Promise.all은 원본 순서를 보장함)
+      const uploadResults = await Promise.all(uploadPromises);
+
+      // 성공한 파일들만 추출 (원본 순서 유지 - Promise.all이 이미 순서를 보장하므로 정렬 불필요)
+      const successfulUploads = uploadResults.filter((r) => r.success);
+      const mediaIds = successfulUploads.map((r) => r.mediaId!);
+      const mediaTypes = successfulUploads.map((r) => r.type);
+
+      // 업로드 결과 요약
+      const successCount = uploadResults.filter((r) => r.success).length;
+      const failCount = uploadResults.filter((r) => !r.success).length;
+
+      console.log(`📊 업로드 결과: 성공 ${successCount}개, 실패 ${failCount}개`);
+
+      // 실패한 파일이 있으면 사용자에게 알림
+      if (failCount > 0) {
+        const failedFiles = uploadResults.filter((r) => !r.success);
+        const failedFileNames = failedFiles.map((f) => f.name).join(', ');
+        Alert.alert(
+          '일부 파일 업로드 실패',
+          `다음 파일 업로드에 실패했습니다:\n${failedFileNames}\n\n성공한 파일(${successCount}개)은 계속 진행됩니다.`,
+        );
       }
 
-      if (mediaIds.length === 0) {
-        console.warn('⚠️ 업로드된 미디어가 없습니다.');
-      } else {
+      // 최소한 하나의 파일이라도 성공했거나, 파일이 없어도 제목과 내용만으로 생성 가능한 경우 계속 진행
+      if (mediaIds.length === 0 && attachments.length > 0) {
+        console.warn('⚠️ 모든 파일 업로드가 실패했습니다.');
+        Alert.alert('업로드 실패', '모든 파일 업로드에 실패했습니다. 다시 시도해주세요.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (mediaIds.length > 0) {
         console.log(`✅ 총 ${mediaIds.length}개 파일 업로드 완료`);
       }
 
