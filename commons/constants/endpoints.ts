@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
 
   // 인증 (Auth)
   AUTH: {
-    KAKAO: 'api/auth/kakao', // 카카오톡 소셜 로그인 (POST)
+    KAKAO: 'api/auth/kakao/callback', // 카카오톡 소셜 로그인 시작 (GET) - 서버가 카카오 인증 후 프론트엔드 콜백으로 리다이렉트
     ME: 'api/auth/me', // 내 정보 조회 (GET)
     VERIFY: 'api/auth/verify', // 토큰 유효성 검증 (GET)
   },
