@@ -1,11 +1,11 @@
 import { API_ENDPOINTS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
-import { buildApiUrl } from '@/utils';
+import { buildApiUrl, getUserFromToken } from '@/utils';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform } from 'react-native';
 
 /**
@@ -13,15 +13,42 @@ import { Alert, Platform } from 'react-native';
  */
 export function useLogin() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const searchParams = useLocalSearchParams<{ token?: string; isNewUser?: string }>();
   const { login } = useAuth();
+  const isProcessingRef = useRef(false);
 
   // API Base URL 가져오기
   const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl || '';
 
-  // ⚠️ 콜백 처리는 /auth/callback 페이지에서 수행하므로 여기서는 처리하지 않음
-  // 이렇게 하면 로그인 페이지가 (auth) 그룹에 있고, 콜백 페이지는 그룹 밖에 있어서 가드 충돌이 없음
+  // 콜백 파라미터에 토큰이 도착하면 여기서 한 번만 처리
+  useEffect(() => {
+    const handleCallback = async () => {
+      if (isProcessingRef.current) return;
+
+      const token = searchParams.token;
+      if (!token) return;
+
+      isProcessingRef.current = true;
+      try {
+        const userData = getUserFromToken(token);
+        if (!userData) {
+          Alert.alert('오류', '사용자 정보를 가져올 수 없습니다.');
+          return;
+        }
+
+        await login(token, userData);
+      } catch (error) {
+        if (__DEV__) {
+          console.error('로그인 콜백 처리 오류:', error);
+        }
+        Alert.alert('오류', '로그인 처리 중 오류가 발생했습니다.');
+      } finally {
+        isProcessingRef.current = false;
+      }
+    };
+
+    handleCallback();
+  }, [searchParams.token, login]);
 
   // 카카오 로그인 시작 (OAuth 2.0 플로우)
   // 플로우: 프론트엔드 → 서버(/api/auth/kakao/callback) → 카카오 → 서버 → 프론트엔드(/auth/callback)
