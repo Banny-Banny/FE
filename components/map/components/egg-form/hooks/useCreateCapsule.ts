@@ -1,74 +1,44 @@
 /**
  * components/map/components/egg-form/hooks/useCreateCapsule.ts
  * 캡슐 생성 API 호출 Hook
- *
- * 생성 시각: 2025-01-XX
- * 규칙 준수 체크리스트:
- * - [x] axios를 사용한 API 통신
- * - [x] 에러 처리 로직 포함 (409, 400, 401, 404)
- * - [x] JWT 토큰 인증 헤더 설정
- * - [x] hooks 폴더 내 커스텀 훅으로 분리 (04-func.mdc 규칙)
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
 import { useMediaUpload } from '@/commons/hooks';
-import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
-import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
-import axios, { AxiosError } from 'axios';
+import { apiClient, buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
+import { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Alert } from 'react-native';
-import {
-  ApiErrorResponse,
-  AttachmentFile,
-  CreateCapsuleRequest,
-  CreateCapsuleResponse,
-} from '../types';
+import { ApiErrorResponse, AttachmentFile, CreateCapsuleRequest, CreateCapsuleResponse } from '../types';
 
-/**
- * 캡슐 생성 Hook
- */
 export const useCreateCapsule = () => {
-  const { accessToken } = useAuth();
   const { upload } = useMediaUpload();
 
-  /**
-   * 캡슐 생성 API 호출
-   * @param data 캡슐 생성 데이터
-   * @returns 생성된 캡슐 정보 또는 null
-   */
   const createCapsule = async (
     data: Omit<CreateCapsuleRequest, 'media_urls' | 'media_types'> & {
       attachments: AttachmentFile[];
     },
   ): Promise<CreateCapsuleResponse | null> => {
     try {
-      if (!accessToken) {
-        Alert.alert('인증 오류', '로그인이 필요합니다.');
-        return null;
-      }
-
       const rawApiBaseUrl =
         Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
-
       const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
 
       if (!apiBaseUrl) {
         Alert.alert(
           '오류',
-          'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.\n예: http://172.16.2.94:3000',
+          'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.',
         );
-        console.error('API Base URL이 설정되지 않았습니다:', rawApiBaseUrl);
         return null;
       }
 
-      // 파일 업로드 및 미디어 ID 수집
+      // 파일 업로드
       const mediaIds: string[] = [];
       const mediaTypes: ('IMAGE' | 'VIDEO' | 'MUSIC')[] = [];
 
       for (const attachment of data.attachments) {
         if (attachment.uri) {
           const mediaId = await upload(attachment.uri, attachment.type);
-
           if (mediaId) {
             mediaIds.push(mediaId);
             mediaTypes.push(attachment.type);
@@ -79,10 +49,9 @@ export const useCreateCapsule = () => {
         }
       }
 
-      // mediaIds를 media_urls로 변환 (API는 URL을 요구함)
-      const mediaUrls = await getMediaUrls(mediaIds, accessToken);
+      // mediaIds를 URL로 변환
+      const mediaUrls = await getMediaUrls(mediaIds);
 
-      // 캡슐 생성 요청 데이터 구성
       const requestData: CreateCapsuleRequest = {
         title: data.title,
         content: data.content,
@@ -93,16 +62,9 @@ export const useCreateCapsule = () => {
         product_id: data.product_id,
       };
 
-      // API 호출
-      const response = await axios.post<CreateCapsuleResponse>(
+      const response = await apiClient.post<CreateCapsuleResponse>(
         buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
         requestData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
       );
 
       return response.data;
@@ -111,15 +73,12 @@ export const useCreateCapsule = () => {
       const status = axiosError.response?.status;
       const errorData = axiosError.response?.data;
 
-      // 에러 처리
       switch (status) {
-        case 409:
-          // 슬롯 부족 에러 처리
+        case 409: {
           const errorCode = errorData?.code;
           const details = errorData?.details;
 
           if (errorCode === 'EGG_SLOTS_EXCEEDED') {
-            // 서버에서 슬롯 정보를 제공하는 경우
             if (details?.max_slots !== undefined && details?.used_slots !== undefined) {
               const remaining = (details.max_slots || 0) - (details.used_slots || 0);
               Alert.alert(
@@ -127,12 +86,8 @@ export const useCreateCapsule = () => {
                 `이스터에그 작성 슬롯이 모두 사용되었습니다.\n\n사용된 슬롯: ${details.used_slots}개\n최대 슬롯: ${details.max_slots}개\n남은 슬롯: ${remaining}개`,
               );
             } else if (details?.remaining_slots !== undefined) {
-              Alert.alert(
-                '슬롯 부족',
-                `남은 슬롯이 없습니다.\n(남은 슬롯: ${details.remaining_slots}개)`,
-              );
+              Alert.alert('슬롯 부족', `남은 슬롯이 없습니다.\n(남은 슬롯: ${details.remaining_slots}개)`);
             } else {
-              // 서버 메시지가 있으면 사용, 없으면 기본 메시지
               const serverMessage = errorData?.message || errorData?.error;
               Alert.alert(
                 '슬롯 부족',
@@ -141,30 +96,19 @@ export const useCreateCapsule = () => {
               );
             }
           } else {
-            // 다른 409 에러인 경우 서버 메시지 사용
             const serverMessage = errorData?.message || errorData?.error || '요청이 충돌했습니다.';
             Alert.alert('알림', serverMessage);
           }
           break;
+        }
         case 400:
-          // 유효성 실패
-          const errorMessage =
-            errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.';
-          Alert.alert('오류', errorMessage);
-          break;
-        case 401:
-          // 인증 실패
-          Alert.alert('인증 오류', '로그인이 필요합니다.');
+          Alert.alert('오류', errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.');
           break;
         case 404:
-          // 상품 미존재
           Alert.alert('오류', '요청한 상품을 찾을 수 없습니다.');
           break;
         default:
-          // 기타 오류
-          const defaultMessage =
-            errorData?.message || errorData?.error || '서버 오류가 발생했습니다.';
-          Alert.alert('오류', defaultMessage);
+          Alert.alert('오류', errorData?.message || errorData?.error || '서버 오류가 발생했습니다.');
           break;
       }
 
@@ -173,7 +117,5 @@ export const useCreateCapsule = () => {
     }
   };
 
-  return {
-    createCapsule,
-  };
+  return { createCapsule };
 };
