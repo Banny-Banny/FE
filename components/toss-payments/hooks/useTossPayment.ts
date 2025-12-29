@@ -47,16 +47,29 @@ export const useTossPayment = (): UseTossPaymentReturn => {
 
         const candidates = [
           (TossPayments as any)?.default?.default,
+          (TossPayments as any)?.default?.TossPayments,
           (TossPayments as any)?.default,
+          (TossPayments as any)?.TossPayments,
           TossPayments,
         ];
+
+        let tossPayments: any = null;
         const tossPaymentsFactory = candidates.find((c) => typeof c === 'function');
 
-        if (!tossPaymentsFactory) {
-          throw new Error('TossPayments SDK 로딩 실패: 유효한 팩토리를 찾을 수 없습니다');
+        if (tossPaymentsFactory) {
+          tossPayments = await tossPaymentsFactory(clientKey);
+        } else {
+          // 혹시 모듈이 이미 인스턴스 형태로 제공되는 경우
+          const instanceCandidate = candidates.find(
+            (c) => c && typeof c === 'object' && typeof (c as any).requestPayment === 'function',
+          );
+          if (instanceCandidate) {
+            tossPayments = instanceCandidate;
+          } else {
+            console.error('[TossPayment] SDK 모듈 형태:', candidates);
+            throw new Error('TossPayments SDK 로딩 실패: 유효한 팩토리를 찾을 수 없습니다');
+          }
         }
-
-        const tossPayments = await tossPaymentsFactory(clientKey);
         await tossPayments.requestPayment('카드', {
           amount,
           orderId,
