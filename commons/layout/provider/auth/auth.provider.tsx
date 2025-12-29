@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAccessToken(token);
     setUser(userData);
-    
+
     // 자동 리다이렉트는 useEffect에서 처리
   };
 
