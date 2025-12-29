@@ -21,3 +21,4 @@ export const Spacing = {
   '3xl': 48,
   '4xl': 64,
 } as const;
+
