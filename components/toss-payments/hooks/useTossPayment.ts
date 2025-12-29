@@ -45,10 +45,16 @@ export const useTossPayment = (): UseTossPaymentReturn => {
           throw new Error('토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
         }
 
-        const tossPaymentsFactory =
-          (TossPayments as any)?.default && typeof (TossPayments as any).default === 'function'
-            ? (TossPayments as any).default
-            : TossPayments;
+        const candidates = [
+          (TossPayments as any)?.default?.default,
+          (TossPayments as any)?.default,
+          TossPayments,
+        ];
+        const tossPaymentsFactory = candidates.find((c) => typeof c === 'function');
+
+        if (!tossPaymentsFactory) {
+          throw new Error('TossPayments SDK 로딩 실패: 유효한 팩토리를 찾을 수 없습니다');
+        }
 
         const tossPayments = await tossPaymentsFactory(clientKey);
         await tossPayments.requestPayment('카드', {
