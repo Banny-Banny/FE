@@ -46,7 +46,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && userData) {
           setAccessToken(token);
           setUser(JSON.parse(userData));
-          if (__DEV__) console.log('[Auth] 인증 정보 복구 완료:', { token: token.substring(0, 20) + '...', user: JSON.parse(userData) });
+          if (__DEV__)
+            console.log('[Auth] 인증 정보 복구 완료:', {
+              token: token.substring(0, 20) + '...',
+              user: JSON.parse(userData),
+            });
         } else {
           if (__DEV__) console.log('[Auth] 저장된 인증 정보 없음');
         }
@@ -109,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAccessToken(null);
     setUser(null);
-    
+
     // 자동 리다이렉트는 useEffect에서 처리
   };
 
