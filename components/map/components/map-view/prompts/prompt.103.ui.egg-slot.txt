@@ -4,19 +4,21 @@
 ==============================================
 
 조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
-            - 01-common.mdc
-            - 04-func.mdc
-            - project-structure.mdc
+            - @01-common.mdc
+            - @03-ui.mdc
+            - @project-structure.mdc
 
 조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/map-view/index.tsx
 조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/map-view/styles.ts
-조건-파일경로) 구현될 hooks 파일경로: FE/components/map/components/map-view/hooks 내부
 
 조건-환경변수) `process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY` 사용.
+
+조건-Figma Desktop MCP(egg-slot)) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=291-1748&t=HHOYTI7WjvrrvXPA-4
+조건-Figma Desktop MCP(egg-slot page)) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=291-1655&t=HHOYTI7WjvrrvXPA-4
 
 ==============================================
 
 핵심요구사항) 아래의 기능 상세를 따를 것
-1. expo-location을 사용하여 현재 위치 권한을 요청하고 좌표를 가져옴
-2. react-native-webview를 통해 카카오맵을 렌더링
-3. 마커 표시(서울시청)을 기준으로 주변 5개 지점의 좌표를 고정 데이터로 생성하여 지도상에 마커로 표시
+1. Figma Desktop MCP를 참고해서, 남은 egg-slot을 표기할 것.
+2. 현재, egg-slot의 경우 mock데이터로 표현할 것.
+3. egg-slot은 총 3개임
