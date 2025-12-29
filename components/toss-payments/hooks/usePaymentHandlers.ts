@@ -18,12 +18,6 @@ interface UsePaymentHandlersProps {
     capsuleName: string;
   };
   orderSummary: OrderSummary;
-  requestPayment: (
-    orderId: string,
-    amount: number,
-    orderName: string,
-    customerName?: string,
-  ) => Promise<void>;
   confirmPayment: (
     paymentKey: string,
     orderId: string,
@@ -39,7 +33,7 @@ interface UsePaymentHandlersProps {
 
 interface UsePaymentHandlersReturn {
   handleBackPress: () => void;
-  handleSubmitPress: () => Promise<void>;
+  handleSubmitPress: () => void;
   handlePaymentSuccess: (paymentKey: string, orderId: string, amount: number) => Promise<void>;
 }
 
@@ -48,7 +42,6 @@ export const usePaymentHandlers = ({
   orderData,
   formData,
   orderSummary,
-  requestPayment,
   confirmPayment,
   openModal,
   closeModal,
@@ -64,29 +57,16 @@ export const usePaymentHandlers = ({
     }
   }, [onBack]);
 
-  /** 결제하기 버튼 핸들러 */
-  const handleSubmitPress = useCallback(async () => {
+  /** 결제하기 버튼 핸들러 (WebView 열기) */
+  const handleSubmitPress = useCallback(() => {
     if (!isPaymentEnabled) {
       Alert.alert('알림', TEXTS.alerts.agreementRequired);
       return;
     }
 
-    try {
-      await requestPayment(
-        orderData.order_id,
-        orderSummary.totalPrice,
-        '타임캡슐 생성',
-        formData.capsuleName,
-      );
-    } catch (err) {
-      const errorMessage =
-        err && typeof err === 'object' && 'message' in err
-          ? (err as PaymentError).message
-          : '결제에 실패했습니다';
-      console.error('❌ [TossPayment] 결제 실패:', errorMessage);
-      Alert.alert('결제 실패', errorMessage);
-    }
-  }, [isPaymentEnabled, requestPayment, orderData.order_id, orderSummary, formData.capsuleName]);
+    // WebView를 열기 위해 결제 데이터 설정
+    // 실제 결제는 PaymentWebView 컴포넌트에서 처리됩니다
+  }, [isPaymentEnabled]);
 
   /** 결제 성공 처리 핸들러 (앱 복귀 시 호출) */
   const handlePaymentSuccess = useCallback(

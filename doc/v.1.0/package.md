@@ -325,6 +325,21 @@
 | **설치 이유**   | React에서 폼 상태 관리 및 검증을 위한 경량 라이브러리. 최소한의 리렌더링으로 성능 최적화를 제공하며, zod와 함께 사용하여 타입 안전한 폼 검증 구현 |
 | **주요 사용처** | 프로젝트 내 모든 폼 컴포넌트 (예: `components/map/components/egg-form`, `components/timecapsule-create` 등)에서 폼 상태 관리 및 검증 로직 구현    |
 
+---
+
+### 결제 (Payment)
+
+#### 30. @tosspayments/payment-sdk-react-native
+
+| 항목            | 내용                                                                                                                                                                                                    |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `@tosspayments/payment-sdk-react-native`                                                                                                                                                                |
+| **버전**        | `^0.0.1-alpha001`                                                                                                                                                                                       |
+| **설치 날짜**   | 25-12-29                                                                                                                                                                                                |
+| **카테고리**    | Payment                                                                                                                                                                                                 |
+| **설치 이유**   | 토스페이먼츠 결제 SDK for React Native. 카드, 간편결제, 계좌이체, 가상계좌 등 다양한 결제 수단을 지원하며, 결제 요청, 인증, 승인 흐름을 간편하게 구현할 수 있도록 지원                                     |
+| **주요 사용처** | `components/toss-payments/hooks/useTossPayment.ts`에서 결제 요청 및 승인 로직 구현. 타임캡슐 생성 시 결제 기능을 제공하며, 백엔드 API(`/api/payments/toss/confirm`)와 연동하여 결제 승인 처리 |
+
 #### 26. expo-image-picker
 
 | 항목            | 내용                                                                                                                       |
@@ -590,6 +605,7 @@
 | 1.0.10 | 25-01-XX | expo-image-picker, expo-document-picker 추가 (이스터에그 폼 파일 첨부 기능 구현용)                            | 최지호 |
 | 1.0.11 | 25-01-XX | expo-video-thumbnails 추가 (동영상 썸네일 추출 기능 구현용)                                                   | 최지호 |
 | 1.0.12 | 25-01-XX | @react-native-async-storage/async-storage 추가 (인증 토큰 및 사용자 정보 저장용)                              | 최지호 |
+| 1.0.13 | 25-12-29 | @tosspayments/payment-sdk-react-native 추가 (토스페이먼츠 결제 SDK, 타임캡슐 생성 시 결제 기능 구현용)        | Cursor |
 
 ---
 

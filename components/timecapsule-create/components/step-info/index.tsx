@@ -351,12 +351,12 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
         console.log('💰 [StepInfo] 백엔드 계산 금액:', orderData.total_amount);
 
         // 2단계: 부모 컴포넌트로 전달 (폼 데이터 + 백엔드 응답)
-        // ⚠️ totalPrice는 UI 표시용이었으며, 실제 금액은 orderData.total_amount입니다.
+        // ⚠️ 실제 결제 금액은 orderData.total_amount를 사용합니다 (백엔드 계산).
+        // totalPrice는 UI 표시용이므로 전달하지 않습니다.
         if (onSubmit) {
           onSubmit({
             ...data,
             orderData, // 백엔드 응답 (실제 결제 금액 포함)
-            totalPrice, // UI 표시용 (참고용)
           });
         }
       } catch (err) {
@@ -367,7 +367,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
         Alert.alert('주문 생성 실패', errorMessage);
       }
     },
-    [onSubmit, totalPrice, submitOrder],
+    [onSubmit, submitOrder],
   );
 
   // ============================================

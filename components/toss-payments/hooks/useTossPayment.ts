@@ -1,22 +1,24 @@
 /**
  * hooks/useTossPayment.ts
- * 토스페이먼츠 결제 Hook
+ * 토스페이먼츠 결제 Hook (WebView 기반)
  */
 
-import TossPayments from '@tosspayments/payment-sdk-react-native';
 import { useCallback, useState } from 'react';
 import { confirmTossPayment } from '../api/payment';
 import type { PaymentError, TossPaymentConfirmResponse } from '../api/types/types';
 
+interface PaymentRequestData {
+  orderId: string;
+  amount: number;
+  orderName: string;
+  customerName?: string;
+}
+
 interface UseTossPaymentReturn {
   isLoading: boolean;
   error: PaymentError | null;
-  requestPayment: (
-    orderId: string,
-    amount: number,
-    orderName: string,
-    customerName?: string,
-  ) => Promise<void>;
+  paymentData: PaymentRequestData | null;
+  setPaymentData: (data: PaymentRequestData | null) => void;
   confirmPayment: (
     paymentKey: string,
     orderId: string,
@@ -25,78 +27,14 @@ interface UseTossPaymentReturn {
   clearError: () => void;
 }
 
+/**
+ * 토스페이먼츠 결제 Hook
+ * WebView를 사용하여 결제창을 띄우고 결제 승인 처리
+ */
 export const useTossPayment = (): UseTossPaymentReturn => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<PaymentError | null>(null);
-
-  const requestPayment = useCallback(
-    async (
-      orderId: string,
-      amount: number,
-      orderName: string,
-      customerName?: string,
-    ): Promise<void> => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
-        if (!clientKey) {
-          throw new Error('토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
-        }
-
-        const candidates = [
-          (TossPayments as any)?.default?.default,
-          (TossPayments as any)?.default?.TossPayments,
-          (TossPayments as any)?.default,
-          (TossPayments as any)?.TossPayments,
-          TossPayments,
-        ];
-
-        let tossPayments: any = null;
-        const tossPaymentsFactory = candidates.find((c) => typeof c === 'function');
-
-        if (tossPaymentsFactory) {
-          tossPayments = await tossPaymentsFactory(clientKey);
-        } else {
-          // 혹시 모듈이 이미 인스턴스 형태로 제공되는 경우
-          const instanceCandidate = candidates.find(
-            (c) => c && typeof c === 'object' && typeof (c as any).requestPayment === 'function',
-          );
-          if (instanceCandidate) {
-            tossPayments = instanceCandidate;
-          } else {
-            console.error('[TossPayment] SDK 모듈 형태:', candidates);
-            throw new Error('TossPayments SDK 로딩 실패: 유효한 팩토리를 찾을 수 없습니다');
-          }
-        }
-        await tossPayments.requestPayment('카드', {
-          amount,
-          orderId,
-          orderName,
-          customerName: customerName || '고객',
-          successUrl: 'timeegg://pay/toss/success',
-          failUrl: 'timeegg://pay/toss/fail',
-        });
-      } catch (err: unknown) {
-        const status = typeof (err as any)?.status === 'number' ? (err as any).status : 0;
-        const message =
-          err instanceof Error
-            ? err.message
-            : typeof (err as any)?.message === 'string'
-              ? (err as any).message
-              : '결제 페이지를 열 수 없습니다';
-
-        const paymentError: PaymentError = { status, message };
-        console.error('❌ [TossPayment] 결제 페이지 오픈 실패:', err);
-        setError(paymentError);
-        throw paymentError;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [],
-  );
+  const [paymentData, setPaymentData] = useState<PaymentRequestData | null>(null);
 
   const confirmPayment = useCallback(
     async (
@@ -134,7 +72,8 @@ export const useTossPayment = (): UseTossPaymentReturn => {
   return {
     isLoading,
     error,
-    requestPayment,
+    paymentData,
+    setPaymentData,
     confirmPayment,
     clearError,
   };

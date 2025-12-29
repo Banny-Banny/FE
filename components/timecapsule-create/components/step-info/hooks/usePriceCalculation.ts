@@ -9,7 +9,7 @@
  */
 
 import { useMemo } from 'react';
-import { PHOTO_PRICE, MUSIC_PRICE, VIDEO_PRICE } from '../constants';
+import { MUSIC_PRICE, PHOTO_PRICE, VIDEO_PRICE } from '../constants';
 import type { AdditionalOptionsState, UsePriceCalculationReturn } from '../types';
 
 /**
@@ -37,10 +37,10 @@ export const usePriceCalculation = (
   // 인원 요금 없음
   const personnelPrice = 0;
 
-  // 이미지: 500원 × 개수
+  // 이미지: 500원 × 개수 × 인원
   const storagePrice = useMemo(() => {
-    return storageCount * PHOTO_PRICE;
-  }, [storageCount]);
+    return storageCount * PHOTO_PRICE * personnelCount;
+  }, [storageCount, personnelCount]);
 
   // 추가 옵션: 파일당 가격 (인원 무관)
   const optionsPrice = useMemo(() => {
