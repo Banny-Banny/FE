@@ -1,0 +1,618 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-info/index.tsx (스텝 인포 설정값)
+            - components/timecapsule-create/components/step-payment/index.tsx (결제 완료 후 진입)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/step-room/index.tsx
+            - components/timecapsule-create/components/step-room/styles.ts (필요시)
+조건-파일경로) 생성할 파일:
+            - components/timecapsule-create/components/step-room/hooks/useRoomData.ts
+            - components/timecapsule-create/components/step-room/hooks/useParticipants.ts
+            - components/timecapsule-create/components/step-room/types.ts
+            - components/timecapsule-create/components/step-room/constants.ts
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 공유 기능, 모달 로직 등 모든 로직 유지
+조건-기능유지) 오직 데이터 플로우 및 참여자 관리 로직만 추가
+
+==============================================
+
+조건-백엔드미구축) 백엔드 API가 아직 준비되지 않음
+조건-백엔드미구축) 모든 데이터는 목데이터로 대체
+조건-백엔드미구축) 추후 API 연동을 고려한 구조로 설계
+조건-백엔드미구축) API 호출 부분은 주석으로 표시하고 목데이터 반환
+
+==============================================
+
+핵심요구사항) 캡슐대기실 데이터 플로우 구현
+핵심요구사항-1) 결제 완료 후 캡슐대기실 진입 시 스텝 인포의 설정값 반영
+핵심요구사항-2) 방장이 공유 링크 생성 → 참여자 입장 플로우
+핵심요구사항-3) 각 참여자마다 개별 작성 폼 제공 (본인 것만 작성 가능)
+핵심요구사항-4) 다른 사람의 작성 내용은 볼 수 없음 (프라이버시)
+핵심요구사항-5) 각자 작성 후 저장 기능
+핵심요구사항-6) 방장이 모든 참여자 작성 완료 시 최종 제출 가능
+핵심요구사항-7) 진행 상황 프로그레스바 실시간 업데이트
+
+==============================================
+
+유저시나리오-방장) 캡슐 생성 플로우
+
+1. 스텝 인포에서 설정
+   - 캡슐 이름: "우리의 추억"
+   - 개봉일: 2025.06.10
+   - 최대 인원: 4명
+   - 이미지 슬롯: 3장
+   - 추가 옵션: 음악 파일, 영상 추가
+
+2. 결제 완료
+   - 토스페이먼츠로 결제 진행
+   - 결제 성공 시 캡슐대기실로 자동 이동
+
+3. 캡슐대기실 진입
+   - 스텝 인포의 설정값이 자동으로 반영됨
+     - 정보 카드에 "캡슐 이름", "개봉일", "참여자 수" 표시
+   - 방장 본인이 첫 번째 참여자로 등록됨
+   - 나머지 참여자 슬롯은 "초대한 친구 기다리는 중..." 상태
+
+4. 공유 링크 생성 및 공유
+   - 우측 상단 공유 버튼 클릭
+   - OS 네이티브 공유 시트 표시
+   - 초대 링크 공유 (카카오톡, 메시지 등)
+
+5. 본인 작성
+   - 본인 참여자 카드 클릭
+   - 바텀시트에서 텍스트, 이미지, 음성 등 작성
+   - 저장 버튼 클릭 시 "작성 완료" 상태로 변경
+
+6. 진행 상황 확인
+   - 진행 상황 바에 완료된 인원 수 표시
+   - 참여자별 작성 상태 확인 (작성 완료 / 아직 작성하지 않았어요)
+
+7. 최종 제출
+   - 모든 참여자 작성 완료 시 "타임캡슐 묻기" 버튼 활성화
+   - 버튼 클릭 시 확인 모달 표시
+   - 확인 시 최종 제출 및 완료 모달 표시
+
+==============================================
+
+유저시나리오-게스트) 참여자 플로우
+
+1. 초대 링크로 진입
+   - 방장이 공유한 링크 클릭
+   - 자동으로 캡슐대기실로 이동
+
+2. 캡슐 정보 확인
+   - 정보 카드에서 캡슐 이름, 개봉일, 참여자 수 확인
+   - 방장에게 👑 아이콘 표시
+   - 본인은 "나 (닉네임)" 형태로 표시
+
+3. 본인 작성
+   - 본인 참여자 카드 클릭
+   - 바텀시트에서 텍스트, 이미지, 음성 등 작성
+   - 저장 버튼 클릭 시 "작성 완료" 상태로 변경
+
+4. 다른 사람 작성 내용 확인 불가
+   - 다른 참여자 카드 클릭 시 작동하지 않음
+   - 본인 것만 클릭 가능
+   - 다른 사람의 작성 상태만 확인 가능 (완료 여부)
+
+5. 수정
+   - 방장이 최종 제출하기 전까지 본인 작성 내용 수정 가능
+   - 본인 카드 다시 클릭하여 바텀시트 열기
+
+6. 작성 마감
+   - 작성 마감 시간 표시 (예: 23시간 59분 남음)
+   - 마감 시간 내에만 작성/수정 가능
+
+==============================================
+
+데이터구조-RoomData) 캡슐대기실 전체 데이터
+
+interface RoomData {
+  // 캡슐 기본 정보 (스텝 인포에서 전달)
+  capsuleId: string;              // 캡슐 고유 ID (백엔드 생성, 목데이터: 'capsule-001')
+  capsuleName: string;            // 캡슐 이름 (예: "우리의 추억")
+  openDate: string;               // 개봉일 (예: "2025.06.10")
+  maxParticipants: number;        // 최대 인원 (예: 4)
+  imageSlots: number;             // 이미지 슬롯 수 (예: 3)
+  additionalOptions: {            // 추가 옵션
+    hasMusicFile: boolean;        // 음악 파일 여부
+    hasVideo: boolean;            // 영상 추가 여부
+  };
+
+  // 방장 정보
+  hostId: string;                 // 방장 ID (예: 'user-001')
+
+  // 작성 마감 정보
+  deadline: string;               // 작성 마감 시간 (ISO 8601 형식)
+
+  // 상태
+  status: 'waiting' | 'ready' | 'submitted';  // 대기실 상태
+}
+
+==============================================
+
+데이터구조-Participant) 참여자 데이터
+
+interface Participant {
+  id: string;                     // 참여자 고유 ID (예: 'user-001')
+  name: string;                   // 참여자 이름 (예: "존잘최홍식")
+  emoji: string;                  // 아바타 이모지 (예: "🥚")
+  status: 'completed' | 'pending' | 'waiting';  // 작성 상태
+  isHost?: boolean;               // 방장 여부
+  isMe?: boolean;                 // 본인 여부
+  joinedAt?: string;              // 입장 시간 (ISO 8601 형식)
+
+  // 작성 내용 (본인 것만 접근 가능)
+  content?: {
+    text?: string;                // 텍스트 내용
+    images?: string[];            // 이미지 URL 배열
+    voiceRecording?: string;      // 음성 녹음 URL
+  };
+}
+
+==============================================
+
+데이터구조-목데이터) 초기 상태 (방장이 생성했을 때)
+
+const mockRoomData: RoomData = {
+  capsuleId: 'capsule-001',
+  capsuleName: 'ㅋ',  // 스텝 인포에서 전달
+  openDate: '2025.06.10',  // 스텝 인포에서 전달
+  maxParticipants: 4,  // 스텝 인포에서 전달
+  imageSlots: 3,  // 스텝 인포에서 전달
+  additionalOptions: {
+    hasMusicFile: true,  // 스텝 인포에서 전달
+    hasVideo: true,  // 스텝 인포에서 전달
+  },
+  hostId: 'user-001',
+  deadline: '2025-12-30T23:59:59Z',
+  status: 'waiting',
+};
+
+const mockParticipants: Participant[] = [
+  {
+    id: 'user-001',
+    name: '나 (존잘최홍식)',
+    emoji: '🥚',
+    status: 'pending',
+    isMe: true,
+    isHost: true,
+    joinedAt: '2025-12-29T10:00:00Z',
+  },
+  // 나머지 슬롯은 빈 상태
+  {
+    id: 'slot-002',
+    name: '',
+    emoji: '👤',
+    status: 'waiting',
+  },
+  {
+    id: 'slot-003',
+    name: '',
+    emoji: '👤',
+    status: 'waiting',
+  },
+  {
+    id: 'slot-004',
+    name: '',
+    emoji: '👤',
+    status: 'waiting',
+  },
+];
+
+==============================================
+
+핵심요구사항-프로그레스바) 진행 상황 프로그레스바 구현
+
+1. 프로그레스바 표시 위치
+   - 정보 카드와 참여자 목록 사이
+   - 화면 상단에 고정되어 스크롤 시에도 보임
+
+2. 프로그레스바 구성 요소
+   - 레이블: "진행 상황" 텍스트
+   - 진행 값: "완료 인원 / 전체 인원" 형태 (예: "2/4")
+   - 프로그레스 바: 퍼센티지 기반 채워지는 바
+   - 색상: 완료된 부분은 강조 색상, 나머지는 회색
+
+3. 계산 로직
+   - 완료 인원: status === 'completed'인 참여자 수
+   - 전체 인원: name이 빈 문자열이 아닌 참여자 수 (실제 입장한 사람만 카운트)
+   - 진행률: (완료 인원 / 전체 인원) × 100
+   - 예시:
+     - 4명 중 2명 완료: 2/4 = 50%
+     - 2명 중 1명 완료: 1/2 = 50%
+     - 1명 중 0명 완료: 0/1 = 0%
+     - 4명 모두 완료: 4/4 = 100%
+
+4. 실시간 업데이트
+   - 참여자가 작성 완료 시 즉시 프로그레스바 업데이트
+   - 새로운 참여자 입장 시 전체 인원 증가 및 퍼센티지 재계산
+   - useMemo를 사용하여 불필요한 재계산 방지
+
+5. UI 표시
+   - 0% 상태: 빈 프로그레스바 표시
+   - 1-99% 상태: 부분적으로 채워진 프로그레스바
+   - 100% 상태: 완전히 채워진 프로그레스바 + 시각적 강조 (색상 변경 등)
+
+6. 애니메이션 (선택사항)
+   - 진행률 변경 시 부드러운 transition 효과
+   - 100% 달성 시 축하 애니메이션 (선택사항)
+
+7. 예시 코드 구조
+   ```typescript
+   // 진행 상황 계산
+   const completedCount = participants.filter(p => p.status === 'completed').length;
+   const totalCount = participants.filter(p => p.name !== '').length;
+   const progressPercentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+   // JSX
+   <View style={styles.progressSection}>
+     <View style={styles.progressHeader}>
+       <Text style={styles.progressLabel}>진행 상황</Text>
+       <Text style={styles.progressValue}>{completedCount}/{totalCount}</Text>
+     </View>
+     <View style={styles.progressBarContainer}>
+       <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+     </View>
+   </View>
+   ```
+
+8. 스타일 요구사항
+   - progressSection: 전체 섹션 컨테이너
+   - progressHeader: 레이블과 값이 좌우로 배치
+   - progressLabel: "진행 상황" 텍스트 스타일
+   - progressValue: "2/4" 형태의 값 스타일
+   - progressBarContainer: 프로그레스바 배경 (회색)
+   - progressBarFill: 채워지는 부분 (강조 색상)
+
+9. 접근성
+   - 프로그레스바 진행률을 음성으로 읽을 수 있도록 accessibilityLabel 제공
+   - 예: "진행 상황: 4명 중 2명 완료, 50퍼센트"
+
+==============================================
+
+구현가이드-1) Constants 파일 생성
+
+파일: components/timecapsule-create/components/step-room/constants.ts
+
+내용:
+- DEFAULT_EMOJI: 기본 아바타 이모지 ('🥚')
+- EMPTY_SLOT_EMOJI: 빈 슬롯 이모지 ('👤')
+- DEFAULT_DEADLINE_HOURS: 기본 작성 마감 시간 (24시간)
+- ROOM_STATUS: 대기실 상태 상수
+  - WAITING: 'waiting' (참여자 대기 중)
+  - READY: 'ready' (모든 참여자 작성 완료)
+  - SUBMITTED: 'submitted' (최종 제출 완료)
+- PARTICIPANT_STATUS: 참여자 상태 상수
+  - COMPLETED: 'completed' (작성 완료)
+  - PENDING: 'pending' (작성 중/미작성)
+  - WAITING: 'waiting' (아직 입장 안함)
+- PROGRESS_COLORS: 프로그레스바 색상 상수 (선택사항)
+  - FILL_COLOR: 채워진 부분 색상
+  - BACKGROUND_COLOR: 배경 색상
+  - COMPLETE_COLOR: 100% 달성 시 색상
+
+==============================================
+
+구현가이드-2) Types 파일 생성
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+내용:
+- RoomData 인터페이스
+- Participant 인터페이스
+- RoomStatus 타입
+- ParticipantStatus 타입
+- ParticipantContent 인터페이스
+- Progress 인터페이스 (프로그레스바 데이터)
+  ```typescript
+  interface Progress {
+    completed: number;    // 완료한 참여자 수
+    total: number;        // 전체 참여자 수 (입장한 사람만)
+    percentage: number;   // 진행률 (0-100)
+  }
+  ```
+
+==============================================
+
+구현가이드-3) useRoomData Hook 구현
+
+파일: components/timecapsule-create/components/step-room/hooks/useRoomData.ts
+
+목적:
+- 캡슐대기실 전체 데이터 관리
+- 스텝 인포 설정값 반영
+- 목데이터 제공 (추후 API 연동 대체)
+
+기능:
+1. fetchRoomData(): 캡슐대기실 데이터 가져오기 (목데이터)
+2. updateRoomStatus(): 대기실 상태 업데이트
+3. calculateProgress(): 진행률 계산 (완료 인원 / 전체 인원)
+   - 참여자 목록을 받아서 진행률 계산
+   - useMemo를 사용하여 최적화
+   - 반환값: { completed: number; total: number; percentage: number }
+4. canSubmit(): 최종 제출 가능 여부 확인
+   - 모든 참여자(name이 있는)가 완료 상태인지 확인
+   - 진행률이 100%일 때만 true
+
+반환값:
+- roomData: RoomData | null
+- isLoading: boolean
+- error: Error | null
+- progress: { completed: number; total: number; percentage: number }
+  - completed: 작성 완료한 참여자 수
+  - total: 실제 입장한 참여자 수 (name이 빈 문자열이 아닌)
+  - percentage: 진행률 (0-100)
+- canSubmit: boolean
+
+==============================================
+
+구현가이드-4) useParticipants Hook 구현
+
+파일: components/timecapsule-create/components/step-room/hooks/useParticipants.ts
+
+목적:
+- 참여자 목록 관리
+- 참여자 작성 상태 관리
+- 본인 작성 내용 저장
+
+기능:
+1. fetchParticipants(): 참여자 목록 가져오기 (목데이터)
+2. updateParticipantStatus(): 참여자 상태 업데이트 (pending → completed)
+3. saveParticipantContent(): 참여자 작성 내용 저장 (본인만)
+4. canEditParticipant(): 편집 가능 여부 확인 (본인만)
+
+반환값:
+- participants: Participant[]
+- myParticipant: Participant | undefined
+- updateStatus: (participantId: string, status: ParticipantStatus) => void
+- saveContent: (participantId: string, content: ParticipantContent) => Promise<void>
+- canEdit: (participantId: string) => boolean
+
+==============================================
+
+구현가이드-5) index.tsx 수정
+
+수정 사항:
+1. hooks import 및 연결
+   - useRoomData() 사용
+   - useParticipants() 사용
+
+2. 정보 카드 데이터 바인딩
+   - roomData.capsuleName → 캡슐 이름
+   - roomData.openDate → 개봉일
+   - roomData.maxParticipants → 참여자 수
+
+3. 진행 상황 프로그레스바 데이터 바인딩
+   - progress.completed / progress.total 표시
+     - 예: "2/4" 형태로 표시
+   - progress.percentage를 width로 적용
+     - 예: width: `${progress.percentage}%`
+   - 실시간 업데이트 확인
+     - 참여자 작성 완료 시 즉시 반영
+     - useMemo로 최적화되어 불필요한 재계산 방지
+   - 100% 달성 시 시각적 피드백
+     - 프로그레스바 색상 변경 (선택사항)
+     - 타임캡슐 묻기 버튼 활성화
+
+4. 참여자 카드 클릭 로직 수정
+   - canEdit(participant.id) 체크
+   - 본인 것만 클릭 가능
+   - 다른 사람 클릭 시 무시
+
+5. 바텀시트 저장 로직
+   - saveContent() 호출
+   - 저장 성공 시 상태 업데이트 (pending → completed)
+   - 진행 상황 자동 업데이트
+
+6. 타임캡슐 묻기 버튼 활성화 조건
+   - canSubmit이 true일 때만 활성화
+   - 모든 참여자 작성 완료 시 true
+
+7. 작성 마감 시간 표시
+   - roomData.deadline 기반 계산
+   - dayjs를 사용하여 남은 시간 계산 (예: "23시간 59분 남음")
+
+==============================================
+
+구현가이드-6) 프라이버시 보호
+
+중요사항:
+1. 다른 사람의 작성 내용은 절대 조회 불가
+   - canEdit() 체크를 통해 본인 것만 접근
+   - 바텀시트는 본인 것만 표시
+
+2. 작성 상태만 확인 가능
+   - 다른 사람의 완료 여부만 확인 가능 (completed / pending)
+   - 내용은 볼 수 없음
+
+3. 방장도 다른 사람 내용 볼 수 없음
+   - 방장도 본인 것만 작성 가능
+   - 최종 제출 시에만 모든 내용 서버로 전송
+
+==============================================
+
+구현가이드-7) 추후 API 연동 대비
+
+API 설계 고려사항:
+1. GET /api/room/:capsuleId - 캡슐대기실 데이터 조회
+2. GET /api/room/:capsuleId/participants - 참여자 목록 조회
+3. POST /api/room/:capsuleId/participants/:participantId/content - 작성 내용 저장
+4. PUT /api/room/:capsuleId/participants/:participantId/status - 상태 업데이트
+5. POST /api/room/:capsuleId/submit - 최종 제출 (방장만)
+
+현재 구현:
+- 모든 API 호출 부분은 주석으로 표시
+- 목데이터를 반환하는 함수로 대체
+- 예시:
+  ```typescript
+  async function fetchRoomData(capsuleId: string): Promise<RoomData> {
+    // TODO: API 연동
+    // const response = await fetch(`/api/room/${capsuleId}`);
+    // return response.json();
+
+    // 목데이터 반환
+    return mockRoomData;
+  }
+  ```
+
+==============================================
+
+구현순서)
+
+1. Constants 파일 작성 (기본값, 상태 상수)
+2. Types 파일 작성 (RoomData, Participant, Progress 등)
+3. useRoomData Hook 구현
+   - fetchRoomData() 구현
+   - calculateProgress() 구현 (useMemo 사용)
+   - canSubmit() 구현 (진행률 100% 체크)
+4. useParticipants Hook 구현
+   - fetchParticipants() 구현
+   - updateParticipantStatus() 구현
+   - saveParticipantContent() 구현
+   - canEdit() 구현
+5. index.tsx에 hooks 연결
+6. 정보 카드 데이터 바인딩 (캡슐 이름, 개봉일, 참여자 수)
+7. 진행 상황 프로그레스바 데이터 바인딩
+   - progress.completed / progress.total 표시
+   - progress.percentage를 width로 적용
+   - 실시간 업데이트 확인
+8. 참여자 카드 클릭 로직 수정 (canEdit 체크)
+9. 바텀시트 저장 로직 연결
+   - saveContent() 호출
+   - 상태 업데이트 (pending → completed)
+   - 프로그레스바 자동 업데이트 확인
+10. 타임캡슐 묻기 버튼 활성화 조건 적용
+    - canSubmit 체크 (진행률 100%)
+    - 호스트만 버튼 표시
+11. 작성 마감 시간 계산 및 표시 (dayjs 사용)
+12. 프라이버시 체크 로직 추가 (본인만 접근)
+13. 프로그레스바 시나리오 테스트
+    - 0% → 50% → 100% 진행 확인
+    - 실시간 업데이트 확인
+14. 테스트 및 디버깅 (전체 플로우)
+15. 체크리스트 작성
+
+==============================================
+
+주의사항)
+
+1. 기존 UI/스타일 절대 수정 금지
+   - index.tsx의 JSX 구조 최대한 유지
+   - styles.ts는 필요 시에만 최소한으로 수정
+   - 새로운 파일(hooks, types, constants)로 로직 분리
+
+2. 프라이버시 보호 철저히
+   - 본인 것만 조회/수정 가능
+   - 다른 사람 내용 접근 시도 차단
+   - canEdit() 체크 필수
+
+3. 목데이터 명확히 표시
+   - 모든 목데이터는 상수로 정의
+   - API 호출 부분은 주석으로 표시
+   - 추후 교체 용이하도록 구조화
+
+4. 상태 관리 최적화
+   - useState, useMemo, useCallback 적절히 사용
+   - 불필요한 리렌더링 방지
+   - 성능 고려
+
+5. 에러 처리
+   - 데이터 로딩 실패 시 에러 표시
+   - 저장 실패 시 재시도 가능
+   - 사용자 피드백 제공
+
+6. TypeScript 타입 안정성
+   - 모든 데이터 구조 타입 정의
+   - any 사용 금지
+   - 타입 에러 0건
+
+==============================================
+
+최종검토 체크리스트)
+
+데이터 구조:
+- [ ] Constants 파일 작성 완료
+- [ ] Types 파일 작성 완료
+- [ ] RoomData 인터페이스 정의됨
+- [ ] Participant 인터페이스 정의됨
+- [ ] 목데이터 정의 완료
+
+Hooks 구현:
+- [ ] useRoomData Hook 구현 완료
+- [ ] useParticipants Hook 구현 완료
+- [ ] fetchRoomData() 정상 작동
+- [ ] fetchParticipants() 정상 작동
+- [ ] calculateProgress() 정확히 계산
+- [ ] canSubmit() 정확히 판단
+- [ ] canEdit() 본인만 true 반환
+
+UI 연동:
+- [ ] 정보 카드에 roomData 바인딩 완료
+- [ ] 진행 상황 바에 progress 바인딩 완료
+- [ ] 참여자 목록에 participants 바인딩 완료
+- [ ] 작성 마감 시간 표시 완료
+
+프로그레스바 구현:
+- [ ] 프로그레스바 섹션 표시됨 (정보 카드와 참여자 목록 사이)
+- [ ] 진행 상황 레이블 표시됨 ("진행 상황")
+- [ ] 완료/전체 인원 수 정확히 표시됨 (예: "2/4")
+- [ ] 프로그레스 바 퍼센티지 정확히 계산됨 (0-100%)
+- [ ] 프로그레스 바 width가 퍼센티지에 따라 변경됨
+- [ ] 참여자 작성 완료 시 프로그레스바 즉시 업데이트
+- [ ] 새로운 참여자 입장 시 전체 인원 증가 및 퍼센티지 재계산
+- [ ] 0% 상태: 빈 프로그레스바 표시
+- [ ] 1-99% 상태: 부분적으로 채워진 프로그레스바
+- [ ] 100% 상태: 완전히 채워진 프로그레스바
+- [ ] useMemo로 진행률 계산 최적화됨
+- [ ] 접근성: accessibilityLabel 제공됨
+
+기능 구현:
+- [ ] 참여자 카드 클릭 시 본인만 바텀시트 표시
+- [ ] 다른 사람 카드 클릭 시 무시됨
+- [ ] 바텀시트 저장 시 상태 업데이트 (pending → completed)
+- [ ] 진행 상황 실시간 업데이트 (프로그레스바 포함)
+- [ ] 타임캡슐 묻기 버튼 활성화 조건 적용 (모든 참여자 완료 시, 진행률 100%)
+- [ ] 방장만 최종 제출 가능
+
+프라이버시:
+- [ ] 본인 작성 내용만 조회 가능
+- [ ] 다른 사람 내용 접근 차단
+- [ ] canEdit() 체크 모든 곳에 적용
+- [ ] 방장도 본인 것만 작성 가능
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] API 호출 부분 주석 처리 완료
+- [ ] 목데이터 명확히 표시
+- [ ] 주석으로 복잡한 로직 설명
+- [ ] 성능 최적화 (useMemo, useCallback) 적용
+
+테스트:
+- [ ] 방장 플로우 정상 작동
+- [ ] 게스트 플로우 정상 작동
+- [ ] 본인 작성 및 저장 정상 작동
+- [ ] 다른 사람 접근 차단 정상 작동
+- [ ] 진행 상황 정확히 표시
+- [ ] 프로그레스바 실시간 업데이트 정상 작동
+- [ ] 프로그레스바 0% → 50% → 100% 시나리오 테스트
+- [ ] 참여자 1명 완료 시 프로그레스바 즉시 변경 확인
+- [ ] 모든 참여자 완료 시 100% 표시 및 버튼 활성화 확인
+- [ ] 새로운 참여자 입장 시 전체 인원 증가 및 퍼센티지 재계산 확인
+- [ ] 최종 제출 조건 정확히 판단 (진행률 100% = canSubmit true)
+
+==============================================

@@ -9,6 +9,10 @@ import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from './types';
 
+// 개발 모드에서 인증 체크 우회 (백엔드 연결 없이 개발 시 true로 설정)
+const SKIP_AUTH_CHECK = __DEV__ && true; // true로 설정하면 인증 체크를 건너뜁니다
+
+// AuthContext 타입 정의
 interface AuthContextType {
   accessToken: string | null;
   user: User | null;

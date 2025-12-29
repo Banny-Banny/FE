@@ -24,6 +24,16 @@ import { StepPaymentProps } from './types';
 import type { PaymentError } from './api/types/payment';
 
 // ============================================
+// 개발 모드 설정
+// ============================================
+
+/**
+ * 개발 모드에서 결제 우회 (백엔드 연결 없이 개발 시 true로 설정)
+ * true로 설정하면 토스페이먼츠 결제를 건너뛰고 바로 다음 단계로 진행합니다.
+ */
+const SKIP_PAYMENT = __DEV__ && true;
+
+// ============================================
 // 텍스트 상수 (국제화 대비)
 // ============================================
 const TEXTS = {
@@ -218,8 +228,25 @@ export default function StepPayment({
         orderData.order_id,
         orderSummary.totalPrice,
         '타임캡슐 생성',
-        formData.roomName,
+        formData.capsuleName,
       );
+
+      // ============================================
+      // 개발 모드: 결제 요청 후 바로 결제 완료 처리
+      // ============================================
+      if (SKIP_PAYMENT) {
+        console.log('🔧 [개발 모드] 결제 완료 모달 표시');
+
+        // 결제 완료 모달 표시
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />
+          ),
+        });
+      }
     } catch (err) {
       // 에러 처리
       const errorMessage =
@@ -234,7 +261,9 @@ export default function StepPayment({
     requestPayment,
     orderData.order_id,
     orderSummary.totalPrice,
-    formData.roomName,
+    formData.capsuleName,
+    openModal,
+    handlePaymentCompleteConfirm,
   ]);
 
   /** 결제 성공 처리 핸들러 (앱 복귀 시 호출) */

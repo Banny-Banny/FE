@@ -51,6 +51,10 @@ export interface CreateOrderResponse {
   order_id: string;
   /** 총 결제 금액 */
   total_amount: number;
+  /** 토스페이먼츠 고객 키 */
+  customer_key: string;
+  /** 생성 시각 (ISO 8601 형식) */
+  created_at: string;
   /** 이미지 추가 금액 */
   image_amount: number;
   /** 음악 추가 금액 */
