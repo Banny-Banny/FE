@@ -45,8 +45,12 @@ export const useTossPayment = (): UseTossPaymentReturn => {
           throw new Error('토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
         }
 
-        // @ts-expect-error - TossPayments SDK는 deprecated되어 타입 정의가 불완전함
-        const tossPayments = await TossPayments(clientKey);
+        const tossPaymentsFactory =
+          (TossPayments as any)?.default && typeof (TossPayments as any).default === 'function'
+            ? (TossPayments as any).default
+            : TossPayments;
+
+        const tossPayments = await tossPaymentsFactory(clientKey);
         await tossPayments.requestPayment('카드', {
           amount,
           orderId,
