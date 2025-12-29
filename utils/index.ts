@@ -4,6 +4,7 @@
  */
 
 export * from './api';
+export * from './apiClient';
 export * from './auth';
 export * from './date-price';
 export * from './format';

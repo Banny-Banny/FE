@@ -12,12 +12,12 @@
  */
 
 import { ALLOWED_EXTENSIONS, API_ENDPOINTS, MIME_TYPE_MAP, SIZE_LIMITS } from '@/commons/constants';
-import { buildApiUrl, normalizeApiBaseUrl } from '@/utils';
-import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { Platform } from 'react-native';
+import { buildApiUrl, normalizeApiBaseUrl } from './api';
+import { apiClient } from './apiClient';
 
 /**
  * 파일 확장자 추출
@@ -138,43 +138,26 @@ const getPresignedUrl = async (
   filename: string,
   contentType: string,
   size: number,
-  token: string,
 ): Promise<{ upload_url: string; object_key: string }> => {
   const rawApiBaseUrl =
     Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
-
   const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
 
   if (!apiBaseUrl) {
-    throw new Error(
-      'API Base URL이 설정되지 않았습니다. .env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.',
-    );
+    throw new Error('API Base URL이 설정되지 않았습니다.');
   }
 
-  try {
-    const response = await axios.post<{ upload_url: string; object_key: string }>(
-      buildApiUrl(apiBaseUrl, API_ENDPOINTS.MEDIA.PRESIGN),
-      {
-        type,
-        filename,
-        content_type: contentType,
-        size,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+  const response = await apiClient.post<{ upload_url: string; object_key: string }>(
+    buildApiUrl(apiBaseUrl, API_ENDPOINTS.MEDIA.PRESIGN),
+    {
+      type,
+      filename,
+      content_type: contentType,
+      size,
+    },
+  );
 
-    return response.data;
-  } catch (error) {
-    const axiosError = error as AxiosError;
-    throw new Error(
-      `Presigned URL 발급 실패: ${axiosError.response?.status} ${axiosError.message}`,
-    );
-  }
+  return response.data;
 };
 
 /**
@@ -265,13 +248,22 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
       }
       console.log('✅ S3 업로드 성공:', uploadResponse.status);
     } else {
-      // 네이티브 환경에서는 axios 사용
-      console.log('📱 네이티브 환경: axios로 S3 업로드');
-      await axios.put(uploadUrl, blob, {
+      // 네이티브 환경에서도 fetch 사용
+      console.log('📱 네이티브 환경: fetch로 S3 업로드');
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: blob,
         headers: {
           'Content-Type': contentType,
         },
       });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        throw new Error(
+          `S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}\n에러: ${errorText}`,
+        );
+      }
       console.log('✅ S3 업로드 성공');
     }
   } catch (error) {
@@ -279,10 +271,7 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
     if (error instanceof Error) {
       throw new Error(`S3 업로드 실패: ${error.message}`);
     }
-    const axiosError = error as AxiosError;
-    throw new Error(
-      `S3 업로드 실패: ${axiosError.response?.status || '알 수 없는 오류'} ${axiosError.message}`,
-    );
+    throw new Error(`S3 업로드 실패: ${String(error)}`);
   }
 };
 
@@ -293,54 +282,37 @@ const completeUpload = async (
   objectKey: string,
   contentType: string,
   size: number,
-  token: string,
 ): Promise<string> => {
   const rawApiBaseUrl =
     Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
-
   const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
 
   if (!apiBaseUrl) {
-    throw new Error(
-      'API Base URL이 설정되지 않았습니다. .env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.',
-    );
+    throw new Error('API Base URL이 설정되지 않았습니다.');
   }
 
-  try {
-    const response = await axios.post<{ media_id: string }>(
-      buildApiUrl(apiBaseUrl, API_ENDPOINTS.MEDIA.COMPLETE),
-      {
-        object_key: objectKey,
-        content_type: contentType,
-        size,
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      },
-    );
+  const response = await apiClient.post<{ media_id: string }>(
+    buildApiUrl(apiBaseUrl, API_ENDPOINTS.MEDIA.COMPLETE),
+    {
+      object_key: objectKey,
+      content_type: contentType,
+      size,
+    },
+  );
 
-    return response.data.media_id;
-  } catch (error) {
-    const axiosError = error as AxiosError;
-    throw new Error(`업로드 완료 등록 실패: ${axiosError.response?.status} ${axiosError.message}`);
-  }
+  return response.data.media_id;
 };
 
 /**
  * 미디어 업로드 통합 함수
  * @param uri 파일 URI
- * @param type 미디어 타입 (IMAGE, VIDEO, AUDIO)
- * @param token 인증 토큰
+ * @param type 미디어 타입 (IMAGE, VIDEO, MUSIC)
  * @param filename 파일명 (선택적, 없으면 URI에서 추출 시도)
  * @returns 업로드된 미디어 ID
  */
 export const uploadMedia = async (
   uri: string,
   type: 'IMAGE' | 'VIDEO' | 'MUSIC',
-  token: string,
   filename?: string,
 ): Promise<string> => {
   try {
@@ -407,7 +379,6 @@ export const uploadMedia = async (
       extractedFilename,
       contentType,
       processedSize,
-      token,
     );
     console.log('✅ Presigned URL 발급 성공');
     console.log('📦 Object Key:', object_key);
@@ -418,7 +389,7 @@ export const uploadMedia = async (
     console.log('✅ S3 업로드 완료');
 
     // Step 4: 업로드 완료 등록
-    const mediaId = await completeUpload(object_key, contentType, processedSize, token);
+    const mediaId = await completeUpload(object_key, contentType, processedSize);
 
     return mediaId;
   } catch (error) {

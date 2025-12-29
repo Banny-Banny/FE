@@ -1,131 +1,70 @@
 /**
  * lib/api/orders.ts
- * 생성 시각: 2024-12-19
  * 타임캡슐 주문 API 함수
  */
 
-import axios from 'axios';
-import dayjs from 'dayjs';
-import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
 import { DATE_OPTION_INDEX } from '@/components/timecapsule-create/components/step-info/constants';
+import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { apiClient } from '@/utils';
+import dayjs from 'dayjs';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
-
-// ============================================
-// API 함수
-// ============================================
 
 /**
  * 타임캡슐 주문 생성 API 호출
- *
- * ⚠️ 현재 백엔드 서버 연결이 주석처리되어 있습니다.
- * 백엔드 서버가 다시 열리면 useCreateOrder.ts의 주석을 해제하세요.
- *
- * @param data 주문 생성 요청 데이터
- * @param token JWT 토큰
- * @returns 주문 생성 응답
- * @throws 요청 실패 시 에러
  */
-export async function createOrder(
-  data: CreateOrderRequest,
-  token: string,
-): Promise<CreateOrderResponse> {
-  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
-
-  if (!baseUrl) {
-    throw new Error('API 베이스 URL이 설정되지 않았습니다');
-  }
-
-  const url = `${baseUrl}api/orders`;
-  console.log('🌐 [API 요청 정보]');
-  console.log('  - URL:', url);
-  console.log('  - 토큰 받음:', token ? '✅' : '❌');
-  console.log('  - Authorization 헤더:', `Bearer ${token.substring(0, 20)}...`);
-
+export async function createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
   try {
-    const response = await axios.post<CreateOrderResponse>(url, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    console.log('📥 [API 응답]');
-    console.log('  - 상태 코드:', response.status);
-    console.log('  - 상태 텍스트:', response.statusText);
-
+    const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
     return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error) && error.response) {
-      const response = error.response;
-      let errorMessage = '주문 생성에 실패했습니다';
+  } catch (error: any) {
+    const status = error.response?.status || 0;
+    let errorMessage = '주문 생성에 실패했습니다';
 
-      console.log('❌ [서버 에러 응답]', JSON.stringify(response.data, null, 2));
-
-      // 에러 메시지 매핑
-      if (response.status === 400) {
-        if (response.data.message === 'PHOTO_COUNT_EXCEEDS_LIMIT') {
-          errorMessage = '사진 개수가 인원당 제한(최대 인원 × 5)을 초과했습니다';
-        } else if (response.data.message === 'CUSTOM_OPEN_AT_MUST_BE_FUTURE') {
-          errorMessage = '개봉일은 현재 시각보다 미래여야 합니다';
-        } else {
-          errorMessage = '입력값이 올바르지 않습니다. 다시 확인해주세요';
-        }
-      } else if (response.status === 401) {
-        errorMessage = '로그인이 필요한 서비스입니다';
-      } else if (response.status === 404) {
-        if (response.data.message === 'PRODUCT_NOT_FOUND_OR_INVALID') {
-          errorMessage = '유효하지 않은 상품입니다';
-        } else {
-          errorMessage = '요청한 리소스를 찾을 수 없습니다';
-        }
-      } else if (response.status === 500) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
-      } else if (response.data.message) {
-        errorMessage = response.data.message;
+    if (status === 400) {
+      const msg = error.response?.data?.message;
+      if (msg === 'PHOTO_COUNT_EXCEEDS_LIMIT') {
+        errorMessage = '사진 개수가 인원당 제한(최대 인원 × 5)을 초과했습니다';
+      } else if (msg === 'CUSTOM_OPEN_AT_MUST_BE_FUTURE') {
+        errorMessage = '개봉일은 현재 시각보다 미래여야 합니다';
+      } else {
+        errorMessage = '입력값이 올바르지 않습니다. 다시 확인해주세요';
       }
-
-      throw new Error(errorMessage);
+    } else if (status === 404) {
+      errorMessage =
+        error.response?.data?.message === 'PRODUCT_NOT_FOUND_OR_INVALID'
+          ? '유효하지 않은 상품입니다'
+          : '요청한 리소스를 찾을 수 없습니다';
+    } else if (status === 500) {
+      errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
     }
 
-    throw error;
+    throw new Error(errorMessage);
   }
 }
 
-// ============================================
-// 데이터 변환 함수
-// ============================================
-
 /**
  * 폼 데이터를 API 요청 형식으로 변환
- * @param formData 폼 데이터
- * @returns API 요청 데이터
  */
 export function mapFormToOrderRequest(formData: StepInfoFormData): CreateOrderRequest {
   const productId = process.env.EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID;
+  if (!productId) throw new Error('상품 ID가 설정되지 않았습니다');
 
-  if (!productId) {
-    throw new Error('상품 ID가 설정되지 않았습니다');
-  }
-
-  // DateOption 인덱스 → time_option 변환
   let timeOption: TimeOption;
   let customOpenAt: string | undefined;
 
-  if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_WEEK) {
-    // "1주일" → 1_WEEK
+  const dateIndex = formData.selectedDateOptionIndex;
+  if (dateIndex === DATE_OPTION_INDEX.ONE_WEEK) {
     timeOption = '1_WEEK';
-  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_MONTH) {
-    // "1개월" → 1_MONTH
+  } else if (dateIndex === DATE_OPTION_INDEX.ONE_MONTH) {
     timeOption = '1_MONTH';
-  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.ONE_YEAR) {
-    // "1년" → 1_YEAR
+  } else if (dateIndex === DATE_OPTION_INDEX.ONE_YEAR) {
     timeOption = '1_YEAR';
-  } else if (formData.selectedDateOptionIndex === DATE_OPTION_INDEX.CUSTOM) {
-    // "직접 선택" → CUSTOM
+  } else if (dateIndex === DATE_OPTION_INDEX.CUSTOM) {
     timeOption = 'CUSTOM';
     customOpenAt = formData.selectedDate ? dayjs(formData.selectedDate).toISOString() : undefined;
   } else {
-    // 기본값 (예외 처리)
     timeOption = '1_YEAR';
   }
 
