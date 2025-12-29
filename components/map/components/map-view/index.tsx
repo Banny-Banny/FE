@@ -14,9 +14,10 @@
  */
 
 import Constants from 'expo-constants';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
+import CurrentLocation from '../current-location';
 import { EggSlot } from '../egg-slot';
 import { useCapsules } from './hooks/useCapsules';
 import { useMapLocation } from './hooks/useMapLocation';
@@ -34,8 +35,14 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
   const webViewRef = useRef<WebView>(null);
   const { location, isLoading: locationLoading } = useMapLocation();
 
-  // 지도 중심 좌표 결정: 현재 위치 > props center > 서울시청 기본값
-  const mapCenter = center || location || SEOUL_CITY_HALL;
+  // 지도 중심점 좌표 상태 (지도 이동 시 업데이트됨)
+  const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
+
+  // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값
+  const initialMapCenter = center || location || SEOUL_CITY_HALL;
+
+  // 지도 중심 좌표 (실시간 업데이트된 중심점 또는 초기값)
+  const mapCenter = mapCenterCoord || initialMapCenter;
 
   // 캡슐 목록 조회 (위치가 있을 때만)
   const { capsules, isLoading: capsulesLoading } = useCapsules({
@@ -80,7 +87,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
             JSON.stringify({
               type: 'INIT',
               payload: {
-                center: mapCenter,
+                center: initialMapCenter,
                 level: level || 4,
               },
             }),
@@ -95,7 +102,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     }, 2000); // WebView 로드 대기 시간 증가
 
     return () => clearTimeout(timer);
-  }, [mapCenter, level]);
+  }, [initialMapCenter, level]);
 
   // 캡슐 마커 표시 (API 응답 데이터 사용)
   useEffect(() => {
@@ -161,6 +168,10 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
         case 'READY':
           console.log('Map is ready');
           break;
+        case 'CENTER_CHANGED':
+          // 지도 중심점 변경 시 좌표 업데이트
+          setMapCenterCoord(message.payload);
+          break;
         case 'MAP_CLICK':
           console.log('Map clicked:', message.payload);
           onMapClick?.(message.payload);
@@ -212,6 +223,12 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
               console.log('[MapView] WebView 로드 완료');
             }}
           />
+          {/* Current Location Indicator - 지도 중심점 기준 */}
+          {mapCenter && (
+            <View style={styles.currentLocationWrapper}>
+              <CurrentLocation lat={mapCenter.lat} lng={mapCenter.lng} />
+            </View>
+          )}
           {/* Egg Slot Indicator */}
           <EggSlot usedCount={MOCK_EGG_SLOT_USED_COUNT} totalCount={3} />
         </>

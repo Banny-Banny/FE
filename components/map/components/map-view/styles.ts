@@ -30,4 +30,10 @@ export const styles = StyleSheet.create({
   errorText: {
     color: Colors.red[500],
   },
+  currentLocationWrapper: {
+    position: 'absolute',
+    left: 140, // Figma 디자인 기준
+    top: 56, // Figma 디자인 기준
+    zIndex: 10, // 지도 위에 표시
+  },
 });

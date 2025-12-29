@@ -69,6 +69,21 @@ export const KAKAO_MAP_HTML = `
             });
           });
 
+          // 지도 중심점 변경 이벤트 리스너 추가
+          kakao.maps.event.addListener(map, "center_changed", () => {
+            const center = map.getCenter();
+            sendToRN({
+              type: "CENTER_CHANGED",
+              payload: { lat: center.getLat(), lng: center.getLng() },
+            });
+          });
+
+          // 초기 중심점 전송
+          sendToRN({
+            type: "CENTER_CHANGED",
+            payload: { lat: center.getLat(), lng: center.getLng() },
+          });
+
           sendToRN({ type: "READY" });
         });
       }
