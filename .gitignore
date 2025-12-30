@@ -55,3 +55,5 @@ ehthumbs.db
 # others
 coverage/
 app-example/
+
+.cursor/.mcp_settings.json

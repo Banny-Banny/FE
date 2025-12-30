@@ -3,7 +3,7 @@
  * 카카오 OAuth 로그인 처리만 담당
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
+import { API_ENDPOINTS, ROUTES } from '@/commons/constants';
 import { buildApiUrl } from '@/utils';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
@@ -36,8 +36,10 @@ export function useKakaoLogin() {
       const baseLoginUrl = buildApiUrl(apiBaseUrl, API_ENDPOINTS.AUTH.KAKAO);
       
       // 플랫폼별 redirect_uri 설정
+      // ⚠️ 중요: 웹 환경에서는 프론트엔드 라우트 경로를 사용해야 함
+      // 백엔드는 이 redirect_uri로 리다이렉트하므로, 프론트엔드 라우트와 일치해야 함
       const redirectUri = Platform.OS === 'web'
-        ? `${window.location.origin}/auth/callback`  // 웹: 현재 도메인의 /auth/callback
+        ? `${window.location.origin}${ROUTES.AUTH_CALLBACK}`  // 웹: 프론트엔드 라우트 경로 사용
         : 'timeegg://auth/callback';  // 모바일: 딥링크
       
       const loginUrl = `${baseLoginUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`;

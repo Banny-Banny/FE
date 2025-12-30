@@ -56,9 +56,9 @@ module.exports = {
     },
     extra: {
       apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL,
-      // 카카오 JS 키: 새로운 변수(EXPO_PUBLIC_KAKAO_MAP_API_KEY) 우선, 기존 이름 폴백
-      kakaoApiKey:
-        process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY || process.env.EXPO_PUBLIC_KAKAO_API_KEY,
+      kakaoApiKey: process.env.EXPO_PUBLIC_KAKAO_API_KEY,
+      kakaoMapApiKey: process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY,
+      kakaoRestApiKey: process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY,
       oauthRedirectUri: process.env.EXPO_PUBLIC_OAUTH_CALLBACK,
     },
   },
