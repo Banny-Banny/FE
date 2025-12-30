@@ -9,6 +9,7 @@
  * - [✓] 피그마 디자인 1:1 대응
  */
 
+import { Image } from 'expo-image';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { styles } from './styles';
@@ -26,7 +27,12 @@ export function ProfileSection() {
         {/* 작은 원형 버튼 (flexbox로 우측 하단 배치) */}
         <View style={styles.smallButtonWrapper}>
           <View style={styles.smallButton}>
-            <View style={styles.smallButtonInner} />
+            <Image
+              source={require('../../../../assets/icons/camera.png')}
+              style={styles.smallButtonInner}
+              contentFit="contain"
+              accessibilityLabel="카메라 아이콘"
+            />
           </View>
         </View>
       </View>

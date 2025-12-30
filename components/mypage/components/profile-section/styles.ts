@@ -19,10 +19,10 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   // 메인 컨테이너 (Vertical container)
   container: {
-    width: 345,
+    width: 'auto',
     height: 250.35,
     alignItems: 'center',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
   },
 
   // Switch container (프로필 이미지/스위치 영역)
@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
     marginBottom: 16, // Button과의 간격 (Figma: 6344.09 - 6208.10 - 120 = 15.99 ≈ 16)
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
 
   // Switch container 내부 (배경 원형)
@@ -97,7 +97,7 @@ export const styles = StyleSheet.create({
 
   // Button (토끼유저 텍스트)
   buttonContainer: {
-    width: 81.09,
+    width: 'auto',
     height: 26.39,
     justifyContent: 'center',
     alignItems: 'flex-start',

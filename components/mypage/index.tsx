@@ -8,17 +8,35 @@
 
 import React from 'react';
 import { View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityStats } from './components/activity-stats';
+import { LogoutButton } from './components/logout-button';
+import { MenuList } from './components/menu-list';
 import { ProfileSection } from './components/profile-section';
-// 다른 컴포넌트들도 필요시 추가
-// import { ActivityStats } from './components/activity-stats';
-// import { MenuList } from './components/menu-list';
-// import { LogoutButton } from './components/logout-button';
+import { styles } from './styles';
 
 export default function MyPageFeature() {
+  const handleLogout = () => {
+    // TODO: 로그아웃 로직 구현
+    console.log('로그아웃');
+  };
+
   return (
-    <View>
-      <ProfileSection />
-      {/* 다른 섹션들 추가 예정 */}
-    </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <View style={styles.content}>
+        <View style={styles.profileSection}>
+          <ProfileSection />
+        </View>
+        <View style={styles.activityStats}>
+          <ActivityStats />
+        </View>
+        <View style={styles.menuList}>
+          <MenuList />
+        </View>
+        <View style={styles.logoutButton}>
+          <LogoutButton onPress={handleLogout} />
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
