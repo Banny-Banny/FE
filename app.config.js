@@ -18,6 +18,7 @@ module.exports = {
     },
     android: {
       package: 'com.timeegg.app',
+      permissions: ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
       intentFilters: [
         {
           action: 'VIEW',
@@ -48,6 +49,17 @@ module.exports = {
           android: {
             usesCleartextTraffic: true,
           },
+        },
+      ],
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission:
+            '$(PRODUCT_NAME)이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
+          locationAlwaysPermission:
+            '$(PRODUCT_NAME)이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
+          locationWhenInUsePermission:
+            '$(PRODUCT_NAME)이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
         },
       ],
     ],

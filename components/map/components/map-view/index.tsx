@@ -14,11 +14,7 @@
  */
 
 import Constants from 'expo-constants';
-<<<<<<< HEAD
-import { useEffect, useMemo, useRef } from 'react';
-=======
-import { useEffect, useMemo, useRef, useState } from 'react';
->>>>>>> origin
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 import CurrentLocation from '../current-location';
@@ -42,8 +38,32 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
   // 지도 중심점 좌표 상태 (지도 이동 시 업데이트됨)
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
 
-  // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값
-  const initialMapCenter = center || location || SEOUL_CITY_HALL;
+  // 카카오 API 키를 가져와서 HTML에 주입 (메모이제이션)
+  const kakaoMapApiKey = useMemo(() => {
+    const key = Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
+    
+    // API 키 로그는 한 번만 출력
+    if (key) {
+      console.log('[MapView] 카카오 API 키 로드 완료:', key.substring(0, 10) + '...');
+    } else {
+      console.error(
+        '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
+      );
+    }
+    
+    return key;
+  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+
+  // HTML 콘텐츠 메모이제이션 (API 키가 변경될 때만 재생성)
+  const htmlContent = useMemo(() => {
+    if (!kakaoMapApiKey) return '';
+    return KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoMapApiKey);
+  }, [kakaoMapApiKey]);
+
+  // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값 (메모이제이션)
+  const initialMapCenter = useMemo(() => {
+    return center || location || SEOUL_CITY_HALL;
+  }, [center, location]);
 
   // 지도 중심 좌표 (실시간 업데이트된 중심점 또는 초기값)
   const mapCenter = mapCenterCoord || initialMapCenter;
@@ -65,69 +85,6 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
       data: capsule,
     }));
   }, [capsules]);
-
-<<<<<<< HEAD
-  // 카카오 API 키를 가져와서 HTML에 주입 (manifest/환경변수 fallback 포함)
-  const kakaoApiKey =
-    Constants?.expoConfig?.extra?.kakaoApiKey ||
-    // EAS build/standalone에서 expoConfig가 없을 수 있으므로 manifest2 fallback
-    (Constants as any)?.manifest2?.extra?.kakaoApiKey ||
-    process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY ||
-    process.env.EXPO_PUBLIC_KAKAO_API_KEY ||
-    '';
-
-  if (!kakaoApiKey) {
-    console.error('[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_API_KEY를 확인하세요.');
-=======
-  // 카카오 API 키를 가져와서 HTML에 주입
-  const kakaoMapApiKey =
-    Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
-
-  if (!kakaoMapApiKey) {
-    console.error(
-      '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
-    );
->>>>>>> origin
-  } else {
-    console.log('[MapView] 카카오 API 키 로드 완료:', kakaoMapApiKey.substring(0, 10) + '...');
-  }
-<<<<<<< HEAD
-  
-  const htmlContent = useMemo(
-    () => KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoApiKey),
-    [kakaoApiKey],
-  );
-
-  // 웹뷰 콘솔/에러를 RN으로 전달해 디버깅 (iOS에서 맵 미표시 원인 추적용)
-  const errorBridgeScript = useMemo(
-    () => `
-      (function() {
-        const send = (type, payload) => {
-          if (window.ReactNativeWebView?.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type, payload }));
-          }
-        };
-        const origError = console.error;
-        console.error = function() {
-          send('WEB_ERROR', Array.from(arguments).map(String).join(' '));
-          origError && origError.apply(console, arguments);
-        };
-        const origWarn = console.warn;
-        console.warn = function() {
-          send('WEB_WARN', Array.from(arguments).map(String).join(' '));
-          origWarn && origWarn.apply(console, arguments);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-          send('WEB_ONERROR', { message, source, lineno, colno, error: error?.message });
-        };
-      })();
-    `,
-    [],
-  );
-=======
-
-  const htmlContent = KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoMapApiKey);
->>>>>>> origin
 
   useEffect(() => {
     // 지도 초기화 메시지 전송
@@ -211,8 +168,11 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     return () => clearTimeout(timer);
   }, [location, locationLoading]);
 
+  // CENTER_CHANGED 이벤트 디바운싱을 위한 ref
+  const centerChangedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // WebView로부터 메시지 수신
-  const handleMessage = (event: any) => {
+  const handleMessage = useCallback((event: any) => {
     try {
       const message = JSON.parse(event.nativeEvent.data);
       console.log('WebView message:', message);
@@ -222,8 +182,13 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
           console.log('Map is ready');
           break;
         case 'CENTER_CHANGED':
-          // 지도 중심점 변경 시 좌표 업데이트
-          setMapCenterCoord(message.payload);
+          // 지도 중심점 변경 시 좌표 업데이트 (디바운싱: 500ms)
+          if (centerChangedTimerRef.current) {
+            clearTimeout(centerChangedTimerRef.current);
+          }
+          centerChangedTimerRef.current = setTimeout(() => {
+            setMapCenterCoord(message.payload);
+          }, 500);
           break;
         case 'MAP_CLICK':
           console.log('Map clicked:', message.payload);
@@ -253,7 +218,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     } catch (error) {
       console.error('Failed to parse message:', error);
     }
-  };
+  }, [capsuleMarkers]);
 
   return (
     <View style={styles.container}>
@@ -262,51 +227,6 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
           <Text style={styles.errorText}>카카오 API 키가 설정되지 않았습니다.</Text>
         </View>
       ) : (
-<<<<<<< HEAD
-        <WebView
-          ref={webViewRef}
-          source={{ html: htmlContent, baseUrl: 'https://dapi.kakao.com' }}
-          style={styles.webview}
-          javaScriptEnabled={true}
-          domStorageEnabled={true}
-          originWhitelist={['*']}
-          allowFileAccess={true}
-          allowingReadAccessToURL={'https://dapi.kakao.com'}
-          allowUniversalAccessFromFileURLs={true}
-          mixedContentMode="always"
-          injectedJavaScriptBeforeContentLoaded={errorBridgeScript}
-          onMessage={handleMessage}
-          onError={(syntheticEvent) => {
-            const { nativeEvent } = syntheticEvent;
-            console.error('[MapView] WebView error:', nativeEvent);
-          }}
-          onHttpError={(syntheticEvent) => {
-            const { nativeEvent } = syntheticEvent;
-            console.error('[MapView] WebView HTTP error:', nativeEvent);
-          }}
-          onLoadStart={() => {
-            console.log('[MapView] WebView 로드 시작');
-          }}
-          onLoadEnd={() => {
-            console.log('[MapView] WebView 로드 완료');
-            // WebView 로드 완료 후 INIT 메시지 전송
-            setTimeout(() => {
-              if (webViewRef.current) {
-                console.log('[MapView] onLoadEnd 후 INIT 메시지 전송');
-                webViewRef.current.postMessage(
-                  JSON.stringify({
-                    type: 'INIT',
-                    payload: {
-                      center: center || { lat: 37.5665, lng: 126.978 },
-                      level: level || 4,
-                    },
-                  }),
-                );
-              }
-            }, 500);
-          }}
-        />
-=======
         <>
           <WebView
             ref={webViewRef}
@@ -339,7 +259,6 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
           {/* Egg Slot Indicator */}
           <EggSlot usedCount={MOCK_EGG_SLOT_USED_COUNT} totalCount={3} />
         </>
->>>>>>> origin
       )}
     </View>
   );
