@@ -13,36 +13,23 @@
  * - [x] BottomSheet 공통 컴포넌트 사용
  */
 
+import { Image } from 'expo-image';
+import React from 'react';
+import { Text, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
+
 import { BottomSheet } from '@/commons/components/bottom-sheet';
-import { formatCurrency } from '@/utils';
-import dayjs from 'dayjs';
-import React, { useMemo } from 'react';
-import { Image, Text, View } from 'react-native';
+import { Button } from '@/commons/components/button';
+import { Colors } from '@/commons/constants';
+
+import { TEXTS } from './constants';
+import { useEggDetail } from './hooks/useEggDetail';
 import { styles } from './styles';
 import type { EggDetailProps } from './types';
 
 export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsule }) => {
-  // 날짜 포맷팅
-  const formattedOpenDate = useMemo(() => {
-    if (!capsule?.open_at) return null;
-    return dayjs(capsule.open_at).format('YYYY년 MM월 DD일');
-  }, [capsule?.open_at]);
-
-  // 거리 포맷팅
-  const formattedDistance = useMemo(() => {
-    if (!capsule?.distance_m) return null;
-    if (capsule.distance_m < 1000) {
-      return `${Math.round(capsule.distance_m)}m`;
-    }
-    return `${(capsule.distance_m / 1000).toFixed(1)}km`;
-  }, [capsule?.distance_m]);
-
-  // 미디어 URL 처리 (media_urls가 이미 URL인지 ID인지 확인 필요)
-  const mediaUrls = useMemo(() => {
-    if (!capsule?.media_urls || capsule.media_urls.length === 0) return [];
-    // media_urls가 이미 URL 형식인지 확인
-    return capsule.media_urls;
-  }, [capsule?.media_urls]);
+  // 비즈니스 로직은 Hook에서 가져옴
+  const { formattedDate, locationText, discoveryCount } = useEggDetail({ capsule });
 
   if (!capsule) {
     return null;
@@ -53,96 +40,69 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
       <View style={styles.container}>
         {/* 헤더 섹션 */}
         <View style={styles.header}>
-          <Text style={styles.title}>{capsule.title}</Text>
-
-          {/* 메타 정보 */}
-          <View style={styles.metaInfo}>
-            {formattedOpenDate && (
-              <View style={styles.metaItem}>
-                <Text style={styles.dateText}>{formattedOpenDate} 개봉</Text>
-              </View>
-            )}
-            {formattedDistance && (
-              <View style={styles.metaItem}>
-                <Text style={styles.distanceText}>{formattedDistance} 거리</Text>
-              </View>
-            )}
+          {/* 왼쪽: 이스터에그 아이콘 */}
+          <View style={styles.iconContainer}>
+            <View style={styles.iconWrapper}>
+              <Image
+                source={require('../../../../assets/icons/egg-icon.svg')}
+                style={styles.eggIcon}
+                contentFit="contain"
+                accessibilityLabel="이스터에그 아이콘"
+              />
+              <Text style={styles.iconText}>?</Text>
+            </View>
           </View>
 
-          {/* 상태 배지 */}
-          <View
-            style={[
-              styles.statusBadge,
-              capsule.is_locked ? styles.lockedBadge : styles.unlockedBadge,
-            ]}>
-            <Text
-              style={
-                capsule.is_locked ? styles.statusText : styles.unlockedStatusText
-              }>
-              {capsule.is_locked ? '잠금' : '개봉 가능'}
+          {/* 오른쪽: 제목과 부제목 */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{capsule.title}</Text>
+            <Text style={styles.subtitle}>{TEXTS.header.subtitle}</Text>
+          </View>
+        </View>
+
+        {/* 정보 카드 섹션 */}
+        <View style={styles.infoCardsContainer}>
+          {/* 숨긴 날짜 카드 */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoCardContent}>
+              <View style={styles.infoCardHeader}>
+                <Icon name="calendar-line" size={12} color={Colors.grey[700]} />
+                <Text style={styles.infoCardLabel}>{TEXTS.infoCard.dateLabel}</Text>
+              </View>
+              <Text style={styles.infoCardValue}>{formattedDate}</Text>
+            </View>
+          </View>
+
+          {/* 위치 카드 */}
+          <View style={styles.infoCard}>
+            <View style={styles.infoCardContent}>
+              <View style={styles.infoCardHeader}>
+                <Icon name="map-pin-line" size={12} color={Colors.grey[700]} />
+                <Text style={styles.infoCardLabel}>{TEXTS.infoCard.locationLabel}</Text>
+              </View>
+              <Text style={styles.infoCardValue} numberOfLines={1}>
+                {locationText}
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 발견 기록 섹션 */}
+        <View style={styles.discoverySection}>
+          <View style={styles.discoveryHeader}>
+            <Icon name="group-line" size={16} color={Colors.black[500]} />
+            <Text style={styles.discoveryTitle}>
+              {TEXTS.discovery.title} ({discoveryCount})
             </Text>
           </View>
+          <View style={styles.discoveryEmptyBox}>
+            <Text style={styles.discoveryEmptyText}>{TEXTS.discovery.emptyText}</Text>
+          </View>
         </View>
 
-        {/* 내용 섹션 */}
-        {capsule.content && (
-          <View style={styles.contentSection}>
-            <Text style={styles.contentText}>{capsule.content}</Text>
-          </View>
-        )}
-
-        {/* 미디어 섹션 */}
-        {mediaUrls.length > 0 && (
-          <View style={styles.mediaSection}>
-            <Text style={styles.mediaTitle}>첨부파일</Text>
-            <View style={styles.mediaContainer}>
-              {mediaUrls.map((url, index) => {
-                const mediaType = capsule.media_types?.[index] || 'IMAGE';
-                const isImage = mediaType === 'IMAGE' || mediaType === 'image';
-                const isVideo = mediaType === 'VIDEO' || mediaType === 'video';
-
-                if (isImage) {
-                  return (
-                    <View key={index} style={styles.imageContainer}>
-                      <Image source={{ uri: url }} style={styles.image} resizeMode="cover" />
-                    </View>
-                  );
-                }
-
-                if (isVideo) {
-                  // 비디오는 나중에 Video 컴포넌트로 교체 가능
-                  return (
-                    <View key={index} style={styles.videoContainer}>
-                      <Image source={{ uri: url }} style={styles.video} resizeMode="cover" />
-                    </View>
-                  );
-                }
-
-                return null;
-              })}
-            </View>
-          </View>
-        )}
-
-        {/* 상품 정보 섹션 */}
-        {capsule.product && (
-          <View style={styles.productSection}>
-            <Text style={styles.productTitle}>상품 정보</Text>
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{capsule.product.name}</Text>
-              <Text style={styles.productPrice}>{formatCurrency(capsule.product.price)}</Text>
-            </View>
-          </View>
-        )}
-
-        {/* 조회 정보 */}
-        <View style={styles.viewInfo}>
-          <Text style={styles.viewText}>
-            조회 {capsule.view_count} / {capsule.view_limit}
-          </Text>
-        </View>
+        {/* 닫기 버튼 */}
+        <Button label={TEXTS.button.close} variant="primary" size="M" onPress={onClose} />
       </View>
     </BottomSheet>
   );
 };
-

@@ -73,7 +73,8 @@ export function useMapLocation(): UseMapLocationReturn {
       });
       setIsLoading(false);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '위치를 가져오는 중 오류가 발생했습니다.';
+      const errorMessage =
+        err instanceof Error ? err.message : '위치를 가져오는 중 오류가 발생했습니다.';
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -90,4 +91,3 @@ export function useMapLocation(): UseMapLocationReturn {
     requestPermission,
   };
 }
-
