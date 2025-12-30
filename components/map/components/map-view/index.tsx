@@ -17,6 +17,7 @@ import Constants from 'expo-constants';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
+import { CurrentLocationMarker } from '@/commons/components/current-location-marker';
 import CurrentLocation from '../current-location';
 import { EggSlot } from '../egg-slot';
 import { useCapsules } from './hooks/useCapsules';
@@ -173,28 +174,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     return () => clearTimeout(timer);
   }, [locationLoading, capsulesLoading, capsuleMarkers]);
 
-  // 현재 위치 커스텀 마커 표시
-  useEffect(() => {
-    if (!webViewRef.current || locationLoading || !location) return;
-
-    const timer = setTimeout(() => {
-      if (webViewRef.current && location) {
-        try {
-          webViewRef.current.postMessage(
-            JSON.stringify({
-              type: 'SET_CURRENT_LOCATION',
-              payload: location,
-            }),
-          );
-          console.log('[MapView] 현재 위치 커스텀 마커 표시 완료:', location);
-        } catch (error) {
-          console.error('[MapView] 현재 위치 마커 표시 실패:', error);
-        }
-      }
-    }, 3000); // 지도 및 일반 마커 표시 후 현재 위치 마커 표시
-
-    return () => clearTimeout(timer);
-  }, [location, locationLoading]);
+  // 현재 위치 커스텀 마커는 CurrentLocationMarker 컴포넌트에서 관리
 
   // CENTER_CHANGED 이벤트 디바운싱을 위한 ref
   const centerChangedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -280,6 +260,12 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
             onLoadEnd={() => {
               console.log('[MapView] WebView 로드 완료');
             }}
+          />
+          {/* Current Location Marker - WebView 내부에 표시 */}
+          <CurrentLocationMarker
+            webViewRef={webViewRef}
+            location={location}
+            isLoading={locationLoading}
           />
           {/* Current Location Indicator - 지도 중심점 기준 */}
           {mapCenter && (
