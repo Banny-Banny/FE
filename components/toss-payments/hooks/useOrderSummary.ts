@@ -5,10 +5,9 @@
  * 주문 상품 계산 Hook
  */
 
-import { formatCurrency } from '@/utils';
+import { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
-import { CreateOrderResponse } from '../../step-info/api/types/order';
 import { OrderItem, OrderSummary } from '../types';
 
 /**

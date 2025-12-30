@@ -4,12 +4,11 @@
  */
 
 import { useNavigation } from '@/commons/hooks';
+import TossPayment from '@/components/toss-payments';
 import React, { useState } from 'react';
 import StepInfo from './components/step-info';
 import { CreateOrderResponse } from './components/step-info/api/types/order';
 import { StepInfoFormData } from './components/step-info/types';
-import { mapFormToApiRequest } from './components/step-info/utils/formToApiMapper';
-import StepPayment from './components/step-payment';
 import StepRoom from './components/step-room';
 
 export default function TimeCapsuleCreate() {
@@ -61,7 +60,7 @@ export default function TimeCapsuleCreate() {
     }
 
     return (
-      <StepPayment
+      <TossPayment
         formData={stepInfoData} // 1단계 폼 데이터 전달
         orderData={orderData} // 백엔드 주문 데이터 전달
         onBack={() => {

@@ -5,9 +5,9 @@
  * 타임캡슐 결제 화면 타입 정의
  */
 
-import { CreateOrderResponse } from '../step-info/api/types/order';
-import { StepInfoFormData } from '../step-info/types';
-import { TossPaymentConfirmResponse } from './api/types/payment';
+import { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
+import { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { TossPaymentConfirmResponse } from './api/types/types';
 
 // ============================================
 // 주문 항목 타입
@@ -62,9 +62,9 @@ export interface AgreementsState {
 // ============================================
 
 /**
- * StepPayment 컴포넌트 Props 타입
+ * TossPayment 컴포넌트 Props 타입
  */
-export interface StepPaymentProps {
+export interface TossPaymentProps {
   /** 이전 단계(step-info)에서 전달받은 폼 데이터 */
   formData: StepInfoFormData;
   /** 백엔드에서 받은 주문 데이터 */

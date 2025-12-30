@@ -255,8 +255,8 @@
       - amount: orderSummary.totalPrice
       - orderName: "타임캡슐 생성"
       - customerName: formData에서 가져오기 (또는 "고객")
-      - successUrl: "myapp://pay/toss/success"
-      - failUrl: "myapp://pay/toss/fail"
+     - successUrl: "timeegg://pay/toss/success"
+     - failUrl: "timeegg://pay/toss/fail"
    4. SDK가 토스페이먼츠 결제 페이지 표시
    5. 사용자가 결제 완료하면 successUrl로 리다이렉트
       - URL 파라미터: paymentKey, orderId, amount
@@ -717,8 +717,8 @@
              orderId,
              orderName,
              customerName: customerName || '고객',
-             successUrl: 'myapp://pay/toss/success',
-             failUrl: 'myapp://pay/toss/fail',
+            successUrl: 'timeegg://pay/toss/success',
+            failUrl: 'timeegg://pay/toss/fail',
            });
            
            console.log('✅ [토스페이먼츠 결제 페이지 열림]');
@@ -1187,8 +1187,8 @@ await tossPayments.requestPayment('카드', {
   orderId: 'order-uuid',
   orderName: '타임캡슐 생성',
   customerName: '홍길동',
-  successUrl: 'myapp://pay/toss/success',
-  failUrl: 'myapp://pay/toss/fail',
+  successUrl: 'timeegg://pay/toss/success',
+  failUrl: 'timeegg://pay/toss/fail',
 });
 ```
 
@@ -1254,7 +1254,7 @@ UI 및 UX:
 2) 리다이렉트 URL 관리
    - 카카오페이: 백엔드가 redirect_url 반환
    - 토스페이먼츠: 프론트엔드가 successUrl/failUrl 설정
-   - 딥링크 사용: myapp://pay/toss/success
+  - 딥링크 사용: timeegg://pay/toss/success
 
 3) 파라미터 차이
    - 카카오페이: pg_token (승인용 토큰)
@@ -1265,7 +1265,7 @@ UI 및 UX:
    - React Native 연동 가이드 참고
 
 5) 딥링크 처리
-   - 성공: myapp://pay/toss/success?paymentKey={key}&orderId={id}&amount={amount}
-   - 실패: myapp://pay/toss/fail?code={code}&message={message}
+  - 성공: timeegg://pay/toss/success?paymentKey={key}&orderId={id}&amount={amount}
+  - 실패: timeegg://pay/toss/fail?code={code}&message={message}
 
 ==============================================

@@ -241,11 +241,11 @@
 추가 고려사항
 
 1) 딥링크 처리
-   - app.json에 URL scheme 설정 필요 (예: myapp://)
+   - app.json에 URL scheme 설정 필요 (예: timeegg://)
    - 카카오페이 승인/취소/실패 URL 설정:
-     - 승인: myapp://payment/success?pg_token={pg_token}
-     - 취소: myapp://payment/cancel
-     - 실패: myapp://payment/fail
+     - 승인: timeegg://payment/success?pg_token={pg_token}
+     - 취소: timeegg://payment/cancel
+     - 실패: timeegg://payment/fail
 
 2) 결제 상태 관리
    - 결제 진행 중 상태 저장 (AsyncStorage 또는 Context)
