@@ -12,6 +12,7 @@ export interface MapViewProps {
   level?: number;
   onMapClick?: (coord: { lat: number; lng: number }) => void;
   onMarkerClick?: (id: string) => void;
+  onCapsuleClick?: (capsule: CapsuleItem) => void;
 }
 
 /**

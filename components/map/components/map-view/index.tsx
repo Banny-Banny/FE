@@ -17,14 +17,16 @@ import Constants from 'expo-constants';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
-import { CurrentLocationMarker } from '@/commons/components/current-location-marker';
 import CurrentLocation from '../current-location';
+import { CurrentLocationMarker } from '../current-location-marker';
 import { EggSlot } from '../egg-slot';
 import { useCapsules } from './hooks/useCapsules';
 import { useMapLocation } from './hooks/useMapLocation';
-import { KAKAO_MAP_HTML } from './kakaoMapHtml';
 import { styles } from './styles';
 import type { CapsuleMarker, MapViewProps } from './types';
+import { generateKakaoMapHtml } from './webview/generateHtml';
+import { sendInitMessage, sendSetMarkersMessage } from './webview/messageHandler';
+import type { WebViewToRNMessage } from './webview/messageTypes';
 
 // 서울시청 기준 주변 5개 지점 고정 데이터 (기본값)
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
@@ -32,7 +34,13 @@ const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
 // Mock 데이터: 사용된 egg-slot 개수 (총 3개 중 2개 사용)
 const MOCK_EGG_SLOT_USED_COUNT = 2;
 
-export default function MapView({ center, level, onMapClick, onMarkerClick }: MapViewProps = {}) {
+export default function MapView({
+  center,
+  level,
+  onMapClick,
+  onMarkerClick,
+  onCapsuleClick,
+}: MapViewProps = {}) {
   const webViewRef = useRef<WebView>(null);
   const { location, isLoading: locationLoading } = useMapLocation();
 
@@ -59,7 +67,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
   // HTML 콘텐츠 메모이제이션 (API 키가 변경될 때만 재생성)
   const htmlContent = useMemo(() => {
     if (!kakaoMapApiKey) return '';
-    return KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoMapApiKey);
+    return generateKakaoMapHtml(kakaoMapApiKey);
   }, [kakaoMapApiKey]);
 
   // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값 (메모이제이션)
@@ -88,108 +96,58 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     }));
   }, [capsules]);
 
-  // 웹뷰 콘솔/에러를 RN으로 전달해 디버깅 (iOS에서 맵 미표시 원인 추적용)
-  const errorBridgeScript = useMemo(
-    () => `
-      (function() {
-        const send = (type, payload) => {
-          if (window.ReactNativeWebView?.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ type, payload }));
-          }
-        };
-        const origError = console.error;
-        console.error = function() {
-          send('WEB_ERROR', Array.from(arguments).map(String).join(' '));
-          origError && origError.apply(console, arguments);
-        };
-        const origWarn = console.warn;
-        console.warn = function() {
-          send('WEB_WARN', Array.from(arguments).map(String).join(' '));
-          origWarn && origWarn.apply(console, arguments);
-        };
-        window.onerror = function(message, source, lineno, colno, error) {
-          send('WEB_ONERROR', { message, source, lineno, colno, error: error?.message });
-        };
-      })();
-    `,
-    [],
-  );
-
+  // 지도 초기화: WebView 로드 후 실행
   useEffect(() => {
-    // 지도 초기화 메시지 전송
-    // WebView가 로드된 후에 메시지를 보내야 함
+    if (!kakaoMapApiKey) return;
+
     const timer = setTimeout(() => {
-      if (webViewRef.current) {
-        console.log('[MapView] INIT 메시지 전송 시도');
-        try {
-          webViewRef.current.postMessage(
-            JSON.stringify({
-              type: 'INIT',
-              payload: {
-                center: initialMapCenter,
-                level: level || 4,
-              },
-            }),
-          );
-          console.log('[MapView] INIT 메시지 전송 완료');
-        } catch (error) {
-          console.error('[MapView] INIT 메시지 전송 실패:', error);
-        }
-      } else {
-        console.warn('[MapView] webViewRef가 아직 준비되지 않음');
+      const success = sendInitMessage(webViewRef, {
+        center: initialMapCenter,
+        level: level || 4,
+      });
+
+      if (success) {
+        console.log('[MapView] 지도 초기화 메시지 전송 완료');
       }
-    }, 2000); // WebView 로드 대기 시간 증가
+    }, 1000); // WebView 로드 대기
 
     return () => clearTimeout(timer);
-  }, [initialMapCenter, level]);
+  }, [kakaoMapApiKey, initialMapCenter, level]);
 
-  // 캡슐 마커 표시 (API 응답 데이터 사용)
+  // 캡슐 마커 표시
   useEffect(() => {
-    if (!webViewRef.current || locationLoading || capsulesLoading || capsuleMarkers.length === 0)
-      return;
+    if (locationLoading || capsulesLoading || capsuleMarkers.length === 0) return;
 
     const timer = setTimeout(() => {
-      if (webViewRef.current) {
-        try {
-          // WebView로 전달할 때는 id, lat, lng만 전달하고, 전체 데이터는 별도로 관리
-          const markersForWebView = capsuleMarkers.map((marker) => ({
-            id: marker.id,
-            lat: marker.lat,
-            lng: marker.lng,
-          }));
+      const markersForWebView = capsuleMarkers.map((marker) => ({
+        id: marker.id,
+        lat: marker.lat,
+        lng: marker.lng,
+      }));
 
-          webViewRef.current.postMessage(
-            JSON.stringify({
-              type: 'SET_MARKERS',
-              payload: markersForWebView,
-            }),
-          );
-          console.log('[MapView] 캡슐 마커 표시 완료:', capsuleMarkers.length, '개');
-        } catch (error) {
-          console.error('[MapView] 마커 표시 실패:', error);
-        }
+      const success = sendSetMarkersMessage(webViewRef, markersForWebView);
+      if (success) {
+        console.log('[MapView] 캡슐 마커 표시 완료:', capsuleMarkers.length, '개');
       }
-    }, 2500); // 지도 초기화 후 마커 표시
+    }, 1500); // 지도 초기화 후 마커 표시
 
     return () => clearTimeout(timer);
   }, [locationLoading, capsulesLoading, capsuleMarkers]);
 
-  // 현재 위치 커스텀 마커는 CurrentLocationMarker 컴포넌트에서 관리
-
   // CENTER_CHANGED 이벤트 디바운싱을 위한 ref
   const centerChangedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // WebView로부터 메시지 수신
+  // WebView로부터 메시지 수신 핸들러
   const handleMessage = useCallback(
-    (event: any) => {
+    (event: { nativeEvent: { data: string } }) => {
       try {
-        const message = JSON.parse(event.nativeEvent.data);
-        console.log('WebView message:', message);
+        const message = JSON.parse(event.nativeEvent.data) as WebViewToRNMessage;
 
         switch (message.type) {
           case 'READY':
-            console.log('Map is ready');
+            console.log('[MapView] 지도 준비 완료');
             break;
+
           case 'CENTER_CHANGED':
             // 지도 중심점 변경 시 좌표 업데이트 (디바운싱: 500ms)
             if (centerChangedTimerRef.current) {
@@ -199,36 +157,35 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
               setMapCenterCoord(message.payload);
             }, 500);
             break;
+
           case 'MAP_CLICK':
-            console.log('Map clicked:', message.payload);
             onMapClick?.(message.payload);
             break;
-          case 'MARKER_CLICK':
-            console.log('Marker clicked:', message.payload);
+
+          case 'MARKER_CLICK': {
             // 마커 ID로 전체 데이터 찾기
             const clickedMarker = capsuleMarkers.find((m) => m.id === message.payload.id);
             if (clickedMarker) {
-              console.log('[MapView] 마커 전체 데이터:', clickedMarker.data);
+              onCapsuleClick?.(clickedMarker.data);
             }
             onMarkerClick?.(message.payload.id);
             break;
+          }
+
           case 'WEB_ERROR':
-            console.error('[MapView][Web] ERROR:', message.payload);
-            break;
           case 'WEB_WARN':
-            console.warn('[MapView][Web] WARN:', message.payload);
-            break;
           case 'WEB_ONERROR':
-            console.error('[MapView][Web] ONERROR:', message.payload);
+            console.error(`[MapView][Web] ${message.type}:`, message.payload);
             break;
+
           default:
-            break;
+            console.warn('[MapView] 알 수 없는 메시지 타입:', (message as any).type);
         }
       } catch (error) {
-        console.error('Failed to parse message:', error);
+        console.error('[MapView] 메시지 파싱 실패:', error);
       }
     },
-    [capsuleMarkers, onMapClick, onMarkerClick],
+    [capsuleMarkers, onMapClick, onMarkerClick, onCapsuleClick],
   );
 
   return (
