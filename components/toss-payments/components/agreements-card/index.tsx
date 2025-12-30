@@ -18,8 +18,6 @@ export const AgreementsCard: React.FC<AgreementsCardProps> = ({
 }) => {
   return (
     <View style={styles.agreementsCard}>
-      <View style={styles.cardBorder} />
-
       {/* 전체 동의 */}
       <View style={styles.allAgreeRow}>
         <TouchableOpacity
@@ -28,7 +26,6 @@ export const AgreementsCard: React.FC<AgreementsCardProps> = ({
           accessibilityRole="checkbox"
           accessibilityState={{ checked: allAgreed }}>
           <View style={[styles.checkbox, allAgreed && styles.checkboxChecked]}>
-            <View style={styles.checkboxBorder} />
             {allAgreed && <Text style={styles.checkboxCheckmark}>✓</Text>}
           </View>
           <Text style={styles.allAgreeText}>{TEXTS.agreements.allAgree}</Text>
@@ -47,9 +44,8 @@ export const AgreementsCard: React.FC<AgreementsCardProps> = ({
                 onPress={() => onAgreementToggle(key)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isChecked }}>
-                <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
-                  <View style={styles.checkboxBorder} />
-                  {isChecked && <Text style={styles.checkboxCheckmark}>✓</Text>}
+                <View style={[styles.checkboxSmall, isChecked && styles.checkboxSmallChecked]}>
+                  {isChecked && <Text style={styles.checkboxCheckmarkSmall}>✓</Text>}
                 </View>
                 <Text style={styles.agreementText}>{label}</Text>
               </TouchableOpacity>

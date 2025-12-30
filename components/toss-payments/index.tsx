@@ -172,14 +172,14 @@ export default function TossPayment({
           onAgreementToggle={handleAgreementToggle}
           onAgreementDetailPress={handleAgreementDetailPress}
         />
-      </ScrollView>
 
-      {/* 하단 결제 버튼 */}
-      <PaymentFooter
-        isLoading={isLoading}
-        isPaymentEnabled={isPaymentEnabled}
-        onSubmit={handleSubmitPress}
-      />
+        {/* 결제 버튼 */}
+        <PaymentFooter
+          isLoading={isLoading}
+          isPaymentEnabled={isPaymentEnabled}
+          onSubmit={handleSubmitPress}
+        />
+      </ScrollView>
 
       {/* 약관 상세 모달 */}
       <AgreementDetailModal
