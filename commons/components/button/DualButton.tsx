@@ -23,13 +23,18 @@ export function DualButton({
   size = 'L',
   cancelVariant = 'secondary',
   confirmVariant = 'primary',
+  fullWidth = true,
+  width,
   cancelDisabled = false,
   confirmDisabled = false,
   onCancelPress,
   onConfirmPress,
 }: DualButtonProps) {
+  // width 우선순위: width prop > fullWidth
+  const containerWidth = width !== undefined ? width : fullWidth ? '100%' : undefined;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { width: containerWidth }]}>
       {/* 취소 버튼 (왼쪽) */}
       <View style={styles.button}>
         <Button
@@ -61,7 +66,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     gap: DUAL_BUTTON_GAP,
-    width: '100%',
   },
   button: {
     flex: 1,

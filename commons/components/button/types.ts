@@ -117,6 +117,20 @@ export interface DualButtonProps {
   confirmVariant?: ButtonVariant;
 
   /**
+   * 전체 너비 사용 여부 (선택, 기본값: true)
+   * width가 지정되면 무시됨
+   */
+  fullWidth?: boolean;
+
+  /**
+   * 커스텀 너비 (선택)
+   * 숫자(px) 또는 퍼센트 문자열 지정 가능
+   * @example width={300} // 300px
+   * @example width="80%" // 80%
+   */
+  width?: DimensionValue;
+
+  /**
    * 취소 버튼 비활성화 상태 (선택, 기본값: false)
    */
   cancelDisabled?: boolean;
