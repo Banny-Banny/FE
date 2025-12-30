@@ -1,0 +1,1271 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 파일들:
+            - components/timecapsule-create/components/step-payment/index.tsx
+            - components/timecapsule-create/components/step-payment/types.ts
+            - components/timecapsule-create/components/step-payment/api/payment.ts
+            - components/timecapsule-create/components/step-payment/api/types/payment.ts
+            - components/timecapsule-create/components/step-payment/hooks/useKakaoPayment.ts (→ useTossPayment.ts로 변경)
+
+==============================================
+
+핵심요구사항) 카카오페이 → 토스페이먼츠 결제 연동 마이그레이션
+
+배경:
+- 백엔드가 카카오페이 API 지원 중단
+- 토스페이먼츠 API로 전환 필요
+- 기존 UI 구조 및 사용자 플로우는 최대한 유지
+
+작업 방식:
+- 기존 카카오페이 관련 코드를 모두 토스페이먼츠로 변경
+- 기존 UI 구조(index.tsx, styles.ts)는 최소한으로 수정
+- API 및 hook 파일을 토스페이먼츠 스펙에 맞게 수정
+
+==============================================
+
+백엔드 API 스펙 (완전판)
+
+중요 변경사항:
+- 카카오페이의 "결제 준비(ready) → 승인(approve)" 2단계 플로우가 사라짐
+- 토스페이먼츠는 클라이언트에서 직접 SDK로 결제 요청
+- 백엔드는 결제 완료 후 승인(confirm) API만 제공
+- 리다이렉트 URL은 백엔드가 아닌 프론트엔드에서 설정 (successUrl, failUrl)
+- 실연동 모드(TOSS_PAY_ENABLE=true)와 테스트 모드(모킹) 지원
+
+1. 결제 승인 API (POST /api/payments/toss/confirm)
+   
+   동작 방식:
+   - 사용자가 토스 결제 완료 후 전달받은 paymentKey, orderId, amount를 JWT와 함께 전송
+   - 서버는 주문 존재 여부, 주문자 일치, 결제 상태(PAID 아님), 상품 타입(TIME_CAPSULE), 금액 일치 검증
+   - 실연동(TOSS_PAY_ENABLE=true)이면 TOSS_SECRET_KEY로 토스 v1/payments/confirm 호출
+   - 테스트 모드에서는 모킹 응답 생성
+   - 결제 완료 후 타임캡슐 생성
+   
+   요청:
+   - Method: POST
+   - URL: /api/payments/toss/confirm
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Body: {
+       paymentKey: string,  // 1~200자
+       orderId: string,     // 6~200자
+       amount: number       // 결제 금액
+     }
+   
+   응답 (201 Created):
+   {
+     order_id: string,
+     payment_key: string,
+     status: string,        // "PAID"
+     amount: number,
+     approved_at: string,   // ISO 8601 형식
+     capsule_id: string,    // 생성된 타임캡슐 UUID
+     receipt_url: string
+   }
+   
+   에러 응답:
+   - 400 AMOUNT_MISMATCH: 결제 금액이 주문 금액과 불일치
+   - 400 ORDER_ALREADY_PAID: 이미 결제 완료된 주문
+   - 400 TOSS_SECRET_KEY_REQUIRED: 실연동 모드인데 시크릿 키 없음
+   - 400 TOSS_CONFIRM_FAILED: 토스 API 호출 실패 (토스 응답 메시지 포함)
+   - 401 ORDER_NOT_OWNED: 다른 사용자의 주문
+   - 401 Unauthorized: JWT 누락/만료
+   - 404 ORDER_NOT_FOUND: 주문 정보 없음
+   - 404 PRODUCT_NOT_FOUND_OR_INVALID: 상품이 TIME_CAPSULE이 아님
+
+2. 결제 조회 API - paymentKey (GET /api/payments/toss/{paymentKey})
+   
+   동작 방식:
+   - 내부 DB에서만 조회 (토스 API 호출 없음)
+   - Payment 테이블에서 paymentKey로 검색
+   - 취소 이력(payment_cancels) 함께 로드
+   
+   요청:
+   - Method: GET
+   - URL: /api/payments/toss/{paymentKey}
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Path Param: paymentKey (string)
+   
+   응답 (200 OK):
+   {
+     payment: {
+       paymentKey: string,
+       orderNo: string,
+       tossStatus: string,        // "DONE", "CANCELED" 등
+       method: string,             // "카드" 등
+       currency: string,           // "KRW"
+       amount: number,             // balance_amount (잔액)
+       approvedAt: string,         // ISO 8601
+       receiptUrl: string
+     },
+     cancels: [
+       {
+         transactionKey: string,
+         cancelAmount: number,
+         cancelReason: string,
+         cancelStatus: string,
+         canceledAt: string
+       }
+     ]
+   }
+   
+   에러 응답:
+   - 401 Unauthorized: JWT 누락/만료
+   - 404 PAYMENT_NOT_FOUND: 결제 정보 없음
+
+3. 결제 조회 API - orderNo (GET /api/payments/toss/orders/{orderNo})
+   
+   동작 방식:
+   - 내부 DB에서만 조회 (토스 API 호출 없음)
+   - Payment 테이블에서 orderNo로 검색
+   - 취소 이력(payment_cancels) 함께 로드
+   
+   요청:
+   - Method: GET
+   - URL: /api/payments/toss/orders/{orderNo}
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Path Param: orderNo (string)
+   
+   응답 (200 OK):
+   {
+     payment: {
+       paymentKey: string,
+       orderNo: string,
+       tossStatus: string,
+       method: string,
+       currency: string,
+       amount: number,
+       approvedAt: string,
+       receiptUrl: string
+     },
+     cancels: [...]
+   }
+   
+   에러 응답:
+   - 401 Unauthorized: JWT 누락/만료
+   - 404 PAYMENT_NOT_FOUND: 결제 정보 없음
+
+4. 결제 취소 API (POST /api/payments/toss/{paymentKey}/cancel)
+   
+   동작 방식:
+   - paymentKey로 결제 조회 후 주문 소유자 확인
+   - 실연동(TOSS_PAY_ENABLE=true)이면 TOSS_SECRET_KEY로 토스 v1/payments/{paymentKey}/cancel 호출
+   - 테스트 모드에서는 모킹 응답 생성
+   - 부분 취소/전액 취소 모두 지원
+   - 잔액이 0이거나 토스 응답 status가 CANCELED이면 내부 상태도 CANCELED로 변경
+   - 취소 이력을 PaymentCancel 테이블에 저장 (중복 transactionKey는 저장 안 함)
+   
+   요청:
+   - Method: POST
+   - URL: /api/payments/toss/{paymentKey}/cancel
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Path Param: paymentKey (1~200자)
+   - Body: {
+       cancelReason: string,              // 필수, 1~200자
+       cancelAmount?: number,             // 선택 (없으면 전액 취소)
+       refundReceiveAccount?: {           // 선택 (가상계좌 환불용)
+         bank: string,
+         accountNumber: string,
+         holderName: string
+       }
+     }
+   
+   응답 (200 OK):
+   {
+     payment_key: string,
+     status: string,              // "CANCELED" 또는 "DONE" (부분 취소 시)
+     balance_amount: number,      // 잔액
+     cancels: [
+       {
+         transactionKey: string,
+         cancelAmount: number,
+         cancelReason: string,
+         cancelStatus: string,
+         canceledAt: string
+       }
+     ],
+     receipt_url: string
+   }
+   
+   에러 응답:
+   - 400 TOSS_SECRET_KEY_REQUIRED: 실연동 모드인데 시크릿 키 없음
+   - 400 TOSS_CANCEL_FAILED: 토스 API 호출 실패 (토스 응답 메시지 포함)
+   - 401 ORDER_NOT_OWNED: 다른 사용자의 결제
+   - 401 Unauthorized: JWT 누락/만료
+   - 404 PAYMENT_NOT_FOUND: 결제 정보 없음
+
+환경 변수 설정:
+- TOSS_PAY_ENABLE: "true"이면 실연동, 그 외는 테스트 모드(모킹)
+- TOSS_SECRET_KEY: 실연동 시 필수 (Basic 인증용)
+- TOSS_BASE_URL: 기본값 https://api.tosspayments.com (선택사항)
+
+==============================================
+
+토스페이먼츠 결제 플로우 (새로운 방식)
+
+[기존 - 카카오페이]
+1. 프론트 → 백엔드: POST /api/payments/kakao/ready (결제 준비)
+2. 백엔드 → 프론트: redirect_url 반환
+3. 프론트: expo-web-browser로 카카오페이 결제 페이지 열기
+4. 사용자: 결제 완료 → pg_token과 함께 앱으로 복귀
+5. 프론트 → 백엔드: POST /api/payments/kakao/approve (결제 승인)
+
+[변경 - 토스페이먼츠]
+1. 프론트: Toss Payments SDK 초기화 (클라이언트 키 사용)
+2. 프론트: SDK.requestPayment() 호출 → 토스 결제 페이지 표시
+3. 사용자: 결제 완료 → paymentKey, orderId, amount와 함께 앱으로 복귀 (successUrl)
+4. 프론트 → 백엔드: POST /api/payments/toss/confirm (결제 승인)
+5. 백엔드: 토스 API로 승인 처리 후 결제 정보 저장
+6. (선택) 프론트 → 백엔드: GET /api/payments/toss/{paymentKey} (결제 조회)
+
+==============================================
+
+라이브러리 조건
+
+1. 패키지 설치
+   - npm install @tosspayments/payment-sdk-react-native
+   - React Native 전용 SDK 사용 (웹 SDK 아님)
+
+2. 기존 패키지 제거 (선택사항)
+   - expo-web-browser는 다른 기능에서 사용 중이면 유지
+
+3. 사용할 라이브러리
+   - HTTP 클라이언트: axios (기존 프로젝트에서 사용 중)
+   - 상태관리: React hooks (useState, useCallback, useMemo)
+   - 알림: React Native의 Alert
+   - 결제 연동: @tosspayments/payment-sdk-react-native
+
+==============================================
+
+유저 시나리오
+
+1) 결제하기 버튼 클릭
+   1. 사용자가 모든 약관에 동의하고 "토스페이먼츠로 결제하기" 버튼 클릭
+   2. 로딩 상태 표시 시작
+   3. Toss Payments SDK 호출
+      - orderId: orderData.order_id
+      - amount: orderSummary.totalPrice
+      - orderName: "타임캡슐 생성"
+      - customerName: formData에서 가져오기 (또는 "고객")
+     - successUrl: "timeegg://pay/toss/success"
+     - failUrl: "timeegg://pay/toss/fail"
+   4. SDK가 토스페이먼츠 결제 페이지 표시
+   5. 사용자가 결제 완료하면 successUrl로 리다이렉트
+      - URL 파라미터: paymentKey, orderId, amount
+   6. 실패 시:
+      - 에러 메시지 표시 (Alert)
+      - 로딩 상태 종료
+
+2) 토스페이먼츠 결제 완료 후 복귀 (successUrl)
+   1. 사용자가 토스페이먼츠 결제를 완료하면 앱으로 복귀
+   2. URL에서 paymentKey, orderId, amount 파라미터 추출
+   3. POST /api/payments/toss/confirm API 호출
+      - paymentKey, orderId, amount 전달
+   4. 성공 시:
+      - 결제 완료 모달 표시 (ConfirmModal - PAYMENT_COMPLETE)
+      - 부모 컴포넌트로 결제 성공 이벤트 전달 (onPaymentSuccess 콜백)
+      - 타임캡슐 생성 완료 화면으로 이동
+   5. 실패 시:
+      - 에러 메시지 표시 (Alert)
+      - 결제 화면으로 복귀
+
+3) 결제 취소/실패 (failUrl)
+   1. 사용자가 토스페이먼츠 결제를 취소하거나 실패하면 앱으로 복귀
+   2. URL에서 code, message 파라미터 추출
+   3. 에러 메시지 표시 (Alert)
+   4. 결제 화면 유지 (재시도 가능)
+
+==============================================
+
+에러 처리
+
+1) 네트워크 에러 (status === 0)
+   - "네트워크 연결을 확인해주세요" 메시지 표시
+   - 재시도 가능 상태 유지
+
+2) 400 에러 (잘못된 요청)
+   결제 승인 API:
+   - AMOUNT_MISMATCH: "결제 금액이 일치하지 않습니다"
+   - ORDER_ALREADY_PAID: "이미 결제가 완료된 주문입니다"
+   - TOSS_SECRET_KEY_REQUIRED: "결제 시스템 설정 오류입니다. 관리자에게 문의해주세요"
+   - TOSS_CONFIRM_FAILED: "결제 승인에 실패했습니다: {토스 응답 메시지}"
+   
+   결제 취소 API:
+   - TOSS_SECRET_KEY_REQUIRED: "결제 시스템 설정 오류입니다. 관리자에게 문의해주세요"
+   - TOSS_CANCEL_FAILED: "결제 취소에 실패했습니다: {토스 응답 메시지}"
+   
+   기타: 백엔드 메시지 그대로 표시
+
+3) 401 에러 (인증 오류)
+   - ORDER_NOT_OWNED: "다른 사용자의 주문/결제입니다"
+   - Unauthorized (JWT 누락/만료): "로그인이 필요합니다"
+   - 로그인 화면으로 이동 (선택사항)
+
+4) 404 에러 (리소스 미존재)
+   결제 승인 API:
+   - ORDER_NOT_FOUND: "주문 정보를 찾을 수 없습니다"
+   - PRODUCT_NOT_FOUND_OR_INVALID: "상품 정보가 유효하지 않습니다"
+   
+   결제 조회/취소 API:
+   - PAYMENT_NOT_FOUND: "결제 정보를 찾을 수 없습니다"
+   
+   이전 화면으로 이동 (선택사항)
+
+5) 500 에러 (서버 오류)
+   - "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요"
+
+주의사항:
+- TOSS_SECRET_KEY_REQUIRED, TOSS_CONFIRM_FAILED, TOSS_CANCEL_FAILED는 400 에러로 반환됨 (500 아님)
+- 에러 코드는 response.data.code에 포함됨
+- 토스 API 실패 시 토스의 응답 메시지도 함께 표시
+
+==============================================
+
+구현 가이드라인
+
+1. API Types 파일 수정
+   파일: components/timecapsule-create/components/step-payment/api/types/payment.ts
+   
+   [제거] 기존 카카오페이 타입
+   ```typescript
+   export interface KakaoPayReadyRequest { ... }
+   export interface KakaoPayReadyResponse { ... }
+   export interface KakaoPayApproveRequest { ... }
+   export interface KakaoPayApproveResponse { ... }
+   ```
+   
+   [추가] 토스페이먼츠 타입
+   ```typescript
+   /**
+    * 토스페이먼츠 결제 승인 요청
+    */
+   export interface TossPaymentConfirmRequest {
+     /** 결제 키 (1~200자) */
+     paymentKey: string;
+     /** 주문 ID (6~200자) */
+     orderId: string;
+     /** 결제 금액 */
+     amount: number;
+   }
+   
+   /**
+    * 토스페이먼츠 결제 승인 응답
+    */
+   export interface TossPaymentConfirmResponse {
+     /** 주문 ID */
+     order_id: string;
+     /** 결제 키 */
+     payment_key: string;
+     /** 결제 상태 (예: "PAID") */
+     status: string;
+     /** 결제 금액 */
+     amount: number;
+     /** 승인 일시 (ISO 8601) */
+     approved_at: string;
+     /** 타임캡슐 ID */
+     capsule_id: string;
+     /** 영수증 URL */
+     receipt_url: string;
+   }
+   
+   /**
+    * 토스페이먼츠 결제 조회 응답 (선택사항)
+    * GET /api/payments/toss/{paymentKey} 또는 /api/payments/toss/orders/{orderNo}
+    */
+   export interface TossPaymentResponse {
+     payment: {
+       paymentKey: string;
+       orderNo: string;
+       tossStatus: string;        // "DONE", "CANCELED" 등
+       method: string;             // "카드" 등
+       currency: string;           // "KRW"
+       amount: number;             // balance_amount (잔액)
+       approvedAt: string;         // ISO 8601
+       receiptUrl: string;
+     };
+     cancels: Array<{
+       transactionKey: string;
+       cancelAmount: number;
+       cancelReason: string;
+       cancelStatus: string;
+       canceledAt: string;
+     }>;
+   }
+   
+   /**
+    * 토스페이먼츠 결제 취소 요청 (선택사항)
+    * POST /api/payments/toss/{paymentKey}/cancel
+    */
+   export interface TossPaymentCancelRequest {
+     /** 취소 사유 (1~200자, 필수) */
+     cancelReason: string;
+     /** 취소 금액 (선택, 없으면 전액 취소) */
+     cancelAmount?: number;
+     /** 환불 계좌 정보 (선택, 가상계좌 환불용) */
+     refundReceiveAccount?: {
+       bank: string;
+       accountNumber: string;
+       holderName: string;
+     };
+   }
+   
+   /**
+    * 토스페이먼츠 결제 취소 응답 (선택사항)
+    */
+   export interface TossPaymentCancelResponse {
+     payment_key: string;
+     status: string;              // "CANCELED" 또는 "DONE" (부분 취소 시)
+     balance_amount: number;      // 잔액
+     cancels: Array<{
+       transactionKey: string;
+       cancelAmount: number;
+       cancelReason: string;
+       cancelStatus: string;
+       canceledAt: string;
+     }>;
+     receipt_url: string;
+   }
+   
+   /**
+    * 결제 에러 타입 (기존 유지)
+    */
+   export interface PaymentError {
+     status: number;
+     message: string;
+   }
+   ```
+
+2. API 함수 수정
+   파일: components/timecapsule-create/components/step-payment/api/payment.ts
+   
+   [제거] 기존 함수
+   ```typescript
+   export const readyKakaoPay = async (...) => { ... };
+   export const approveKakaoPay = async (...) => { ... };
+   ```
+   
+   [추가] 토스페이먼츠 함수
+   ```typescript
+   import axios from 'axios';
+   import { API_BASE_URL } from '@/commons/constants';
+   import type {
+     TossPaymentConfirmRequest,
+     TossPaymentConfirmResponse,
+     TossPaymentResponse,
+     TossPaymentCancelResponse,
+     PaymentError,
+   } from './types/payment';
+   
+   // axios 인스턴스 (기존 프로젝트 패턴 사용)
+   const apiClient = axios.create({
+     baseURL: API_BASE_URL,
+     timeout: 10000,
+   });
+   
+   /**
+    * 토스페이먼츠 결제 승인
+    * @param paymentKey 결제 키
+    * @param orderId 주문 ID
+    * @param amount 결제 금액
+    * @param accessToken JWT 토큰
+    * @returns 결제 승인 결과
+    */
+   export const confirmTossPayment = async (
+     paymentKey: string,
+     orderId: string,
+     amount: number,
+     accessToken: string,
+   ): Promise<TossPaymentConfirmResponse> => {
+     try {
+       const response = await apiClient.post(
+         '/api/payments/toss/confirm',
+         {
+           paymentKey,
+           orderId,
+           amount,
+         },
+         {
+           headers: {
+             Authorization: `Bearer ${accessToken}`,
+           },
+         },
+       );
+       
+       return response.data;
+     } catch (error: any) {
+       // 에러 메시지 매핑
+       const status = error.response?.status || 0;
+       let message = '결제 승인에 실패했습니다';
+       
+       if (status === 400) {
+         const errorCode = error.response?.data?.code;
+         if (errorCode === 'AMOUNT_MISMATCH') {
+           message = '결제 금액이 일치하지 않습니다';
+         } else if (errorCode === 'ORDER_ALREADY_PAID') {
+           message = '이미 결제가 완료된 주문입니다';
+         } else {
+           message = error.response?.data?.message || message;
+         }
+       } else if (status === 401) {
+         message = '로그인이 필요합니다';
+       } else if (status === 404) {
+         const errorCode = error.response?.data?.code;
+         if (errorCode === 'ORDER_NOT_FOUND') {
+           message = '주문 정보를 찾을 수 없습니다';
+         } else if (errorCode === 'PRODUCT_NOT_FOUND_OR_INVALID') {
+           message = '상품 정보가 유효하지 않습니다';
+         }
+       } else if (status === 500) {
+         const errorCode = error.response?.data?.code;
+         if (errorCode === 'TOSS_SECRET_KEY_REQUIRED') {
+           message = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요';
+         } else if (errorCode === 'TOSS_CONFIRM_FAILED') {
+           message = '결제 승인에 실패했습니다. 고객센터로 문의해주세요';
+         } else {
+           message = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+         }
+       } else if (!status) {
+         message = '네트워크 연결을 확인해주세요';
+       }
+       
+       const paymentError: PaymentError = { status, message };
+       throw paymentError;
+     }
+   };
+   
+   /**
+    * 토스페이먼츠 결제 조회 (paymentKey) - 선택사항
+    */
+   export const getTossPaymentByKey = async (
+     paymentKey: string,
+     accessToken: string,
+   ): Promise<TossPaymentResponse> => {
+     const response = await apiClient.get(
+       `/api/payments/toss/${paymentKey}`,
+       {
+         headers: {
+           Authorization: `Bearer ${accessToken}`,
+         },
+       },
+     );
+     
+     return response.data;
+   };
+   
+   /**
+    * 토스페이먼츠 결제 조회 (orderNo) - 선택사항
+    */
+   export const getTossPaymentByOrderNo = async (
+     orderNo: string,
+     accessToken: string,
+   ): Promise<TossPaymentResponse> => {
+     const response = await apiClient.get(
+       `/api/payments/toss/orders/${orderNo}`,
+       {
+         headers: {
+           Authorization: `Bearer ${accessToken}`,
+         },
+       },
+     );
+     
+     return response.data;
+   };
+   
+   /**
+    * 토스페이먼츠 결제 취소 - 선택사항
+    * @param paymentKey 결제 키
+    * @param cancelReason 취소 사유
+    * @param cancelAmount 취소 금액 (선택, 없으면 전액 취소)
+    * @param accessToken JWT 토큰
+    * @returns 결제 취소 결과
+    */
+   export const cancelTossPayment = async (
+     paymentKey: string,
+     cancelReason: string,
+     cancelAmount: number | undefined,
+     accessToken: string,
+   ): Promise<TossPaymentCancelResponse> => {
+     try {
+       const response = await apiClient.post(
+         `/api/payments/toss/${paymentKey}/cancel`,
+         {
+           cancelReason,
+           ...(cancelAmount !== undefined && { cancelAmount }),
+         },
+         {
+           headers: {
+             Authorization: `Bearer ${accessToken}`,
+           },
+         },
+       );
+       
+       return response.data;
+     } catch (error: any) {
+       // 에러 메시지 매핑
+       const status = error.response?.status || 0;
+       let message = '결제 취소에 실패했습니다';
+       
+       if (status === 400) {
+         const errorCode = error.response?.data?.code;
+         if (errorCode === 'TOSS_SECRET_KEY_REQUIRED') {
+           message = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요';
+         } else if (errorCode === 'TOSS_CANCEL_FAILED') {
+           message = `결제 취소에 실패했습니다: ${error.response?.data?.message || ''}`;
+         } else {
+           message = error.response?.data?.message || message;
+         }
+       } else if (status === 401) {
+         const errorCode = error.response?.data?.code;
+         if (errorCode === 'ORDER_NOT_OWNED') {
+           message = '다른 사용자의 결제는 취소할 수 없습니다';
+         } else {
+           message = '로그인이 필요합니다';
+         }
+       } else if (status === 404) {
+         message = '결제 정보를 찾을 수 없습니다';
+       } else if (!status) {
+         message = '네트워크 연결을 확인해주세요';
+       }
+       
+       const paymentError: PaymentError = { status, message };
+       throw paymentError;
+     }
+   };
+   ```
+
+3. useTossPayment Hook 구현
+   파일명 변경: useKakaoPayment.ts → useTossPayment.ts
+   파일: components/timecapsule-create/components/step-payment/hooks/useTossPayment.ts
+   
+   ```typescript
+   import { useCallback, useState } from 'react';
+   import TossPayments from '@tosspayments/payment-sdk-react-native';
+   import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+   import { confirmTossPayment } from '../api/payment';
+   import type {
+     TossPaymentConfirmResponse,
+     PaymentError,
+   } from '../api/types/payment';
+   
+   interface UseTossPaymentReturn {
+     /** 로딩 상태 */
+     isLoading: boolean;
+     /** 에러 정보 */
+     error: PaymentError | null;
+     /** 토스페이먼츠 결제 요청 */
+     requestPayment: (
+       orderId: string,
+       amount: number,
+       orderName: string,
+       customerName?: string,
+     ) => Promise<void>;
+     /** 결제 승인 */
+     confirmPayment: (
+       paymentKey: string,
+       orderId: string,
+       amount: number,
+     ) => Promise<TossPaymentConfirmResponse>;
+     /** 에러 클리어 */
+     clearError: () => void;
+   }
+   
+   export const useTossPayment = (): UseTossPaymentReturn => {
+     const { accessToken } = useAuth();
+     const [isLoading, setIsLoading] = useState<boolean>(false);
+     const [error, setError] = useState<PaymentError | null>(null);
+     
+     /**
+      * 토스페이먼츠 결제 요청
+      */
+     const requestPayment = useCallback(
+       async (
+         orderId: string,
+         amount: number,
+         orderName: string,
+         customerName?: string,
+       ): Promise<void> => {
+         try {
+           setIsLoading(true);
+           setError(null);
+           
+           // 토스페이먼츠 클라이언트 키 (환경 변수)
+           const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
+           
+           if (!clientKey) {
+             throw new Error('토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
+           }
+           
+           console.log('💳 [토스페이먼츠 결제 시작]');
+           console.log('  - 주문 ID:', orderId);
+           console.log('  - 금액:', amount);
+           console.log('  - 주문명:', orderName);
+           
+           // 토스페이먼츠 SDK 초기화
+           const tossPayments = await TossPayments(clientKey);
+           
+           // 결제 요청
+           await tossPayments.requestPayment('카드', {
+             amount,
+             orderId,
+             orderName,
+             customerName: customerName || '고객',
+            successUrl: 'timeegg://pay/toss/success',
+            failUrl: 'timeegg://pay/toss/fail',
+           });
+           
+           console.log('✅ [토스페이먼츠 결제 페이지 열림]');
+         } catch (err) {
+           console.error('❌ [토스페이먼츠 결제 실패]', err);
+           
+           const paymentError: PaymentError = {
+             status: 0,
+             message: err instanceof Error ? err.message : '결제 페이지를 열 수 없습니다',
+           };
+           
+           setError(paymentError);
+           throw paymentError;
+         } finally {
+           setIsLoading(false);
+         }
+       },
+       [],
+     );
+     
+     /**
+      * 결제 승인
+      */
+     const confirmPayment = useCallback(
+       async (
+         paymentKey: string,
+         orderId: string,
+         amount: number,
+       ): Promise<TossPaymentConfirmResponse> => {
+         try {
+           setIsLoading(true);
+           setError(null);
+           
+           if (!accessToken) {
+             throw new Error('로그인이 필요합니다');
+           }
+           
+           console.log('💳 [결제 승인 시작]');
+           console.log('  - paymentKey:', paymentKey);
+           console.log('  - orderId:', orderId);
+           console.log('  - amount:', amount);
+           
+           const response = await confirmTossPayment(
+             paymentKey,
+             orderId,
+             amount,
+             accessToken,
+           );
+           
+           console.log('✅ [결제 승인 성공]');
+           console.log('  - 주문번호:', response.order_id);
+           console.log('  - 상태:', response.status);
+           console.log('  - 금액:', response.amount);
+           
+           return response;
+         } catch (err) {
+           console.error('❌ [결제 승인 실패]', err);
+           
+           const paymentError =
+             err instanceof Error && 'status' in err
+               ? (err as PaymentError)
+               : {
+                   status: 0,
+                   message: err instanceof Error ? err.message : '결제 승인에 실패했습니다',
+                 };
+           
+           setError(paymentError);
+           throw paymentError;
+         } finally {
+           setIsLoading(false);
+         }
+       },
+       [accessToken],
+     );
+     
+     /**
+      * 에러 클리어
+      */
+     const clearError = useCallback(() => {
+       setError(null);
+     }, []);
+     
+     return {
+       isLoading,
+       error,
+       requestPayment,
+       confirmPayment,
+       clearError,
+     };
+   };
+   ```
+
+4. types.ts 수정
+   파일: components/timecapsule-create/components/step-payment/types.ts
+   
+   ```typescript
+   // 기존
+   import type { KakaoPayApproveResponse } from './api/types/payment';
+   
+   export interface StepPaymentProps {
+     formData: FormData;
+     orderData: OrderData;
+     onSubmit: (orderSummary: OrderSummary) => void;
+     onBack: () => void;
+     onPaymentSuccess?: (paymentData: KakaoPayApproveResponse) => void;
+   }
+   
+   // 변경
+   import type { TossPaymentConfirmResponse } from './api/types/payment';
+   
+   export interface StepPaymentProps {
+     formData: FormData;
+     orderData: OrderData;
+     onSubmit: (orderSummary: OrderSummary) => void;
+     onBack: () => void;
+     onPaymentSuccess?: (paymentData: TossPaymentConfirmResponse) => void;
+   }
+   ```
+
+5. index.tsx 수정
+   파일: components/timecapsule-create/components/step-payment/index.tsx
+   
+   [변경 1] Import 수정
+   ```typescript
+   // 기존
+   import { useKakaoPayment } from './hooks/useKakaoPayment';
+   
+   // 변경
+   import { useTossPayment } from './hooks/useTossPayment';
+   ```
+   
+   [변경 2] TEXTS 상수 수정
+   ```typescript
+   const TEXTS = {
+     // ...
+     footer: {
+       submitButton: '토스페이먼츠로 결제하기', // 기존: '카카오페이로 결제하기'
+     },
+   };
+   ```
+   
+   [변경 3] Hook 연결
+   ```typescript
+   // 기존
+   const { isLoading, error, readyPayment, approvePayment, openKakaoPayBrowser, clearError } =
+     useKakaoPayment();
+   
+   // 변경
+   const { isLoading, error, requestPayment, confirmPayment, clearError } =
+     useTossPayment();
+   ```
+   
+   [변경 4] 결제하기 버튼 핸들러
+   ```typescript
+   // 기존
+   const handleSubmitPress = useCallback(async () => {
+     if (!isPaymentEnabled) {
+       Alert.alert('알림', TEXTS.alerts.agreementRequired);
+       return;
+     }
+     
+     try {
+       const { redirect_url } = await readyPayment(orderData.order_id);
+       await openKakaoPayBrowser(redirect_url);
+     } catch (err) {
+       Alert.alert('결제 준비 실패', err.message);
+     }
+   }, [isPaymentEnabled, readyPayment, openKakaoPayBrowser, orderData.order_id]);
+   
+   // 변경
+   const handleSubmitPress = useCallback(async () => {
+     if (!isPaymentEnabled) {
+       Alert.alert('알림', TEXTS.alerts.agreementRequired);
+       return;
+     }
+     
+     try {
+       await requestPayment(
+         orderData.order_id,
+         orderSummary.totalPrice,
+         '타임캡슐 생성',
+         formData.roomName,
+       );
+     } catch (err) {
+       const errorMessage =
+         err && typeof err === 'object' && 'message' in err
+           ? (err as PaymentError).message
+           : '결제에 실패했습니다';
+       Alert.alert('결제 실패', errorMessage);
+     }
+   }, [
+     isPaymentEnabled,
+     requestPayment,
+     orderData.order_id,
+     orderSummary.totalPrice,
+     formData.roomName,
+   ]);
+   ```
+   
+   [변경 5] 딥링크 처리
+   ```typescript
+   // 기존
+   const handlePaymentApproval = useCallback(
+     async (pgToken: string) => {
+       try {
+         const paymentData = await approvePayment(orderData.order_id, pgToken);
+         
+         openModal({
+           width: 344,
+           height: 'auto',
+           closeOnBackdropPress: true,
+           children: (
+             <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />
+           ),
+         });
+         
+         if (onPaymentSuccess) {
+           onPaymentSuccess(paymentData);
+         }
+       } catch (err) {
+         Alert.alert('결제 승인 실패', err.message);
+       }
+     },
+     [approvePayment, orderData.order_id, openModal, handlePaymentCompleteConfirm, onPaymentSuccess],
+   );
+   
+   useEffect(() => {
+     const handleDeepLink = (event: { url: string }) => {
+       const url = event.url;
+       const urlObj = new URL(url);
+       const pgToken = urlObj.searchParams.get('pg_token');
+       const path = urlObj.pathname;
+       
+       if (pgToken && path.includes('/payment/success')) {
+         handlePaymentApproval(pgToken);
+       } else if (path.includes('/payment/cancel')) {
+         Alert.alert('결제 취소', '결제가 취소되었습니다.');
+       } else if (path.includes('/payment/fail')) {
+         Alert.alert('결제 실패', '결제 처리 중 오류가 발생했습니다.');
+       }
+     };
+     
+     const subscription = Linking.addEventListener('url', handleDeepLink);
+     
+     Linking.getInitialURL().then((url) => {
+       if (url) {
+         handleDeepLink({ url });
+       }
+     });
+     
+     return () => {
+       subscription.remove();
+     };
+   }, [handlePaymentApproval]);
+   
+   // 변경
+   const handlePaymentSuccess = useCallback(
+     async (paymentKey: string, orderId: string, amount: number) => {
+       try {
+         console.log('💳 [결제 성공 - 승인 시작]');
+         console.log('  - paymentKey:', paymentKey);
+         console.log('  - orderId:', orderId);
+         console.log('  - amount:', amount);
+         
+         // 결제 승인
+         const paymentData = await confirmPayment(paymentKey, orderId, amount);
+         
+         console.log('✅ [결제 승인 완료]');
+         
+         // 결제 완료 모달 표시
+         openModal({
+           width: 344,
+           height: 'auto',
+           closeOnBackdropPress: true,
+           children: (
+             <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />
+           ),
+         });
+         
+         // 부모 컴포넌트로 결제 성공 이벤트 전달
+         if (onPaymentSuccess) {
+           onPaymentSuccess(paymentData);
+         }
+       } catch (err) {
+         const errorMessage =
+           err && typeof err === 'object' && 'message' in err
+             ? (err as PaymentError).message
+             : '결제 승인에 실패했습니다';
+         console.error('❌ [결제 승인 실패]', errorMessage);
+         Alert.alert('결제 승인 실패', errorMessage);
+       }
+     },
+     [confirmPayment, openModal, handlePaymentCompleteConfirm, onPaymentSuccess],
+   );
+   
+   useEffect(() => {
+     const handleDeepLink = (event: { url: string }) => {
+       const url = event.url;
+       console.log('🔗 [DeepLink] URL 수신:', url);
+       
+       const urlObj = new URL(url);
+       const path = urlObj.pathname;
+       
+       // 토스페이먼츠 결제 성공
+       if (path.includes('/pay/toss/success')) {
+         const paymentKey = urlObj.searchParams.get('paymentKey');
+         const orderId = urlObj.searchParams.get('orderId');
+         const amount = urlObj.searchParams.get('amount');
+         
+         console.log('✅ [DeepLink] 결제 성공');
+         console.log('  - paymentKey:', paymentKey);
+         console.log('  - orderId:', orderId);
+         console.log('  - amount:', amount);
+         
+         if (paymentKey && orderId && amount) {
+           handlePaymentSuccess(paymentKey, orderId, parseInt(amount, 10));
+         } else {
+           Alert.alert('결제 오류', '결제 정보가 올바르지 않습니다.');
+         }
+       }
+       // 토스페이먼츠 결제 실패
+       else if (path.includes('/pay/toss/fail')) {
+         const code = urlObj.searchParams.get('code');
+         const message = urlObj.searchParams.get('message');
+         
+         console.log('❌ [DeepLink] 결제 실패');
+         console.log('  - code:', code);
+         console.log('  - message:', message);
+         
+         Alert.alert('결제 실패', message || '결제 처리 중 오류가 발생했습니다.');
+       }
+     };
+     
+     const subscription = Linking.addEventListener('url', handleDeepLink);
+     
+     Linking.getInitialURL().then((url) => {
+       if (url) {
+         handleDeepLink({ url });
+       }
+     });
+     
+     return () => {
+       subscription.remove();
+     };
+   }, [handlePaymentSuccess]);
+   ```
+
+==============================================
+
+환경 변수 설정
+
+1. .env 파일에 토스페이먼츠 클라이언트 키 추가
+   ```
+   # 개발 환경 (테스트 키)
+   EXPO_PUBLIC_TOSS_CLIENT_KEY=test_ck_xxxxxxxxxxxx
+   
+   # 운영 환경 (라이브 키)
+   # EXPO_PUBLIC_TOSS_CLIENT_KEY=live_ck_xxxxxxxxxxxx
+   ```
+
+2. app.json에 딥링크 URL scheme 확인
+   ```json
+   {
+     "expo": {
+       "scheme": "myapp",
+       "ios": {
+         "bundleIdentifier": "com.yourapp.timecapsule"
+       },
+       "android": {
+         "package": "com.yourapp.timecapsule"
+       }
+     }
+   }
+   ```
+
+==============================================
+
+구현 순서
+
+1. 패키지 설치
+   - npm install @tosspayments/payment-sdk-react-native
+
+2. API Types 파일 수정
+   - 카카오페이 타입 제거
+   - 토스페이먼츠 타입 추가 (TossPaymentConfirmRequest, TossPaymentConfirmResponse)
+
+3. API 함수 수정
+   - readyKakaoPay, approveKakaoPay 삭제
+   - confirmTossPayment 추가
+   - 에러 메시지 매핑 (AMOUNT_MISMATCH, ORDER_ALREADY_PAID 등)
+
+4. Hook 파일명 변경 및 수정
+   - useKakaoPayment.ts → useTossPayment.ts
+   - requestPayment, confirmPayment 함수 구현
+
+5. types.ts 수정
+   - KakaoPayApproveResponse → TossPaymentConfirmResponse
+
+6. index.tsx 수정
+   - useKakaoPayment → useTossPayment
+   - TEXTS 상수 수정 ("토스페이먼츠로 결제하기")
+   - handleSubmitPress 로직 변경 (Toss SDK 호출)
+   - 딥링크 처리 수정 (paymentKey, orderId, amount)
+
+7. 환경 변수 설정
+   - .env에 EXPO_PUBLIC_TOSS_CLIENT_KEY 추가
+
+8. 테스트
+   - 결제 요청 (requestPayment)
+   - 결제 성공 시 딥링크 처리
+   - 결제 실패 시 에러 메시지
+   - 결제 승인 API 호출 (confirmPayment)
+
+9. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 코드 유지
+   - index.tsx의 기본 UI 구조는 최대한 유지
+   - 기존 hooks (usePaymentValidation, useOrderSummary) 유지
+   - styles.ts는 수정하지 않음
+
+2. API 클라이언트 표준화
+   - axios 사용 (기존 프로젝트에서 사용 중)
+   - JWT 토큰 수동 포함 (Authorization 헤더)
+   - 에러 처리 표준화 (axios error.response 패턴)
+   - 타입 안정성 확보
+
+3. 결제 플로우 안정성
+   - 네트워크 에러 재시도 가능
+   - 결제 취소 시 재시도 가능
+   - 결제 승인 실패 시 명확한 에러 메시지
+   - 금액 불일치 에러 명확히 처리
+
+4. 모바일 환경 고려
+   - Toss Payments SDK 사용 (React Native 전용)
+   - 딥링크 처리 (successUrl, failUrl)
+   - 앱 복귀 시 파라미터 추출
+
+5. 사용자 경험
+   - 로딩 중 명확한 피드백
+   - 에러 시 명확한 안내 메시지
+   - 결제 완료 시 성공 피드백
+
+6. 보안
+   - JWT 토큰은 Authorization 헤더로 전달
+   - paymentKey는 URL 파라미터로만 전달 (저장하지 않음)
+   - 민감한 정보 로그 출력 금지
+
+==============================================
+
+토스페이먼츠 SDK 사용 예시
+
+```typescript
+import TossPayments from '@tosspayments/payment-sdk-react-native';
+
+// SDK 초기화
+const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
+const tossPayments = await TossPayments(clientKey);
+
+// 결제 요청
+await tossPayments.requestPayment('카드', {
+  amount: 10000,
+  orderId: 'order-uuid',
+  orderName: '타임캡슐 생성',
+  customerName: '홍길동',
+  successUrl: 'timeegg://pay/toss/success',
+  failUrl: 'timeegg://pay/toss/fail',
+});
+```
+
+==============================================
+
+최종검토 체크리스트
+
+패키지 및 환경 설정:
+- [ ] @tosspayments/payment-sdk-react-native 패키지 설치 완료
+- [ ] .env에 EXPO_PUBLIC_TOSS_CLIENT_KEY 추가 완료
+- [ ] app.json URL scheme 확인 완료
+
+API 레이어:
+- [ ] API Types 파일 수정 완료 (카카오페이 타입 제거, 토스페이먼츠 타입 추가)
+- [ ] confirmTossPayment API 함수 구현 완료
+- [ ] 에러 메시지 매핑 구현 완료 (AMOUNT_MISMATCH, ORDER_ALREADY_PAID 등)
+- [ ] getTossPaymentByKey, getTossPaymentByOrderNo 함수 구현 완료 (선택사항)
+
+Hook 레이어:
+- [ ] useKakaoPayment.ts 파일 삭제 완료
+- [ ] useTossPayment.ts Hook 구현 완료
+- [ ] requestPayment 함수 구현 완료
+- [ ] confirmPayment 함수 구현 완료
+
+컴포넌트 레이어:
+- [ ] types.ts에 TossPaymentConfirmResponse 적용 완료
+- [ ] index.tsx import 변경 완료 (useTossPayment)
+- [ ] index.tsx TEXTS 상수 수정 완료 ("토스페이먼츠로 결제하기")
+- [ ] handleSubmitPress 로직 변경 완료 (Toss SDK 호출)
+- [ ] handlePaymentSuccess 함수 구현 완료 (결제 승인)
+- [ ] 딥링크 리스너 수정 완료 (paymentKey, orderId, amount)
+
+UI 및 UX:
+- [ ] 로딩 상태 UI 확인 완료
+- [ ] 에러 처리 및 Alert 메시지 구현 완료
+- [ ] 결제 완료 모달 표시 확인 완료
+- [ ] 기존 UI 구조 유지 확인
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] JWT 토큰 Authorization 헤더 포함 확인
+- [ ] 민감한 정보 로그 출력 0건
+- [ ] 코드 가독성 및 유지보수성 확보
+
+기능 테스트:
+- [ ] 결제 요청 테스트 완료 (Toss SDK 호출)
+- [ ] 결제 성공 시 딥링크 처리 테스트 완료
+- [ ] 결제 실패 시 에러 메시지 테스트 완료
+- [ ] 결제 승인 API 호출 테스트 완료
+- [ ] 네트워크 에러 재시도 가능 확인
+- [ ] 결제 취소 시 재시도 가능 확인
+
+==============================================
+
+참고사항
+
+1) 백엔드 API 차이점
+   - 카카오페이: ready → redirect → approve (3단계)
+   - 토스페이먼츠: SDK 호출 → successUrl 리다이렉트 → confirm (2단계)
+   - 토스페이먼츠는 결제 준비 API(/ready)가 없으며, SDK가 직접 토스 서버와 통신
+   - 프론트엔드는 결제 완료 후 /confirm API만 호출
+
+2) 리다이렉트 URL 관리
+   - 카카오페이: 백엔드가 redirect_url 반환
+   - 토스페이먼츠: 프론트엔드가 successUrl/failUrl 설정
+  - 딥링크 사용: timeegg://pay/toss/success
+
+3) 파라미터 차이
+   - 카카오페이: pg_token (승인용 토큰)
+   - 토스페이먼츠: paymentKey, orderId, amount (3개 파라미터)
+
+4) 토스페이먼츠 공식 문서
+   - https://docs.tosspayments.com/
+   - React Native 연동 가이드 참고
+
+5) 딥링크 처리
+  - 성공: timeegg://pay/toss/success?paymentKey={key}&orderId={id}&amount={amount}
+  - 실패: timeegg://pay/toss/fail?code={code}&message={message}
+
+==============================================

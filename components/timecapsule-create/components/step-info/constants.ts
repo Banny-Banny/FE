@@ -9,7 +9,7 @@
 // ============================================
 
 /** 기본 금액 (없음) */
-export const BASE_PRICE = 0;
+export const BASE_PRICE = 1000;
 
 /** 이미지 1장당 가격 */
 export const PHOTO_PRICE = 500;

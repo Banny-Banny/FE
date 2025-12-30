@@ -19,6 +19,7 @@ export const ROUTES = {
   // 인증
   AUTH_LOGIN: '/(auth)/login',
   AUTH_SIGNUP: '/(auth)/signup',
+  AUTH_CALLBACK: '/auth/callback', // OAuth 콜백 (웹 전용) - Expo Router에서 (auth) 그룹은 URL에 포함되지 않음
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
