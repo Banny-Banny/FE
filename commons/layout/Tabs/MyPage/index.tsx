@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import MyPageFeature from '@/components/mypage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { styles } from './styles';
 
@@ -8,11 +9,8 @@ import { styles } from './styles';
  */
 export default function MyPage() {
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>마이페이지</Text>
-        <Text style={styles.subtitle}>사용자 설정 및 정보</Text>
-      </View>
-    </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <MyPageFeature />
+    </SafeAreaView>
   );
 }
