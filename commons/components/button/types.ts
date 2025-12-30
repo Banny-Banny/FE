@@ -3,13 +3,16 @@
  * Button 컴포넌트 타입 정의
  */
 
+import { DimensionValue } from 'react-native';
+
 /**
  * 버튼 Variant 타입
  * - primary: 검은색 배경 (활성화 상태)
  * - secondary: 회색 배경 (비활성화 상태)
  * - outline: 흰색 배경 + 검은색 테두리 + 아이콘 (공유 등)
+ * - danger: 빨간색 배경 (로그아웃, 삭제 등)
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'danger';
 
 /**
  * 버튼 크기 타입
@@ -61,8 +64,17 @@ export interface ButtonProps {
 
   /**
    * 전체 너비 사용 여부 (선택, 기본값: true)
+   * width가 지정되면 무시됨
    */
   fullWidth?: boolean;
+
+  /**
+   * 커스텀 너비 (선택)
+   * 숫자(px) 또는 퍼센트 문자열 지정 가능
+   * @example width={200} // 200px
+   * @example width="50%" // 50%
+   */
+  width?: DimensionValue;
 
   /**
    * 비활성화 상태 (선택, 기본값: false)
@@ -93,6 +105,16 @@ export interface DualButtonProps {
    * 버튼 크기 (선택, 기본값: 'L')
    */
   size?: ButtonSize;
+
+  /**
+   * 취소 버튼 variant (선택, 기본값: 'secondary')
+   */
+  cancelVariant?: ButtonVariant;
+
+  /**
+   * 확인 버튼 variant (선택, 기본값: 'primary')
+   */
+  confirmVariant?: ButtonVariant;
 
   /**
    * 취소 버튼 비활성화 상태 (선택, 기본값: false)

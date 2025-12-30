@@ -4,7 +4,7 @@
  *
  * @description
  * - Button, DualButton 컴포넌트 export
- * - 타입 export
+ * - 타입 및 상수 export
  */
 
 export { Button } from './Button';
@@ -16,3 +16,4 @@ export type {
   DualButtonProps,
   IconPosition,
 } from './types';
+export * from './constants';
