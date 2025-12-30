@@ -4,6 +4,7 @@
 
 import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
+import { sharedStyles } from '../shared/styles';
 
 export const styles = StyleSheet.create({
   orderSummaryCard: {
@@ -14,16 +15,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  cardBorder: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    width: '100%',
-    height: '100%',
-    borderWidth: 1,
-    borderColor: Colors.grey[200],
-    borderRadius: 20,
-  },
+  cardBorder: sharedStyles.cardBorder,
 
   cardContent: {
     position: 'relative',

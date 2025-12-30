@@ -14,7 +14,7 @@
  */
 
 import Constants from 'expo-constants';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 import CurrentLocation from '../current-location';
@@ -38,8 +38,32 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
   // 지도 중심점 좌표 상태 (지도 이동 시 업데이트됨)
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
 
-  // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값
-  const initialMapCenter = center || location || SEOUL_CITY_HALL;
+  // 카카오 API 키를 가져와서 HTML에 주입 (메모이제이션)
+  const kakaoMapApiKey = useMemo(() => {
+    const key = Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
+    
+    // API 키 로그는 한 번만 출력
+    if (key) {
+      console.log('[MapView] 카카오 API 키 로드 완료:', key.substring(0, 10) + '...');
+    } else {
+      console.error(
+        '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
+      );
+    }
+    
+    return key;
+  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+
+  // HTML 콘텐츠 메모이제이션 (API 키가 변경될 때만 재생성)
+  const htmlContent = useMemo(() => {
+    if (!kakaoMapApiKey) return '';
+    return KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoMapApiKey);
+  }, [kakaoMapApiKey]);
+
+  // 지도 중심 좌표 결정: props center > 현재 위치 > 서울시청 기본값 (메모이제이션)
+  const initialMapCenter = useMemo(() => {
+    return center || location || SEOUL_CITY_HALL;
+  }, [center, location]);
 
   // 지도 중심 좌표 (실시간 업데이트된 중심점 또는 초기값)
   const mapCenter = mapCenterCoord || initialMapCenter;
@@ -61,24 +85,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
       data: capsule,
     }));
   }, [capsules]);
-
-  // 카카오 API 키를 가져와서 HTML에 주입
-  const kakaoMapApiKey =
-    Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
-
-  if (!kakaoMapApiKey) {
-    console.error(
-      '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
-    );
-  } else {
-    console.log('[MapView] 카카오 API 키 로드 완료:', kakaoMapApiKey.substring(0, 10) + '...');
-  }
-
-  const htmlContent = useMemo(
-    () => KAKAO_MAP_HTML.replace('__KAKAO_JS_KEY__', kakaoMapApiKey),
-    [kakaoMapApiKey],
-  );
-
+  
   // 웹뷰 콘솔/에러를 RN으로 전달해 디버깅 (iOS에서 맵 미표시 원인 추적용)
   const errorBridgeScript = useMemo(
     () => `
@@ -188,49 +195,60 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     return () => clearTimeout(timer);
   }, [location, locationLoading]);
 
-  // WebView로부터 메시지 수신
-  const handleMessage = (event: any) => {
-    try {
-      const message = JSON.parse(event.nativeEvent.data);
-      console.log('WebView message:', message);
+  // CENTER_CHANGED 이벤트 디바운싱을 위한 ref
+  const centerChangedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-      switch (message.type) {
-        case 'READY':
-          console.log('Map is ready');
-          break;
-        case 'CENTER_CHANGED':
-          // 지도 중심점 변경 시 좌표 업데이트
-          setMapCenterCoord(message.payload);
-          break;
-        case 'MAP_CLICK':
-          console.log('Map clicked:', message.payload);
-          onMapClick?.(message.payload);
-          break;
-        case 'MARKER_CLICK':
-          console.log('Marker clicked:', message.payload);
-          // 마커 ID로 전체 데이터 찾기
-          const clickedMarker = capsuleMarkers.find((m) => m.id === message.payload.id);
-          if (clickedMarker) {
-            console.log('[MapView] 마커 전체 데이터:', clickedMarker.data);
-          }
-          onMarkerClick?.(message.payload.id);
-          break;
-        case 'WEB_ERROR':
-          console.error('[MapView][Web] ERROR:', message.payload);
-          break;
-        case 'WEB_WARN':
-          console.warn('[MapView][Web] WARN:', message.payload);
-          break;
-        case 'WEB_ONERROR':
-          console.error('[MapView][Web] ONERROR:', message.payload);
-          break;
-        default:
-          break;
+  // WebView로부터 메시지 수신
+  const handleMessage = useCallback(
+    (event: any) => {
+      try {
+        const message = JSON.parse(event.nativeEvent.data);
+        console.log('WebView message:', message);
+
+        switch (message.type) {
+          case 'READY':
+            console.log('Map is ready');
+            break;
+          case 'CENTER_CHANGED':
+            // 지도 중심점 변경 시 좌표 업데이트 (디바운싱: 500ms)
+            if (centerChangedTimerRef.current) {
+              clearTimeout(centerChangedTimerRef.current);
+            }
+            centerChangedTimerRef.current = setTimeout(() => {
+              setMapCenterCoord(message.payload);
+            }, 500);
+            break;
+          case 'MAP_CLICK':
+            console.log('Map clicked:', message.payload);
+            onMapClick?.(message.payload);
+            break;
+          case 'MARKER_CLICK':
+            console.log('Marker clicked:', message.payload);
+            // 마커 ID로 전체 데이터 찾기
+            const clickedMarker = capsuleMarkers.find((m) => m.id === message.payload.id);
+            if (clickedMarker) {
+              console.log('[MapView] 마커 전체 데이터:', clickedMarker.data);
+            }
+            onMarkerClick?.(message.payload.id);
+            break;
+          case 'WEB_ERROR':
+            console.error('[MapView][Web] ERROR:', message.payload);
+            break;
+          case 'WEB_WARN':
+            console.warn('[MapView][Web] WARN:', message.payload);
+            break;
+          case 'WEB_ONERROR':
+            console.error('[MapView][Web] ONERROR:', message.payload);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.error('Failed to parse message:', error);
       }
-    } catch (error) {
-      console.error('Failed to parse message:', error);
-    }
-  };
+    },
+    [capsuleMarkers, onMapClick, onMarkerClick],
+  );
 
   return (
     <View style={styles.container}>

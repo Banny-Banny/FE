@@ -9,7 +9,16 @@
  */
 
 import { useEffect, useState } from 'react';
-import * as Location from 'expo-location';
+
+// 네이티브 모듈이 없을 때를 대비한 안전한 import
+let Location: typeof import('expo-location') | null = null;
+
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Location = require('expo-location');
+} catch (error) {
+  console.warn('[useMapLocation] expo-location 모듈을 찾을 수 없습니다. 네이티브 빌드가 필요할 수 있습니다.');
+}
 
 export interface LocationCoordinate {
   lat: number;
@@ -35,6 +44,15 @@ export function useMapLocation(): UseMapLocationReturn {
     try {
       setIsLoading(true);
       setError(null);
+
+      // 네이티브 모듈이 없으면 에러 처리
+      if (!Location) {
+        const errorMessage = '위치 서비스를 사용할 수 없습니다. 네이티브 빌드가 필요합니다.';
+        setError(errorMessage);
+        setIsLoading(false);
+        console.warn('[useMapLocation]', errorMessage);
+        return;
+      }
 
       // 위치 권한 상태 확인
       const { status } = await Location.requestForegroundPermissionsAsync();

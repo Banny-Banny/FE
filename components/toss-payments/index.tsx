@@ -13,7 +13,8 @@ import { AgreementDetailModal } from './components/agreement-detail-modal';
 import { AgreementsCard } from './components/agreements-card';
 import { OrderSummaryCard } from './components/order-summary-card';
 import { PaymentFooter } from './components/payment-footer';
-import { PaymentWebView } from './components/payment-webview';
+import { PaymentMethodSelector } from './components/payment-method-selector';
+import { PaymentMethod, PaymentWebView } from './components/payment-webview';
 import { TEXTS } from './constants';
 import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
@@ -38,6 +39,7 @@ export default function TossPayment({
   const { isLoading, confirmPayment } = useTossPayment();
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('간편결제');
 
   // ============================================
   // 핸들러
@@ -159,6 +161,10 @@ export default function TossPayment({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <OrderSummaryCard orderSummary={orderSummary} />
+        <PaymentMethodSelector
+          selectedMethod={selectedPaymentMethod}
+          onSelectMethod={setSelectedPaymentMethod}
+        />
         <AgreementsCard
           allAgreed={allAgreed}
           agreements={agreements}
@@ -189,6 +195,7 @@ export default function TossPayment({
         amount={orderData.total_amount}
         orderName="타임캡슐 생성"
         customerName={formData.capsuleName}
+        paymentMethod={selectedPaymentMethod}
         onSuccess={handlePaymentSuccess}
         onFail={handlePaymentFail}
         onClose={() => setShowPaymentWebView(false)}

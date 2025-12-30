@@ -8,12 +8,15 @@ import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, Linking, Modal, StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
+export type PaymentMethod = '카드' | '간편결제' | '카카오페이';
+
 interface PaymentWebViewProps {
   visible: boolean;
   orderId: string;
   amount: number;
   orderName: string;
   customerName?: string;
+  paymentMethod?: PaymentMethod; // 결제 수단 선택 (기본값: '간편결제')
   onSuccess: (paymentKey: string, orderId: string, amount: number) => void;
   onFail: (code: string, message: string) => void;
   onClose: () => void;
@@ -28,6 +31,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   amount,
   orderName,
   customerName = '고객',
+  paymentMethod = '간편결제', // 기본값: 간편결제 (카카오페이 포함)
   onSuccess,
   onFail,
   onClose,
@@ -167,7 +171,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           button.disabled = true;
           console.log('⏳ [PaymentWebView] 결제 요청 시작...');
           
-          await tossPayments.requestPayment('카드', {
+          await tossPayments.requestPayment('${paymentMethod}', {
             amount: ${amount},
             orderId: "${orderId}",
             orderName: "${orderName}",
@@ -319,6 +323,31 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         .catch((err: Error) => {
           console.error('❌ [PaymentWebView] 딥링크 열기 실패:', err);
           onFail('DEEPLINK_ERROR', '토스 앱을 열 수 없습니다.');
+        });
+
+      // WebView에서 이 URL을 로드하지 않음 (중요!)
+      return false;
+    }
+
+    // 카카오페이 앱 딥링크 감지 (kakaotalk://, kakaopay://)
+    if (url.startsWith('kakaotalk://') || url.startsWith('kakaopay://') || url.startsWith('kakaolink://')) {
+      console.log('🔗 [PaymentWebView] 카카오페이 앱 딥링크 감지:', url);
+      
+      // 즉시 처리 (WebView가 URL을 로드하기 전에 막아야 함)
+      Linking.canOpenURL(url)
+        .then((supported: boolean) => {
+          console.log('📱 [PaymentWebView] 카카오톡/카카오페이 앱 설치 여부:', supported);
+          if (supported) {
+            console.log('✅ [PaymentWebView] 카카오 앱 열기 시도:', url);
+            return Linking.openURL(url);
+          } else {
+            console.warn('⚠️ [PaymentWebView] 카카오톡 또는 카카오페이 앱이 설치되어 있지 않습니다');
+            onFail('APP_NOT_INSTALLED', '카카오톡 또는 카카오페이 앱이 설치되어 있지 않습니다. 앱을 설치해주세요.');
+          }
+        })
+        .catch((err: Error) => {
+          console.error('❌ [PaymentWebView] 카카오 딥링크 열기 실패:', err);
+          onFail('DEEPLINK_ERROR', '카카오 앱을 열 수 없습니다.');
         });
 
       // WebView에서 이 URL을 로드하지 않음 (중요!)
