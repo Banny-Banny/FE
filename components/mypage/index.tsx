@@ -6,6 +6,7 @@
  * 비즈니스 로직과 UI 컴포넌트를 조립하는 컨테이너
  */
 
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import React from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,9 +17,10 @@ import { ProfileSection } from './components/profile-section';
 import { styles } from './styles';
 
 export default function MyPageFeature() {
-  const handleLogout = () => {
-    // TODO: 로그아웃 로직 구현
-    console.log('로그아웃');
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (

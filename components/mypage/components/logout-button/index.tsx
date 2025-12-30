@@ -8,27 +8,21 @@
  * - [✓] 인라인 스타일 0건
  * - [✓] 모든 스타일은 styles.ts에서 import하여 사용
  * - [✓] 피그마 디자인 1:1 대응
+ * - [✓] 비즈니스 로직 없음 (Container에서 처리)
  *
  * Figma 노드 ID: 535-893
  */
 
+import { Button } from '@/commons/components/button';
 import React from 'react';
 import { View } from 'react-native';
-import { Button } from '@/commons/components/button';
 import { styles } from './styles';
 import { LogoutButtonProps } from './types';
 
 export function LogoutButton({ onPress }: LogoutButtonProps) {
   return (
     <View style={styles.container}>
-      <Button
-        label="로그아웃"
-        variant="secondary"
-        size="M"
-        onPress={onPress}
-        fullWidth={true}
-      />
+      <Button label="로그아웃" variant="secondary" size="M" onPress={onPress} fullWidth={true} />
     </View>
   );
 }
-
