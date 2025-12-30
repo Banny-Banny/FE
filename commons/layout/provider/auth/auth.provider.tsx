@@ -9,6 +9,10 @@ import { useRouter, useSegments } from 'expo-router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from './types';
 
+// 개발 모드에서 인증 체크 우회 (백엔드 연결 없이 개발 시 true로 설정)
+const SKIP_AUTH_CHECK = __DEV__ && true; // true로 설정하면 인증 체크를 건너뜁니다
+
+// AuthContext 타입 정의
 interface AuthContextType {
   accessToken: string | null;
   user: User | null;
@@ -42,7 +46,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && userData) {
           setAccessToken(token);
           setUser(JSON.parse(userData));
-          if (__DEV__) console.log('[Auth] 인증 정보 복구 완료:', { token: token.substring(0, 20) + '...', user: JSON.parse(userData) });
+          if (__DEV__)
+            console.log('[Auth] 인증 정보 복구 완료:', {
+              token: token.substring(0, 20) + '...',
+              user: JSON.parse(userData),
+            });
         } else {
           if (__DEV__) console.log('[Auth] 저장된 인증 정보 없음');
         }
@@ -88,7 +96,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAccessToken(token);
     setUser(userData);
-    
+
     // 자동 리다이렉트는 useEffect에서 처리
   };
 
@@ -105,7 +113,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     setAccessToken(null);
     setUser(null);
-    
+
     // 자동 리다이렉트는 useEffect에서 처리
   };
 

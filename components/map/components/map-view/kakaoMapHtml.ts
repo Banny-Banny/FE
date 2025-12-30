@@ -1,3 +1,5 @@
+import { getCurrentLocationMarkerScript } from '@/commons/components/current-location-marker';
+
 export const KAKAO_MAP_HTML = `
 <!DOCTYPE html>
 <html>
@@ -27,6 +29,7 @@ export const KAKAO_MAP_HTML = `
       // ======= 상태 =======
       let map = null;
       let markers = {};      // id -> kakao.maps.Marker
+      let currentLocationMarker = null;  // 현재 위치 커스텀 마커
 
       function sendToRN(message) {
         if (window.ReactNativeWebView?.postMessage) {
@@ -66,6 +69,21 @@ export const KAKAO_MAP_HTML = `
             });
           });
 
+          // 지도 중심점 변경 이벤트 리스너 추가
+          kakao.maps.event.addListener(map, "center_changed", () => {
+            const center = map.getCenter();
+            sendToRN({
+              type: "CENTER_CHANGED",
+              payload: { lat: center.getLat(), lng: center.getLng() },
+            });
+          });
+
+          // 초기 중심점 전송
+          sendToRN({
+            type: "CENTER_CHANGED",
+            payload: { lat: center.getLat(), lng: center.getLng() },
+          });
+
           sendToRN({ type: "READY" });
         });
       }
@@ -98,6 +116,8 @@ export const KAKAO_MAP_HTML = `
         map.setCenter(new kakao.maps.LatLng(center.lat, center.lng));
       }
 
+      ${getCurrentLocationMarkerScript()}
+
       // ======= RN -> WebView 메시지 수신 =======
       function onMessage(raw) {
         const msg = safeParse(raw);
@@ -112,6 +132,12 @@ export const KAKAO_MAP_HTML = `
             break;
           case "MOVE_CAMERA":
             moveCamera(msg.payload);
+            break;
+          case "SET_CURRENT_LOCATION":
+            setCurrentLocationMarker(msg.payload);
+            break;
+          case "REMOVE_CURRENT_LOCATION":
+            removeCurrentLocationMarker();
             break;
           default:
             break;
@@ -141,4 +167,3 @@ export const KAKAO_MAP_HTML = `
   </body>
 </html>
 `;
-

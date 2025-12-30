@@ -1,6 +1,5 @@
 import MyPageFeature from '@/components/mypage';
-import { SafeAreaView } from 'react-native-safe-area-context';
-
+import { View } from 'react-native';
 import { styles } from './styles';
 
 /**
@@ -9,8 +8,8 @@ import { styles } from './styles';
  */
 export default function MyPage() {
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       <MyPageFeature />
-    </SafeAreaView>
+    </View>
   );
 }

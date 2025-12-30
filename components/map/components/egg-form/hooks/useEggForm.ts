@@ -246,7 +246,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
       console.log('🔗 미디어 URL 변환 시작...');
       let mediaUrls: string[];
       try {
-        mediaUrls = await getMediaUrls(mediaIds, accessToken);
+        mediaUrls = await getMediaUrls(mediaIds);
         console.log(`✅ 미디어 URL 변환 완료: ${mediaUrls.length}개`);
       } catch (urlError) {
         console.error('❌ 미디어 URL 변환 실패:', urlError);

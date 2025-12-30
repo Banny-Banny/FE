@@ -49,10 +49,10 @@ export const styles = StyleSheet.create({
   /* === Sub Buttons Container === */
   subButtonsContainer: {
     position: 'absolute',
-    bottom: 120,
-    right: 24,
+    bottom: 102,
+    right: 48,
     flexDirection: 'column',
-    gap: 16,
+    gap: 4,
     alignItems: 'flex-end',
     zIndex: 2,
   },
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
   subButtonRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
     minHeight: 52,
   },
 
@@ -76,8 +76,8 @@ export const styles = StyleSheet.create({
 
   /* === Sub Button Circle === */
   subButtonCircle: {
-    width: 52,
-    height: 52,
+    width: 40,
+    height: 40,
     borderRadius: 9999,
     backgroundColor: Colors.white[50],
     justifyContent: 'center',
@@ -116,8 +116,8 @@ export const styles = StyleSheet.create({
 
   /* === Main Button === */
   mainButton: {
-    width: 80,
-    height: 80,
+    width: 64,
+    height: 64,
     borderRadius: 9999,
     backgroundColor: '#FFC107', // Yellow - Colors에 없으므로 유지
     justifyContent: 'center',
@@ -163,3 +163,4 @@ export const styles = StyleSheet.create({
     // This would need a custom solution or library if critical
   },
 });
+
