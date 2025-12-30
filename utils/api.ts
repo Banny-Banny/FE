@@ -46,3 +46,28 @@ export const buildApiUrl = (baseUrl: string, endpoint: string): string => {
 
   return `${normalizedBaseUrl}${cleanEndpoint}`;
 };
+
+/**
+ * 엔드포인트와 쿼리 파라미터를 조합하여 완전한 엔드포인트 문자열을 생성합니다.
+ * @param endpoint API endpoint (슬래시로 시작하거나 시작하지 않아도 됨)
+ * @param params 쿼리 파라미터 객체 (undefined 값은 자동으로 제외됨)
+ * @returns 쿼리 파라미터가 포함된 엔드포인트 문자열 (예: "/api/capsules?lat=37.5&lng=127.0")
+ */
+export const buildEndpointWithQuery = (
+  endpoint: string,
+  params: Record<string, string | number | boolean | undefined>
+): string => {
+  // endpoint 정규화: 슬래시로 시작하도록 보장
+  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // undefined 값 제외하고 URLSearchParams 생성
+  const queryParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined) {
+      queryParams.append(key, value.toString());
+    }
+  });
+
+  const queryString = queryParams.toString();
+  return queryString ? `${normalizedEndpoint}?${queryString}` : normalizedEndpoint;
+};
