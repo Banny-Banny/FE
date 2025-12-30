@@ -13,7 +13,7 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { BorderRadius, Colors, Typography } from '@/commons/constants';
+import { BorderRadius, Colors, FontWeight, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -25,12 +25,10 @@ export const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    width: 'auto',
-    height: 90.191,
-    paddingLeft: 36.163,
-    paddingRight: 36.25,
-    paddingVertical: 0,
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+    paddingVertical: 21,
+    gap: Spacing.xl, // 32px
   },
 
   // 통계 항목 컨테이너
@@ -52,11 +50,11 @@ export const styles = StyleSheet.create({
 
   // 통계 값 텍스트 (숫자)
   statValue: {
-    ...Typography.header.h1,
+    fontFamily: Typography.header.h1.fontFamily,
     fontSize: 24,
+    fontWeight: FontWeight.extrabold,
     lineHeight: 26.4,
-    fontWeight: '800',
-    letterSpacing: -0.40968748927116394,
+    letterSpacing: -0.4097,
     color: Colors.black[500],
     textAlign: 'center',
   },
@@ -73,11 +71,7 @@ export const styles = StyleSheet.create({
   // 통계 라벨 텍스트
   statLabel: {
     ...Typography.body.body8,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '600',
-    letterSpacing: 0,
-    color: Colors.darkGrey[400],
+    color: Colors.darkGrey[400], // #878787 (피그마 #888에 가장 가까운 토큰)
     textAlign: 'center',
   },
 

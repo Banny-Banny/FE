@@ -50,20 +50,18 @@ export const styles = StyleSheet.create({
 
   // Switch (이모지가 들어있는 원형)
   switch: {
-    width: 60,
-    height: 60,
+    width: 120,
+    height: 120,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   // 이모지 텍스트
   switchEmoji: {
+    ...Typography.body.body4,
     fontSize: 60,
     lineHeight: 60,
     color: Colors.black[500],
-    fontFamily: 'Pretendard Variable',
-    fontWeight: '400',
-    letterSpacing: 0.263671875,
   },
 
   // 작은 원형 버튼 wrapper (flexbox로 우측 하단 배치)
@@ -106,10 +104,6 @@ export const styles = StyleSheet.create({
 
   buttonText: {
     ...Typography.header.h1,
-    fontSize: 24,
-    lineHeight: 26.4,
-    fontWeight: '800',
-    letterSpacing: -0.40968748927116394,
     color: Colors.black[500],
   },
 
@@ -123,10 +117,6 @@ export const styles = StyleSheet.create({
 
   textInputText: {
     ...Typography.body.body6,
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '500',
-    letterSpacing: -0.150390625,
     color: Colors.darkGrey[400],
   },
 });

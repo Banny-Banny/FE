@@ -11,10 +11,10 @@
 ==============================================
 
 조건-피그마) 활용할MCP: Figma Desktop MCP
-조건-Figma Desktop MCP 링크) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=161-24090&m=dev
+조건-Figma Desktop MCP 링크) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=161-24090&t=P2PAM4JcikEzQzoV-4
 
-조건-파일경로) 구현될 TSX 파일경로: src/components/activity-stats/index.tsx
-조건-파일경로) 구현될 CSS 파일경로: src/components/activity-stats/styles.ts
+조건-파일경로) 구현될 TSX 파일경로: components/mypage/components/activity-stats/index.tsx
+조건-파일경로) 구현될 스타일 파일경로: components/mypage/components/activity-stats/styles.ts
 
 ==============================================
 
@@ -27,21 +27,24 @@
 ==============================================
 
 조건-공통컴포넌트) 공통 컴포넌트를 최대한 활용할 것
-조건-공통컴포넌트) 컴포넌트 경로: components/
+조건-공통컴포넌트) 컴포넌트 경로: commons/components/
 
-조건-색상토큰) globals.css에 명시된 색상 변수 토큰 활용
+조건-색상토큰) commons/constants/color.ts에 명시된 Colors 토큰 활용
+조건-색상토큰) @/commons/constants에서 Colors import하여 사용
 조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
 조건-색상토큰) hex, rgb, hsl 직접 입력 금지
 
-조건-타이포그래피) globals.css에 명시된 타이포그래피 변수 토큰 활용
+조건-타이포그래피) commons/constants/typography.ts에 명시된 Typography 토큰 활용
+조건-타이포그래피) @/commons/constants에서 Typography import하여 사용
 조건-타이포그래피) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
 
 ==============================================
 
 조건-아이콘/이미지) 아이콘 경로: assets/icons/
 조건-아이콘/이미지) 이미지 경로: assets/images/
-조건-아이콘/이미지) 외부 아이콘 패키지 설치 금지
-조건-아이콘/이미지) 제공된 assets 폴더 내 리소스만 사용
+조건-아이콘/이미지) 아이콘 라이브러리: react-native-remix-icon 사용 가능 (이미 설치됨)
+조건-아이콘/이미지) 외부 아이콘 패키지 추가 설치 금지
+조건-아이콘/이미지) 제공된 assets 폴더 내 리소스 또는 react-native-remix-icon 사용
 
 ==============================================
 
@@ -54,8 +57,8 @@
 사전분석단계)
 1. package.json 확인하여 사용 가능한 라이브러리 분석
 2. 피그마 구조 전체 분석 (레이아웃 → 섹션 → 컴포넌트 순)
-3. globals.css의 색상/타이포그래피 토큰 목록 확인
-4. 공통 컴포넌트 목록 확인 및 재사용 가능 여부 판단
+3. commons/constants의 Colors, Typography 토큰 목록 확인
+4. commons/components의 공통 컴포넌트 목록 확인 및 재사용 가능 여부 판단
 
 ==============================================
 
@@ -69,12 +72,13 @@
 
 최종검토) 아래 체크리스트를 모두 통과해야 완료
 - [ ] 피그마 디자인과 동일하게 구현됨
-- [ ] 색상 하드코딩 0건 (토큰만 사용)
+- [ ] 색상 하드코딩 0건 (Colors 토큰만 사용)
 - [ ] 인라인 스타일 0건
 - [ ] index.tsx는 구조만, styles.ts는 스타일만 분리
 - [ ] 외부 라이브러리 설치 0건
 - [ ] 명시된 파일(index.tsx, styles.ts) 외 수정 0건
-- [ ] globals.css 수정 0건
-- [ ] 공통 컴포넌트 최대한 활용
+- [ ] commons/constants 수정 0건
+- [ ] 공통 컴포넌트(commons/components/) 최대한 활용
+- [ ] @/commons/constants에서 Colors, Typography import 확인
 
 ==============================================

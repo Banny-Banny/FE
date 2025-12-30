@@ -13,7 +13,7 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { Colors, Typography, BorderRadius } from '@/commons/constants';
+import { BorderRadius, Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
