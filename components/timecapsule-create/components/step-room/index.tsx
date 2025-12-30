@@ -8,16 +8,23 @@
  * - [✓] 인라인 스타일 금지
  * - [✓] 색상 토큰만 사용
  * - [✓] Figma 디자인 1:1 대응
+ * - [✓] Hooks 연결 (useRoomData, useParticipants)
+ * - [✓] 데이터 바인딩 (roomData, participants, progress)
  */
 
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants/color';
-import React, { useState } from 'react';
-import { Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
+import dayjs from 'dayjs';
+import React, { useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import ConfirmModal from '../confirm-modal';
 import UserBottomSheet from '../write-bottomsheet';
+import { useParticipants } from './hooks/useParticipants';
+import { useRoomData } from './hooks/useRoomData';
+import { useRoomSubmit } from './hooks/useRoomSubmit';
 import { styles } from './styles';
+import type { Participant } from './types';
 
 // Props 인터페이스 정의
 interface StepRoomProps {
@@ -25,63 +32,70 @@ interface StepRoomProps {
   onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
 }
 
-// 참여자 데이터 타입
-interface Participant {
-  id: string;
-  name: string;
-  emoji: string;
-  status: 'completed' | 'pending' | 'waiting';
-  isHost?: boolean;
-  isMe?: boolean;
-}
-
-// 임시 참여자 데이터 (실제로는 props로 받아야 함)
-const mockParticipants: Participant[] = [
-  {
-    id: '1',
-    name: '나 (존잘최홍식)',
-    emoji: '🥚',
-    status: 'pending',
-    isMe: true,
-  },
-  {
-    id: '2',
-    name: '양지윤',
-    emoji: '🥚',
-    status: 'completed',
-    isHost: true,
-  },
-  {
-    id: '3',
-    name: '박초롱',
-    emoji: '🥚',
-    status: 'waiting',
-  },
-  {
-    id: '4',
-    name: '',
-    emoji: '👤',
-    status: 'waiting',
-  },
-];
-
 export default function StepRoom({ role, onSubmit }: StepRoomProps) {
-  // 호스트 여부 확인
+  // ============================================
+  // Hooks
+  // ============================================
+
+  /** 호스트 여부 확인 */
   const isHost = role === 'host';
 
-  // 모달 제어 Hook
+  /** 모달 제어 Hook */
   const { openModal, closeModal } = useModal();
 
-  // 바텀시트 상태 관리
+  /** 캡슐대기실 데이터 Hook */
+  const { roomData, isLoading: isRoomLoading, error: roomError, calculateProgress, canSubmit } = useRoomData();
+
+  /** 참여자 목록 Hook */
+  const { participants, myParticipant, saveContent, canEdit } = useParticipants();
+
+  /** 타임캡슐 최종 제출 Hook */
+  const { submitTimeCapsule, isSubmitting: isSubmittingCapsule, error: submitError } = useRoomSubmit();
+
+  // ============================================
+  // 상태 관리
+  // ============================================
+
+  /** 바텀시트 상태 관리 */
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
 
-  // 공유 기능
+  // ============================================
+  // 계산된 값 (useMemo로 최적화)
+  // ============================================
+
+  /** 진행 상황 계산 (완료 인원 / 전체 인원) */
+  const progress = useMemo(() => {
+    return calculateProgress(participants);
+  }, [calculateProgress, participants]);
+
+  /** 최종 제출 가능 여부 (진행률 100%) */
+  const isSubmitEnabled = useMemo(() => {
+    return canSubmit(participants);
+  }, [canSubmit, participants]);
+
+  /** 작성 마감까지 남은 시간 계산 */
+  const remainingTime = useMemo(() => {
+    if (!roomData?.deadline) return '';
+
+    const now = dayjs();
+    const deadlineDate = dayjs(roomData.deadline);
+    const diffHours = deadlineDate.diff(now, 'hour');
+    const diffMinutes = deadlineDate.diff(now, 'minute') % 60;
+
+    return `${diffHours}시간 ${diffMinutes}분 남음`;
+  }, [roomData?.deadline]);
+
+  // ============================================
+  // 이벤트 핸들러
+  // ============================================
+
+  /** 공유 기능 */
   const handleShare = async () => {
     try {
       const result = await Share.share({
         title: '타임캡슐에 초대합니다',
-        message: `타임캡슐 이름: ㅋ\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
+        message: `타임캡슐 이름: ${roomData?.capsuleName || ''}\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
       });
 
       // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
@@ -95,25 +109,46 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
     }
   };
 
-  // 진행 상황 계산
-  const completedCount = mockParticipants.filter((p) => p.status === 'completed').length;
-  const totalCount = mockParticipants.filter((p) => p.name).length;
+  /** 바텀시트 저장 핸들러 */
+  const handleBottomSheetSave = async (content: any) => {
+    if (!selectedParticipant) return;
 
-  // 진행률 계산
-  const progressPercentage = (completedCount / totalCount) * 100;
+    try {
+      console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
+      await saveContent(selectedParticipant.id, content);
+      console.log('✅ [StepRoom] 바텀시트 저장 성공!');
+      setIsBottomSheetVisible(false);
+    } catch (err) {
+      console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
+    }
+  };
 
+  // ============================================
   // 참여자 카드 렌더링
+  // ============================================
+
   const renderParticipantCard = (participant: Participant, index: number) => {
     const isActive = participant.isMe || participant.status === 'completed';
     const showCheckbox = participant.name !== '';
+    const isEditable = canEdit(participant.id);
 
     return (
-      <View
+      <Pressable
         key={participant.id}
         style={[
           styles.participantCard,
           isActive ? styles.participantCardActive : styles.participantCardInactive,
-        ]}>
+        ]}
+        onPress={() => {
+          // 프라이버시 체크: 본인 것만 클릭 가능
+          if (participant.name && isEditable) {
+            console.log('📝 [StepRoom] 참여자 카드 클릭:', participant.name);
+            setSelectedParticipant(participant);
+            setIsBottomSheetVisible(true);
+          } else if (participant.name && !isEditable) {
+            console.log('🚫 [StepRoom] 다른 사람 카드 클릭 차단:', participant.name);
+          }
+        }}>
         <View style={styles.participantInfo}>
           {/* 아바타 */}
           <View style={[styles.avatar, isActive && styles.avatarActive]}>
@@ -128,19 +163,12 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
 
           {/* 참여자 정보 */}
           <View style={styles.participantDetails}>
-            <Pressable
-              style={styles.participantNameRow}
-              onPress={() => {
-                if (participant.name) {
-                  setSelectedParticipant(participant);
-                  setIsBottomSheetVisible(true);
-                }
-              }}>
+            <View style={styles.participantNameRow}>
               <Text style={styles.participantName}>
                 {participant.name || '초대한 친구 기다리는 중...'}
               </Text>
               {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
-            </Pressable>
+            </View>
             {participant.name && (
               <Text
                 style={[
@@ -166,9 +194,40 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
             )}
           </View>
         )}
-      </View>
+      </Pressable>
     );
   };
+
+  // ============================================
+  // 로딩 및 에러 처리
+  // ============================================
+
+  /** 로딩 상태 */
+  if (isRoomLoading || !roomData) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={Colors.black[500]} />
+        <Text style={{ marginTop: 16, textAlign: 'center', color: Colors.grey[500] }}>
+          캡슐대기실 정보를 불러오는 중...
+        </Text>
+      </View>
+    );
+  }
+
+  /** 에러 상태 */
+  if (roomError) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
+          에러가 발생했습니다: {roomError.message}
+        </Text>
+      </View>
+    );
+  }
+
+  // ============================================
+  // 렌더링
+  // ============================================
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -207,7 +266,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
       <View style={styles.infoCard}>
         <View>
           <Text style={styles.infoCardLabel}>캡슐 이름</Text>
-          <Text style={styles.infoCardValue}>ㅋ</Text>
+          <Text style={styles.infoCardValue}>{roomData.capsuleName}</Text>
         </View>
 
         <View style={styles.infoCardDetails}>
@@ -217,7 +276,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
               <Icon name="calendar-line" size={16} color={Colors.grey[500]} />
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
             </View>
-            <Text style={styles.infoCardDetailValue}>2025.06.10</Text>
+            <Text style={styles.infoCardDetailValue}>{roomData.openDate}</Text>
           </View>
 
           {/* 참여자 */}
@@ -226,7 +285,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
               <Icon name="user-3-line" size={16} color={Colors.grey[500]} />
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
             </View>
-            <Text style={styles.infoCardDetailValue}>4명</Text>
+            <Text style={styles.infoCardDetailValue}>{roomData.maxParticipants}명</Text>
           </View>
         </View>
       </View>
@@ -235,10 +294,13 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
       <View style={styles.progressSection}>
         <View style={styles.progressHeader}>
           <Text style={styles.progressLabel}>진행 상황</Text>
-          <Text style={styles.progressValue}>{`${completedCount}/${totalCount}`}</Text>
+          <Text style={styles.progressValue}>{`${progress.completed}/${progress.total}`}</Text>
         </View>
         <View style={styles.progressBarContainer}>
-          <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
+          <View
+            style={[styles.progressBarFill, { width: `${progress.percentage}%` }]}
+            accessibilityLabel={`진행 상황: ${progress.total}명 중 ${progress.completed}명 완료, ${progress.percentage}퍼센트`}
+          />
         </View>
       </View>
 
@@ -246,7 +308,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
       <View style={styles.participantSection}>
         <Text style={styles.participantLabel}>참여자 목록</Text>
         <View style={styles.participantList}>
-          {mockParticipants.map((participant, index) => renderParticipantCard(participant, index))}
+          {participants.map((participant, index) => renderParticipantCard(participant, index))}
         </View>
       </View>
 
@@ -260,16 +322,25 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
 
         <View style={styles.deadlineContainer}>
           <Icon name="time-line" size={16} color={Colors.grey[500]} />
-          <Text style={styles.deadlineText}>작성 마감: 23시간 59분 남음</Text>
+          <Text style={styles.deadlineText}>
+            작성 마감: {remainingTime || '계산 중...'}
+          </Text>
         </View>
 
-        {/* 타임캡슐 묻기 버튼 (호스트만, 테스트용: 항상 활성화) */}
+        {/* 타임캡슐 묻기 버튼 (호스트만, 진행률 100%일 때 활성화) */}
         {isHost && (
           <View style={styles.buttonSection}>
             <TouchableOpacity
-              style={styles.submitButton}
+              style={[
+                styles.submitButton,
+                (!isSubmitEnabled || isSubmittingCapsule) && { opacity: 0.5 }
+              ]}
+              disabled={!isSubmitEnabled || isSubmittingCapsule}
               onPress={() => {
                 console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
+                console.log('📊 [StepRoom] 진행률:', progress.percentage, '%');
+                console.log('✅ [StepRoom] 제출 가능 여부:', isSubmitEnabled);
+
                 // 1단계: 정말 묻겠습니까?
                 openModal({
                   width: 344,
@@ -278,33 +349,74 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
                   children: (
                     <ConfirmModal
                       type="SUBMIT_CONFIRM"
-                      onConfirm={() => {
+                      onConfirm={async () => {
                         console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
                         closeModal();
-                        // 2단계: 제출 완료!
-                        openModal({
-                          width: 344,
-                          height: 'auto',
-                          closeOnBackdropPress: true,
-                          children: (
-                            <ConfirmModal
-                              type="SUBMIT_COMPLETE"
-                              onConfirm={() => {
-                                console.log('✅ [StepRoom] 제출 완료 모달 확인!');
-                                closeModal();
-                                if (onSubmit) {
-                                  onSubmit();
-                                }
-                              }}
-                              data={{
-                                capsuleName: 'ㅋ',
-                                openDate: '2025.06.10',
-                                dDay: 169,
-                                participantCount: 4,
-                              }}
-                            />
-                          ),
-                        });
+
+                        try {
+                          // 백엔드로 최종 제출
+                          console.log('📤 [StepRoom] 백엔드로 타임캡슐 제출 시작...');
+                          await submitTimeCapsule(roomData, participants);
+                          console.log('✅ [StepRoom] 백엔드 제출 완료!');
+
+                          // D-Day 계산
+                          const now = dayjs();
+                          const openDateObj = dayjs(roomData.openDate, 'YYYY.MM.DD');
+                          const dDay = openDateObj.diff(now, 'day');
+
+                          // 2단계: 제출 완료!
+                          openModal({
+                            width: 344,
+                            height: 'auto',
+                            closeOnBackdropPress: true,
+                            children: (
+                              <ConfirmModal
+                                type="SUBMIT_COMPLETE"
+                                onConfirm={() => {
+                                  console.log('✅ [StepRoom] 제출 완료 모달 확인!');
+                                  closeModal();
+                                  if (onSubmit) {
+                                    onSubmit();
+                                  }
+                                }}
+                                data={{
+                                  capsuleName: roomData.capsuleName,
+                                  openDate: roomData.openDate,
+                                  dDay,
+                                  participantCount: progress.total,
+                                }}
+                              />
+                            ),
+                          });
+                        } catch (err) {
+                          // 제출 실패 시 에러 모달 표시
+                          console.error('❌ [StepRoom] 타임캡슐 제출 실패:', err);
+                          openModal({
+                            width: 344,
+                            height: 'auto',
+                            closeOnBackdropPress: true,
+                            children: (
+                              <View style={{ padding: 24 }}>
+                                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>
+                                  제출 실패
+                                </Text>
+                                <Text style={{ fontSize: 14, color: Colors.grey[600], marginBottom: 24 }}>
+                                  {err instanceof Error ? err.message : '타임캡슐 제출에 실패했습니다.'}
+                                </Text>
+                                <TouchableOpacity
+                                  style={{
+                                    backgroundColor: Colors.black[500],
+                                    padding: 16,
+                                    borderRadius: 8,
+                                    alignItems: 'center',
+                                  }}
+                                  onPress={closeModal}>
+                                  <Text style={{ color: Colors.white, fontWeight: 'bold' }}>확인</Text>
+                                </TouchableOpacity>
+                              </View>
+                            ),
+                          });
+                        }
                       }}
                       onCancel={() => {
                         console.log('❌ [StepRoom] 타임캡슐 묻기 취소!');
@@ -316,9 +428,15 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
               }}
               accessibilityRole="button"
               accessibilityLabel="타임캡슐 묻기">
-              <Text style={styles.submitButtonText}>타임캡슐 묻기</Text>
+              <Text style={styles.submitButtonText}>
+                {isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
+              </Text>
             </TouchableOpacity>
-            <Text style={styles.buttonHint}>테스트용: 버튼 활성화됨</Text>
+            {!isSubmitEnabled && (
+              <Text style={styles.buttonHint}>
+                모든 참여자가 작성을 완료하면 제출할 수 있어요 ({progress.completed}/{progress.total})
+              </Text>
+            )}
           </View>
         )}
       </View>
@@ -329,6 +447,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
           isVisible={isBottomSheetVisible}
           onClose={() => setIsBottomSheetVisible(false)}
           participant={selectedParticipant}
+          onSave={handleBottomSheetSave}
         />
       )}
     </ScrollView>

@@ -1,0 +1,470 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/write-bottomsheet/index.tsx
+조건-파일경로) 스타일 파일은 필요시 수정: components/timecapsule-create/components/write-bottomsheet/styles.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/write-bottomsheet/hooks/useVoiceRecorder.ts
+조건-파일경로) 구현될 TYPE 파일경로: components/timecapsule-create/components/write-bottomsheet/types.ts (기존 파일에 추가)
+
+==============================================
+
+조건-패키지) expo-av 라이브러리를 설치하여 사용할 것 (녹음 + 재생)
+조건-패키지) expo-document-picker 라이브러리를 설치하여 사용할 것 (파일 선택)
+조건-패키지) 이미 설치되어 있으면 재설치 불필요
+조건-패키지) 다른 오디오 관련 라이브러리 추가 설치 금지
+
+==============================================
+
+조건-호환성) 기존 UI/UX 최대한 유지 (음악 섹션을 음성 섹션으로 변경)
+조건-호환성) UserBottomSheetProps 인터페이스 변경 금지 (isVisible, onClose, participant)
+조건-호환성) react-hook-form 기반 폼 관리 유지
+조건-호환성) 기존 폼 데이터 타입 UserContentFormData의 music 필드를 voice로 변경
+조건-호환성) BottomSheet 공통 컴포넌트는 그대로 사용
+조건-호환성) footer 렌더링 방식 그대로 유지
+
+==============================================
+
+조건-타입정의) 음성 파일 타입 정의:
+interface VoiceFile {
+  uri: string;
+  type: 'recorded' | 'selected';
+  name: string;
+  duration?: number; // 초 단위
+  size?: number; // bytes
+}
+
+조건-타입정의) useVoiceRecorder Hook 반환 타입:
+interface UseVoiceRecorderReturn {
+  // 녹음 관련
+  startRecording: () => Promise<void>;
+  stopRecording: () => Promise<void>;
+  isRecording: boolean;
+  recordingDuration: number; // 초 단위
+  recordingUri: string | null;
+
+  // 파일 선택 관련
+  pickAudioFile: () => Promise<void>;
+  isPicking: boolean;
+
+  // 재생 관련
+  playAudio: (uri: string) => Promise<void>;
+  stopAudio: () => Promise<void>;
+  isPlaying: boolean;
+  playbackPosition: number; // 초 단위
+
+  // 공통
+  error: string | null;
+  clearError: () => void;
+}
+
+==============================================
+
+핵심요구사항) 음성 녹음 기능 구현
+            1) 유저시나리오
+                1. "녹음하기" 버튼 클릭
+                2. 마이크 권한 요청 (처음 한 번만)
+                3. 녹음 시작
+                4. 녹음 시간 실시간 표시 (00:00 형식)
+                5. "중지" 버튼으로 녹음 종료
+                6. 녹음된 파일 URI를 voice 필드에 저장
+                7. 녹음된 파일 정보 표시 (파일명, 시간)
+
+            2) 기술 요구사항
+                - expo-av의 Audio.Recording 사용
+                - 권한 요청: Audio.requestPermissionsAsync()
+                - 녹음 품질 설정:
+                  - Android: Audio.AndroidAudioEncoder.AAC
+                  - iOS: Audio.IOSAudioQuality.HIGH
+                  - SampleRate: 44100
+                  - NumberOfChannels: 1 (모노)
+                  - BitRate: 128000
+                - 최대 녹음 시간: 3분 (180초)
+                - 3분 도달 시 자동 중지 및 알림
+
+            3) 녹음 파일 저장
+                - 녹음된 파일 URI를 react-hook-form의 voice 필드에 저장
+                - setValue('voice', recordingUri) 사용
+                - watch('voice')로 현재 상태 확인
+                - 녹음 시간 정보도 함께 저장 (duration)
+
+==============================================
+
+핵심요구사항) 음성 파일 선택 기능 구현
+            1) 유저시나리오
+                1. "파일 선택" 버튼 클릭
+                2. 파일 피커 열기
+                3. 오디오 파일 선택 (mp3, m4a, wav 등)
+                4. 선택한 파일 정보 표시 (파일명)
+                5. 파일 URI를 voice 필드에 저장
+                6. 이미 음성이 있으면 교체 확인 후 저장
+
+            2) 기술 요구사항
+                - expo-document-picker 사용
+                - DocumentPicker.getDocumentAsync() 사용
+                - type: 'audio/*' (오디오 파일만)
+                - copyToCacheDirectory: true (앱 캐시에 복사)
+                - 지원 포맷: mp3, m4a, wav, aac
+                - 최대 1개 선택
+                - 파일 크기 제한: 10MB
+                - 파일 크기 초과 시 알림 표시
+
+            3) 파일 저장
+                - 선택한 파일 URI를 react-hook-form의 voice 필드에 저장
+                - setValue('voice', fileUri) 사용
+                - watch('voice')로 현재 상태 확인
+
+==============================================
+
+핵심요구사항) 음성 재생 기능 구현
+            1) 유저시나리오
+                1. 녹음된 또는 선택된 음성 파일 표시 영역에 재생 버튼 표시
+                2. 재생 버튼 클릭 시 음성 재생 시작
+                3. 재생 중 진행 시간 표시 (00:00 / 03:00 형식)
+                4. 재생 중지 버튼으로 재생 중단
+                5. 재생 완료 시 자동으로 처음으로 되돌아감
+
+            2) 기술 요구사항
+                - expo-av의 Audio.Sound 사용
+                - Audio.Sound.createAsync()로 Sound 객체 생성
+                - playAsync()로 재생 시작
+                - pauseAsync()로 재생 중지
+                - setOnPlaybackStatusUpdate()로 재생 상태 업데이트
+                - 재생 완료 시 isPlaying = false로 변경
+                - 재생 위치 표시 (positionMillis)
+
+            3) UI 요구사항
+                - 재생 버튼 / 중지 버튼 토글
+                - 재생 진행 바 (선택사항)
+                - 현재 재생 시간 / 전체 시간 표시
+                - 재생 중 로딩 인디케이터 (선택사항)
+
+==============================================
+
+핵심요구사항) 녹음 시간 표시 기능
+            1) 유저시나리오
+                1. 녹음 시작하면 00:00부터 시작
+                2. 매 초마다 업데이트 (00:01, 00:02, ...)
+                3. 1분 넘으면 01:00 형식으로 표시
+                4. 녹음 중지 시 최종 시간 표시
+
+            2) 기술 요구사항
+                - setInterval로 1초마다 업데이트
+                - recordingDuration 상태로 관리
+                - 포맷 함수: formatTime(seconds) => "00:00"
+                - 녹음 중지 시 interval 정리
+
+            3) UI 표시
+                - 녹음 중: "녹음 중... 00:15"
+                - 녹음 완료: "녹음됨 (01:23)"
+
+==============================================
+
+핵심요구사항) 권한 처리
+            1) 마이크 권한 요청
+                - expo-av의 Audio.requestPermissionsAsync() 사용
+                - 권한 요청 타이밍: 녹음 시작 버튼 클릭 시
+                - 권한 거부 시 안내 메시지 표시:
+                  "마이크 권한이 필요합니다. 설정에서 권한을 허용해주세요."
+                - Alert로 권한 설정 안내
+
+            2) 에러 처리
+                - 권한 거부: "마이크 권한이 거부되었습니다"
+                - 녹음 실패: "녹음을 시작할 수 없습니다"
+                - 파일 선택 실패: "파일을 불러올 수 없습니다"
+                - 파일 크기 초과: "파일 크기는 10MB 이하여야 합니다"
+                - 재생 실패: "음성을 재생할 수 없습니다"
+
+==============================================
+
+핵심요구사항) UI 변경 - 음악 → 음성
+            1) 섹션 제목 변경
+                - 기존: "음악 (0/1)"
+                - 변경: "음성 (0/1)"
+
+            2) 버튼 변경
+                - 기존: "음악 추가" 버튼 1개
+                - 변경: "녹음하기" + "파일 선택" 버튼 2개
+                - 버튼 레이아웃: 가로로 나란히 배치
+
+            3) 아이콘 변경
+                - 기존: music-icon.svg
+                - 변경: voice-icon.svg (또는 mic-icon.svg)
+
+            4) 파일 표시 영역
+                - 녹음된 경우:
+                  - 아이콘: 마이크 아이콘
+                  - 텍스트: "녹음됨 (01:23)"
+                  - 재생 버튼
+                  - 삭제 버튼
+                - 선택된 경우:
+                  - 아이콘: 파일 아이콘
+                  - 텍스트: "파일명.mp3"
+                  - 재생 버튼
+                  - 삭제 버튼
+
+==============================================
+
+추가요구사항) 기존 음성 교체 확인
+            1) 시나리오
+                - 이미 녹음된 음성이 있는데 새로 녹음하는 경우
+                - 이미 선택된 파일이 있는데 새로 선택하는 경우
+                - 이미 녹음된 음성이 있는데 파일을 선택하는 경우
+                - 이미 선택된 파일이 있는데 녹음하는 경우
+
+            2) 처리 방법
+                - Alert로 확인 메시지 표시
+                - "기존 음성을 교체하시겠습니까?"
+                - 확인 시 기존 음성 삭제 후 새 음성 저장
+                - 취소 시 기존 음성 유지
+
+==============================================
+
+추가요구사항) 녹음 중 UI 상태
+            1) 녹음 시작 시
+                - "녹음하기" 버튼 → "중지" 버튼으로 변경
+                - "파일 선택" 버튼 비활성화
+                - 녹음 시간 표시 시작
+                - 다른 섹션 버튼들도 비활성화 (선택사항)
+
+            2) 녹음 중지 시
+                - "중지" 버튼 → "녹음하기" 버튼으로 변경
+                - "파일 선택" 버튼 활성화
+                - 녹음된 파일 정보 표시
+
+==============================================
+
+추가요구사항) 재생 중 UI 상태
+            1) 재생 시작 시
+                - 재생 버튼 → 중지 버튼으로 변경
+                - 재생 시간 표시 시작
+                - 다른 버튼 비활성화 (선택사항)
+
+            2) 재생 중지 시
+                - 중지 버튼 → 재생 버튼으로 변경
+                - 재생 시간 초기화
+
+==============================================
+
+구현 가이드라인
+
+1. Types 파일 수정
+   - 파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+   - VoiceFile 타입 추가
+   - UseVoiceRecorderReturn 타입 추가
+   - UserContentFormData의 music을 voice로 변경
+
+2. useVoiceRecorder Hook 구현
+   - 파일: components/timecapsule-create/components/write-bottomsheet/hooks/useVoiceRecorder.ts
+   - expo-av, expo-document-picker import
+   - 녹음 관련:
+     - startRecording 함수 구현
+     - stopRecording 함수 구현
+     - recordingDuration 상태 관리 (setInterval)
+     - 권한 요청 로직
+   - 파일 선택 관련:
+     - pickAudioFile 함수 구현
+     - 파일 크기 검증
+   - 재생 관련:
+     - playAudio 함수 구현
+     - stopAudio 함수 구현
+     - playbackPosition 상태 관리
+   - 로딩 상태 관리 (isRecording, isPicking, isPlaying)
+   - 에러 상태 관리 (error)
+   - 반환값: UseVoiceRecorderReturn
+
+3. index.tsx 수정
+   - UserContentFormData의 music을 voice로 변경
+   - useVoiceRecorder Hook import 및 사용
+   - 음성 섹션 UI 변경:
+     - 섹션 제목: "음성 (0/1)"
+     - 버튼 2개: "녹음하기", "파일 선택"
+   - 녹음하기 버튼 핸들러:
+     - 녹음 중이 아니면: startRecording
+     - 녹음 중이면: stopRecording
+     - 버튼 텍스트 토글: "녹음하기" ↔ "중지"
+   - 파일 선택 버튼 핸들러:
+     - pickAudioFile 실행
+     - 녹음 중이면 비활성화
+   - 음성 파일 표시 영역:
+     - 녹음된 파일 또는 선택된 파일 정보 표시
+     - 재생 버튼 (playAudio 연결)
+     - 삭제 버튼 (setValue('voice', null))
+   - 녹음 시간 표시:
+     - recordingDuration을 포맷하여 표시
+   - 재생 시간 표시:
+     - playbackPosition을 포맷하여 표시
+
+4. 스타일 추가 (필요시)
+   - 버튼 2개 가로 배치 스타일
+   - 녹음 중 표시 스타일
+   - 재생 버튼 스타일
+
+5. 헬퍼 함수
+   - formatTime 함수:
+     ```typescript
+     function formatTime(seconds: number): string {
+       const mins = Math.floor(seconds / 60);
+       const secs = seconds % 60;
+       return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+     }
+     ```
+
+==============================================
+
+구현 순서
+
+1. expo-av, expo-document-picker 패키지 설치 확인 및 설치
+2. Types 파일 수정
+   - VoiceFile 타입 정의
+   - UseVoiceRecorderReturn 타입 정의
+   - UserContentFormData의 music → voice 변경
+3. useVoiceRecorder Hook 구현
+   - 녹음 기능 (startRecording, stopRecording)
+   - 파일 선택 기능 (pickAudioFile)
+   - 재생 기능 (playAudio, stopAudio)
+   - 시간 관리 (recordingDuration, playbackPosition)
+   - 상태 관리 (isRecording, isPicking, isPlaying, error)
+4. index.tsx 수정
+   - music → voice 변경
+   - useVoiceRecorder Hook 연결
+   - 음성 섹션 UI 변경
+   - 버튼 2개 추가 및 핸들러 연결
+   - 녹음 시간 표시
+   - 음성 파일 정보 표시
+   - 재생 기능 추가
+5. 권한 처리 테스트
+   - 마이크 권한 요청 확인
+   - 권한 거부 시 메시지 확인
+6. 녹음 기능 테스트
+   - 녹음 시작/중지 확인
+   - 녹음 시간 표시 확인
+   - 녹음 파일 저장 확인
+7. 파일 선택 테스트
+   - 파일 피커 열림 확인
+   - 파일 선택 후 저장 확인
+   - 파일 크기 검증 확인
+8. 재생 기능 테스트
+   - 녹음된 파일 재생 확인
+   - 선택된 파일 재생 확인
+   - 재생 시간 표시 확인
+9. 교체 확인 테스트
+   - 기존 음성 교체 시 확인 메시지
+10. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 UI 구조 최대한 유지
+   - 음악 섹션 위치, 순서 동일
+   - 다른 섹션(텍스트, 사진, 동영상) 영향 없음
+   - 버튼 스타일 일관성 유지
+
+2. react-hook-form 통합
+   - 모든 음성 파일은 react-hook-form으로 관리
+   - setValue, watch 사용
+   - 기존 폼 검증 로직 유지
+
+3. 사용자 경험
+   - 녹음 시작 시 즉각적인 시각적 피드백
+   - 명확한 녹음 상태 표시 (녹음 중, 녹음 완료)
+   - 재생 중 명확한 피드백
+   - 에러 발생 시 명확한 메시지
+   - 권한 요청 시 사용자 친화적인 안내
+
+4. 코드 품질
+   - TypeScript 타입 안정성
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+   - 에러 처리 완벽 구현
+   - 메모리 관리 (Recording, Sound 객체 정리)
+
+5. 성능 최적화
+   - interval, timeout 정리 (cleanup)
+   - Sound 객체 unload
+   - 불필요한 리렌더링 방지
+
+6. 플랫폼 호환성
+   - iOS/Android 모두 지원
+   - 권한 처리 플랫폼별 대응
+   - 오디오 포맷 호환성 확인
+
+7. 리소스 관리
+   - 녹음 중지 시 Recording 객체 정리
+   - 재생 종료 시 Sound 객체 정리
+   - 컴포넌트 unmount 시 모든 리소스 정리
+   - useEffect cleanup 함수 활용
+
+8. 최대 녹음 시간 제한
+   - 3분(180초) 제한
+   - 3분 도달 시 자동 중지
+   - Alert로 사용자에게 안내
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] expo-av 설치 확인됨
+- [ ] expo-document-picker 설치 확인됨
+- [ ] VoiceFile 타입 정의됨
+- [ ] UseVoiceRecorderReturn 타입 정의됨
+- [ ] UserContentFormData의 music이 voice로 변경됨
+- [ ] useVoiceRecorder Hook 구현됨
+- [ ] startRecording 함수 정상 작동
+- [ ] stopRecording 함수 정상 작동
+- [ ] 마이크 권한 요청 작동
+- [ ] 권한 거부 시 안내 메시지 표시됨
+- [ ] 녹음 시작 시 녹음 중 상태로 변경됨
+- [ ] 녹음 시간 실시간 표시됨 (00:00 형식)
+- [ ] 녹음 중지 시 파일 URI 저장됨
+- [ ] 최대 3분 제한 작동
+- [ ] 3분 도달 시 자동 중지 및 알림
+- [ ] pickAudioFile 함수 정상 작동
+- [ ] 파일 피커 열림 (오디오 파일만)
+- [ ] 선택한 파일 URI 저장됨
+- [ ] 파일 크기 검증 작동 (10MB)
+- [ ] 파일 크기 초과 시 알림 표시됨
+- [ ] playAudio 함수 정상 작동
+- [ ] stopAudio 함수 정상 작동
+- [ ] 재생 중 상태 변경됨
+- [ ] 재생 시간 표시됨
+- [ ] 재생 완료 시 자동 정지됨
+- [ ] 음성 섹션 제목 "음성 (0/1)" 표시됨
+- [ ] "녹음하기" 버튼 표시됨
+- [ ] "파일 선택" 버튼 표시됨
+- [ ] 버튼 2개 가로로 나란히 배치됨
+- [ ] 녹음하기 버튼 클릭 시 녹음 시작됨
+- [ ] 녹음 중 "중지" 버튼으로 변경됨
+- [ ] 중지 버튼 클릭 시 녹음 중지됨
+- [ ] 녹음 중 "파일 선택" 버튼 비활성화됨
+- [ ] 파일 선택 버튼 클릭 시 파일 피커 열림
+- [ ] 선택된 음성 파일 정보 표시됨 (파일명)
+- [ ] 녹음된 음성 정보 표시됨 (시간)
+- [ ] 재생 버튼 표시됨
+- [ ] 재생 버튼 클릭 시 재생 시작됨
+- [ ] 재생 중 중지 버튼으로 변경됨
+- [ ] 삭제 버튼 클릭 시 음성 삭제됨
+- [ ] 기존 음성 있을 때 교체 확인 메시지 표시됨
+- [ ] 교체 확인 시 기존 음성 삭제 후 새 음성 저장됨
+- [ ] 교체 취소 시 기존 음성 유지됨
+- [ ] react-hook-form과 정상 통합됨
+- [ ] voice 필드에 정상 저장됨
+- [ ] watch('voice')로 상태 확인 가능
+- [ ] Recording 객체 정리됨
+- [ ] Sound 객체 정리됨
+- [ ] interval 정리됨 (cleanup)
+- [ ] 기존 UI 구조 유지됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] ESLint 경고 0건
+- [ ] iOS에서 정상 작동
+- [ ] Android에서 정상 작동
+
+==============================================

@@ -275,3 +275,4 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     </View>
   );
 }
+

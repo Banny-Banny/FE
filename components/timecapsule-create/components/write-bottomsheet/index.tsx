@@ -17,7 +17,7 @@ import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
-import { useMediaPicker } from './hooks';
+import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
 
 // Participant 타입 정의
@@ -35,6 +35,7 @@ interface UserBottomSheetProps {
   isVisible: boolean;
   onClose: () => void;
   participant: Participant;
+  onSave?: (content: any) => Promise<void>; // 부모 컴포넌트의 저장 핸들러 (선택사항)
 }
 
 // 폼 데이터 타입 정의
@@ -45,7 +46,7 @@ interface UserContentFormData {
   video: string | null;
 }
 
-export default function UserBottomSheet({ isVisible, onClose, participant }: UserBottomSheetProps) {
+export default function UserBottomSheet({ isVisible, onClose, participant, onSave }: UserBottomSheetProps) {
   // react-hook-form 설정
   const {
     control,
@@ -88,6 +89,14 @@ export default function UserBottomSheet({ isVisible, onClose, participant }: Use
       !!currentMusic,
     );
 
+  // useSubmitContent Hook 사용
+  const {
+    submitContent,
+    isSubmitting,
+    error: submitError,
+    validateContent,
+  } = useSubmitContent(participant.id);
+
   // 사진 삭제 핸들러
   const handleDeletePhoto = (index: number) => {
     const currentPhotos = watch('photos');
@@ -120,10 +129,43 @@ export default function UserBottomSheet({ isVisible, onClose, participant }: Use
   }, [error]);
 
   // 폼 제출 핸들러
-  const onFormSubmit = (data: UserContentFormData) => {
-    // TODO: 저장 로직 구현 (API 호출 등)
-    console.log('저장할 데이터:', data);
-    onClose();
+  const onFormSubmit = async (data: UserContentFormData) => {
+    try {
+      // 제출 전 검증
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        Alert.alert('검증 실패', validation.message);
+        return;
+      }
+
+      // 부모 컴포넌트의 onSave가 있으면 호출 (우선순위 높음)
+      if (onSave) {
+        console.log('💾 [UserBottomSheet] 부모 컴포넌트 저장 호출');
+        await onSave({
+          text: data.textContent,
+          images: data.photos,
+          voiceRecording: data.music, // music을 voiceRecording으로 매핑
+        });
+      } else {
+        // 기존 submitContent Hook 호출 (하위 호환성)
+        console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
+        await submitContent(data);
+      }
+
+      // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose();
+          },
+        },
+      ]);
+    } catch (err) {
+      // 에러 처리
+      console.error('제출 중 오류:', err);
+      Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
+    }
   };
 
   // 저장 버튼 핸들러
@@ -145,11 +187,14 @@ export default function UserBottomSheet({ isVisible, onClose, participant }: Use
   const renderFooter = () => (
     <>
       <View style={styles.buttonContainer}>
-        <Pressable style={styles.cancelButton} onPress={handleCancel}>
+        <Pressable style={styles.cancelButton} onPress={handleCancel} disabled={isSubmitting}>
           <Text style={styles.cancelButtonText}>취소</Text>
         </Pressable>
-        <Pressable style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>저장</Text>
+        <Pressable
+          style={[styles.saveButton, isSubmitting && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={isSubmitting}>
+          <Text style={styles.saveButtonText}>{isSubmitting ? '저장 중...' : '저장'}</Text>
         </Pressable>
       </View>
       <Text style={styles.hintText}>나중에도 수정할 수 있어요</Text>
