@@ -37,3 +37,4 @@ export const styles = StyleSheet.create({
     zIndex: 10, // 지도 위에 표시
   },
 });
+

@@ -29,3 +29,4 @@ export const formatCurrency = (value: number): string => {
 export const formatPriceWithSymbol = (amount: number): string => {
   return `₩${amount.toLocaleString('ko-KR')}`;
 };
+

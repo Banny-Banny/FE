@@ -85,6 +85,33 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
       data: capsule,
     }));
   }, [capsules]);
+  
+  // 웹뷰 콘솔/에러를 RN으로 전달해 디버깅 (iOS에서 맵 미표시 원인 추적용)
+  const errorBridgeScript = useMemo(
+    () => `
+      (function() {
+        const send = (type, payload) => {
+          if (window.ReactNativeWebView?.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type, payload }));
+          }
+        };
+        const origError = console.error;
+        console.error = function() {
+          send('WEB_ERROR', Array.from(arguments).map(String).join(' '));
+          origError && origError.apply(console, arguments);
+        };
+        const origWarn = console.warn;
+        console.warn = function() {
+          send('WEB_WARN', Array.from(arguments).map(String).join(' '));
+          origWarn && origWarn.apply(console, arguments);
+        };
+        window.onerror = function(message, source, lineno, colno, error) {
+          send('WEB_ONERROR', { message, source, lineno, colno, error: error?.message });
+        };
+      })();
+    `,
+    [],
+  );
 
   useEffect(() => {
     // 지도 초기화 메시지 전송
@@ -172,53 +199,56 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
   const centerChangedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // WebView로부터 메시지 수신
-  const handleMessage = useCallback((event: any) => {
-    try {
-      const message = JSON.parse(event.nativeEvent.data);
-      console.log('WebView message:', message);
+  const handleMessage = useCallback(
+    (event: any) => {
+      try {
+        const message = JSON.parse(event.nativeEvent.data);
+        console.log('WebView message:', message);
 
-      switch (message.type) {
-        case 'READY':
-          console.log('Map is ready');
-          break;
-        case 'CENTER_CHANGED':
-          // 지도 중심점 변경 시 좌표 업데이트 (디바운싱: 500ms)
-          if (centerChangedTimerRef.current) {
-            clearTimeout(centerChangedTimerRef.current);
-          }
-          centerChangedTimerRef.current = setTimeout(() => {
-            setMapCenterCoord(message.payload);
-          }, 500);
-          break;
-        case 'MAP_CLICK':
-          console.log('Map clicked:', message.payload);
-          onMapClick?.(message.payload);
-          break;
-        case 'MARKER_CLICK':
-          console.log('Marker clicked:', message.payload);
-          // 마커 ID로 전체 데이터 찾기
-          const clickedMarker = capsuleMarkers.find((m) => m.id === message.payload.id);
-          if (clickedMarker) {
-            console.log('[MapView] 마커 전체 데이터:', clickedMarker.data);
-          }
-          onMarkerClick?.(message.payload.id);
-          break;
-        case 'WEB_ERROR':
-          console.error('[MapView][Web] ERROR:', message.payload);
-          break;
-        case 'WEB_WARN':
-          console.warn('[MapView][Web] WARN:', message.payload);
-          break;
-        case 'WEB_ONERROR':
-          console.error('[MapView][Web] ONERROR:', message.payload);
-          break;
-        default:
-          break;
+        switch (message.type) {
+          case 'READY':
+            console.log('Map is ready');
+            break;
+          case 'CENTER_CHANGED':
+            // 지도 중심점 변경 시 좌표 업데이트 (디바운싱: 500ms)
+            if (centerChangedTimerRef.current) {
+              clearTimeout(centerChangedTimerRef.current);
+            }
+            centerChangedTimerRef.current = setTimeout(() => {
+              setMapCenterCoord(message.payload);
+            }, 500);
+            break;
+          case 'MAP_CLICK':
+            console.log('Map clicked:', message.payload);
+            onMapClick?.(message.payload);
+            break;
+          case 'MARKER_CLICK':
+            console.log('Marker clicked:', message.payload);
+            // 마커 ID로 전체 데이터 찾기
+            const clickedMarker = capsuleMarkers.find((m) => m.id === message.payload.id);
+            if (clickedMarker) {
+              console.log('[MapView] 마커 전체 데이터:', clickedMarker.data);
+            }
+            onMarkerClick?.(message.payload.id);
+            break;
+          case 'WEB_ERROR':
+            console.error('[MapView][Web] ERROR:', message.payload);
+            break;
+          case 'WEB_WARN':
+            console.warn('[MapView][Web] WARN:', message.payload);
+            break;
+          case 'WEB_ONERROR':
+            console.error('[MapView][Web] ONERROR:', message.payload);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.error('Failed to parse message:', error);
       }
-    } catch (error) {
-      console.error('Failed to parse message:', error);
-    }
-  }, [capsuleMarkers]);
+    },
+    [capsuleMarkers, onMapClick, onMarkerClick],
+  );
 
   return (
     <View style={styles.container}>
@@ -263,3 +293,4 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     </View>
   );
 }
+
