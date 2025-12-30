@@ -10,4 +10,3 @@ export interface EggSlotProps {
   /** 전체 egg 슬롯 개수 (기본값: 3) */
   totalCount?: number;
 }
-

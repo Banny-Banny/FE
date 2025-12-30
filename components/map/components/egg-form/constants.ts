@@ -5,5 +5,3 @@
 
 // 메시지 최대 길이
 export const MAX_MESSAGE_LENGTH = 500;
-
-
