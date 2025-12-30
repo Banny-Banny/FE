@@ -2,25 +2,18 @@
  * MapView Component
  * Version: 1.0.0
  * Updated: 2025-01-XX
- *
- * Checklist:
- * - [x] tailwind.config.js 수정 안 함
- * - [x] 색상값 직접 입력 0건 (Colors 토큰만 사용)
- * - [x] 인라인 스타일 0건
- * - [x] index.tsx → 구조만 / styles.ts → 스타일만 분리
- * - [x] nativewind 토큰 참조만 사용
- * - [x] 피그마 구조 대비 누락 섹션 없음
- * - [x] 접근성: 시맨틱/포커스/명도 대비/탭타겟 통과
  */
 
 import Constants from 'expo-constants';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 import WebView from 'react-native-webview';
+
 import CurrentLocation from '../current-location';
 import { CurrentLocationMarker } from '../current-location-marker';
 import { EggSlot } from '../egg-slot';
 import { useCapsules } from './hooks/useCapsules';
+import { useEggSlot } from './hooks/useEggSlot';
 import { useMapLocation } from './hooks/useMapLocation';
 import { styles } from './styles';
 import type { CapsuleMarker, MapViewProps } from './types';
@@ -28,11 +21,8 @@ import { generateKakaoMapHtml } from './webview/generateHtml';
 import { sendInitMessage, sendSetMarkersMessage } from './webview/messageHandler';
 import type { WebViewToRNMessage } from './webview/messageTypes';
 
-// 서울시청 기준 주변 5개 지점 고정 데이터 (기본값)
+// 서울시청 기본값
 const SEOUL_CITY_HALL = { lat: 37.5665, lng: 126.978 };
-
-// Mock 데이터: 사용된 egg-slot 개수 (총 3개 중 2개 사용)
-const MOCK_EGG_SLOT_USED_COUNT = 2;
 
 export default function MapView({
   center,
@@ -43,6 +33,7 @@ export default function MapView({
 }: MapViewProps = {}) {
   const webViewRef = useRef<WebView>(null);
   const { location, isLoading: locationLoading } = useMapLocation();
+  const { slotData } = useEggSlot();
 
   // 지도 중심점 좌표 상태 (지도 이동 시 업데이트됨)
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
@@ -52,17 +43,8 @@ export default function MapView({
     const key =
       Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
 
-    // API 키 로그는 한 번만 출력
-    if (key) {
-      console.log('[MapView] 카카오 API 키 로드 완료:', key.substring(0, 10) + '...');
-    } else {
-      console.error(
-        '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
-      );
-    }
-
     return key;
-  }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
+  }, []);
 
   // HTML 콘텐츠 메모이제이션 (API 키가 변경될 때만 재생성)
   const htmlContent = useMemo(() => {
@@ -101,14 +83,10 @@ export default function MapView({
     if (!kakaoMapApiKey) return;
 
     const timer = setTimeout(() => {
-      const success = sendInitMessage(webViewRef, {
+      sendInitMessage(webViewRef, {
         center: initialMapCenter,
         level: level || 4,
       });
-
-      if (success) {
-        console.log('[MapView] 지도 초기화 메시지 전송 완료');
-      }
     }, 1000); // WebView 로드 대기
 
     return () => clearTimeout(timer);
@@ -125,10 +103,7 @@ export default function MapView({
         lng: marker.lng,
       }));
 
-      const success = sendSetMarkersMessage(webViewRef, markersForWebView);
-      if (success) {
-        console.log('[MapView] 캡슐 마커 표시 완료:', capsuleMarkers.length, '개');
-      }
+      sendSetMarkersMessage(webViewRef, markersForWebView);
     }, 1500); // 지도 초기화 후 마커 표시
 
     return () => clearTimeout(timer);
@@ -145,7 +120,6 @@ export default function MapView({
 
         switch (message.type) {
           case 'READY':
-            console.log('[MapView] 지도 준비 완료');
             break;
 
           case 'CENTER_CHANGED':
@@ -175,14 +149,23 @@ export default function MapView({
           case 'WEB_ERROR':
           case 'WEB_WARN':
           case 'WEB_ONERROR':
-            console.error(`[MapView][Web] ${message.type}:`, message.payload);
+            // WebView 에러는 개발 환경에서만 로깅
+            if (__DEV__) {
+              console.error(`[MapView][Web] ${message.type}:`, message.payload);
+            }
             break;
 
           default:
-            console.warn('[MapView] 알 수 없는 메시지 타입:', (message as any).type);
+            if (__DEV__) {
+              console.warn('[MapView] 알 수 없는 메시지 타입:', (message as any).type);
+            }
+            break;
         }
       } catch (error) {
-        console.error('[MapView] 메시지 파싱 실패:', error);
+        // 메시지 파싱 실패 시 개발 환경에서만 로깅
+        if (__DEV__) {
+          console.error('[MapView] 메시지 파싱 실패:', error);
+        }
       }
     },
     [capsuleMarkers, onMapClick, onMarkerClick, onCapsuleClick],
@@ -203,20 +186,6 @@ export default function MapView({
             javaScriptEnabled={true}
             domStorageEnabled={true}
             onMessage={handleMessage}
-            onError={(syntheticEvent) => {
-              const { nativeEvent } = syntheticEvent;
-              console.error('[MapView] WebView error:', nativeEvent);
-            }}
-            onHttpError={(syntheticEvent) => {
-              const { nativeEvent } = syntheticEvent;
-              console.error('[MapView] WebView HTTP error:', nativeEvent);
-            }}
-            onLoadStart={() => {
-              console.log('[MapView] WebView 로드 시작');
-            }}
-            onLoadEnd={() => {
-              console.log('[MapView] WebView 로드 완료');
-            }}
           />
           {/* Current Location Marker - WebView 내부에 표시 */}
           <CurrentLocationMarker
@@ -231,7 +200,7 @@ export default function MapView({
             </View>
           )}
           {/* Egg Slot Indicator */}
-          <EggSlot usedCount={MOCK_EGG_SLOT_USED_COUNT} totalCount={3} />
+          <EggSlot usedCount={slotData.usedCount} totalCount={slotData.totalCount} />
         </>
       )}
     </View>

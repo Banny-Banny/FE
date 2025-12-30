@@ -1,4 +1,5 @@
 /**
+ * components/map/components/current-location-marker/types.ts
  * Current Location Marker Types
  * Version: 1.0.0
  * Created: 2025-01-XX

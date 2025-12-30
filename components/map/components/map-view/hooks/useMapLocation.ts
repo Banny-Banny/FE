@@ -17,7 +17,7 @@ try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   Location = require('expo-location');
 } catch (error) {
-  console.warn('[useMapLocation] expo-location 모듈을 찾을 수 없습니다. 네이티브 빌드가 필요할 수 있습니다.');
+  // expo-location 모듈을 찾을 수 없음
 }
 
 export interface LocationCoordinate {
@@ -50,7 +50,6 @@ export function useMapLocation(): UseMapLocationReturn {
         const errorMessage = '위치 서비스를 사용할 수 없습니다. 네이티브 빌드가 필요합니다.';
         setError(errorMessage);
         setIsLoading(false);
-        console.warn('[useMapLocation]', errorMessage);
         return;
       }
 
@@ -77,7 +76,6 @@ export function useMapLocation(): UseMapLocationReturn {
       const errorMessage = err instanceof Error ? err.message : '위치를 가져오는 중 오류가 발생했습니다.';
       setError(errorMessage);
       setIsLoading(false);
-      console.error('[useMapLocation] 위치 가져오기 실패:', err);
     }
   };
 

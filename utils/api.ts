@@ -55,7 +55,7 @@ export const buildApiUrl = (baseUrl: string, endpoint: string): string => {
  */
 export const buildEndpointWithQuery = (
   endpoint: string,
-  params: Record<string, string | number | boolean | undefined>
+  params: Record<string, string | number | boolean | undefined>,
 ): string => {
   // endpoint 정규화: 슬래시로 시작하도록 보장
   const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;

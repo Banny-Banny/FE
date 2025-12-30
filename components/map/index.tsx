@@ -12,13 +12,15 @@
 
 import React, { useState } from 'react';
 import { View } from 'react-native';
+
 import { EggDetail } from './components/egg-detail';
 import { EggForm } from './components/egg-form';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
-import type { CapsuleItem } from './components/map-view/types';
+import { styles } from './styles';
 import type { MapFeatureProps } from './types';
 
 export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: MapFeatureProps = {}) {
@@ -42,7 +44,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <MapView
         center={mapConfig.center}
         level={mapConfig.level}
