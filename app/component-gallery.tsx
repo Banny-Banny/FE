@@ -8,7 +8,8 @@
  * - 개발 환경에서만 사용 (프로덕션 빌드 시 제외 가능)
  */
 
-import { Button, DualButton } from '@/commons/components/button';
+import { Button } from '@/commons/components/button';
+import { DualButton } from '@/commons/components/dual-button';
 import { Colors } from '@/commons/constants';
 import React, { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -95,63 +96,188 @@ export default function ComponentGallery() {
  */
 function ButtonStories() {
   return (
-    <View style={{ padding: 20, gap: 40 }}>
-      {/* Primary Variant */}
+    <View style={{ padding: 20, gap: 32 }}>
+      {/* 전체 Variant 한눈에 보기 */}
+      <StorySection title="All Variants Overview" description="모든 variant와 size를 한눈에 비교">
+        <View
+          style={{
+            padding: 16,
+            backgroundColor: Colors.white[50],
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: Colors.whiteGrey[500],
+            gap: 16,
+          }}>
+          {/* Primary Variant */}
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.black[500] }}>
+              Primary (검은색 배경)
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                label="L"
+                variant="primary"
+                size="L"
+                fullWidth={false}
+                onPress={() => console.log('Primary L clicked')}
+              />
+              <Button
+                label="M"
+                variant="primary"
+                size="M"
+                fullWidth={false}
+                onPress={() => console.log('Primary M clicked')}
+              />
+              <Button
+                label="S"
+                variant="primary"
+                size="S"
+                fullWidth={false}
+                onPress={() => console.log('Primary S clicked')}
+              />
+            </View>
+          </View>
+
+          {/* Disabled Variant */}
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.black[500] }}>
+              Disabled (회색 배경)
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                label="L"
+                variant="disabled"
+                size="L"
+                fullWidth={false}
+                onPress={() => console.log('Disabled L clicked')}
+              />
+              <Button
+                label="M"
+                variant="disabled"
+                size="M"
+                fullWidth={false}
+                onPress={() => console.log('Disabled M clicked')}
+              />
+              <Button
+                label="S"
+                variant="disabled"
+                size="S"
+                fullWidth={false}
+                onPress={() => console.log('Disabled S clicked')}
+              />
+            </View>
+          </View>
+
+          {/* Outline Variant */}
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.black[500] }}>
+              Outline (흰색 배경 + 테두리)
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                label="L"
+                variant="outline"
+                size="L"
+                fullWidth={false}
+                onPress={() => console.log('Outline L clicked')}
+              />
+              <Button
+                label="M"
+                variant="outline"
+                size="M"
+                fullWidth={false}
+                onPress={() => console.log('Outline M clicked')}
+              />
+              <Button
+                label="S"
+                variant="outline"
+                size="S"
+                fullWidth={false}
+                onPress={() => console.log('Outline S clicked')}
+              />
+            </View>
+          </View>
+
+          {/* Danger Variant */}
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontSize: 14, fontWeight: '600', color: Colors.black[500] }}>
+              Danger (빨간색 배경)
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Button
+                label="L"
+                variant="danger"
+                size="L"
+                fullWidth={false}
+                onPress={() => console.log('Danger L clicked')}
+              />
+              <Button
+                label="M"
+                variant="danger"
+                size="M"
+                fullWidth={false}
+                onPress={() => console.log('Danger M clicked')}
+              />
+              <Button
+                label="S"
+                variant="danger"
+                size="S"
+                fullWidth={false}
+                onPress={() => console.log('Danger S clicked')}
+              />
+            </View>
+          </View>
+        </View>
+      </StorySection>
+
+      {/* Primary Variant 상세 */}
       <StorySection title="Primary Variant" description="검은색 배경의 주요 액션 버튼">
         <View style={{ gap: 12 }}>
-          <StoryItem label="Size: L (64px)">
-            <Button
-              label="결제하기"
-              variant="primary"
-              size="L"
-              onPress={() => console.log('Primary L clicked')}
-            />
-            <Text style={{ color: 'blue', fontSize: 10, marginTop: 4 }}>
-              ↑ 여기에 검은 버튼이 보여야 함
-            </Text>
+          <StoryItem label="All Sizes">
+            <View style={{ gap: 12 }}>
+              <Button
+                label="결제하기 (L)"
+                variant="primary"
+                size="L"
+                onPress={() => console.log('Primary L clicked')}
+              />
+              <Button
+                label="타임캡슐 묻기 (M)"
+                variant="primary"
+                size="M"
+                onPress={() => console.log('Primary M clicked')}
+              />
+              <Button
+                label="확인 (S)"
+                variant="primary"
+                size="S"
+                onPress={() => console.log('Primary S clicked')}
+              />
+            </View>
           </StoryItem>
 
-          <StoryItem label="Size: M (56px)">
-            <Button
-              label="타임캡슐 묻기"
-              variant="primary"
-              size="M"
-              onPress={() => console.log('Primary M clicked')}
-            />
+          <StoryItem label="With Icon">
+            <View style={{ gap: 12 }}>
+              <Button
+                label="공유하기"
+                variant="primary"
+                size="M"
+                icon="ri-share-line"
+                iconPosition="left"
+                onPress={() => console.log('Primary with icon clicked')}
+              />
+              <Button
+                label="좋아요"
+                variant="primary"
+                size="M"
+                icon="ri-heart-line"
+                iconPosition="only"
+                onPress={() => console.log('Primary icon only clicked')}
+              />
+            </View>
           </StoryItem>
 
-          <StoryItem label="Size: S (48px)">
-            <Button
-              label="확인"
-              variant="primary"
-              size="S"
-              onPress={() => console.log('Primary S clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="With Icon (Left)">
-            <Button
-              label="공유하기"
-              variant="primary"
-              size="M"
-              icon="ri-share-line"
-              iconPosition="left"
-              onPress={() => console.log('Primary with icon clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Icon Only">
-            <Button
-              label="좋아요"
-              variant="primary"
-              size="M"
-              icon="ri-heart-line"
-              iconPosition="only"
-              onPress={() => console.log('Primary icon only clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Disabled">
+          <StoryItem label="Disabled State">
             <Button
               label="비활성화"
               variant="primary"
@@ -163,40 +289,36 @@ function ButtonStories() {
         </View>
       </StorySection>
 
-      {/* Secondary Variant */}
-      <StorySection title="Secondary Variant" description="회색 배경의 보조 액션 버튼">
+      {/* Disabled Variant 상세 */}
+      <StorySection title="Disabled Variant" description="진한 회색 배경의 보조 액션 버튼">
         <View style={{ gap: 12 }}>
-          <StoryItem label="Size: L (64px)">
-            <Button
-              label="취소"
-              variant="secondary"
-              size="L"
-              onPress={() => console.log('Secondary L clicked')}
-            />
+          <StoryItem label="All Sizes">
+            <View style={{ gap: 12 }}>
+              <Button
+                label="취소 (L)"
+                variant="disabled"
+                size="L"
+                onPress={() => console.log('Disabled L clicked')}
+              />
+              <Button
+                label="다음에 하기 (M)"
+                variant="disabled"
+                size="M"
+                onPress={() => console.log('Disabled M clicked')}
+              />
+              <Button
+                label="닫기 (S)"
+                variant="disabled"
+                size="S"
+                onPress={() => console.log('Disabled S clicked')}
+              />
+            </View>
           </StoryItem>
 
-          <StoryItem label="Size: M (56px)">
-            <Button
-              label="다음에 하기"
-              variant="secondary"
-              size="M"
-              onPress={() => console.log('Secondary M clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Size: S (48px)">
-            <Button
-              label="닫기"
-              variant="secondary"
-              size="S"
-              onPress={() => console.log('Secondary S clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Disabled">
+          <StoryItem label="Disabled State">
             <Button
               label="비활성화"
-              variant="secondary"
+              variant="disabled"
               size="L"
               disabled
               onPress={() => console.log('This should not fire')}
@@ -205,34 +327,30 @@ function ButtonStories() {
         </View>
       </StorySection>
 
-      {/* Outline Variant */}
+      {/* Outline Variant 상세 */}
       <StorySection title="Outline Variant" description="흰색 배경 + 검은색 테두리 버튼">
         <View style={{ gap: 12 }}>
-          <StoryItem label="Size: L (64px)">
-            <Button
-              label="더 알아보기"
-              variant="outline"
-              size="L"
-              onPress={() => console.log('Outline L clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Size: M (56px)">
-            <Button
-              label="설정"
-              variant="outline"
-              size="M"
-              onPress={() => console.log('Outline M clicked')}
-            />
-          </StoryItem>
-
-          <StoryItem label="Size: S (48px)">
-            <Button
-              label="편집"
-              variant="outline"
-              size="S"
-              onPress={() => console.log('Outline S clicked')}
-            />
+          <StoryItem label="All Sizes">
+            <View style={{ gap: 12 }}>
+              <Button
+                label="더 알아보기 (L)"
+                variant="outline"
+                size="L"
+                onPress={() => console.log('Outline L clicked')}
+              />
+              <Button
+                label="설정 (M)"
+                variant="outline"
+                size="M"
+                onPress={() => console.log('Outline M clicked')}
+              />
+              <Button
+                label="편집 (S)"
+                variant="outline"
+                size="S"
+                onPress={() => console.log('Outline S clicked')}
+              />
+            </View>
           </StoryItem>
 
           <StoryItem label="With Icon">
@@ -246,7 +364,7 @@ function ButtonStories() {
             />
           </StoryItem>
 
-          <StoryItem label="Disabled">
+          <StoryItem label="Disabled State">
             <Button
               label="비활성화"
               variant="outline"
@@ -258,7 +376,47 @@ function ButtonStories() {
         </View>
       </StorySection>
 
-      {/* Full Width vs Auto Width */}
+      {/* Danger Variant 상세 */}
+      <StorySection
+        title="Danger Variant"
+        description="빨간색 배경의 위험 액션 버튼 (삭제, 로그아웃 등)">
+        <View style={{ gap: 12 }}>
+          <StoryItem label="All Sizes">
+            <View style={{ gap: 12 }}>
+              <Button
+                label="로그아웃 (L)"
+                variant="danger"
+                size="L"
+                onPress={() => console.log('Danger L clicked')}
+              />
+              <Button
+                label="삭제하기 (M)"
+                variant="danger"
+                size="M"
+                onPress={() => console.log('Danger M clicked')}
+              />
+              <Button
+                label="취소 (S)"
+                variant="danger"
+                size="S"
+                onPress={() => console.log('Danger S clicked')}
+              />
+            </View>
+          </StoryItem>
+
+          <StoryItem label="Disabled State">
+            <Button
+              label="비활성화"
+              variant="danger"
+              size="L"
+              disabled
+              onPress={() => console.log('This should not fire')}
+            />
+          </StoryItem>
+        </View>
+      </StorySection>
+
+      {/* Width Options */}
       <StorySection title="Width Options" description="전체 너비 vs 자동 너비">
         <View style={{ gap: 12 }}>
           <StoryItem label="Full Width (default)">
@@ -323,19 +481,23 @@ function DualButtonStories() {
               onConfirmPress={() => console.log('Confirm S clicked')}
             />
           </StoryItem>
+        </View>
+      </StorySection>
 
-          <StoryItem label="Cancel Disabled">
+      <StorySection title="Disabled States" description="비활성화 상태 예시">
+        <View style={{ gap: 12 }}>
+          <StoryItem label="Confirm Disabled (Size: L)">
             <DualButton
               cancelLabel="취소"
-              confirmLabel="확인"
-              size="M"
-              cancelDisabled={true}
-              onCancelPress={() => console.log('This should not fire')}
-              onConfirmPress={() => console.log('Confirm clicked')}
+              confirmLabel="저장"
+              size="L"
+              confirmDisabled={true}
+              onCancelPress={() => console.log('Cancel clicked')}
+              onConfirmPress={() => console.log('This should not fire')}
             />
           </StoryItem>
 
-          <StoryItem label="Confirm Disabled">
+          <StoryItem label="Confirm Disabled (Size: M)">
             <DualButton
               cancelLabel="취소"
               confirmLabel="확인"
@@ -346,15 +508,24 @@ function DualButtonStories() {
             />
           </StoryItem>
 
-          <StoryItem label="Both Disabled">
+          <StoryItem label="Confirm Disabled (Size: S)">
+            <DualButton
+              cancelLabel="취소"
+              confirmLabel="확인"
+              size="S"
+              confirmDisabled={true}
+              onCancelPress={() => console.log('Cancel clicked')}
+              onConfirmPress={() => console.log('This should not fire')}
+            />
+          </StoryItem>
+
+          <StoryItem label="Note: 취소 버튼은 항상 활성화 (outline variant)">
             <DualButton
               cancelLabel="취소"
               confirmLabel="확인"
               size="M"
-              cancelDisabled={true}
-              confirmDisabled={true}
-              onCancelPress={() => console.log('This should not fire')}
-              onConfirmPress={() => console.log('This should not fire')}
+              onCancelPress={() => console.log('Cancel clicked')}
+              onConfirmPress={() => console.log('Confirm clicked')}
             />
           </StoryItem>
         </View>
