@@ -31,6 +31,10 @@ export const styles = StyleSheet.create({
     ...Typography.body.body4,
     color: Colors.grey[500],
     textAlign: 'center',
+    marginBottom: 24,
+  },
+  buttonContainer: {
+    marginTop: 16,
   },
 });
 
