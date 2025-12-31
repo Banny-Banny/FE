@@ -37,6 +37,7 @@ interface WebMapViewProps extends MapViewProps {
   markers: Array<{ id: string; lat: number; lng: number }>;
   currentLocation?: { lat: number; lng: number } | null;
   isLoadingLocation?: boolean;
+  moveToLocationRef?: React.MutableRefObject<((location: { lat: number; lng: number }) => void) | null>;
 }
 
 export function WebMapView({
@@ -46,6 +47,7 @@ export function WebMapView({
   onMessage,
   currentLocation,
   isLoadingLocation,
+  moveToLocationRef,
 }: WebMapViewProps) {
   const viewRef = useRef<any>(null);
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
@@ -252,6 +254,25 @@ export function WebMapView({
       updateCurrentLocationMarker();
     }
   }, [updateMarkers, updateCurrentLocationMarker]);
+
+  // 현재 위치로 이동하는 함수
+  const moveToLocation = useCallback(
+    (location: { lat: number; lng: number }) => {
+      if (!mapRef.current || !window.kakao?.maps) return;
+
+      const kakaoMaps = window.kakao.maps;
+      const position = new kakaoMaps.LatLng(location.lat, location.lng);
+      mapRef.current.setCenter(position);
+    },
+    [],
+  );
+
+  // moveToLocation 함수를 외부에서 사용할 수 있도록 ref에 저장
+  useEffect(() => {
+    if (moveToLocationRef) {
+      moveToLocationRef.current = moveToLocation;
+    }
+  }, [moveToLocation, moveToLocationRef]);
 
   return <View ref={viewRef} style={styles.webMapViewContainer} />;
 }

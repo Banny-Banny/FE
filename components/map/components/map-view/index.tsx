@@ -8,10 +8,12 @@
  * - 이 컴포넌트는 렌더링만 담당
  */
 
+import { useRef } from 'react';
 import { Platform, Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 
 import CurrentLocation from '../current-location';
+import { CurrentLocationButton } from '../current-location-button';
 import { CurrentLocationMarker } from '../current-location-marker';
 import { EggSlot } from '../egg-slot';
 import { useMapView } from './hooks/useMapView';
@@ -34,6 +36,16 @@ export default function MapView(props: MapViewProps = {}) {
     handleMessageCommon,
   } = useMapView(props);
 
+  // 웹 환경에서 지도 이동 함수를 저장할 ref
+  const moveToLocationRef = useRef<((location: { lat: number; lng: number }) => void) | null>(null);
+
+  // 웹 환경에서 현재 위치로 이동하는 함수
+  const handleMoveToLocation = (loc: { lat: number; lng: number }) => {
+    if (moveToLocationRef.current) {
+      moveToLocationRef.current(loc);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {!kakaoMapApiKey ? (
@@ -48,6 +60,7 @@ export default function MapView(props: MapViewProps = {}) {
           onMessage={handleMessageCommon}
           currentLocation={location}
           isLoadingLocation={locationLoading}
+          moveToLocationRef={moveToLocationRef}
         />
       ) : (
         <>
@@ -74,6 +87,13 @@ export default function MapView(props: MapViewProps = {}) {
         </View>
       )}
       <EggSlot usedCount={slotData.usedCount} totalCount={slotData.totalCount} />
+      {/* 현재 위치로 이동 버튼 */}
+      <CurrentLocationButton
+        webViewRef={webViewRef}
+        location={location}
+        isLoading={locationLoading}
+        onMoveToLocation={Platform.OS === 'web' ? handleMoveToLocation : undefined}
+      />
     </View>
   );
 }

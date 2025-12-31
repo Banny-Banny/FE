@@ -7,6 +7,7 @@ import type { WebView } from 'react-native-webview';
 
 import type {
   InitMapMessage,
+  MoveCameraMessage,
   RemoveCurrentLocationMessage,
   SetCurrentLocationMessage,
   SetMarkersMessage,
@@ -100,6 +101,20 @@ export function sendSetCurrentLocationMessage(
 export function sendRemoveCurrentLocationMessage(webViewRef: React.RefObject<WebView | null>) {
   const message: RemoveCurrentLocationMessage = {
     type: 'REMOVE_CURRENT_LOCATION',
+  };
+  return sendMessage(webViewRef, JSON.stringify(message));
+}
+
+/**
+ * 카메라 이동 메시지 전송
+ */
+export function sendMoveCameraMessage(
+  webViewRef: React.RefObject<WebView | null>,
+  payload: MoveCameraMessage['payload'],
+) {
+  const message: MoveCameraMessage = {
+    type: 'MOVE_CAMERA',
+    payload,
   };
   return sendMessage(webViewRef, JSON.stringify(message));
 }
