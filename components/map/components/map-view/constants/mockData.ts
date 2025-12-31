@@ -18,3 +18,4 @@ export const MOCK_EGG_SLOT_USED_COUNT = 2;
  * Mock 데이터: 전체 egg-slot 개수
  */
 export const MOCK_EGG_SLOT_TOTAL_COUNT = 3;
+

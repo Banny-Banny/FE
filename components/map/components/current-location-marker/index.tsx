@@ -15,7 +15,7 @@ import type { WebView } from 'react-native-webview';
 import {
   sendRemoveCurrentLocationMessage,
   sendSetCurrentLocationMessage,
-} from '../map-view/webview/messageHandler';
+} from '../map-view/webview/sendMessage';
 import { DEFAULT_MARKER_CONFIG } from './styles';
 import type { CurrentLocationMarkerConfig, LocationCoordinate } from './types';
 

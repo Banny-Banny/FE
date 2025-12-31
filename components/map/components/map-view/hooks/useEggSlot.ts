@@ -11,7 +11,7 @@
  */
 
 import { useMemo } from 'react';
-import { MOCK_EGG_SLOT_TOTAL_COUNT, MOCK_EGG_SLOT_USED_COUNT } from '../constants/mockData';
+import { MOCK_EGG_SLOT_TOTAL_COUNT, MOCK_EGG_SLOT_USED_COUNT } from '../constants';
 
 export interface EggSlotData {
   /** 사용된 슬롯 개수 */
@@ -70,4 +70,3 @@ export function useEggSlot(): UseEggSlotReturn {
     isLoading: false, // Mock 데이터는 즉시 반환
   };
 }
-

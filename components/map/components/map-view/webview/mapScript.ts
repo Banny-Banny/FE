@@ -10,12 +10,10 @@ import { getCurrentLocationMarkerScript } from '../../current-location-marker/ut
  */
 export function generateMapScript(): string {
   return `
-    // ======= 상태 관리 =======
     let map = null;
-    let markers = {};  // id -> kakao.maps.Marker
+    let markers = {};
     let currentLocationMarker = null;
 
-    // ======= 유틸리티 함수 =======
     function sendToRN(message) {
       if (window.ReactNativeWebView?.postMessage) {
         window.ReactNativeWebView.postMessage(JSON.stringify(message));
@@ -30,14 +28,12 @@ export function generateMapScript(): string {
       }
     }
 
-    // ======= 지도 초기화 =======
     function initMap(payload) {
       if (!window.kakao || !window.kakao.maps) {
         return;
       }
 
       window.kakao.maps.load(() => {
-        // 이미 초기화된 경우 카메라만 이동
         if (map) {
           moveCamera(payload.center);
           sendToRN({ type: "READY" });
@@ -55,7 +51,6 @@ export function generateMapScript(): string {
           level: payload.level ?? 4,
         });
 
-        // 지도 클릭 이벤트
         kakao.maps.event.addListener(map, "click", (mouseEvent) => {
           const latlng = mouseEvent.latLng;
           sendToRN({
@@ -64,7 +59,6 @@ export function generateMapScript(): string {
           });
         });
 
-        // 지도 중심점 변경 이벤트
         kakao.maps.event.addListener(map, "center_changed", () => {
           const center = map.getCenter();
           sendToRN({
@@ -73,7 +67,6 @@ export function generateMapScript(): string {
           });
         });
 
-        // 초기 중심점 전송
         sendToRN({
           type: "CENTER_CHANGED",
           payload: { lat: center.getLat(), lng: center.getLng() },
@@ -83,7 +76,6 @@ export function generateMapScript(): string {
       });
     }
 
-    // ======= 마커 관리 =======
     function clearMarkers() {
       Object.values(markers).forEach((marker) => marker.setMap(null));
       markers = {};
@@ -110,7 +102,6 @@ export function generateMapScript(): string {
       });
     }
 
-    // ======= 카메라 제어 =======
     function moveCamera(center) {
       if (!map) {
         return;
@@ -118,10 +109,8 @@ export function generateMapScript(): string {
       map.setCenter(new kakao.maps.LatLng(center.lat, center.lng));
     }
 
-    // ======= 현재 위치 마커 =======
     ${getCurrentLocationMarkerScript()}
 
-    // ======= 메시지 핸들러 =======
     function handleMessage(raw) {
       const msg = safeParse(raw);
       if (!msg || !msg.type) return;
@@ -147,7 +136,6 @@ export function generateMapScript(): string {
       }
     }
 
-    // ======= 메시지 리스너 설정 =======
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.onMessage = (event) => {
         handleMessage(event.data);
