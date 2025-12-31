@@ -10,13 +10,17 @@
  * - useMapFeature: 비즈니스 로직
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
+
+import { EggDetail } from './components/egg-detail';
 import { EggForm } from './components/egg-form';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
+import { styles } from './styles';
 import type { MapFeatureProps } from './types';
 
 export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: MapFeatureProps = {}) {
@@ -25,11 +29,34 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     onEasterEggPress,
   });
 
+  // 캡슐 상세 바텀시트 상태 관리
+  const [selectedCapsule, setSelectedCapsule] = useState<CapsuleItem | null>(null);
+  const [isCapsuleDetailVisible, setIsCapsuleDetailVisible] = useState(false);
+
+  const handleCapsuleClick = (capsule: CapsuleItem) => {
+    setSelectedCapsule(capsule);
+    setIsCapsuleDetailVisible(true);
+  };
+
+  const handleCloseCapsuleDetail = () => {
+    setIsCapsuleDetailVisible(false);
+    setSelectedCapsule(null);
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <MapView center={mapConfig.center} level={mapConfig.level} />
+    <View style={styles.container}>
+      <MapView
+        center={mapConfig.center}
+        level={mapConfig.level}
+        onCapsuleClick={handleCapsuleClick}
+      />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <EggForm isVisible={isEggFormVisible} onClose={handleCloseEggForm} />
+      <EggDetail
+        isVisible={isCapsuleDetailVisible}
+        onClose={handleCloseCapsuleDetail}
+        capsule={selectedCapsule}
+      />
     </View>
   );
 }

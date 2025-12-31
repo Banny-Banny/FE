@@ -9,6 +9,7 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants';
+import { buildEndpointWithQuery } from '@/utils/api';
 import { apiClient } from '@/utils/apiClient';
 import { useCallback, useEffect, useState } from 'react';
 import type { CapsuleItem, CapsulesResponse } from '../types';
@@ -42,34 +43,14 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
       setIsLoading(true);
       setError(null);
 
-      const queryParams = new URLSearchParams({
-        lat: params.lat.toString(),
-        lng: params.lng.toString(),
+      const endpoint = buildEndpointWithQuery(API_ENDPOINTS.CAPSULE.LIST, {
+        lat: params.lat,
+        lng: params.lng,
+        radius_m: params.radius_m,
+        limit: params.limit,
+        include_locationless: params.include_locationless,
+        include_consumed: params.include_consumed,
       });
-
-      if (params.radius_m !== undefined) {
-        queryParams.append('radius_m', params.radius_m.toString());
-      }
-      if (params.limit !== undefined) {
-        queryParams.append('limit', params.limit.toString());
-      }
-      if (params.include_locationless !== undefined) {
-        queryParams.append('include_locationless', params.include_locationless.toString());
-      }
-      if (params.include_consumed !== undefined) {
-        queryParams.append('include_consumed', params.include_consumed.toString());
-      }
-
-      // 엔드포인트 앞에 슬래시 추가하여 올바른 URL 구성
-      const endpoint = `/${API_ENDPOINTS.CAPSULE.LIST}?${queryParams.toString()}`;
-
-      // 디버깅: 실제 요청 URL 확인
-      if (__DEV__) {
-        const baseURL = apiClient.defaults.baseURL || 'BASE_URL_NOT_SET';
-        console.log('[useCapsules] Base URL:', baseURL);
-        console.log('[useCapsules] Endpoint:', endpoint);
-        console.log('[useCapsules] Full URL:', `${baseURL}${endpoint}`);
-      }
 
       const response = await apiClient.get<CapsulesResponse>(endpoint);
 
@@ -80,7 +61,6 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
         err.message ||
         '캡슐 목록을 불러오는 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useCapsules] API 호출 실패:', err);
     } finally {
       setIsLoading(false);
     }

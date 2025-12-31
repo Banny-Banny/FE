@@ -1,7 +1,39 @@
 {
+  // 파일을 저장할 때 실행될 코드 액션 설정
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
+    "source.fixAll": "explicit", // 저장 시 ESLint 등에서 고칠 수 있는 모든 에러를 자동으로 수정합니다.
+    "source.organizeImports": "explicit", // 저장 시 사용하지 않는 import를 제거하고 순서를 정렬합니다.
+    "source.sortMembers": "explicit" // 저장 시 클래스나 인터페이스 내의 멤버들을 자동으로 정렬합니다.
+  },
+
+  // 파일의 맨 끝에 빈 줄(newline)을 자동으로 추가할지 여부
+  "files.insertFinalNewline": false, // false로 설정되어 있어 마지막 줄에 빈 줄을 강제로 넣지 않습니다.
+
+  // 파일을 저장할 때마다 자동으로 포맷팅(코드 정리)을 수행합니다.
+  "editor.formatOnSave": true,
+
+  // 기본 포맷터(코드 정리 도구)를 Prettier로 설정합니다.
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // --- 언어별 개별 설정 ---
+
+  // 자바스크립트 파일에 대해 Prettier를 기본 포맷터로 사용합니다.
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // 타입스크립트 파일에 대해 Prettier를 기본 포맷터로 사용합니다.
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // React 타입스크립트(.tsx) 파일에 대해 Prettier를 기본 포맷터로 사용합니다.
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // React 자바스크립트(.jsx) 파일에 대해 Prettier를 기본 포맷터로 사용합니다.
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

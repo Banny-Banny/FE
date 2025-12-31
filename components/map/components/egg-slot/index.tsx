@@ -58,4 +58,3 @@ export const EggSlot: React.FC<EggSlotProps> = ({ usedCount, totalCount = 3 }) =
 };
 
 export default EggSlot;
-

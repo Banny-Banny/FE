@@ -17,10 +17,14 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
+    height: '100%',
     backgroundColor: Colors.whiteGrey[50],
   },
   webview: {
     flex: 1,
+    width: '100%',
+    height: '100%',
   },
   errorContainer: {
     flex: 1,
@@ -36,5 +40,9 @@ export const styles = StyleSheet.create({
     top: 56, // Figma 디자인 기준
     zIndex: 10, // 지도 위에 표시
   },
+  webMapViewContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
 });
-
