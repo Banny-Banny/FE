@@ -1,11 +1,14 @@
 /**
  * components/map/components/current-location-marker/styles.ts
  * Current Location Marker 스타일 및 상수 정의
+ * Version: 2.0.0
+ * Updated: 2025-01-XX
  *
- * @description
- * - 디자인 시스템 색상 토큰 사용 (Colors)
- * - WebView 내부에서 사용되는 마커 스타일 정의
- * - React Native와 WebView 양쪽에서 사용 가능한 스타일 제공
+ * Checklist:
+ * - [x] tailwind.config.js 수정 안 함
+ * - [x] 색상값 직접 입력 최소화 (Colors 토큰 우선 사용)
+ * - [x] WebView 내부 JavaScript에서 사용할 스타일 상수만 정의
+ * - [x] React Native와 WebView 양쪽에서 사용 가능한 스타일 제공
  *
  * NOTE: 이 컴포넌트는 `return null`을 하므로 React Native View를 렌더링하지 않습니다.
  * 따라서 StyleSheet.create()가 필요하지 않으며, WebView 내부 JavaScript에서
@@ -58,6 +61,41 @@ const MARKER_STYLES = {
 } as const;
 
 /**
+ * 반경 원 기본 설정
+ */
+const RADIUS_CIRCLE_STYLES = {
+  /**
+   * 반경 원 표시 여부
+   */
+  showRadius: true,
+
+  /**
+   * 반경 원 크기 (미터 단위)
+   * 기본값: 300m
+   */
+  radiusMeters: 300,
+
+  /**
+   * 반경 원 색상
+   * Figma 디자인 기준: rgba(66,133,244,0.1)
+   * NOTE: Figma 디자인 색상이 Colors.blue[500]과 다르므로 디자인 정확도를 위해 하드코딩 유지
+   */
+  radiusColor: 'rgba(66,133,244,0.1)',
+
+  /**
+   * 반경 원 테두리 색상
+   * Figma 디자인 기준: rgba(66,133,244,0.2)
+   * NOTE: Figma 디자인 색상이 Colors.blue[500]과 다르므로 디자인 정확도를 위해 하드코딩 유지
+   */
+  radiusStrokeColor: 'rgba(66,133,244,0.2)',
+
+  /**
+   * 반경 원 테두리 두께
+   */
+  radiusStrokeWeight: 1,
+} as const;
+
+/**
  * 현재 위치 마커 기본 설정
  * React Native 컴포넌트에서 사용
  */
@@ -69,6 +107,11 @@ export const DEFAULT_MARKER_CONFIG: CurrentLocationMarkerConfig = {
   borderWidth: MARKER_STYLES.borderWidth,
   borderRadius: MARKER_STYLES.borderRadius,
   boxShadow: MARKER_STYLES.boxShadow,
+  showRadius: RADIUS_CIRCLE_STYLES.showRadius,
+  radiusMeters: RADIUS_CIRCLE_STYLES.radiusMeters,
+  radiusColor: RADIUS_CIRCLE_STYLES.radiusColor,
+  radiusStrokeColor: RADIUS_CIRCLE_STYLES.radiusStrokeColor,
+  radiusStrokeWeight: RADIUS_CIRCLE_STYLES.radiusStrokeWeight,
 };
 
 /**
@@ -83,4 +126,9 @@ export const DEFAULT_MARKER_STYLE_FOR_WEBVIEW = {
   borderWidth: MARKER_STYLES.borderWidth,
   borderRadius: MARKER_STYLES.borderRadius,
   boxShadow: MARKER_STYLES.boxShadow,
+  showRadius: RADIUS_CIRCLE_STYLES.showRadius,
+  radiusMeters: RADIUS_CIRCLE_STYLES.radiusMeters,
+  radiusColor: RADIUS_CIRCLE_STYLES.radiusColor,
+  radiusStrokeColor: RADIUS_CIRCLE_STYLES.radiusStrokeColor,
+  radiusStrokeWeight: RADIUS_CIRCLE_STYLES.radiusStrokeWeight,
 } as const;

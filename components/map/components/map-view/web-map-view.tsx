@@ -21,6 +21,7 @@ declare global {
         LatLng: new (lat: number, lng: number) => any;
         Marker: new (options: any) => any;
         CustomOverlay: new (options: any) => any;
+        Circle: new (options: any) => any;
         event: {
           addListener: (target: any, event: string, callback: (e: any) => void) => void;
         };
@@ -51,6 +52,7 @@ export function WebMapView({
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Record<string, any>>({});
   const currentLocationMarkerRef = useRef<any>(null);
+  const currentLocationCircleRef = useRef<any>(null);
   const scriptLoadedRef = useRef(false);
   const kakaoMapApiKey = getKakaoMapApiKey();
 
@@ -190,6 +192,10 @@ export function WebMapView({
       currentLocationMarkerRef.current.setMap(null);
       currentLocationMarkerRef.current = null;
     }
+    if (currentLocationCircleRef.current) {
+      currentLocationCircleRef.current.setMap(null);
+      currentLocationCircleRef.current = null;
+    }
   }, []);
 
   const updateCurrentLocationMarker = useCallback(() => {
@@ -203,6 +209,7 @@ export function WebMapView({
 
     clearCurrentLocationMarker();
 
+    // 마커 생성
     const content = document.createElement('div');
     content.style.width = `${style.width}px`;
     content.style.height = `${style.height}px`;
@@ -221,6 +228,22 @@ export function WebMapView({
     });
 
     currentLocationMarkerRef.current.setMap(mapRef.current);
+
+    // 반경 원 표시
+    if (style.showRadius) {
+      currentLocationCircleRef.current = new kakaoMaps.Circle({
+        center: position,
+        radius: style.radiusMeters || 300,
+        strokeWeight: style.radiusStrokeWeight || 1,
+        strokeColor: style.radiusStrokeColor || 'rgba(66,133,244,0.2)',
+        strokeOpacity: 1,
+        strokeStyle: 'solid',
+        fillColor: style.radiusColor || 'rgba(66,133,244,0.1)',
+        fillOpacity: 1,
+      });
+
+      currentLocationCircleRef.current.setMap(mapRef.current);
+    }
   }, [currentLocation, isLoadingLocation, clearCurrentLocationMarker]);
 
   useEffect(() => {

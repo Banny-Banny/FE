@@ -2,7 +2,7 @@
  * components/map/components/current-location-marker/utils.ts
  * Current Location Marker Utility
  * Version: 2.0.0
- * Created: 2025-01-XX
+ * Updated: 2025-01-XX
  *
  * [Feature Utility] 현재 위치 커스텀 마커 유틸리티
  *
@@ -18,10 +18,24 @@ import { DEFAULT_MARKER_STYLE_FOR_WEBVIEW } from './styles';
  */
 export function getCurrentLocationMarkerScript(): string {
   // styles.ts에서 기본 스타일 가져오기
-  const { width, height, backgroundColor, borderColor, borderWidth, borderRadius, boxShadow } =
-    DEFAULT_MARKER_STYLE_FOR_WEBVIEW;
+  const {
+    width,
+    height,
+    backgroundColor,
+    borderColor,
+    borderWidth,
+    borderRadius,
+    boxShadow,
+    showRadius,
+    radiusMeters,
+    radiusColor,
+    radiusStrokeColor,
+    radiusStrokeWeight,
+  } = DEFAULT_MARKER_STYLE_FOR_WEBVIEW;
 
   return `
+    let currentLocationCircle = null;
+
     function createCurrentLocationMarkerElement(style) {
       const content = document.createElement("div");
       content.style.width = style.width + "px";
@@ -32,6 +46,35 @@ export function getCurrentLocationMarkerScript(): string {
       content.style.boxShadow = style.boxShadow;
       content.style.position = "relative";
       return content;
+    }
+
+    function setCurrentLocationRadiusCircle(location, radiusConfig) {
+      if (!map || !location || !radiusConfig || !radiusConfig.showRadius) {
+        if (currentLocationCircle) {
+          currentLocationCircle.setMap(null);
+          currentLocationCircle = null;
+        }
+        return;
+      }
+
+      if (currentLocationCircle) {
+        currentLocationCircle.setMap(null);
+        currentLocationCircle = null;
+      }
+
+      const position = new kakao.maps.LatLng(location.lat, location.lng);
+      currentLocationCircle = new kakao.maps.Circle({
+        center: position,
+        radius: radiusConfig.radiusMeters || ${radiusMeters},
+        strokeWeight: radiusConfig.radiusStrokeWeight || ${radiusStrokeWeight},
+        strokeColor: radiusConfig.radiusStrokeColor || "${radiusStrokeColor}",
+        strokeOpacity: 1,
+        strokeStyle: "solid",
+        fillColor: radiusConfig.radiusColor || "${radiusColor}",
+        fillOpacity: 1,
+      });
+
+      currentLocationCircle.setMap(map);
     }
 
     function setCurrentLocationMarker(payload) {
@@ -45,7 +88,12 @@ export function getCurrentLocationMarkerScript(): string {
         borderColor: "${borderColor}",
         borderWidth: ${borderWidth},
         borderRadius: "${borderRadius}",
-        boxShadow: "${boxShadow}"
+        boxShadow: "${boxShadow}",
+        showRadius: ${showRadius},
+        radiusMeters: ${radiusMeters},
+        radiusColor: "${radiusColor}",
+        radiusStrokeColor: "${radiusStrokeColor}",
+        radiusStrokeWeight: ${radiusStrokeWeight}
       };
 
       if (currentLocationMarker) {
@@ -63,12 +111,27 @@ export function getCurrentLocationMarkerScript(): string {
       });
 
       currentLocationMarker.setMap(map);
+
+      // 반경 원 표시
+      if (style.showRadius) {
+        setCurrentLocationRadiusCircle(location, {
+          showRadius: style.showRadius,
+          radiusMeters: style.radiusMeters,
+          radiusColor: style.radiusColor,
+          radiusStrokeColor: style.radiusStrokeColor,
+          radiusStrokeWeight: style.radiusStrokeWeight,
+        });
+      }
     }
 
     function removeCurrentLocationMarker() {
       if (currentLocationMarker) {
         currentLocationMarker.setMap(null);
         currentLocationMarker = null;
+      }
+      if (currentLocationCircle) {
+        currentLocationCircle.setMap(null);
+        currentLocationCircle = null;
       }
     }
   `;

@@ -71,6 +71,11 @@ export function sendSetCurrentLocationMessage(
       borderWidth?: number;
       borderRadius?: string;
       boxShadow?: string;
+      showRadius?: boolean;
+      radiusMeters?: number;
+      radiusColor?: string;
+      radiusStrokeColor?: string;
+      radiusStrokeWeight?: number;
     };
   },
 ) {
