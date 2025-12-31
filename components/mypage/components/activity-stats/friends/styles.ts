@@ -121,6 +121,13 @@ export const styles = StyleSheet.create({
     lineHeight: 19.5,
   },
 
+  // 친구 목록 섹션 래퍼
+  // ScrollView가 터치 이벤트를 받을 수 있도록 래퍼 추가
+  friendsSectionWrapper: {
+    flex: 1,
+    minHeight: 0,
+  },
+
   // 친구 목록 섹션
   // 헤더 섹션 높이를 제외한 나머지 공간을 스크롤 영역으로 사용
   // 전체 높이 614px - 헤더 섹션(약 190px) = 약 424px
@@ -149,6 +156,12 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+
+  // 차단된 친구 항목 (해제 상태)
+  // 피그마 디자인에 맞는 색상: #E0E0E0
+  friendItemBlocked: {
+    backgroundColor: '#E0E0E0',
   },
 
   // 친구 정보 컨테이너
@@ -193,6 +206,11 @@ export const styles = StyleSheet.create({
     ...Typography.header.h4,
     color: Colors.black[500],
     height: 24,
+  },
+
+  // 차단된 친구 이름 (해제 상태)
+  friendNameBlocked: {
+    color: Colors.black[500],
   },
 
   // 차단 버튼

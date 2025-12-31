@@ -113,50 +113,63 @@ export function FriendsModal({
         </View>
 
         {/* 친구 목록 섹션 */}
-        <ScrollView
-          style={styles.friendsSection}
-          contentContainerStyle={styles.friendsList}
-          showsVerticalScrollIndicator={false}
-          nestedScrollEnabled={true}
-          bounces={true}
-          scrollEnabled={true}>
-          {friends.map((friend: Friend) => (
-            <View key={friend.id} style={styles.friendItem}>
-              {/* 친구 정보 */}
-              <View style={styles.friendInfo}>
-                {/* 아바타 */}
-                <View
-                  style={[
-                    styles.avatarContainer,
-                    friend.isBlocked && styles.avatarContainerBlocked,
-                  ]}>
-                  <Text style={[styles.avatarEmoji, friend.isBlocked && styles.avatarEmojiBlocked]}>
-                    {friend.emoji}
+        <View style={styles.friendsSectionWrapper}>
+          <ScrollView
+            style={styles.friendsSection}
+            contentContainerStyle={styles.friendsList}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            bounces={true}
+            scrollEnabled={true}
+            directionalLockEnabled={true}
+            alwaysBounceVertical={false}>
+            {friends.map((friend: Friend) => (
+              <View
+                key={friend.id}
+                style={[styles.friendItem, friend.isBlocked && styles.friendItemBlocked]}
+                pointerEvents="box-none">
+                {/* 친구 정보 */}
+                <View style={styles.friendInfo} pointerEvents="box-none">
+                  {/* 아바타 */}
+                  <View
+                    style={[
+                      styles.avatarContainer,
+                      friend.isBlocked && styles.avatarContainerBlocked,
+                    ]}>
+                    <Text
+                      style={[styles.avatarEmoji, friend.isBlocked && styles.avatarEmojiBlocked]}>
+                      {friend.emoji}
+                    </Text>
+                  </View>
+
+                  {/* 이름 */}
+                  <Text style={[styles.friendName, friend.isBlocked && styles.friendNameBlocked]}>
+                    {friend.name}
                   </Text>
                 </View>
 
-                {/* 이름 */}
-                <Text style={styles.friendName}>{friend.name}</Text>
+                {/* 차단/해제 버튼 */}
+                <Pressable
+                  style={[styles.blockButton, friend.isBlocked && styles.unblockButton]}
+                  onPress={() => handleToggleBlock(friend.id)}
+                  pointerEvents="auto">
+                  <Icon
+                    name={
+                      (friend.isBlocked
+                        ? 'ri-user-unfollow-line'
+                        : 'ri-user-forbid-line') as IconName
+                    }
+                    size={16}
+                    color={friend.isBlocked ? Colors.white[500] : Colors.black[500]}
+                  />
+                  <Text style={[styles.buttonText, friend.isBlocked && styles.buttonTextUnblock]}>
+                    {friend.isBlocked ? '해제' : '차단'}
+                  </Text>
+                </Pressable>
               </View>
-
-              {/* 차단/해제 버튼 */}
-              <Pressable
-                style={[styles.blockButton, friend.isBlocked && styles.unblockButton]}
-                onPress={() => handleToggleBlock(friend.id)}>
-                <Icon
-                  name={
-                    (friend.isBlocked ? 'ri-user-unfollow-line' : 'ri-user-forbid-line') as IconName
-                  }
-                  size={16}
-                  color={friend.isBlocked ? Colors.white[500] : Colors.black[500]}
-                />
-                <Text style={[styles.buttonText, friend.isBlocked && styles.buttonTextUnblock]}>
-                  {friend.isBlocked ? '해제' : '차단'}
-                </Text>
-              </Pressable>
-            </View>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
+        </View>
       </View>
     </Modal>
   );
