@@ -22,7 +22,7 @@ interface PaymentRequestData {
  * 개발 모드에서 결제 우회 (백엔드 연결 없이 개발 시 true로 설정)
  * true로 설정하면 토스페이먼츠 결제를 건너뛰고 Mock 데이터로 다음 단계로 진행합니다.
  */
-const SKIP_PAYMENT = __DEV__ && true;
+export const SKIP_PAYMENT = __DEV__ && true;
 
 // ============================================
 // Hook 반환 타입

@@ -10,8 +10,10 @@
  */
 
 import React, { useCallback, useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
+import { Button } from '@/commons/components/button';
+import { DualButton } from '@/commons/components/button/DualButton';
 import { MODAL_CONTENTS } from './constants';
 import { styles } from './styles';
 import { ConfirmModalProps } from './types';
@@ -103,27 +105,22 @@ export default function ConfirmModal({ type, onConfirm, onCancel, data }: Confir
       <View style={styles.buttonContainer}>
         {config.buttonCount === 1 ? (
           // 버튼 1개: 확인만
-          <Pressable style={[styles.button, styles.buttonPrimary]} onPress={handleConfirm}>
-            <Text style={[styles.buttonText, styles.buttonTextPrimary]}>{config.confirmText}</Text>
-          </Pressable>
+          <Button
+            label={config.confirmText}
+            variant="primary"
+            size={config.buttonSize}
+            fullWidth={true}
+            onPress={handleConfirm}
+          />
         ) : (
           // 버튼 2개: 취소, 확인
-          <View style={styles.buttonRow}>
-            <Pressable
-              style={[styles.button, styles.buttonSecondary, styles.buttonHalf]}
-              onPress={handleCancel}>
-              <Text style={[styles.buttonText, styles.buttonTextSecondary]}>
-                {config.cancelText}
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.button, styles.buttonPrimary, styles.buttonHalf]}
-              onPress={handleConfirm}>
-              <Text style={[styles.buttonText, styles.buttonTextPrimary]}>
-                {config.confirmText}
-              </Text>
-            </Pressable>
-          </View>
+          <DualButton
+            cancelLabel={config.cancelText || '취소'}
+            confirmLabel={config.confirmText}
+            size={config.buttonSize}
+            onCancelPress={handleCancel}
+            onConfirmPress={handleConfirm}
+          />
         )}
       </View>
     </View>

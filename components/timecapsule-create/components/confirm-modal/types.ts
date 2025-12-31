@@ -3,6 +3,8 @@
  * ConfirmModal 컴포넌트 타입 정의
  */
 
+import { ButtonSize } from '@/commons/components/button';
+
 /**
  * 모달 타입 정의
  * - PAYMENT_COMPLETE: 결제완료 확인 모달
@@ -43,6 +45,7 @@ export interface ModalContentConfig {
   confirmText: string;
   cancelText?: string;
   buttonCount: 1 | 2;
+  buttonSize: ButtonSize;
   closeOnBackdropPress: boolean;
   width: number;
   height: 'auto' | number;
