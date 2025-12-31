@@ -13,7 +13,7 @@ import React, { useCallback, useMemo } from 'react';
 import { Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { Button } from '@/commons/components/button';
-import { DualButton } from '@/commons/components/button/DualButton';
+import { DualButton } from '@/commons/components/dual-button';
 import { MODAL_CONTENTS } from './constants';
 import { styles } from './styles';
 import { ConfirmModalProps } from './types';

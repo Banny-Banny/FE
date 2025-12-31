@@ -13,10 +13,23 @@ import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // 메인 컨테이너
+  // 메인 컨테이너 (SafeAreaView)
   container: {
     flex: 1,
     backgroundColor: Colors.white[100],
+  },
+
+  // 스크롤 영역
+  scrollContent: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+
+  // 중앙 정렬 컨텐츠 (로딩, 에러 상태)
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
 

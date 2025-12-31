@@ -13,7 +13,8 @@
  */
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
-import { Button, DualButton } from '@/commons/components/button';
+import { Button } from '@/commons/components/button';
+import { DualButton } from '@/commons/components/dual-button';
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -191,9 +192,8 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
         cancelLabel="취소"
         confirmLabel={isSubmitting ? '저장 중...' : '저장'}
         size="M"
-        cancelVariant="secondary"
+        cancelVariant="outline"
         confirmVariant="primary"
-        cancelDisabled={isSubmitting}
         confirmDisabled={isSubmitting}
         onCancelPress={handleCancel}
         onConfirmPress={handleSave}
