@@ -11,18 +11,23 @@
 
 ==============================================
 
-조건-피그마) 활용할MCP: Figma  MCP 채널 : 9fuv5m1e
-조건-피그마) 화면 링크 node-id : 407:1828
-조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/step-room/index.tsx
-조건-파일경로) 수정할 CSS 파일경로: components/timecapsule-create/components/step-room/styles.ts
+조건-피그마) 활용할 Figma 채널 : 10gzqtjr
+조건-피그마) 활용할 Figma node-id : 420:9433
+참고-피그마) 음악추가 ui node-id : 420:10624
+참고-피그마) 동영상 추가 node-id : 420:10821
+
+조건-피그마) CRITICAL: 피그마 디자인과 100% 일치하도록 구현할 것
+조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/write-bottomsheet/index.tsx
+조건-파일경로) 수정할 CSS 파일경로: components/timecapsule-create/components/write-bottomsheet/styles.ts
 
 ==============================================
 
 조건-기능유지) 기존 기능 로직은 절대 수정하지 말 것
-조건-기능유지) useState, useCallback, useMemo, custom hooks 등 상태 관리 로직 유지
-조건-기능유지) 이벤트 핸들러 로직 유지
-조건-기능유지) Props 인터페이스 유지 (role: 'host' | 'guest')
-조건-기능유지) 조건부 렌더링 로직 유지
+조건-기능유지) react-hook-form 로직 유지 (Controller, useForm, watch, setValue 등)
+조건-기능유지) useMediaPicker, useSubmitContent Hook 사용 유지
+조건-기능유지) 이벤트 핸들러 로직 유지 (handleAddPhoto, handleDeletePhoto, handleSave 등)
+조건-기능유지) Props 인터페이스 유지 (UserBottomSheetProps, Participant)
+조건-기능유지) 폼 상태 관리 로직 유지
 조건-기능유지) 오직 UI/스타일만 수정
 
 ==============================================
@@ -34,18 +39,21 @@
 
 ==============================================
 
+조건-공통컴포넌트) CRITICAL: 공통 BottomSheet 컴포넌트를 반드시 사용할 것
+조건-공통컴포넌트) 공통 BottomSheet 컴포넌트 경로: @/commons/components/bottom-sheet
+조건-공통컴포넌트) BottomSheet import: import { BottomSheet } from '@/commons/components/bottom-sheet';
+조건-공통컴포넌트) CRITICAL: 이미 BottomSheet 컴포넌트를 사용 중이므로 유지할 것
+
 조건-공통컴포넌트) CRITICAL: 공통 Button 컴포넌트를 반드시 사용할 것
 조건-공통컴포넌트) 공통 Button 컴포넌트 경로: @/commons/components/button
 조건-공통컴포넌트) Button 컴포넌트 import: import { Button } from '@/commons/components/button';
-조건-공통컴포넌트) CRITICAL: 기존의 TouchableOpacity를 공통 Button 컴포넌트로 교체할 것
-조건-공통컴포넌트) 버튼 사용 예시:
-                  <Button
-                    label="타임캡슐 묻기"
-                    variant="primary"
-                    size="L"
-                    disabled={!isSubmitEnabled || isSubmittingCapsule}
-                    onPress={handleSubmit}
-                  />
+조건-공통컴포넌트) CRITICAL: 기존의 Pressable 버튼을 공통 Button 컴포넌트로 교체할 것
+조건-공통컴포넌트) 버튼 사용 대상:
+                  - 취소 버튼 (cancelButton)
+                  - 저장 버튼 (saveButton)
+                  - 사진 추가 버튼 (addButton)
+                  - 음악 추가 버튼 (addButton)
+                  - 동영상 추가 버튼 (addButton)
 
 조건-색상토큰) globals.css에 명시된 색상 변수 토큰 활용
 조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
@@ -68,32 +76,35 @@
 핵심요구사항) CRITICAL: 공통 Button 컴포넌트를 반드시 사용할 것
 핵심요구사항) CRITICAL: 피그마 디자인과 정확히 일치하도록 구현할 것
 핵심요구사항) MCP를 연동하여 피그마의 디자인을 정확히 재검토
-핵심요구사항) 호스트/게스트 두 가지 화면 모두 피그마에 표시된 사이즈, 간격, 색상, 폰트 크기를 정밀하게 적용
-핵심요구사항) 버튼, 참가자 카드 등의 인터랙션 상태를 피그마 디자인과 정확히 일치시킬 것
+핵심요구사항) 피그마에 표시된 사이즈, 간격, 색상, 폰트 크기를 정밀하게 적용
+핵심요구사항) 버튼, 입력 필드 등의 인터랙션 상태를 피그마 디자인과 정확히 일치시킬 것
+핵심요구사항) 공통 BottomSheet 컴포넌트의 기본 스타일 유지 (footer 영역 활용)
 
 ==============================================
 
 UI개선포인트) 다음 항목들을 중점적으로 체크하여 개선:
-1. CRITICAL: 타임캡슐 묻기 버튼을 TouchableOpacity에서 공통 Button 컴포넌트로 교체
-2. Button 컴포넌트 속성 설정:
-   - label: 버튼 텍스트
-   - variant: 'primary' (검은색 배경)
-   - size: 피그마에서 확인 (L/M/S 중 선택)
-   - disabled: !isSubmitEnabled || isSubmittingCapsule
+1. CRITICAL: 취소/저장 버튼을 Pressable에서 공통 Button 컴포넌트로 교체
+2. CRITICAL: 사진/음악/동영상 추가 버튼을 Pressable에서 공통 Button 컴포넌트로 교체
+3. Button 컴포넌트 속성 설정:
+   - 취소 버튼: variant='secondary', size='M'
+   - 저장 버튼: variant='primary', size='M'
+   - 추가 버튼: variant='outline', size='S' (또는 피그마 확인)
+   - disabled: 적절한 상태에 따라 설정
    - onPress: 기존 이벤트 핸들러 연결
-3. 컴포넌트 간 간격(margin, padding)이 피그마와 정확히 일치하는지
-4. 텍스트 정렬, 색상, 폰트 크기가 디자인과 일치하는지
-5. 참가자 카드의 레이아웃과 스타일이 정확한지
-6. 역할 표시(호스트/게스트)의 시각적 차이가 명확한지
-7. 전체적인 비주얼 일관성 유지
-8. 모바일 환경에서의 터치 영역 적절성
+4. 컴포넌트 간 간격(margin, padding)이 피그마와 정확히 일치하는지
+5. 텍스트 정렬, 색상, 폰트 크기가 디자인과 일치하는지
+6. 섹션 헤더 (텍스트, 사진, 음악, 동영상) 스타일 정확성
+7. TextInput placeholder 색상, 테두리가 정확한지
+8. 사진 그리드 레이아웃 (3 + 2) 정확성
+9. 전체적인 비주얼 일관성 유지
+10. 모바일 환경에서의 터치 영역 적절성
 
 ==============================================
 
 사전분석단계)
 1. 기존 index.tsx 읽고 기능 로직 파악 (수정 금지 영역)
 2. 기존 styles.ts 읽고 현재 스타일 확인
-3. 호스트/게스트 피그마 디자인 모두 다시 분석 (세부 수치 확인)
+3. 피그마 디자인 분석 (세부 수치 확인)
 4. commons/components/button 컴포넌트 구조 확인
 5. Button 컴포넌트의 Props 타입 확인 (ButtonProps)
 6. globals.css 색상/타이포그래피 토큰 재확인
@@ -104,40 +115,45 @@ UI개선포인트) 다음 항목들을 중점적으로 체크하여 개선:
 구현단계)
 1. index.tsx 수정:
    - Button 컴포넌트 import 추가
-   - 기존 TouchableOpacity를 Button 컴포넌트로 교체
+   - 취소/저장 버튼을 Button 컴포넌트로 교체
+   - 사진/음악/동영상 추가 버튼을 Button 컴포넌트로 교체
    - Button Props 설정 (label, variant, size, disabled, onPress)
    - 기존 이벤트 핸들러 로직은 그대로 연결
+   - react-hook-form 로직 유지
 2. styles.ts 수정:
-   - Button 컴포넌트 관련 불필요한 스타일 제거 (submitButton, submitButtonText 등)
+   - Button 컴포넌트 관련 불필요한 스타일 제거 (cancelButton, saveButton, addButton 등의 버튼 스타일)
+   - buttonContainer는 버튼 배치용으로 유지 (flexDirection, gap 등)
    - 나머지 스타일은 피그마 디자인과 1px 단위로 비교하며 수정
 3. 피그마 디자인과 정밀 비교:
-   - 버튼 크기 (height: 64px/56px/48px 중 확인)
-   - 버튼 배경색 (피그마 확인)
-   - 버튼 텍스트 색상 (피그마 확인)
-   - 버튼 border radius (피그마 확인)
+   - 버튼 크기 (L/M/S 확인)
+   - 버튼 배경색, 텍스트 색상, border radius
+   - 섹션 간격, 패딩
+   - 텍스트 스타일 (fontSize, fontWeight, color)
 4. 토큰 기반 색상/타이포그래피 재확인
 
 ==============================================
 
 최종검토) 아래 체크리스트를 모두 통과해야 완료
-- [ ] 기존 기능 로직 100% 유지됨 (상태 관리, 이벤트 핸들러, 조건부 렌더링 등)
+- [ ] 기존 기능 로직 100% 유지됨 (react-hook-form, hooks, 이벤트 핸들러 등)
 - [ ] CRITICAL: 공통 Button 컴포넌트 import 완료
-- [ ] CRITICAL: TouchableOpacity → Button 컴포넌트 교체 완료
+- [ ] CRITICAL: Pressable → Button 컴포넌트 교체 완료 (취소/저장/추가 버튼)
 - [ ] Button Props 정확히 설정됨 (label, variant, size, disabled, onPress)
 - [ ] 기존 이벤트 핸들러 로직이 Button 컴포넌트에 정확히 연결됨
-- [ ] 호스트/게스트 피그마 디자인 모두 정확하게 일치함
-- [ ] Props 인터페이스 유지됨 (role: 'host' | 'guest')
+- [ ] 피그마 디자인과 정확하게 일치함
+- [ ] Props 인터페이스 유지됨 (UserBottomSheetProps, Participant)
 - [ ] 색상 하드코딩 0건 (토큰만 사용)
 - [ ] 인라인 스타일 0건
 - [ ] index.tsx는 구조만, styles.ts는 스타일만 분리 원칙 유지
 - [ ] 외부 라이브러리 설치 0건
 - [ ] 명시된 파일(index.tsx, styles.ts) 외 수정 0건
 - [ ] globals.css 수정 0건
+- [ ] 공통 BottomSheet 컴포넌트 사용 유지됨
 - [ ] 공통 Button 컴포넌트 사용됨
 - [ ] 버튼 크기가 피그마와 일치함
 - [ ] 버튼 스타일이 피그마와 일치함
 - [ ] disabled 상태가 정상 작동함
-- [ ] 로딩 상태 표시 정상 작동함 (isSubmittingCapsule)
+- [ ] 로딩 상태 표시 정상 작동함 (isSubmitting)
+- [ ] react-hook-form 로직 정상 작동함
 
 ==============================================
 
@@ -155,39 +171,53 @@ Button 컴포넌트 사용 가이드)
      onPress: () => void;                                 // 클릭 이벤트 (필수)
    }
 
-2. 사용 예시:
-   <Button
-     label="타임캡슐 묻기"
-     variant="primary"
-     size="L"
-     disabled={!isSubmitEnabled || isSubmittingCapsule}
-     onPress={handleSubmitButtonPress}
-   />
+2. 취소/저장 버튼 사용 예시:
+   <View style={styles.buttonContainer}>
+     <Button
+       label="취소"
+       variant="secondary"
+       size="M"
+       fullWidth={false}
+       disabled={isSubmitting}
+       onPress={handleCancel}
+     />
+     <Button
+       label={isSubmitting ? '저장 중...' : '저장'}
+       variant="primary"
+       size="M"
+       fullWidth={false}
+       disabled={isSubmitting}
+       onPress={handleSave}
+     />
+   </View>
 
-3. 로딩 상태 표시:
-   - label에 조건부로 텍스트 변경:
-     label={isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
-   - disabled에 로딩 상태 포함:
-     disabled={!isSubmitEnabled || isSubmittingCapsule}
+3. 추가 버튼 사용 예시:
+   <Button
+     label={isPickingImage ? '선택 중...' : '사진 추가'}
+     variant="outline"
+     size="S"
+     icon="add-line"
+     disabled={isPickingImage || currentPhotos.length >= 5}
+     onPress={handleAddPhoto}
+   />
 
 4. 기존 코드와 비교:
    기존:
-   <TouchableOpacity
-     style={[styles.submitButton, (!isSubmitEnabled || isSubmittingCapsule) && { opacity: 0.5 }]}
-     disabled={!isSubmitEnabled || isSubmittingCapsule}
-     onPress={handleSubmitButtonPress}>
-     <Text style={styles.submitButtonText}>
-       {isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
-     </Text>
-   </TouchableOpacity>
+   <Pressable
+     style={styles.cancelButton}
+     onPress={handleCancel}
+     disabled={isSubmitting}>
+     <Text style={styles.cancelButtonText}>취소</Text>
+   </Pressable>
 
    변경 후:
    <Button
-     label={isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
-     variant="primary"
-     size="L"
-     disabled={!isSubmitEnabled || isSubmittingCapsule}
-     onPress={handleSubmitButtonPress}
+     label="취소"
+     variant="secondary"
+     size="M"
+     fullWidth={false}
+     disabled={isSubmitting}
+     onPress={handleCancel}
    />
 
 ==============================================
@@ -196,9 +226,12 @@ Button 컴포넌트 사용 가이드)
 
 1. CRITICAL: 공통 Button 컴포넌트 반드시 사용
    - import { Button } from '@/commons/components/button';
-   - TouchableOpacity 사용 금지 (Button 컴포넌트로 교체)
+   - Pressable 사용 금지 (Button 컴포넌트로 교체)
+   - 단, 사진 삭제 버튼 등 작은 아이콘 버튼은 Pressable 유지 가능
 
 2. 기존 로직 절대 수정 금지
+   - react-hook-form 로직 유지
+   - useMediaPicker, useSubmitContent Hook 유지
    - 이벤트 핸들러 내부 로직 유지
    - 상태 관리 로직 유지
    - Props 인터페이스 유지
@@ -206,6 +239,7 @@ Button 컴포넌트 사용 가이드)
 3. 피그마 디자인 정확히 일치
    - MCP로 피그마 확인
    - 버튼 크기, 색상, 텍스트 스타일 정확히 적용
+   - 섹션 간격, 패딩 정확히 적용
 
 4. 스타일 분리 원칙 준수
    - index.tsx: 구조만
@@ -215,5 +249,9 @@ Button 컴포넌트 사용 가이드)
 5. 접근성 고려
    - Button 컴포넌트는 이미 접근성 속성이 내장되어 있음
    - 추가적인 accessibilityLabel 불필요
+
+6. BottomSheet footer 활용
+   - renderFooter() 함수 유지
+   - footer 내부의 버튼만 Button 컴포넌트로 교체
 
 ==============================================
