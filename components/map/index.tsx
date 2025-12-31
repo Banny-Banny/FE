@@ -15,6 +15,7 @@ import { View } from 'react-native';
 import { EggForm } from './components/egg-form';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import ResetEggSlot from './components/reset-egg-slot';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
 import type { MapFeatureProps } from './types';
@@ -28,6 +29,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   return (
     <View style={{ flex: 1 }}>
       <MapView center={mapConfig.center} level={mapConfig.level} />
+      <ResetEggSlot />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <EggForm isVisible={isEggFormVisible} onClose={handleCloseEggForm} />
     </View>

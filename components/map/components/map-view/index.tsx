@@ -40,8 +40,9 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
 
   // 카카오 API 키를 가져와서 HTML에 주입 (메모이제이션)
   const kakaoMapApiKey = useMemo(() => {
-    const key = Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
-    
+    const key =
+      Constants.expoConfig?.extra?.kakaoMapApiKey || process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY;
+
     // API 키 로그는 한 번만 출력
     if (key) {
       console.log('[MapView] 카카오 API 키 로드 완료:', key.substring(0, 10) + '...');
@@ -50,7 +51,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
         '[MapView] 카카오 API 키가 설정되지 않았습니다. EXPO_PUBLIC_KAKAO_MAP_API_KEY를 확인하세요.',
       );
     }
-    
+
     return key;
   }, []); // 빈 배열: 컴포넌트 마운트 시 한 번만 실행
 
@@ -85,7 +86,7 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
       data: capsule,
     }));
   }, [capsules]);
-  
+
   // 웹뷰 콘솔/에러를 RN으로 전달해 디버깅 (iOS에서 맵 미표시 원인 추적용)
   const errorBridgeScript = useMemo(
     () => `
@@ -293,4 +294,3 @@ export default function MapView({ center, level, onMapClick, onMarkerClick }: Ma
     </View>
   );
 }
-
