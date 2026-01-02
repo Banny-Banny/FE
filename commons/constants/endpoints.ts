@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
     CREATE: 'api/capsule', // 이스터에그 생성 (POST)
     DETAIL: 'api/capsule', // 이스터에그(캡슐) 조회 (GET) - {id} 파라미터 필요
     LIST: 'api/capsules', // 캡슐 목록 조회 (GET)
+    SLOTS: 'api/capsules/slots', // 슬롯 정보 조회 (GET)
   },
 
   // 주문 (Order)

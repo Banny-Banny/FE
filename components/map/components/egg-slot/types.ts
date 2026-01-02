@@ -4,11 +4,9 @@
  * Created: 2025-01-XX
  */
 
+import type { EggSlotDataResponse } from './hooks/useEggSlotData';
+
 export interface EggSlotProps {
-  /** 사용된 egg 슬롯 개수 (0 ~ totalCount) */
-  usedCount: number;
-  /** 전체 egg 슬롯 개수 (기본값: 3) */
-  totalCount?: number;
-  /** 클릭 핸들러 (선택) */
-  onPress?: () => void;
+  /** 클릭 핸들러 - 슬롯 데이터를 전달 (선택) */
+  onPress?: (slotData: EggSlotDataResponse | null) => void;
 }

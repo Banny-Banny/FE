@@ -4,4 +4,3 @@
  */
 
 export * from './mapConfig';
-export * from './mockData';

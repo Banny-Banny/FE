@@ -33,6 +33,8 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
 }) => {
   // 사용된 개수가 전체 개수를 초과하지 않도록 제한
   const safeUsedCount = Math.min(Math.max(0, usedCount), totalCount);
+  // remaining slots 계산 (totalCount - usedCount)
+  const remainingCount = Math.max(0, totalCount - safeUsedCount);
 
   return (
     <Modal
@@ -64,7 +66,9 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
         <View style={styles.eggSlotContainer}>
           <View style={styles.eggSlotRow}>
             {Array.from({ length: totalCount }, (_, index) => {
-              const isFilled = index < safeUsedCount;
+              // remaining slots를 기준으로 찬 알 표시
+              // 뒤에서부터 remainingCount만큼 채워진 알로 표시
+              const isFilled = index >= totalCount - remainingCount;
               const slotNumber = index + 1;
 
               return (
@@ -92,8 +96,8 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
 
         {/* 개수 표시 */}
         <View style={styles.countContainer}>
-          <Text style={styles.currentCount}>{safeUsedCount}</Text>
-          <Text style={styles.totalCount}>/3</Text>
+          <Text style={styles.currentCount}>{remainingCount}</Text>
+          <Text style={styles.totalCount}>/{totalCount}</Text>
         </View>
 
         {/* 정보 섹션 */}

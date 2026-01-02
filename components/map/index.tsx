@@ -18,7 +18,7 @@ import { EggForm } from './components/egg-form';
 import { EggSlotModal } from './components/egg-slot-modal';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
-import { useEggSlot } from './components/map-view/hooks/useEggSlot';
+import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
 import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
@@ -47,9 +47,10 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
 
   // 에그 슬롯 모달 상태 관리
   const [isEggSlotModalVisible, setIsEggSlotModalVisible] = useState(false);
-  const { slotData } = useEggSlot();
+  const [slotData, setSlotData] = useState<EggSlotDataResponse | null>(null);
 
-  const handleEggSlotPress = () => {
+  const handleEggSlotPress = (data: EggSlotDataResponse | null) => {
+    setSlotData(data);
     setIsEggSlotModalVisible(true);
   };
 
@@ -75,8 +76,8 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
       <EggSlotModal
         visible={isEggSlotModalVisible}
         onClose={handleCloseEggSlotModal}
-        usedCount={slotData.usedCount}
-        totalCount={slotData.totalCount}
+        usedCount={slotData?.usedSlots ?? 0}
+        totalCount={slotData?.totalSlots ?? 3}
       />
     </View>
   );
