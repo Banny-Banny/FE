@@ -47,15 +47,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
         styles.hideButton,
         isFormValid && !isSubmitting ? styles.hideButtonActive : styles.hideButtonInactive,
       ]}
-      onPress={() => {
-        console.log('🔘 숨기기 버튼 클릭됨');
-        console.log('📊 버튼 상태:', {
-          isFormValid,
-          isSubmitting,
-          disabled: !isFormValid || isSubmitting,
-        });
-        handleSubmit();
-      }}
+      onPress={handleSubmit}
       disabled={!isFormValid || isSubmitting}>
       <Text
         style={[

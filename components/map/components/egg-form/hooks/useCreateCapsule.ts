@@ -112,7 +112,6 @@ export const useCreateCapsule = () => {
           break;
       }
 
-      console.error('캡슐 생성 오류:', error);
       return null;
     }
   };

@@ -23,7 +23,6 @@ import { generateKakaoMapHtml } from '../webview/generateHtml';
 import type { WebViewToRNMessage } from '../webview/messageTypes';
 import { sendInitMessage, sendSetMarkersMessage } from '../webview/sendMessage';
 import { useCapsules } from './useCapsules';
-import { useEggSlot } from './useEggSlot';
 import { useMapLocation } from './useMapLocation';
 
 export function useMapView({
@@ -32,10 +31,10 @@ export function useMapView({
   onMapClick,
   onMarkerClick,
   onCapsuleClick,
+  onEggSlotPress,
 }: MapViewProps) {
   const webViewRef = useRef<WebView>(null);
   const { location, isLoading: locationLoading } = useMapLocation();
-  const { slotData } = useEggSlot();
 
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
 
@@ -152,7 +151,6 @@ export function useMapView({
     mapCenter,
     location,
     locationLoading,
-    slotData,
     markersForWeb,
     handleMessage,
     handleMessageCommon,

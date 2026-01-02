@@ -86,7 +86,7 @@ export default function MapView(props: MapViewProps = {}) {
           <CurrentLocation lat={mapCenter.lat} lng={mapCenter.lng} />
         </View>
       )}
-      <EggSlot usedCount={slotData.usedCount} totalCount={slotData.totalCount} />
+      <EggSlot onPress={props.onEggSlotPress} />
       {/* 현재 위치로 이동 버튼 */}
       <CurrentLocationButton
         webViewRef={webViewRef}

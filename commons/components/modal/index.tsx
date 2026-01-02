@@ -9,10 +9,10 @@
  */
 
 import React, { useMemo } from 'react';
-import { View, Pressable, Modal as RNModal } from 'react-native';
+import { Pressable, Modal as RNModal, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
-import { ModalConfig } from './types';
 import { DEFAULT_CONFIG, styles } from './styles';
+import { ModalConfig } from './types';
 
 interface ModalProps extends ModalConfig {
   /** 모달 표시 여부 */
@@ -46,6 +46,7 @@ export const Modal: React.FC<ModalProps> = ({
   height = DEFAULT_CONFIG.defaultHeight,
   padding = DEFAULT_CONFIG.defaultPadding,
   closeOnBackdropPress = DEFAULT_CONFIG.closeOnBackdropPress,
+  disableAnimation = false,
 }) => {
   // 모달 컨테이너 스타일 계산 (width, height, padding)
   const modalContainerStyle = useMemo(() => {
@@ -88,29 +89,42 @@ export const Modal: React.FC<ModalProps> = ({
       transparent
       animationType="none"
       onRequestClose={onClose}
-      statusBarTranslucent
-    >
+      statusBarTranslucent>
       {/* Backdrop (뒷배경) */}
-      <Animated.View
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(200)}
-        style={styles.backdrop}
-      >
-        <Pressable style={styles.backdropPressable} onPress={handleBackdropPress}>
-          {/* Modal Container */}
-          <Animated.View
-            entering={SlideInUp.duration(300).springify()}
-            exiting={SlideOutDown.duration(200)}
-            style={[styles.modalContainer, modalContainerStyle]}
-            // 모달 내부 클릭 시 이벤트 전파 중단 (backdrop close 방지)
-            onStartShouldSetResponder={() => true}
-            onTouchEnd={(e) => e.stopPropagation()}
-          >
-            {/* Modal Content - children을 그대로 렌더링 */}
-            {children}
-          </Animated.View>
-        </Pressable>
-      </Animated.View>
+      {disableAnimation ? (
+        <View style={styles.backdrop}>
+          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress}>
+            {/* Modal Container */}
+            <View
+              style={[styles.modalContainer, modalContainerStyle]}
+              // 모달 내부 클릭 시 이벤트 전파 중단 (backdrop close 방지)
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={(e) => e.stopPropagation()}>
+              {/* Modal Content - children을 그대로 렌더링 */}
+              {children}
+            </View>
+          </Pressable>
+        </View>
+      ) : (
+        <Animated.View
+          entering={FadeIn.duration(200)}
+          exiting={FadeOut.duration(200)}
+          style={styles.backdrop}>
+          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress}>
+            {/* Modal Container */}
+            <Animated.View
+              entering={SlideInUp.duration(300).springify()}
+              exiting={SlideOutDown.duration(200)}
+              style={[styles.modalContainer, modalContainerStyle]}
+              // 모달 내부 클릭 시 이벤트 전파 중단 (backdrop close 방지)
+              onStartShouldSetResponder={() => true}
+              onTouchEnd={(e) => e.stopPropagation()}>
+              {/* Modal Content - children을 그대로 렌더링 */}
+              {children}
+            </Animated.View>
+          </Pressable>
+        </Animated.View>
+      )}
     </RNModal>
   );
 };

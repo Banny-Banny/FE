@@ -4,6 +4,8 @@
  * Created: 2025-12-17
  */
 
+import type { EggSlotDataResponse } from '../egg-slot/hooks/useEggSlotData';
+
 export interface MapViewProps {
   center?: {
     lat: number;
@@ -13,6 +15,7 @@ export interface MapViewProps {
   onMapClick?: (coord: { lat: number; lng: number }) => void;
   onMarkerClick?: (id: string) => void;
   onCapsuleClick?: (capsule: CapsuleItem) => void;
+  onEggSlotPress?: (slotData: EggSlotDataResponse | null) => void;
 }
 
 /**

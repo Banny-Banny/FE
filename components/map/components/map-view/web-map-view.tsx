@@ -56,6 +56,7 @@ export function WebMapView({
   const currentLocationMarkerRef = useRef<any>(null);
   const currentLocationCircleRef = useRef<any>(null);
   const scriptLoadedRef = useRef(false);
+  const mapsLoadedRef = useRef(false);
   const kakaoMapApiKey = getKakaoMapApiKey();
 
   useEffect(() => {
@@ -84,9 +85,12 @@ export function WebMapView({
   }, []);
 
   const updateMarkers = useCallback(() => {
-    if (!mapRef.current || !window.kakao?.maps) return;
+    if (!mapRef.current || !window.kakao?.maps || !mapsLoadedRef.current) return;
 
     const kakaoMaps = window.kakao.maps;
+
+    // LatLng가 생성자로 사용 가능한지 확인
+    if (typeof kakaoMaps.LatLng !== 'function') return;
 
     Object.values(markersRef.current).forEach((marker: any) => {
       marker.setMap(null);
@@ -94,19 +98,23 @@ export function WebMapView({
     markersRef.current = {};
 
     markers.forEach(({ id, lat, lng }) => {
-      const marker = new kakaoMaps.Marker({
-        position: new kakaoMaps.LatLng(lat, lng),
-        map: mapRef.current,
-      });
-
-      kakaoMaps.event.addListener(marker, 'click', () => {
-        onMessage?.({
-          type: 'MARKER_CLICK',
-          payload: { id },
+      try {
+        const marker = new kakaoMaps.Marker({
+          position: new kakaoMaps.LatLng(lat, lng),
+          map: mapRef.current,
         });
-      });
 
-      markersRef.current[id] = marker;
+        kakaoMaps.event.addListener(marker, 'click', () => {
+          onMessage?.({
+            type: 'MARKER_CLICK',
+            payload: { id },
+          });
+        });
+
+        markersRef.current[id] = marker;
+      } catch (error) {
+        // 마커 생성 실패 시 조용히 처리
+      }
     });
   }, [markers, onMessage]);
 
@@ -114,6 +122,12 @@ export function WebMapView({
     if (!mapContainerRef.current || !window.kakao?.maps) return;
 
     const kakaoMaps = window.kakao.maps;
+
+    // LatLng가 생성자로 사용 가능한지 확인
+    if (typeof kakaoMaps.LatLng !== 'function') {
+      return;
+    }
+
     const container = mapContainerRef.current;
     const center = new kakaoMaps.LatLng(mapCenter.lat, mapCenter.lng);
 
@@ -138,6 +152,7 @@ export function WebMapView({
       });
     });
 
+    mapsLoadedRef.current = true;
     updateMarkers();
   }, [mapCenter.lat, mapCenter.lng, level, onMessage, updateMarkers]);
 
@@ -157,6 +172,7 @@ export function WebMapView({
         scriptLoadedRef.current = true;
         if (window.kakao?.maps && mapContainerRef.current) {
           window.kakao.maps.load(() => {
+            mapsLoadedRef.current = true;
             initMap();
           });
         }
@@ -170,16 +186,19 @@ export function WebMapView({
       };
     } else if (window.kakao?.maps) {
       window.kakao.maps.load(() => {
+        mapsLoadedRef.current = true;
         initMap();
       });
     }
   }, [kakaoMapApiKey, initMap]);
 
   useEffect(() => {
-    if (mapRef.current && window.kakao?.maps) {
+    if (mapRef.current && window.kakao?.maps && mapsLoadedRef.current) {
       const kakaoMaps = window.kakao.maps;
-      const center = new kakaoMaps.LatLng(mapCenter.lat, mapCenter.lng);
-      mapRef.current.setCenter(center);
+      if (typeof kakaoMaps.LatLng === 'function') {
+        const center = new kakaoMaps.LatLng(mapCenter.lat, mapCenter.lng);
+        mapRef.current.setCenter(center);
+      }
     }
   }, [mapCenter.lat, mapCenter.lng]);
 
@@ -201,55 +220,65 @@ export function WebMapView({
   }, []);
 
   const updateCurrentLocationMarker = useCallback(() => {
-    if (!mapRef.current || !window.kakao?.maps || isLoadingLocation || !currentLocation) {
+    if (!mapRef.current || !window.kakao?.maps || !mapsLoadedRef.current || isLoadingLocation || !currentLocation) {
       clearCurrentLocationMarker();
       return;
     }
 
     const kakaoMaps = window.kakao.maps;
+
+    // LatLng가 생성자로 사용 가능한지 확인
+    if (typeof kakaoMaps.LatLng !== 'function') {
+      return;
+    }
+
     const style = DEFAULT_MARKER_STYLE_FOR_WEBVIEW;
 
     clearCurrentLocationMarker();
 
-    // 마커 생성
-    const content = document.createElement('div');
-    content.style.width = `${style.width}px`;
-    content.style.height = `${style.height}px`;
-    content.style.backgroundColor = style.backgroundColor;
-    content.style.border = `${style.borderWidth}px solid ${style.borderColor}`;
-    content.style.borderRadius = style.borderRadius;
-    content.style.boxShadow = style.boxShadow;
-    content.style.position = 'relative';
+    try {
+      // 마커 생성
+      const content = document.createElement('div');
+      content.style.width = `${style.width}px`;
+      content.style.height = `${style.height}px`;
+      content.style.backgroundColor = style.backgroundColor;
+      content.style.border = `${style.borderWidth}px solid ${style.borderColor}`;
+      content.style.borderRadius = style.borderRadius;
+      content.style.boxShadow = style.boxShadow;
+      content.style.position = 'relative';
 
-    const position = new kakaoMaps.LatLng(currentLocation.lat, currentLocation.lng);
-    currentLocationMarkerRef.current = new kakaoMaps.CustomOverlay({
-      position,
-      content,
-      yAnchor: 0.5,
-      xAnchor: 0.5,
-    });
-
-    currentLocationMarkerRef.current.setMap(mapRef.current);
-
-    // 반경 원 표시
-    if (style.showRadius) {
-      currentLocationCircleRef.current = new kakaoMaps.Circle({
-        center: position,
-        radius: style.radiusMeters || 300,
-        strokeWeight: style.radiusStrokeWeight || 1,
-        strokeColor: style.radiusStrokeColor || 'rgba(66,133,244,0.2)',
-        strokeOpacity: 1,
-        strokeStyle: 'solid',
-        fillColor: style.radiusColor || 'rgba(66,133,244,0.1)',
-        fillOpacity: 1,
+      const position = new kakaoMaps.LatLng(currentLocation.lat, currentLocation.lng);
+      currentLocationMarkerRef.current = new kakaoMaps.CustomOverlay({
+        position,
+        content,
+        yAnchor: 0.5,
+        xAnchor: 0.5,
       });
 
-      currentLocationCircleRef.current.setMap(mapRef.current);
+      currentLocationMarkerRef.current.setMap(mapRef.current);
+
+      // 반경 원 표시
+      if (style.showRadius) {
+        currentLocationCircleRef.current = new kakaoMaps.Circle({
+          center: position,
+          radius: style.radiusMeters || 300,
+          strokeWeight: style.radiusStrokeWeight || 1,
+          strokeColor: style.radiusStrokeColor || 'rgba(66,133,244,0.2)',
+          strokeOpacity: 1,
+          strokeStyle: 'solid',
+          fillColor: style.radiusColor || 'rgba(66,133,244,0.1)',
+          fillOpacity: 1,
+        });
+
+        currentLocationCircleRef.current.setMap(mapRef.current);
+      }
+    } catch (error) {
+      // 현재 위치 마커 업데이트 실패 시 조용히 처리
     }
   }, [currentLocation, isLoadingLocation, clearCurrentLocationMarker]);
 
   useEffect(() => {
-    if (mapRef.current && window.kakao?.maps) {
+    if (mapRef.current && window.kakao?.maps && mapsLoadedRef.current) {
       updateMarkers();
       updateCurrentLocationMarker();
     }
@@ -258,11 +287,13 @@ export function WebMapView({
   // 현재 위치로 이동하는 함수
   const moveToLocation = useCallback(
     (location: { lat: number; lng: number }) => {
-      if (!mapRef.current || !window.kakao?.maps) return;
+      if (!mapRef.current || !window.kakao?.maps || !mapsLoadedRef.current) return;
 
       const kakaoMaps = window.kakao.maps;
-      const position = new kakaoMaps.LatLng(location.lat, location.lng);
-      mapRef.current.setCenter(position);
+      if (typeof kakaoMaps.LatLng === 'function') {
+        const position = new kakaoMaps.LatLng(location.lat, location.lng);
+        mapRef.current.setCenter(position);
+      }
     },
     [],
   );
