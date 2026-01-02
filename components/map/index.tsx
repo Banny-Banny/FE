@@ -17,6 +17,7 @@ import { EggDetail } from './components/egg-detail';
 import { EggForm } from './components/egg-form';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import ResetEggSlot from './components/reset-egg-slot';
 import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
