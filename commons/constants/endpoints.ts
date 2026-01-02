@@ -18,10 +18,11 @@ export const API_ENDPOINTS = {
 
   // 캡슐 (Capsules)
   CAPSULE: {
-    CREATE: 'api/capsule', // 이스터에그 생성 (POST)
+    CREATE: 'api/capsules', // 이스터에그 생성 (POST)
     DETAIL: 'api/capsule', // 이스터에그(캡슐) 조회 (GET) - {id} 파라미터 필요
     LIST: 'api/capsules', // 캡슐 목록 조회 (GET)
     SLOTS: 'api/capsules/slots', // 슬롯 정보 조회 (GET)
+    SLOTS_RESET: 'api/capsules/slots/reset', // 이스터에그 슬롯 초기화 (POST)
   },
 
   // 주문 (Order)

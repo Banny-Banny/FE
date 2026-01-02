@@ -44,10 +44,11 @@ export const Modal: React.FC<ModalProps> = ({
   children,
   width = DEFAULT_CONFIG.defaultWidth,
   height = DEFAULT_CONFIG.defaultHeight,
+  padding = DEFAULT_CONFIG.defaultPadding,
   closeOnBackdropPress = DEFAULT_CONFIG.closeOnBackdropPress,
   disableAnimation = false,
 }) => {
-  // 모달 컨테이너 스타일 계산 (width, height)
+  // 모달 컨테이너 스타일 계산 (width, height, padding)
   const modalContainerStyle = useMemo(() => {
     const dynamicStyle: any = {};
 
@@ -67,8 +68,13 @@ export const Modal: React.FC<ModalProps> = ({
       }
     }
 
+    // padding 설정
+    if (padding !== undefined) {
+      dynamicStyle.padding = padding;
+    }
+
     return dynamicStyle;
-  }, [width, height]);
+  }, [width, height, padding]);
 
   // 뒷배경 클릭 핸들러
   const handleBackdropPress = () => {

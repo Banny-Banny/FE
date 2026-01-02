@@ -18,7 +18,7 @@ import { PaymentMethod, PaymentWebView } from './components/payment-webview';
 import { TEXTS } from './constants';
 import { useOrderSummary } from './hooks/useOrderSummary';
 import { usePaymentValidation } from './hooks/usePaymentValidation';
-import { useTossPayment } from './hooks/useTossPayment';
+import { SKIP_PAYMENT, useTossPayment } from './hooks/useTossPayment';
 import { styles } from './styles';
 import { TossPaymentProps } from './types';
 
@@ -50,17 +50,6 @@ export default function TossPayment({
       onSubmit(orderSummary);
     }
   }, [closeModal, onSubmit, orderSummary]);
-
-  // ============================================
-  // WebView 결제 핸들러
-  // ============================================
-  const handleSubmitPress = useCallback(() => {
-    if (!isPaymentEnabled) {
-      Alert.alert('알림', TEXTS.alerts.agreementRequired);
-      return;
-    }
-    setShowPaymentWebView(true);
-  }, [isPaymentEnabled]);
 
   const handlePaymentSuccess = useCallback(
     async (paymentKey: string, orderId: string, amount: number) => {
@@ -96,7 +85,7 @@ export default function TossPayment({
         // 결제 완료 모달 표시
         openModal({
           width: 344,
-          height: 'auto',
+          height: 242,
           closeOnBackdropPress: true,
           children: <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />,
         });
@@ -120,6 +109,29 @@ export default function TossPayment({
     setShowPaymentWebView(false);
     Alert.alert('결제 실패', message || '결제 처리 중 오류가 발생했습니다.');
   }, []);
+
+  // ============================================
+  // WebView 결제 핸들러
+  // ============================================
+  const handleSubmitPress = useCallback(() => {
+    if (!isPaymentEnabled) {
+      Alert.alert('알림', TEXTS.alerts.agreementRequired);
+      return;
+    }
+
+    // ============================================
+    // 개발 모드: 결제 자동 건너뛰기
+    // ============================================
+    if (SKIP_PAYMENT) {
+      console.log('🔧 [개발 모드] 결제 WebView 건너뛰기 - 자동으로 결제 성공 처리');
+      // Mock 결제 데이터로 즉시 성공 처리
+      const mockPaymentKey = 'mock-payment-key-' + Date.now();
+      handlePaymentSuccess(mockPaymentKey, orderData.order_id, orderData.total_amount);
+      return;
+    }
+
+    setShowPaymentWebView(true);
+  }, [isPaymentEnabled, handlePaymentSuccess, orderData.order_id, orderData.total_amount]);
 
   const handleBackPress = useCallback(() => {
     if (onBack) {
@@ -172,14 +184,14 @@ export default function TossPayment({
           onAgreementToggle={handleAgreementToggle}
           onAgreementDetailPress={handleAgreementDetailPress}
         />
-      </ScrollView>
 
-      {/* 하단 결제 버튼 */}
-      <PaymentFooter
-        isLoading={isLoading}
-        isPaymentEnabled={isPaymentEnabled}
-        onSubmit={handleSubmitPress}
-      />
+        {/* 결제 버튼 */}
+        <PaymentFooter
+          isLoading={isLoading}
+          isPaymentEnabled={isPaymentEnabled}
+          onSubmit={handleSubmitPress}
+        />
+      </ScrollView>
 
       {/* 약관 상세 모달 */}
       <AgreementDetailModal

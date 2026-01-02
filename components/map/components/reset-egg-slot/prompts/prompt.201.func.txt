@@ -1,0 +1,29 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - 01-common.mdc
+            - 04-func.mdc
+            - project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/reset-egg-slot/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/reset-egg-slot/styles.ts
+조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/map/components/reset-egg-slot/hooks 하위 폴더
+
+조건-환경변수) `process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY` 사용.
+조건-라이브러리) axios와 이미 구현되어 있는 react-query provider 사용
+
+==============================================
+
+핵심요구사항) reset과 관련된 아이콘을 사용해서 동그란 버튼을 map-view의 왼쪽 상단에 배치
+(마이페이지에서 이스터에그 수정, 삭제 기능 추가 시 삭제 될 예정)
+
+핵심요구사항) 아래의 기능 상세를 따를 것
+1. API 주소 (POST /api/capsule/slots/reset)
+  - 사용자가 지도에 있는 버튼을 누르면, 이스터에그 슬롯을 초기화 시켜 3개로 만들 것.
+  - Header: `Authorization: Bearer <JWT>`
+
+2. 구현 로직
+  - api 요청의 경우 hooks 폴더 하위에 분류할 것.

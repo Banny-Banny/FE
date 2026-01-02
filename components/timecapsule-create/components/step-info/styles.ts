@@ -1,10 +1,12 @@
 /**
  * step-info/styles.ts
  * 생성 시각: 2024-12-16
+ * 수정 시각: 2024-12-30 (Figma 디자인 node 303:654 기반 전면 개선)
  * 규칙 준수 체크리스트:
  * - [x] tailwind.config.js 토큰 기반 색상 사용
  * - [x] StyleSheet.create() 방식 사용
- * - [x] 인라인 스타일 금지 준수
+ * - [x] 인라인 스타일 금지 준수 (로딩 오버레이 포함)
+ * - [x] Figma 디자인과 1px 단위 정밀 일치
  */
 
 import { Colors, Typography } from '@/commons/constants';
@@ -16,7 +18,7 @@ export const styles = StyleSheet.create({
   // ============================================
   container: {
     flex: 1,
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.white[500],
   },
 
   // ============================================
@@ -24,7 +26,6 @@ export const styles = StyleSheet.create({
   // ============================================
   header: {
     width: '100%',
-    height: 64,
   },
 
   headerContainer: {
@@ -32,7 +33,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingTop: 16,
-    paddingBottom: 12,
+    paddingBottom: 16,
+    height: 84,
   },
 
   headerBorder: {
@@ -42,16 +44,14 @@ export const styles = StyleSheet.create({
   },
 
   backButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
 
   backButtonText: {
-    ...Typography.body.body4,
     fontSize: 20,
     color: Colors.black[500],
     includeFontPadding: false,
@@ -59,10 +59,11 @@ export const styles = StyleSheet.create({
 
   headerTitle: {
     ...Typography.header.h1,
-    color: Colors.darkGrey[900],
+    color: Colors.black[500],
   },
+
   scrollContent: {
-    paddingTop: 32,
+    paddingTop: 24,
     paddingHorizontal: 24,
     paddingBottom: 48,
   },
@@ -71,217 +72,237 @@ export const styles = StyleSheet.create({
   // Section Common
   // ============================================
   section: {
-    marginBottom: 32,
+    marginBottom: 48,
   },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 4,
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  sectionHeaderWithSub: {
-    height: 43,
-  },
-  sectionLabelContainer: {
-    gap: 4,
-  },
-  sectionSubLabel: {
-    ...Typography.body.body10,
-    color: Colors.black[500],
-  },
+
   sectionLabel: {
     ...Typography.body.body1,
-    color: Colors.darkGrey[900],
-  },
-  sectionLabelBlack: {
     color: Colors.black[500],
   },
+
   sectionPrice: {
-    ...Typography.body.body10,
+    ...Typography.caption.caption1,
     color: Colors.red[500],
-  },
-  sectionPriceMuted: {
-    color: Colors.grey[400],
   },
 
   // ============================================
   // Capsule Name Section
   // ============================================
   capsuleNameSection: {
-    gap: 24,
+    gap: 12,
   },
+
   inputContainer: {
-    backgroundColor: Colors.whiteGrey[100],
+    backgroundColor: Colors.darkGrey[50],
     borderWidth: 1,
     borderColor: Colors.grey[200],
     borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    height: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 56,
     justifyContent: 'center',
   },
+
   input: {
-    ...Typography.body.body4,
+    ...Typography.body.body1,
     color: Colors.black[500],
-  },
-  inputPlaceholder: {
-    ...Typography.body.body4,
-    color: Colors.grey[400],
+    padding: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 
   // ============================================
   // Date Selection Section
   // ============================================
   dateSelectionSection: {
-    gap: 16,
+    gap: 12,
   },
+
   openDateText: {
     ...Typography.body.body9,
     fontSize: 13,
     lineHeight: 19.5,
     color: Colors.grey[700],
     marginTop: 4,
-    paddingHorizontal: 4,
   },
+
   dateButtonsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
+
   dateButton: {
     width: '48%',
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.white[500],
     borderWidth: 2,
     borderColor: Colors.grey[200],
     borderRadius: 16,
     paddingTop: 18,
-    paddingBottom: 2,
+    paddingBottom: 18,
     paddingHorizontal: 18,
-    height: 80,
-    gap: 4,
+    height: 84,
+    justifyContent: 'space-between',
   },
+
   dateButtonSelected: {
-    borderWidth: 2,
+    backgroundColor: Colors.black[500],
     borderColor: Colors.black[500],
     shadowColor: Colors.black[500],
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowRadius: 4,
+    elevation: 3,
   },
+
   dateButtonTitle: {
-    ...Typography.header.h3,
-    color: Colors.darkGrey[900],
-  },
-  dateButtonTitleSelected: {
+    ...Typography.body.body1,
     color: Colors.black[500],
   },
-  dateButtonPrice: {
-    ...Typography.body.body3,
-    fontSize: 10,
-    lineHeight: 15,
-    color: Colors.grey[500],
+
+  dateButtonTitleSelected: {
+    color: Colors.white[500],
   },
+
+  dateButtonPrice: {
+    ...Typography.caption.caption1,
+    color: Colors.black[500],
+  },
+
   dateButtonPriceSelected: {
-    color: Colors.grey[500],
+    color: Colors.white[500],
   },
 
   // ============================================
   // Stepper Section
   // ============================================
   stepperSection: {
-    marginBottom: 24,
+    marginBottom: 48,
   },
+
   stepperRow: {
+    flexDirection: 'column',
+    gap: 16,
+  },
+
+  stepperInfoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    height: 72,
+    alignItems: 'flex-start',
   },
+
   stepperLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 4,
   },
+
   stepperLabelColumn: {
     gap: 4,
   },
+
+  stepperPriceColumn: {
+    gap: 4,
+    alignItems: 'flex-end',
+  },
+
   stepperLabel: {
     ...Typography.body.body1,
     color: Colors.black[500],
   },
+
   stepperSubLabel: {
-    ...Typography.body.body3,
-    fontSize: 11,
-    lineHeight: 20,
-    color: Colors.grey[500],
+    ...Typography.caption.caption1,
+    color: Colors.grey[700],
   },
+
   stepperHint: {
-    ...Typography.body.body6,
-    color: Colors.grey[600],
+    ...Typography.caption.caption1,
+    color: Colors.grey[700],
     textAlign: 'right',
-    marginTop: 6,
+    marginTop: 0,
   },
-  stepperSectionPrice: {
-    ...Typography.body.body10,
+
+  stepperPrice: {
+    ...Typography.caption.caption1,
     color: Colors.red[500],
     textAlign: 'right',
-    marginBottom: 16,
+    marginTop: 0,
   },
+
+  stepperSectionPrice: {
+    ...Typography.caption.caption1,
+    color: Colors.red[500],
+    textAlign: 'right',
+    marginBottom: 12,
+  },
+
   stepperContainer: {
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.whiteGrey[200],
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 27,
-
-    height: 72,
-    minWidth: 174,
+    justifyContent: 'space-between',
+    paddingHorizontal: 43,
+    height: 60,
   },
+
   stepperButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: Colors.whiteGrey[50],
-    borderRadius: 14,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   stepperButtonText: {
-    ...Typography.header.h5,
-    fontSize: 28,
-    lineHeight: 28,
-    color: Colors.black[500],
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '700',
+    color: Colors.grey[900],
+    includeFontPadding: false,
   },
+
   stepperValueContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+
   stepperValue: {
-    ...Typography.header.h5,
     fontSize: 28,
     lineHeight: 36,
+    fontWeight: '700',
     color: Colors.black[500],
+    includeFontPadding: false,
   },
+
   stepperUnit: {
     ...Typography.body.body1,
-    color: Colors.grey[600],
+    color: Colors.grey[700],
   },
 
   // ============================================
   // Additional Options Section
   // ============================================
   additionalOptionsSection: {
-    gap: 16,
+    gap: 12,
   },
+
   optionsContainer: {
     flexDirection: 'row',
     gap: 12,
   },
+
   optionCard: {
     flex: 1,
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.white[500],
     borderWidth: 2,
     borderColor: Colors.grey[200],
     borderRadius: 16,
@@ -292,20 +313,23 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   optionIconContainer: {
     width: 24,
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   optionTitle: {
     ...Typography.body.body1,
-    color: Colors.darkGrey[900],
+    color: Colors.black[500],
     textAlign: 'center',
   },
+
   optionPrice: {
-    ...Typography.body.body6,
-    color: Colors.grey[500],
+    ...Typography.caption.caption1,
+    color: Colors.black[500],
     textAlign: 'center',
   },
 
@@ -313,40 +337,46 @@ export const styles = StyleSheet.create({
   // Payment Section (총 결제금액 및 결제 버튼)
   // ============================================
   paymentSection: {
-    marginTop: 66,
+    marginTop: 32,
     gap: 16,
   },
+
   totalContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     height: 32,
   },
+
   totalLabel: {
-    ...Typography.body.body1,
     fontSize: 20,
     lineHeight: 24,
+    fontWeight: '700',
     color: Colors.black[500],
   },
+
   totalPrice: {
-    ...Typography.header.h1,
     fontSize: 24,
     lineHeight: 32,
+    fontWeight: '700',
     color: Colors.red[500],
   },
+
   submitButton: {
-    backgroundColor: Colors.darkGrey[900],
-    borderRadius: 16,
+    backgroundColor: Colors.black[500],
+    borderRadius: 20,
     height: 64,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   submitButtonDisabled: {
     backgroundColor: Colors.grey[300],
   },
+
   submitButtonText: {
     ...Typography.caption.button,
-    color: Colors.white[50],
+    color: Colors.white[500],
     textAlign: 'center',
   },
 
@@ -358,6 +388,11 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 10, 10, 0.5)', // Colors.black[500] with 50% opacity
     justifyContent: 'flex-end',
   },
+
+  calendarBottomSheetBackdrop: {
+    flex: 1,
+  },
+
   calendarBottomSheetContainer: {
     backgroundColor: Colors.white[50],
     borderTopLeftRadius: 24,
@@ -367,6 +402,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24,
     maxHeight: '70%',
   },
+
   calendarBottomSheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -374,22 +410,27 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: 4,
   },
+
   calendarBottomSheetTitle: {
     ...Typography.caption.button,
     fontSize: 18,
     lineHeight: 27,
     color: Colors.darkGrey[900],
   },
+
   calendarBottomSheetCloseButton: {
     padding: 8,
   },
+
   calendarBottomSheetCloseText: {
     ...Typography.body.body11,
     color: Colors.grey[600],
   },
+
   calendarContainer: {
     marginBottom: 20,
   },
+
   calendarConfirmButton: {
     backgroundColor: Colors.darkGrey[900],
     borderRadius: 16,
@@ -398,6 +439,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
+
   calendarConfirmButtonText: {
     ...Typography.body.body1,
     color: Colors.white[50],
@@ -407,19 +449,48 @@ export const styles = StyleSheet.create({
   // Option Card Selected State
   // ============================================
   optionCardSelected: {
-    borderWidth: 2,
-    borderColor: Colors.darkGrey[900],
-    backgroundColor: Colors.whiteGrey[100],
-    shadowColor: Colors.darkGrey[900],
+    backgroundColor: Colors.black[500],
+    borderColor: Colors.black[500],
+    shadowColor: Colors.black[500],
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
+
   optionTitleSelected: {
-    color: Colors.black[500],
+    color: Colors.white[500],
   },
+
   optionPriceSelected: {
-    color: Colors.grey[600],
+    color: Colors.white[500],
+  },
+
+  // ============================================
+  // Loading Overlay (인라인 스타일 제거)
+  // ============================================
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+
+  loadingContainer: {
+    backgroundColor: Colors.white[100],
+    padding: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.black[500],
   },
 });
