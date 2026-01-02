@@ -13,6 +13,7 @@ export interface MapViewProps {
   onMapClick?: (coord: { lat: number; lng: number }) => void;
   onMarkerClick?: (id: string) => void;
   onCapsuleClick?: (capsule: CapsuleItem) => void;
+  onEggSlotPress?: () => void;
 }
 
 /**

@@ -19,6 +19,8 @@ export interface ModalConfig {
   closeOnBackdropPress?: boolean;
   /** 모달 닫힐 때 호출되는 콜백 함수 */
   onClose?: () => void;
+  /** 애니메이션 비활성화 여부 (기본값: false) */
+  disableAnimation?: boolean;
 }
 
 /**

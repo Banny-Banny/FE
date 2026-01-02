@@ -15,15 +15,15 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { styles } from './styles';
 import type { EggSlotProps } from './types';
 
-export const EggSlot: React.FC<EggSlotProps> = ({ usedCount, totalCount = 3 }) => {
+export const EggSlot: React.FC<EggSlotProps> = ({ usedCount, totalCount = 3, onPress }) => {
   // 사용된 개수가 전체 개수를 초과하지 않도록 제한
   const safeUsedCount = Math.min(Math.max(0, usedCount), totalCount);
 
-  return (
+  const content = (
     <View style={styles.container}>
       {Array.from({ length: totalCount }, (_, index) => {
         const isFilled = index < safeUsedCount;
@@ -55,6 +55,20 @@ export const EggSlot: React.FC<EggSlotProps> = ({ usedCount, totalCount = 3 }) =
       })}
     </View>
   );
+
+  if (onPress) {
+    return (
+      <Pressable
+        style={styles.pressableWrapper}
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel="이스터에그 슬롯 정보 보기">
+        {content}
+      </Pressable>
+    );
+  }
+
+  return <View style={styles.pressableWrapper}>{content}</View>;
 };
 
 export default EggSlot;

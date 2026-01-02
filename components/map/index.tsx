@@ -15,8 +15,10 @@ import { View } from 'react-native';
 
 import { EggDetail } from './components/egg-detail';
 import { EggForm } from './components/egg-form';
+import { EggSlotModal } from './components/egg-slot-modal';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import { useEggSlot } from './components/map-view/hooks/useEggSlot';
 import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
@@ -43,12 +45,25 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setSelectedCapsule(null);
   };
 
+  // 에그 슬롯 모달 상태 관리
+  const [isEggSlotModalVisible, setIsEggSlotModalVisible] = useState(false);
+  const { slotData } = useEggSlot();
+
+  const handleEggSlotPress = () => {
+    setIsEggSlotModalVisible(true);
+  };
+
+  const handleCloseEggSlotModal = () => {
+    setIsEggSlotModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
         center={mapConfig.center}
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
+        onEggSlotPress={handleEggSlotPress}
       />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <EggForm isVisible={isEggFormVisible} onClose={handleCloseEggForm} />
@@ -56,6 +71,12 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         isVisible={isCapsuleDetailVisible}
         onClose={handleCloseCapsuleDetail}
         capsule={selectedCapsule}
+      />
+      <EggSlotModal
+        visible={isEggSlotModalVisible}
+        onClose={handleCloseEggSlotModal}
+        usedCount={slotData.usedCount}
+        totalCount={slotData.totalCount}
       />
     </View>
   );
