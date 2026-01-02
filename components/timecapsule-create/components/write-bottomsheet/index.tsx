@@ -13,6 +13,8 @@
  */
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
+import { Button } from '@/commons/components/button';
+import { DualButton } from '@/commons/components/dual-button';
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -186,17 +188,16 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
   // 하단 고정 버튼 영역 (공통 컴포넌트의 footer 스타일 사용)
   const renderFooter = () => (
     <>
-      <View style={styles.buttonContainer}>
-        <Pressable style={styles.cancelButton} onPress={handleCancel} disabled={isSubmitting}>
-          <Text style={styles.cancelButtonText}>취소</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.saveButton, isSubmitting && { opacity: 0.6 }]}
-          onPress={handleSave}
-          disabled={isSubmitting}>
-          <Text style={styles.saveButtonText}>{isSubmitting ? '저장 중...' : '저장'}</Text>
-        </Pressable>
-      </View>
+      <DualButton
+        cancelLabel="취소"
+        confirmLabel={isSubmitting ? '저장 중...' : '저장'}
+        size="M"
+        cancelVariant="outline"
+        confirmVariant="primary"
+        confirmDisabled={isSubmitting}
+        onCancelPress={handleCancel}
+        onConfirmPress={handleSave}
+      />
       <Text style={styles.hintText}>나중에도 수정할 수 있어요</Text>
     </>
   );
@@ -250,16 +251,14 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
             />
             <Text style={styles.sectionTitle}>사진 ({watch('photos').length}/5)</Text>
           </View>
-          <Pressable
-            style={styles.addButton}
+          <Button
+            label={isPickingImage ? '선택 중...' : '사진 추가'}
+            variant="outline"
+            size="M"
+            icon="ri-add-line"
+            disabled={isPickingImage || currentPhotos.length >= 5}
             onPress={handleAddPhoto}
-            disabled={isPickingImage || currentPhotos.length >= 5}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
-              style={styles.addButtonIcon}
-            />
-            <Text style={styles.addButtonText}>{isPickingImage ? '선택 중...' : '사진 추가'}</Text>
-          </Pressable>
+          />
 
           {/* 추가된 사진 미리보기 - 그리드 배치 (3 + 2) */}
           <Controller
@@ -310,15 +309,14 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
             />
             <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
           </View>
-          <Pressable style={styles.addButton} onPress={handleAddMusic} disabled={isPickingAudio}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
-              style={styles.addButtonIcon}
-            />
-            <Text style={styles.addButtonText}>
-              {isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
-            </Text>
-          </Pressable>
+          <Button
+            label={isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
+            variant="outline"
+            size="M"
+            icon="ri-add-line"
+            disabled={isPickingAudio}
+            onPress={handleAddMusic}
+          />
 
           {/* 선택된 음악 표시 */}
           {currentMusic && (
@@ -350,15 +348,14 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
             />
             <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
           </View>
-          <Pressable style={styles.addButton} onPress={handleAddVideo} disabled={isPickingVideo}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/plus-icon.svg' }}
-              style={styles.addButtonIcon}
-            />
-            <Text style={styles.addButtonText}>
-              {isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
-            </Text>
-          </Pressable>
+          <Button
+            label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
+            variant="outline"
+            size="M"
+            icon="ri-add-line"
+            disabled={isPickingVideo}
+            onPress={handleAddVideo}
+          />
 
           {/* 선택된 동영상 표시 */}
           {currentVideo && (
