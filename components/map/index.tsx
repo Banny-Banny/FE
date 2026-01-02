@@ -68,6 +68,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         onEggSlotPress={handleEggSlotPress}
       />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
+      <ResetEggSlot />
       <EggForm isVisible={isEggFormVisible} onClose={handleCloseEggForm} />
       <EggDetail
         isVisible={isCapsuleDetailVisible}
