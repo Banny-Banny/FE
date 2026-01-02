@@ -9,10 +9,17 @@ import { apiClient, buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/uti
 import { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Alert } from 'react-native';
-import { ApiErrorResponse, AttachmentFile, CreateCapsuleRequest, CreateCapsuleResponse } from '../types';
+import { useMapLocation } from '../../map-view/hooks/useMapLocation';
+import {
+  ApiErrorResponse,
+  AttachmentFile,
+  CreateCapsuleRequest,
+  CreateCapsuleResponse,
+} from '../types';
 
 export const useCreateCapsule = () => {
   const { upload } = useMediaUpload();
+  const { location } = useMapLocation();
 
   const createCapsule = async (
     data: Omit<CreateCapsuleRequest, 'media_urls' | 'media_types'> & {
@@ -52,7 +59,15 @@ export const useCreateCapsule = () => {
       // mediaIds를 URL로 변환
       const mediaUrls = await getMediaUrls(mediaIds);
 
+      // 현재 위치 확인
+      if (!location) {
+        Alert.alert('오류', '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
+        return null;
+      }
+
       const requestData: CreateCapsuleRequest = {
+        latitude: location.lat,
+        longitude: location.lng,
         title: data.title,
         content: data.content,
         media_urls: mediaUrls,
@@ -86,7 +101,10 @@ export const useCreateCapsule = () => {
                 `이스터에그 작성 슬롯이 모두 사용되었습니다.\n\n사용된 슬롯: ${details.used_slots}개\n최대 슬롯: ${details.max_slots}개\n남은 슬롯: ${remaining}개`,
               );
             } else if (details?.remaining_slots !== undefined) {
-              Alert.alert('슬롯 부족', `남은 슬롯이 없습니다.\n(남은 슬롯: ${details.remaining_slots}개)`);
+              Alert.alert(
+                '슬롯 부족',
+                `남은 슬롯이 없습니다.\n(남은 슬롯: ${details.remaining_slots}개)`,
+              );
             } else {
               const serverMessage = errorData?.message || errorData?.error;
               Alert.alert(
@@ -102,13 +120,19 @@ export const useCreateCapsule = () => {
           break;
         }
         case 400:
-          Alert.alert('오류', errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.');
+          Alert.alert(
+            '오류',
+            errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.',
+          );
           break;
         case 404:
           Alert.alert('오류', '요청한 상품을 찾을 수 없습니다.');
           break;
         default:
-          Alert.alert('오류', errorData?.message || errorData?.error || '서버 오류가 발생했습니다.');
+          Alert.alert(
+            '오류',
+            errorData?.message || errorData?.error || '서버 오류가 발생했습니다.',
+          );
           break;
       }
 
