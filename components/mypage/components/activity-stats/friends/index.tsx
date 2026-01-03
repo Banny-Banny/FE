@@ -17,7 +17,7 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
 import React, { useMemo } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { styles } from './styles';
 import type { Friend, FriendsModalProps } from './types';
@@ -95,18 +95,10 @@ export function FriendsModal({
 
         {/* 친구 목록 섹션 */}
         <View style={styles.friendsSectionWrapper}>
-          <ScrollView
-            style={styles.friendsSection}
-            contentContainerStyle={styles.friendsList}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            bounces={true}
-            scrollEnabled={true}
-            directionalLockEnabled={true}
-            alwaysBounceVertical={false}>
-            {friends.map((friend: Friend) => (
+          <FlatList
+            data={friends}
+            renderItem={({ item: friend }) => (
               <View
-                key={friend.id}
                 style={[styles.friendItem, friend.isBlocked && styles.friendItemBlocked]}
                 pointerEvents="box-none">
                 {/* 친구 정보 */}
@@ -148,8 +140,17 @@ export function FriendsModal({
                   </Text>
                 </Pressable>
               </View>
-            ))}
-          </ScrollView>
+            )}
+            keyExtractor={(friend) => friend.id}
+            style={styles.friendsSection}
+            contentContainerStyle={styles.friendsList}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            bounces={true}
+            scrollEnabled={true}
+            directionalLockEnabled={true}
+            alwaysBounceVertical={false}
+          />
         </View>
       </View>
     </Modal>
