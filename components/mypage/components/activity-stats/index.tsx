@@ -11,21 +11,14 @@
  * Figma 노드 ID: 161:24090
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useToggle } from '@/commons/hooks';
 import { FriendsModal } from './friends';
 import { styles } from './styles';
 
 export function ActivityStats() {
-  const [isFriendsModalVisible, setIsFriendsModalVisible] = useState(false);
-
-  const handleFriendsPress = () => {
-    setIsFriendsModalVisible(true);
-  };
-
-  const handleCloseFriendsModal = () => {
-    setIsFriendsModalVisible(false);
-  };
+  const { isOpen: isFriendsModalVisible, open: handleFriendsPress, close: handleCloseFriendsModal } = useToggle();
 
   return (
     <>
