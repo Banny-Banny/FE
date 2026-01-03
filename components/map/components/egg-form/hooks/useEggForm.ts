@@ -301,6 +301,20 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     }
   };
 
+  /**
+   * 오디오 파일 직접 추가 (모달에서 사용)
+   */
+  const handleAddAudioFile = (uri: string, name: string) => {
+    const otherAttachments = attachments.filter((att) => att.type !== 'AUDIO');
+    const newAttachment: AttachmentFile = {
+      id: Date.now().toString(),
+      type: 'AUDIO',
+      name,
+      uri,
+    };
+    setValue('attachments', [...otherAttachments, newAttachment]);
+  };
+
   // 각 타입별 첨부파일 확인
   const photoAttachment = attachments.find((att) => att.type === 'IMAGE');
   const musicAttachment = attachments.find((att) => att.type === 'AUDIO');
@@ -313,6 +327,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     isSubmitting,
     handleDeleteAttachment,
     handleAddAttachment,
+    handleAddAudioFile,
     photoAttachment,
     musicAttachment,
     videoAttachment,
