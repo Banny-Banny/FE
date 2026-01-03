@@ -10,7 +10,7 @@ import { API_ENDPOINTS } from '@/commons/constants/endpoints';
 import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
-import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
+import { buildApiUrl, getMediaUrls, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
@@ -26,6 +26,7 @@ import {
   CreateCapsuleResponse,
   EggFormData,
 } from '../types';
+import { useVideoThumbnail } from './useVideoThumbnail';
 
 interface UseEggFormProps {
   onClose: () => void;
@@ -38,6 +39,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const { accessToken } = useAuth();
   const { upload: uploadMedia, isUploading: isMediaUploading } = useMediaUpload();
   const { location } = useMapLocation();
+  const { generateThumbnail } = useVideoThumbnail();
   const { control, handleSubmit, watch, setValue } = useForm<EggFormData>({
     defaultValues: {
       title: '',
@@ -78,7 +80,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           };
         }
       } else {
-        const mimeTypes = type === 'AUDIO' ? ['audio/*'] : ['video/*'];
+        const mimeTypes = getMimeTypes(type);
         const result = await DocumentPicker.getDocumentAsync({
           type: mimeTypes,
           copyToCacheDirectory: true,
@@ -99,10 +101,24 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           name: file.name,
           uri: file.uri,
         };
+
+        // 비디오 파일인 경우 썸네일 생성
+        if (type === 'VIDEO') {
+          try {
+            const thumbnailUri = await generateThumbnail(file.uri);
+            if (thumbnailUri) {
+              newAttachment.thumbnailUri = thumbnailUri;
+            }
+          } catch (error) {
+            console.error('비디오 썸네일 생성 오류:', error);
+            // 썸네일 생성 실패해도 파일은 추가
+          }
+        }
+
         setValue('attachments', [...otherAttachments, newAttachment]);
       }
     } catch (error) {
-      console.log('파일 선택 오류:', error);
+      console.error('파일 선택 오류:', error);
     }
   };
 

@@ -19,6 +19,7 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 import { SIZE_LIMITS } from '@/commons/constants/media';
 import { formatTime, formatTimeFromMillis } from '@/utils/format';
+import { getMimeTypes } from '@/utils';
 import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
@@ -101,7 +102,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
   const pickAudioFile = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: ['audio/*'],
+        type: getMimeTypes('AUDIO'),
         copyToCacheDirectory: true,
       });
 
