@@ -19,13 +19,20 @@
  * - react-native-remix-icon 사용
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors, ROUTES } from '@/commons/constants';
+import { useNavigation } from '@/commons/hooks';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { styles } from './styles';
 
 export function Header() {
+  const navigation = useNavigation();
+
+  const handleNotificationPress = () => {
+    navigation.push(ROUTES.ALARM);
+  };
+
   return (
     <View style={styles.outerContainer}>
       <View style={styles.container}>
@@ -37,13 +44,17 @@ export function Header() {
         {/* 오른쪽: 아이콘 컨테이너 */}
         <View style={styles.iconContainer}>
           {/* 알림 아이콘 (배지 있음) */}
-          <View style={styles.notificationButton}>
+          <Pressable
+            style={styles.notificationButton}
+            onPress={handleNotificationPress}
+            accessibilityRole="button"
+            accessibilityLabel="알림">
             <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
             {/* 알림 배지 */}
             <View style={styles.badge}>
               <Text style={styles.badgeText}>3</Text>
             </View>
-          </View>
+          </Pressable>
 
           {/* X 아이콘 */}
           <View style={styles.settingsButton}>
