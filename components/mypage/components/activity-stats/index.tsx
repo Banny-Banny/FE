@@ -11,50 +11,64 @@
  * Figma 노드 ID: 161:24090
  */
 
-import React from 'react';
-import { Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { FriendsModal } from './friends';
 import { styles } from './styles';
 
 export function ActivityStats() {
+  const [isFriendsModalVisible, setIsFriendsModalVisible] = useState(false);
+
+  const handleFriendsPress = () => {
+    setIsFriendsModalVisible(true);
+  };
+
+  const handleCloseFriendsModal = () => {
+    setIsFriendsModalVisible(false);
+  };
+
   return (
-    <View style={styles.container}>
-      {/* 캡슐 통계 */}
-      <View style={styles.statItem}>
-        <View style={styles.statValueContainer}>
-          <Text style={styles.statValue}>3</Text>
+    <>
+      <View style={styles.container}>
+        {/* 캡슐 통계 */}
+        <View style={styles.statItem}>
+          <View style={styles.statValueContainer}>
+            <Text style={styles.statValue}>3</Text>
+          </View>
+          <View style={styles.statLabelContainer}>
+            <Text style={styles.statLabel}>캡슐</Text>
+          </View>
         </View>
-        <View style={styles.statLabelContainer}>
-          <Text style={styles.statLabel}>캡슐</Text>
+
+        {/* 구분선 */}
+        <View style={styles.divider} />
+
+        {/* 이스터에그 통계 */}
+        <View style={styles.statItem}>
+          <View style={styles.statValueContainer}>
+            <Text style={styles.statValue}>12</Text>
+          </View>
+          <View style={styles.statLabelContainer}>
+            <Text style={styles.statLabel}>이스터에그</Text>
+          </View>
         </View>
+
+        {/* 구분선 */}
+        <View style={styles.divider} />
+
+        {/* 친구 통계 */}
+        <Pressable style={styles.statItem} onPress={handleFriendsPress}>
+          <View style={styles.statValueContainer}>
+            <Text style={styles.statValue}>8</Text>
+          </View>
+          <View style={styles.statLabelContainer}>
+            <Text style={styles.statLabel}>친구</Text>
+          </View>
+        </Pressable>
       </View>
 
-      {/* 구분선 */}
-      <View style={styles.divider} />
-
-      {/* 이스터에그 통계 */}
-      <View style={styles.statItem}>
-        <View style={styles.statValueContainer}>
-          <Text style={styles.statValue}>12</Text>
-        </View>
-        <View style={styles.statLabelContainer}>
-          <Text style={styles.statLabel}>이스터에그</Text>
-        </View>
-      </View>
-
-      {/* 구분선 */}
-      <View style={styles.divider} />
-
-      {/* 친구 통계 */}
-      <View style={styles.statItem}>
-        <View style={styles.statValueContainer}>
-          <Text style={styles.statValue}>8</Text>
-        </View>
-        <View style={styles.statLabelContainer}>
-          <Text style={styles.statLabel}>친구</Text>
-        </View>
-      </View>
-    </View>
+      {/* 친구 관리 모달 */}
+      <FriendsModal visible={isFriendsModalVisible} onClose={handleCloseFriendsModal} />
+    </>
   );
 }
-
-
