@@ -14,27 +14,10 @@
 
 import { ALLOWED_EXTENSIONS, MediaType } from '@/commons/constants';
 import { useMediaUpload } from '@/commons/hooks';
-import { getMimeTypes } from '@/utils';
+import { getMimeTypes, validateFileExtension } from '@/utils';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Alert } from 'react-native';
-
-/**
- * 파일 확장자 추출
- */
-const getFileExtension = (filename: string): string => {
-  const parts = filename.toLowerCase().split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
-};
-
-/**
- * 파일 확장자 검증
- */
-const validateFileExtension = (filename: string, type: MediaType): boolean => {
-  const extension = getFileExtension(filename);
-  const allowedExtensions = ALLOWED_EXTENSIONS[type] as readonly string[];
-  return allowedExtensions.includes(extension);
-};
 
 /**
  * 파일 업로드 Hook

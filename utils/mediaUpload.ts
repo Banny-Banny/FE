@@ -25,17 +25,13 @@ import { Platform } from 'react-native';
 import { buildApiUrl, normalizeApiBaseUrl } from './api';
 import { apiClient } from './apiClient';
 
-/**
- * 파일 확장자 추출
- */
-const getFileExtension = (filename: string): string => {
-  const parts = filename.toLowerCase().split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
-};
+import { getFileExtension } from './mediaType';
 
 /**
  * MIME Type 추론 함수
  * 파일 확장자를 기반으로 정확한 Content-Type을 반환
+ * @param filename 파일명
+ * @returns MIME 타입 문자열
  */
 export const inferMimeType = (filename: string): string => {
   const extension = getFileExtension(filename);
