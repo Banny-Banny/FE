@@ -13,9 +13,9 @@
  * - [x] 파일 업로드 기능 (expo-document-picker)
  */
 
-import { Colors } from '@/commons/constants';
-import { Typography } from '@/commons/constants';
 import { Modal } from '@/commons/components/modal';
+import { Colors } from '@/commons/constants';
+import { SIZE_LIMITS } from '@/commons/constants/media';
 import { Audio } from 'expo-av';
 import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useRef, useState } from 'react';
@@ -55,7 +55,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // 녹음 시간 업데이트
   useEffect(() => {
@@ -155,10 +155,11 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
 
       if (!result.canceled && result.assets?.[0]) {
         const asset = result.assets[0];
-        // 파일 크기 검증 (10MB)
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        // 파일 크기 검증 (20MB)
+        const maxSize = SIZE_LIMITS.AUDIO;
         if (asset.size && asset.size > maxSize) {
-          Alert.alert('파일 크기 초과', '파일 크기는 최대 10MB입니다.');
+          const sizeLimitMB = maxSize / (1024 * 1024);
+          Alert.alert('파일 크기 초과', `파일 크기는 최대 ${sizeLimitMB}MB입니다.`);
           return;
         }
 
@@ -195,10 +196,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
             style={[styles.tabButton, activeTab === 'record' && styles.tabButtonActive]}
             onPress={() => setActiveTab('record')}>
             <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === 'record' && styles.tabButtonTextActive,
-              ]}>
+              style={[styles.tabButtonText, activeTab === 'record' && styles.tabButtonTextActive]}>
               직접 녹음
             </Text>
           </Pressable>
@@ -206,10 +204,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
             style={[styles.tabButton, activeTab === 'upload' && styles.tabButtonActive]}
             onPress={() => setActiveTab('upload')}>
             <Text
-              style={[
-                styles.tabButtonText,
-                activeTab === 'upload' && styles.tabButtonTextActive,
-              ]}>
+              style={[styles.tabButtonText, activeTab === 'upload' && styles.tabButtonTextActive]}>
               파일 업로드
             </Text>
           </Pressable>
@@ -238,9 +233,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
 
               {/* 안내 텍스트 */}
               <Text style={styles.hintText}>
-                {isRecording
-                  ? '녹음 중... 버튼을 눌러 중지'
-                  : '버튼을 눌러 녹음을 시작하세요'}
+                {isRecording ? '녹음 중... 버튼을 눌러 중지' : '버튼을 눌러 녹음을 시작하세요'}
               </Text>
             </View>
           ) : (
@@ -249,7 +242,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
               <Pressable style={styles.uploadButton} onPress={pickAudioFile}>
                 <Icon name="file-upload-line" size={32} color={Colors.grey[500]} />
                 <Text style={styles.uploadButtonTitle}>파일 선택하기</Text>
-                <Text style={styles.uploadButtonSubtitle}>MPEG, AAC (Max 10MB)</Text>
+                <Text style={styles.uploadButtonSubtitle}>MPEG, AAC (Max 20MB)</Text>
               </Pressable>
             </View>
           )}
@@ -260,4 +253,3 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
 };
 
 export default AudioAttachment;
-
