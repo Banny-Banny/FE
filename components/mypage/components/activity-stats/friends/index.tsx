@@ -15,44 +15,12 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
+import { DEFAULT_FRIENDS } from './constants';
 import { styles } from './styles';
-
-// 타입 정의
-export interface Friend {
-  id: string;
-  name: string;
-  emoji: string;
-  isBlocked: boolean;
-}
-
-export interface FriendsModalProps {
-  /** 모달 표시 여부 */
-  visible: boolean;
-  /** 모달 닫기 함수 */
-  onClose: () => void;
-  /** 친구 목록 */
-  friends?: Friend[];
-  /** 새로고침 함수 */
-  onRefresh?: () => void;
-  /** 친구 차단/해제 함수 */
-  onToggleBlock?: (friendId: string) => void;
-}
-
-// 기본 친구 목록 데이터 (Figma 디자인 기준)
-const DEFAULT_FRIENDS: Friend[] = [
-  { id: '1', name: '김민수', emoji: '🐨', isBlocked: false },
-  { id: '2', name: '이지은', emoji: '🐼', isBlocked: false },
-  { id: '3', name: '최유나', emoji: '🐯', isBlocked: false },
-  { id: '4', name: '정우성', emoji: '🐰', isBlocked: false },
-  { id: '5', name: '한지민', emoji: '🦋', isBlocked: false },
-  { id: '6', name: '신유', emoji: '🐶', isBlocked: false },
-  { id: '7', name: '최산', emoji: '🦊', isBlocked: false },
-  { id: '8', name: '김선호', emoji: '🐮', isBlocked: false },
-  { id: '9', name: '박서준', emoji: '🐵', isBlocked: true },
-];
+import type { Friend, FriendsModalProps } from './types';
 
 export function FriendsModal({
   visible,
@@ -61,18 +29,31 @@ export function FriendsModal({
   onRefresh,
   onToggleBlock,
 }: FriendsModalProps) {
-  // 차단되지 않은 친구 수 계산
-  const activeFriendsCount = friends.filter((f: Friend) => !f.isBlocked).length;
+  // ============================================
+  // 계산된 값 (useMemo로 최적화)
+  // ============================================
+
+  /** 차단되지 않은 친구 수 계산 */
+  const activeFriendsCount = useMemo(
+    () => friends.filter((f: Friend) => !f.isBlocked).length,
+    [friends]
+  );
+
+  /** 전체 친구 수 */
   const totalFriendsCount = friends.length;
 
-  // 친구 차단/해제 핸들러
+  // ============================================
+  // 이벤트 핸들러
+  // ============================================
+
+  /** 친구 차단/해제 핸들러 */
   const handleToggleBlock = (friendId: string) => {
     if (onToggleBlock) {
       onToggleBlock(friendId);
     }
   };
 
-  // 새로고침 핸들러
+  /** 새로고침 핸들러 */
   const handleRefresh = () => {
     if (onRefresh) {
       onRefresh();
