@@ -1,15 +1,12 @@
 /**
- * components/mypage/components/activity-stats/friends/constants.ts
- * 친구 관리 모달 상수 및 목업 데이터
+ * egg/constants/MOCK_DATA.js
+ * 목업 데이터 상수
  *
  * @description
- * - 친구 목록 목업 데이터 정의
- * - 피그마 디자인 기준으로 작성된 기본 친구 목록
- * - 컴포넌트 props의 기본값으로 사용됨
- * - ⚠️ 추후 백엔드 API 연동 시 Hook으로 이동 예정
+ * - 프로젝트 전역에서 사용하는 목업 데이터 정의
+ * - 피그마 디자인 기준으로 작성된 기본 데이터
+ * - ⚠️ 추후 백엔드 API 연동 시 제거될 예정
  */
-
-import type { Friend } from './types';
 
 // ============================================
 // 목데이터 (백엔드 API 준비 전)
@@ -20,9 +17,16 @@ import type { Friend } from './types';
  * - 피그마 디자인 기준으로 작성
  * - FriendsModal 컴포넌트의 props 기본값으로 사용
  * - ⚠️ 추후 백엔드 API로 교체될 예정
- * - TODO: useFriends Hook 생성 후 이 데이터를 Hook 내부로 이동
+ *
+ * @typedef {Object} Friend
+ * @property {string} id - 친구 고유 ID
+ * @property {string} name - 친구 이름
+ * @property {string} emoji - 친구 아바타 이모지
+ * @property {boolean} isBlocked - 차단 여부
+ *
+ * @type {Friend[]}
  */
-export const DEFAULT_FRIENDS: Friend[] = [
+export const DEFAULT_FRIENDS = [
   { id: '1', name: '김민수', emoji: '🐨', isBlocked: false },
   { id: '2', name: '이지은', emoji: '🐼', isBlocked: false },
   { id: '3', name: '최유나', emoji: '🐯', isBlocked: false },

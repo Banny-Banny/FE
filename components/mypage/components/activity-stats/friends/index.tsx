@@ -15,10 +15,10 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
+import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
 import React, { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
-import { DEFAULT_FRIENDS } from './constants';
 import { styles } from './styles';
 import type { Friend, FriendsModalProps } from './types';
 
@@ -36,7 +36,7 @@ export function FriendsModal({
   /** 차단되지 않은 친구 수 계산 */
   const activeFriendsCount = useMemo(
     () => friends.filter((f: Friend) => !f.isBlocked).length,
-    [friends]
+    [friends],
   );
 
   /** 전체 친구 수 */
