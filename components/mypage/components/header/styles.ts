@@ -14,24 +14,37 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { Colors, Typography } from '@/commons/constants';
+import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
+  // 외부 컨테이너
+  outerContainer: {
+    width: '100%',
+    position: 'relative',
+    overflow: 'visible', // absolute positioned border가 화면 밖으로 나갈 수 있도록
+  },
+
   // 메인 컨테이너 (Text input)
   container: {
+    width: '100%',
     height: 73.108,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 23.993,
+    // paddingHorizontal: 23.993,
     paddingTop: 0,
     paddingBottom: 1.111,
-    borderBottomWidth: 1.111,
-    // borderBottomColor: rgba(10, 10, 10, 0.08) - Colors.black[500]의 8% 투명도
-    // React Native에서는 borderColor에 opacity를 직접 적용할 수 없으므로
-    // 가장 가까운 연한 회색 토큰 사용
-    borderBottomColor: Colors.whiteGrey[400], // #E9E9E9 (가장 가까운 연한 회색)
+  },
+
+  // border-bottom line (화면 양끝까지 확장)
+  borderLine: {
+    position: 'absolute',
+    bottom: 0,
+    left: -Spacing.lg, // 부모의 paddingHorizontal 상쇄
+    right: -Spacing.lg, // 부모의 paddingHorizontal 상쇄
+    height: 1.111,
+    backgroundColor: Colors.whiteGrey[400], // #E9E9E9 (가장 가까운 연한 회색)
   },
 
   // 왼쪽: 타이틀 컨테이너 (Button)
@@ -125,4 +138,3 @@ export const styles = StyleSheet.create({
     height: 20,
   },
 });
-

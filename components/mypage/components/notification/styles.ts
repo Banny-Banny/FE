@@ -1,6 +1,6 @@
 /**
- * components/mypage/components/alert/styles.ts
- * alert 스타일 정의
+ * components/mypage/components/notification/styles.ts
+ * notification 스타일 정의
  *
  * 체크리스트:
  * - [✓] StyleSheet.create() 사용

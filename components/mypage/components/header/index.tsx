@@ -27,28 +27,32 @@ import { styles } from './styles';
 
 export function Header() {
   return (
-    <View style={styles.container}>
-      {/* 왼쪽: 마이페이지 타이틀 */}
-      <View style={styles.titleContainer}>
-        <Text style={styles.titleText}>마이페이지</Text>
-      </View>
+    <View style={styles.outerContainer}>
+      <View style={styles.container}>
+        {/* 왼쪽: 마이페이지 타이틀 */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>마이페이지</Text>
+        </View>
 
-      {/* 오른쪽: 아이콘 컨테이너 */}
-      <View style={styles.iconContainer}>
-        {/* 알림 아이콘 (배지 있음) */}
-        <View style={styles.notificationButton}>
-          <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
-          {/* 알림 배지 */}
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>3</Text>
+        {/* 오른쪽: 아이콘 컨테이너 */}
+        <View style={styles.iconContainer}>
+          {/* 알림 아이콘 (배지 있음) */}
+          <View style={styles.notificationButton}>
+            <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
+            {/* 알림 배지 */}
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>3</Text>
+            </View>
+          </View>
+
+          {/* X 아이콘 */}
+          <View style={styles.settingsButton}>
+            <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
           </View>
         </View>
-
-        {/* X 아이콘 */}
-        <View style={styles.settingsButton}>
-          <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
-        </View>
       </View>
+      {/* border-bottom line (화면 양끝까지 확장) */}
+      <View style={styles.borderLine} />
     </View>
   );
 }

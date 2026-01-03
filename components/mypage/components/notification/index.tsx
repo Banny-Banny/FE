@@ -1,6 +1,6 @@
 /**
- * components/mypage/components/alert/index.tsx
- * alert 컴포넌트
+ * components/mypage/components/notification/index.tsx
+ * notification 컴포넌트
  *
  * 체크리스트:
  * - [✓] JSX 구조만 작성 (View, Text 등 기본 컴포넌트 사용)
@@ -13,7 +13,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { styles } from './styles';
 
-export function Alert() {
+export function Notification() {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>알림</Text>
