@@ -11,16 +11,20 @@
  * - [x] styles.ts에서만 스타일 선언
  * - [x] 직접 녹음 기능 (expo-av)
  * - [x] 파일 업로드 기능 (expo-document-picker)
+ * - [x] 미리보기 기능 (재생)
+ * - [x] 로컬 URI 보관 (S3 업로드는 나중에)
  */
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 import { SIZE_LIMITS } from '@/commons/constants/media';
-import { Audio } from 'expo-av';
+import { formatTime, formatTimeFromMillis } from '@/utils/format';
 import * as DocumentPicker from 'expo-document-picker';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
+import { useAudioPreview } from './hooks/useAudioPreview';
+import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { styles } from './styles';
 
 export interface AudioAttachmentProps {
@@ -35,15 +39,6 @@ export interface AudioAttachmentProps {
 type TabType = 'record' | 'upload';
 
 /**
- * 시간 포맷팅 함수 (초를 MM:SS 형식으로)
- */
-const formatTime = (seconds: number): string => {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(1, '0')}:${secs.toString().padStart(2, '0')}`;
-};
-
-/**
  * 오디오 첨부 모달 컴포넌트
  */
 export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
@@ -52,99 +47,56 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
   onSelectAudio,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('record');
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingDuration, setRecordingDuration] = useState(0);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [selectedAudioUri, setSelectedAudioUri] = useState<string | null>(null);
+  const [selectedAudioName, setSelectedAudioName] = useState<string>('');
 
-  // 녹음 시간 업데이트
+  // 녹음 Hook
+  const {
+    isRecording,
+    recordingDuration,
+    startRecording,
+    stopRecording: stopRecordingHook,
+    resetRecording,
+  } = useAudioRecorder();
+
+  // 미리보기 Hook
+  const {
+    isPlaying,
+    positionMillis,
+    durationMillis,
+    togglePlay,
+    stop: stopPreview,
+    unload: unloadPreview,
+  } = useAudioPreview(selectedAudioUri);
+
+  // 모달이 닫힐 때 리셋
   useEffect(() => {
-    if (isRecording) {
-      intervalRef.current = setInterval(() => {
-        setRecordingDuration((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    if (!visible) {
+      // 녹음 중이면 중지
+      if (isRecording) {
+        resetRecording();
       }
+      // 미리보기 정리
+      unloadPreview();
+      // 선택된 오디오 리셋
+      setSelectedAudioUri(null);
+      setSelectedAudioName('');
     }
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isRecording]);
-
-  // 모달 닫을 때 녹음 중이면 중지
-  useEffect(() => {
-    if (!visible && isRecording) {
-      stopRecording();
-    }
-  }, [visible]);
+  }, [visible, isRecording, resetRecording, unloadPreview]);
 
   /**
-   * 녹음 시작
+   * 녹음 중지 및 로컬 URI 보관
    */
-  const startRecording = async () => {
-    try {
-      // 권한 요청
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('권한 필요', '마이크 접근 권한이 필요합니다.');
-        return;
-      }
-
-      // 오디오 모드 설정
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
-
-      // 녹음 시작
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      );
-
-      setRecording(newRecording);
-      setIsRecording(true);
-      setRecordingDuration(0);
-    } catch (error) {
-      console.error('녹음 시작 오류:', error);
-      Alert.alert('오류', '녹음을 시작할 수 없습니다.');
+  const handleStopRecording = async () => {
+    const uri = await stopRecordingHook();
+    if (uri) {
+      setSelectedAudioUri(uri);
+      setSelectedAudioName(`recording_${Date.now()}.m4a`);
     }
   };
 
   /**
-   * 녹음 중지
-   */
-  const stopRecording = async () => {
-    if (!recording) {
-      return;
-    }
-
-    try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-
-      if (uri) {
-        // 녹음된 파일 선택 완료
-        onSelectAudio(uri, `recording_${Date.now()}.m4a`);
-        onClose();
-      }
-
-      setRecording(null);
-      setIsRecording(false);
-      setRecordingDuration(0);
-    } catch (error) {
-      console.error('녹음 중지 오류:', error);
-      Alert.alert('오류', '녹음을 중지할 수 없습니다.');
-    }
-  };
-
-  /**
-   * 파일 선택
+   * 파일 선택 및 로컬 URI 보관
    */
   const pickAudioFile = async () => {
     try {
@@ -163,13 +115,33 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
           return;
         }
 
-        onSelectAudio(asset.uri, asset.name);
-        onClose();
+        setSelectedAudioUri(asset.uri);
+        setSelectedAudioName(asset.name);
       }
     } catch (error) {
       console.error('파일 선택 오류:', error);
       Alert.alert('오류', '파일을 선택할 수 없습니다.');
     }
+  };
+
+  /**
+   * 확인 버튼 클릭 - 부모에게 전달
+   */
+  const handleConfirm = () => {
+    if (selectedAudioUri && selectedAudioName) {
+      onSelectAudio(selectedAudioUri, selectedAudioName);
+      onClose();
+    }
+  };
+
+  /**
+   * 다시 선택 (리셋)
+   */
+  const handleReset = () => {
+    unloadPreview();
+    setSelectedAudioUri(null);
+    setSelectedAudioName('');
+    resetRecording();
   };
 
   return (
@@ -190,29 +162,80 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
           </Pressable>
         </View>
 
-        {/* 탭 버튼 */}
-        <View style={styles.tabContainer}>
-          <Pressable
-            style={[styles.tabButton, activeTab === 'record' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('record')}>
-            <Text
-              style={[styles.tabButtonText, activeTab === 'record' && styles.tabButtonTextActive]}>
-              직접 녹음
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.tabButton, activeTab === 'upload' && styles.tabButtonActive]}
-            onPress={() => setActiveTab('upload')}>
-            <Text
-              style={[styles.tabButtonText, activeTab === 'upload' && styles.tabButtonTextActive]}>
-              파일 업로드
-            </Text>
-          </Pressable>
-        </View>
+        {/* 탭 버튼 - 미리보기 중일 때는 비활성화 */}
+        {!selectedAudioUri && (
+          <View style={styles.tabContainer}>
+            <Pressable
+              style={[styles.tabButton, activeTab === 'record' && styles.tabButtonActive]}
+              onPress={() => setActiveTab('record')}>
+              <Text
+                style={[
+                  styles.tabButtonText,
+                  activeTab === 'record' && styles.tabButtonTextActive,
+                ]}>
+                직접 녹음
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.tabButton, activeTab === 'upload' && styles.tabButtonActive]}
+              onPress={() => setActiveTab('upload')}>
+              <Text
+                style={[
+                  styles.tabButtonText,
+                  activeTab === 'upload' && styles.tabButtonTextActive,
+                ]}>
+                파일 업로드
+              </Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* 컨텐츠 영역 */}
         <View style={styles.content}>
-          {activeTab === 'record' ? (
+          {selectedAudioUri ? (
+            /* 미리보기 영역 */
+            <View style={styles.previewContainer}>
+              <Text style={styles.previewTitle}>미리보기</Text>
+              <Text style={styles.previewFileName} numberOfLines={1}>
+                {selectedAudioName}
+              </Text>
+
+              {/* 재생 컨트롤 */}
+              <View style={styles.playbackContainer}>
+                <Pressable style={styles.playButton} onPress={togglePlay}>
+                  <Icon
+                    name={isPlaying ? 'pause-circle-line' : 'play-circle-line'}
+                    size={48}
+                    color={Colors.black[500]}
+                  />
+                </Pressable>
+                <View style={styles.timeContainer}>
+                  <Text style={styles.timeText}>
+                    {formatTimeFromMillis(positionMillis)} / {formatTimeFromMillis(durationMillis)}
+                  </Text>
+                </View>
+              </View>
+
+              {/* 액션 버튼 */}
+              <View style={styles.actionButtons}>
+                <Pressable style={styles.resetButton} onPress={handleReset}>
+                  <Text style={styles.resetButtonText}>다시 선택</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.confirmButton, !selectedAudioUri && styles.confirmButtonDisabled]}
+                  onPress={handleConfirm}
+                  disabled={!selectedAudioUri}>
+                  <Text
+                    style={[
+                      styles.confirmButtonText,
+                      !selectedAudioUri && styles.confirmButtonTextDisabled,
+                    ]}>
+                    확인
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : activeTab === 'record' ? (
             /* 직접 녹음 탭 */
             <View style={styles.recordContent}>
               {/* 타이머 */}
@@ -223,7 +246,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
               {/* 녹음 버튼 */}
               <Pressable
                 style={[styles.recordButton, isRecording && styles.recordButtonActive]}
-                onPress={isRecording ? stopRecording : startRecording}>
+                onPress={isRecording ? handleStopRecording : startRecording}>
                 <Icon
                   name={isRecording ? 'stop-circle-line' : 'mic-line'}
                   size={32}

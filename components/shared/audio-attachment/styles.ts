@@ -133,4 +133,76 @@ export const styles = StyleSheet.create({
     ...Typography.body.body8,
     color: Colors.grey[500],
   },
+
+  // 미리보기 영역
+  previewContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.lg,
+  },
+  previewTitle: {
+    ...Typography.header.h3,
+    color: Colors.black[500],
+  },
+  previewFileName: {
+    ...Typography.body.body10,
+    color: Colors.grey[500],
+    maxWidth: '100%',
+  },
+  playbackContainer: {
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  playButton: {
+    width: 64,
+    height: 64,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timeContainer: {
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  timeText: {
+    ...Typography.body.body10,
+    color: Colors.grey[500],
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    width: '100%',
+    marginTop: Spacing.md,
+  },
+  resetButton: {
+    flex: 1,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.whiteGrey[100],
+    borderRadius: BorderRadius.md,
+  },
+  resetButtonText: {
+    ...Typography.body.body11,
+    color: Colors.grey[500],
+  },
+  confirmButton: {
+    flex: 1,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.black[500],
+    borderRadius: BorderRadius.md,
+  },
+  confirmButtonDisabled: {
+    backgroundColor: Colors.whiteGrey[100],
+  },
+  confirmButtonText: {
+    ...Typography.body.body11,
+    color: Colors.white[500],
+  },
+  confirmButtonTextDisabled: {
+    color: Colors.grey[500],
+  },
 });
