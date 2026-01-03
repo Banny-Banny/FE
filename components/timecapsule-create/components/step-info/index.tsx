@@ -28,7 +28,6 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Icon from 'react-native-remix-icon';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   MAX_CAPSULE_NAME_LENGTH,
   MAX_PERSONNEL,
@@ -386,7 +385,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
     : {};
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       {/* 로딩 오버레이 */}
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -718,6 +717,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
           </Animated.View>
         </Animated.View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }

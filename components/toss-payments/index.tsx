@@ -7,7 +7,6 @@ import { useModal } from '@/commons/components/modal/hooks/useModal';
 import ConfirmModal from '@/components/timecapsule-create/components/confirm-modal';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { PaymentError } from './api/types/types';
 import { AgreementDetailModal } from './components/agreement-detail-modal';
 import { AgreementsCard } from './components/agreements-card';
@@ -151,7 +150,7 @@ export default function TossPayment({
   // 렌더링
   // ============================================
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerContainer}>
@@ -212,6 +211,6 @@ export default function TossPayment({
         onFail={handlePaymentFail}
         onClose={() => setShowPaymentWebView(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }

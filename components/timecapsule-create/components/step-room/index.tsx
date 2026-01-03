@@ -17,7 +17,7 @@ import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants/color';
 import dayjs from 'dayjs';
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import ConfirmModal from '../confirm-modal';
 import UserBottomSheet from '../write-bottomsheet';
@@ -214,27 +214,27 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   /** 로딩 상태 */
   if (isRoomLoading || !roomData) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={Colors.black[500]} />
           <Text style={{ marginTop: 16, textAlign: 'center', color: Colors.grey[500] }}>
             캡슐대기실 정보를 불러오는 중...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   /** 에러 상태 */
   if (roomError) {
     return (
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <View style={styles.centerContent}>
           <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
             에러가 발생했습니다: {roomError.message}
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -243,7 +243,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   // ============================================
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* 헤더 */}
         <View style={styles.header}>
@@ -449,6 +449,6 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
           />
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
