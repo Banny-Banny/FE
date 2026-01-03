@@ -164,7 +164,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 음악 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.musicButton]}
-              onPress={() => handleAddAttachment('MUSIC')}>
+              onPress={() => handleAddAttachment('AUDIO')}>
               {musicAttachment ? (
                 <>
                   {/* 음악 아이콘 */}

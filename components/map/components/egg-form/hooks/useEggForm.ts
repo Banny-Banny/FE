@@ -7,6 +7,7 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
@@ -55,7 +56,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     title.trim().length > 0 && content.trim().length > 0 && !isSubmitting && !isMediaUploading;
 
   // 파일 선택 핸들러 (간소화)
-  const handleAddAttachment = async (type: 'IMAGE' | 'VIDEO' | 'MUSIC') => {
+  const handleAddAttachment = async (type: MediaType) => {
     try {
       let file: { name: string; uri: string } | null = null;
 
@@ -77,7 +78,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           };
         }
       } else {
-        const mimeTypes = type === 'MUSIC' ? ['audio/*'] : ['video/*'];
+        const mimeTypes = type === 'AUDIO' ? ['audio/*'] : ['video/*'];
         const result = await DocumentPicker.getDocumentAsync({
           type: mimeTypes,
           copyToCacheDirectory: true,
@@ -302,7 +303,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
 
   // 각 타입별 첨부파일 확인
   const photoAttachment = attachments.find((att) => att.type === 'IMAGE');
-  const musicAttachment = attachments.find((att) => att.type === 'MUSIC');
+  const musicAttachment = attachments.find((att) => att.type === 'AUDIO');
   const videoAttachment = attachments.find((att) => att.type === 'VIDEO');
 
   return {
