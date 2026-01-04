@@ -93,36 +93,34 @@ export const Modal: React.FC<ModalProps> = ({
       {/* Backdrop (뒷배경) */}
       {disableAnimation ? (
         <View style={styles.backdrop}>
-          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress}>
-            {/* Modal Container */}
-            <View
-              style={[styles.modalContainer, modalContainerStyle]}
-              // 모달 내부 클릭 시 이벤트 전파 중단 (backdrop close 방지)
-              onStartShouldSetResponder={() => true}
-              onTouchEnd={(e) => e.stopPropagation()}>
-              {/* Modal Content - children을 그대로 렌더링 */}
-              {children}
-            </View>
-          </Pressable>
+          {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
+          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress} />
+          {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
+          <View
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
+            onStartShouldSetResponder={() => false}
+            onMoveShouldSetResponder={() => false}>
+            {/* Modal Content - children을 그대로 렌더링 */}
+            {children}
+          </View>
         </View>
       ) : (
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
           style={styles.backdrop}>
-          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress}>
-            {/* Modal Container */}
-            <Animated.View
-              entering={SlideInUp.duration(300).springify()}
-              exiting={SlideOutDown.duration(200)}
-              style={[styles.modalContainer, modalContainerStyle]}
-              // 모달 내부 클릭 시 이벤트 전파 중단 (backdrop close 방지)
-              onStartShouldSetResponder={() => true}
-              onTouchEnd={(e) => e.stopPropagation()}>
-              {/* Modal Content - children을 그대로 렌더링 */}
-              {children}
-            </Animated.View>
-          </Pressable>
+          {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
+          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress} />
+          {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
+          <Animated.View
+            entering={SlideInUp.duration(300).springify()}
+            exiting={SlideOutDown.duration(200)}
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
+            onStartShouldSetResponder={() => false}
+            onMoveShouldSetResponder={() => false}>
+            {/* Modal Content - children을 그대로 렌더링 */}
+            {children}
+          </Animated.View>
         </Animated.View>
       )}
     </RNModal>

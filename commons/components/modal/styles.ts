@@ -144,4 +144,14 @@ export const styles = StyleSheet.create({
     maxWidth: '90%',
     maxHeight: '90%',
   },
+
+  /**
+   * 모달 컨테이너 absolute 위치 스타일
+   * - Pressable과 분리하여 스크롤 제스처가 정상 작동하도록 함
+   * - backdrop의 justifyContent: 'center', alignItems: 'center'와 함께 사용
+   */
+  modalContainerAbsolute: {
+    position: 'absolute',
+    alignSelf: 'center',
+  },
 });

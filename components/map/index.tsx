@@ -13,6 +13,7 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 
+import { EggDetailFind } from './components/egg-detail-find';
 import { EggDetailHint } from './components/egg-detail-hint';
 import { EggDetail } from './components/egg-detail-owner';
 import { EggForm } from './components/egg-form';
@@ -60,8 +61,8 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setIsEggSlotModalVisible(false);
   };
 
-  // 에그 디테일 힌트 모달 상태 관리 (UI 확인용: 기본값 true)
-  const [isEggDetailHintVisible, setIsEggDetailHintVisible] = useState(true);
+  // 에그 디테일 힌트 모달 상태 관리 (UI 확인용: 기본값 false)
+  const [isEggDetailHintVisible, setIsEggDetailHintVisible] = useState(false);
 
   const handleEggDetailHintPress = () => {
     setIsEggDetailHintVisible(true);
@@ -70,6 +71,22 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   const handleCloseEggDetailHint = () => {
     setIsEggDetailHintVisible(false);
   };
+
+  // 에그 디테일 발견 모달 상태 관리 (내꺼가 아닌 경우, 근접해지면 모달이 뜨게 할 것 - 추후 기능단에서 구현)
+  // UI 확인용: 기본값 true로 설정
+  const [isEggDetailFindVisible, setIsEggDetailFindVisible] = useState(true);
+
+  const handleCloseEggDetailFind = () => {
+    setIsEggDetailFindVisible(false);
+  };
+
+  // TODO: 근접 감지 로직 추가 (추후 기능단에서 구현)
+  // useEffect(() => {
+  //   // 내꺼가 아닌 이스터에그에 근접하면 모달 표시
+  //   if (isNearbyEgg && !isMyEgg) {
+  //     setIsEggDetailFindVisible(true);
+  //   }
+  // }, [isNearbyEgg, isMyEgg]);
 
   return (
     <View style={styles.container}>
@@ -94,6 +111,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         totalCount={slotData?.totalSlots ?? 3}
       />
       <EggDetailHint visible={isEggDetailHintVisible} onClose={handleCloseEggDetailHint} />
+      <EggDetailFind visible={isEggDetailFindVisible} onClose={handleCloseEggDetailFind} />
     </View>
   );
 }
