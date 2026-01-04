@@ -61,3 +61,23 @@ export const PROGRESS_COLORS = {
   /** 100% 달성 시 색상 */
   COMPLETE_COLOR: '#4CAF50',
 };
+
+// ============================================
+// 목데이터
+// ============================================
+
+import type { RoomSettingsResponse } from './types';
+
+/**
+ * 목데이터: 대기실 설정값
+ * ⚠️ API 호출 실패 시 폴백용으로 사용됨
+ */
+export const mockRoomData: RoomSettingsResponse = {
+  room_id: 'capsule-001',
+  capsule_name: 'ㅋ',
+  open_date: '2025-06-10',
+  max_participants: 4,
+  max_images_per_person: 3,
+  has_music: true,
+  has_video: true,
+};

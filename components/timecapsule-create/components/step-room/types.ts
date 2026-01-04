@@ -118,3 +118,25 @@ export interface Progress {
   /** 진행률 (0-100) */
   percentage: number;
 }
+
+// ============================================
+// 대기실 설정 API 타입
+// ============================================
+
+/** 백엔드 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
+export interface RoomSettingsResponse {
+  /** 대기실 ID (UUID) */
+  room_id: string;
+  /** 캡슐 이름 */
+  capsule_name: string;
+  /** 개봉 날짜 (YYYY-MM-DD) */
+  open_date: string;
+  /** 총 인원수 */
+  max_participants: number;
+  /** 1인당 최대 사진 개수 */
+  max_images_per_person: number;
+  /** 음성 추가 여부 */
+  has_music: boolean;
+  /** 동영상 추가 여부 */
+  has_video: boolean;
+}

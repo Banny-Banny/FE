@@ -30,10 +30,11 @@ import type { Participant } from './types';
 // Props 인터페이스 정의
 interface StepRoomProps {
   role: 'host' | 'guest';
+  capsuleId?: string; // 캡슐 ID (옵션, 없으면 환경변수 사용)
   onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
 }
 
-export default function StepRoom({ role, onSubmit }: StepRoomProps) {
+export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: StepRoomProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -44,8 +45,16 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   /** 모달 제어 Hook */
   const { openModal, closeModal } = useModal();
 
+  /**
+   * capsuleId 우선순위:
+   * 1. Props로 전달받은 capsuleId
+   * 2. 환경변수 (EXPO_PUBLIC_CAPSULE_ID)
+   * 3. undefined (목데이터 사용)
+   */
+  const capsuleId = propsCapsuleId || process.env.EXPO_PUBLIC_CAPSULE_ID;
+
   /** 캡슐대기실 데이터 Hook */
-  const { roomData, isLoading: isRoomLoading, error: roomError, calculateProgress, canSubmit } = useRoomData();
+  const { roomSettings, roomData, isLoading: isRoomLoading, error: roomError, calculateProgress, canSubmit } = useRoomData(capsuleId);
 
   /** 참여자 목록 Hook */
   const { participants, myParticipant, saveContent, canEdit } = useParticipants();
