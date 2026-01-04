@@ -15,7 +15,7 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
@@ -27,9 +27,10 @@ import { useEggDetail } from './hooks/useEggDetail';
 import { styles } from './styles';
 import type { EggDetailProps } from './types';
 
-export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsule }) => {
+export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsule, currentLocation }) => {
   // 비즈니스 로직은 Hook에서 가져옴
-  const { formattedDate, locationText, discoveryCount } = useEggDetail({ capsule });
+  const { formattedDate, locationText, discoveryCount, authorNickname, viewers, isLoading, error } =
+    useEggDetail({ capsule, currentLocation });
 
   if (!capsule) {
     return null;
@@ -38,70 +39,100 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
   return (
     <BottomSheet isVisible={isVisible} onClose={onClose}>
       <View style={styles.container}>
-        {/* 헤더 섹션 */}
-        <View style={styles.header}>
-          {/* 왼쪽: 이스터에그 아이콘 */}
-          <View style={styles.iconContainer}>
-            <View style={styles.iconWrapper}>
-              <Image
-                source={require('../../../../assets/icons/egg-icon.svg')}
-                style={styles.eggIcon}
-                contentFit="contain"
-                accessibilityLabel="이스터에그 아이콘"
-              />
-              <Text style={styles.iconText}>?</Text>
-            </View>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.black[500]} />
+            <Text style={styles.loadingText}>상세 정보를 불러오는 중...</Text>
           </View>
-
-          {/* 오른쪽: 제목과 부제목 */}
-          <View style={styles.titleContainer}>
-            <Text style={styles.title}>{capsule.title}</Text>
-            <Text style={styles.subtitle}>{TEXTS.header.subtitle}</Text>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
           </View>
-        </View>
-
-        {/* 정보 카드 섹션 */}
-        <View style={styles.infoCardsContainer}>
-          {/* 숨긴 날짜 카드 */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardContent}>
-              <View style={styles.infoCardHeader}>
-                <Icon name="calendar-line" size={12} color={Colors.grey[700]} />
-                <Text style={styles.infoCardLabel}>{TEXTS.infoCard.dateLabel}</Text>
+        ) : (
+          <>
+            {/* 헤더 섹션 */}
+            <View style={styles.header}>
+              {/* 왼쪽: 이스터에그 아이콘 */}
+              <View style={styles.iconContainer}>
+                <View style={styles.iconWrapper}>
+                  <Image
+                    source={require('../../../../assets/icons/egg-icon.svg')}
+                    style={styles.eggIcon}
+                    contentFit="contain"
+                    accessibilityLabel="이스터에그 아이콘"
+                  />
+                  <Text style={styles.iconText}>?</Text>
+                </View>
               </View>
-              <Text style={styles.infoCardValue}>{formattedDate}</Text>
-            </View>
-          </View>
 
-          {/* 위치 카드 */}
-          <View style={styles.infoCard}>
-            <View style={styles.infoCardContent}>
-              <View style={styles.infoCardHeader}>
-                <Icon name="map-pin-line" size={12} color={Colors.grey[700]} />
-                <Text style={styles.infoCardLabel}>{TEXTS.infoCard.locationLabel}</Text>
+              {/* 오른쪽: 제목과 부제목 */}
+              <View style={styles.titleContainer}>
+                <Text style={styles.title}>{capsule.title}</Text>
+                <Text style={styles.subtitle}>{TEXTS.header.subtitle}</Text>
               </View>
-              <Text style={styles.infoCardValue} numberOfLines={1}>
-                {locationText}
-              </Text>
             </View>
-          </View>
-        </View>
 
-        {/* 발견 기록 섹션 */}
-        <View style={styles.discoverySection}>
-          <View style={styles.discoveryHeader}>
-            <Icon name="group-line" size={16} color={Colors.black[500]} />
-            <Text style={styles.discoveryTitle}>
-              {TEXTS.discovery.title} ({discoveryCount})
-            </Text>
-          </View>
-          <View style={styles.discoveryEmptyBox}>
-            <Text style={styles.discoveryEmptyText}>{TEXTS.discovery.emptyText}</Text>
-          </View>
-        </View>
+            {/* 정보 카드 섹션 */}
+            <View style={styles.infoCardsContainer}>
+              {/* 숨긴 날짜 카드 */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardContent}>
+                  <View style={styles.infoCardHeader}>
+                    <Icon name="calendar-line" size={12} color={Colors.grey[700]} />
+                    <Text style={styles.infoCardLabel}>{TEXTS.infoCard.dateLabel}</Text>
+                  </View>
+                  <Text style={styles.infoCardValue}>{formattedDate}</Text>
+                </View>
+              </View>
 
-        {/* 닫기 버튼 */}
-        <Button label={TEXTS.button.close} variant="primary" size="M" onPress={onClose} />
+              {/* 위치 카드 */}
+              <View style={styles.infoCard}>
+                <View style={styles.infoCardContent}>
+                  <View style={styles.infoCardHeader}>
+                    <Icon name="map-pin-line" size={12} color={Colors.grey[700]} />
+                    <Text style={styles.infoCardLabel}>{TEXTS.infoCard.locationLabel}</Text>
+                  </View>
+                  <Text style={styles.infoCardValue} numberOfLines={1}>
+                    {locationText}
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {/* 발견 기록 섹션 */}
+            <View style={styles.discoverySection}>
+              <View style={styles.discoveryHeader}>
+                <Icon name="group-line" size={16} color={Colors.black[500]} />
+                <Text style={styles.discoveryTitle}>
+                  {TEXTS.discovery.title} ({discoveryCount})
+                </Text>
+              </View>
+              {viewers.length > 0 ? (
+                <ScrollView style={styles.viewersList} nestedScrollEnabled>
+                  {viewers.map((viewer) => (
+                    <View key={viewer.id} style={styles.viewerItem}>
+                      <Text style={styles.viewerNickname}>{viewer.nickname}</Text>
+                      <Text style={styles.viewerDate}>
+                        {new Date(viewer.viewed_at).toLocaleDateString('ko-KR', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                        })}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+              ) : (
+                <View style={styles.discoveryEmptyBox}>
+                  <Text style={styles.discoveryEmptyText}>{TEXTS.discovery.emptyText}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* 닫기 버튼 */}
+            <Button label={TEXTS.button.close} variant="primary" size="M" onPress={onClose} />
+          </>
+        )}
       </View>
     </BottomSheet>
   );

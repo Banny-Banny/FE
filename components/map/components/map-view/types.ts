@@ -19,6 +19,11 @@ export interface MapViewProps {
 }
 
 /**
+ * Capsule Type
+ */
+export type CapsuleType = 'EASTER_EGG' | 'TIME_CAPSULE';
+
+/**
  * Capsule API Response Types
  */
 export interface CapsuleItem {
@@ -40,6 +45,8 @@ export interface CapsuleItem {
     name: string;
     price: number;
   };
+  is_mine?: boolean;
+  type?: CapsuleType;
 }
 
 export interface CapsulesResponse {

@@ -6,46 +6,88 @@
  * - 날짜 포맷팅 로직
  * - 위치 정보 처리 로직
  * - 발견 기록 수 관리
+ * - 상세 API 호출 및 데이터 바인딩
  */
 
 import dayjs from 'dayjs';
 import { useMemo } from 'react';
 
-import type { CapsuleItem } from '../../map-view/types';
+import type { CapsuleItem } from '@/components/map/components/map-view/types';
+import { useCapsuleDetail } from './useCapsuleDetail';
+import { useRoadAddress } from './useRoadAddress';
 
 export interface UseEggDetailReturn {
   formattedDate: string;
   locationText: string;
   discoveryCount: number;
+  authorNickname: string;
+  viewers: Array<{ id: string; nickname: string; viewed_at: string }>;
+  isLoading: boolean;
+  error: string | null;
 }
 
 export interface UseEggDetailProps {
   capsule: CapsuleItem | null;
+  currentLocation: { lat: number; lng: number } | null;
 }
 
 /**
  * 이스터에그 상세 정보를 처리하는 Hook
  */
-export function useEggDetail({ capsule }: UseEggDetailProps): UseEggDetailReturn {
-  // 날짜 포맷팅 (YYYY.MM.DD 형식) - open_at을 숨긴 날짜로 사용
+export function useEggDetail({ capsule, currentLocation }: UseEggDetailProps): UseEggDetailReturn {
+  // 상세 API 호출
+  const {
+    data: detailData,
+    isLoading,
+    error,
+  } = useCapsuleDetail({
+    capsuleId: capsule?.id || null,
+    lat: currentLocation?.lat || null,
+    lng: currentLocation?.lng || null,
+  });
+
+  // 주소 변환 (상세 API에서 받은 latitude, longitude 사용)
+  const { address: roadAddress } = useRoadAddress({
+    lat: detailData?.latitude || null,
+    lng: detailData?.longitude || null,
+  });
+
+  // 날짜 포맷팅 (YYYY.MM.DD 형식) - created_at 사용
   const formattedDate = useMemo(() => {
-    if (!capsule?.open_at) return '날짜 정보 없음';
-    return dayjs(capsule.open_at).format('YYYY.MM.DD');
-  }, [capsule?.open_at]);
+    if (!detailData?.created_at) return '날짜 정보 없음';
+    return dayjs(detailData.created_at).format('YYYY.MM.DD');
+  }, [detailData?.created_at]);
 
-  // 위치 정보 (임시로 "위치 정보 없음" 표시, 추후 API 연동 시 수정)
+  // 위치 정보 (도로명 주소)
   const locationText = useMemo(() => {
-    // 추후 API에서 위치 정보를 받아올 수 있으면 사용
+    if (roadAddress) {
+      return roadAddress;
+    }
     return '위치 정보 없음';
-  }, []);
+  }, [roadAddress]);
 
-  // 발견 기록 수 (현재는 0으로 고정, 추후 API 연동 시 수정)
-  const discoveryCount = 0;
+  // 발견 기록 수 (view_count 사용)
+  const discoveryCount = useMemo(() => {
+    return detailData?.view_count || 0;
+  }, [detailData?.view_count]);
+
+  // 작성자 닉네임
+  const authorNickname = useMemo(() => {
+    return detailData?.author?.nickname || '';
+  }, [detailData?.author?.nickname]);
+
+  // 발견자 리스트
+  const viewers = useMemo(() => {
+    return detailData?.viewers || [];
+  }, [detailData?.viewers]);
 
   return {
     formattedDate,
     locationText,
     discoveryCount,
+    authorNickname,
+    viewers,
+    isLoading,
+    error,
   };
 }
-

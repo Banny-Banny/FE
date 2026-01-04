@@ -21,6 +21,7 @@ import { EggSlotModal } from './components/egg-slot-modal';
 import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import { useMapLocation } from './components/map-view/hooks/useMapLocation';
 import type { CapsuleItem } from './components/map-view/types';
 import ResetEggSlot from './components/reset-egg-slot';
 import { useEggForm } from './hooks/useEggForm';
@@ -34,13 +35,19 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     onEasterEggPress,
   });
 
+  // 현재 위치 가져오기
+  const { location: currentLocation } = useMapLocation();
+
   // 캡슐 상세 바텀시트 상태 관리
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleItem | null>(null);
   const [isCapsuleDetailVisible, setIsCapsuleDetailVisible] = useState(false);
 
   const handleCapsuleClick = (capsule: CapsuleItem) => {
     setSelectedCapsule(capsule);
-    setIsCapsuleDetailVisible(true);
+    // 조건부 렌더링: is_mine === true && type === EASTER_EGG일 때만 표시
+    if (capsule.is_mine === true && capsule.type === 'EASTER_EGG') {
+      setIsCapsuleDetailVisible(true);
+    }
   };
 
   const handleCloseCapsuleDetail = () => {
@@ -103,6 +110,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         isVisible={isCapsuleDetailVisible}
         onClose={handleCloseCapsuleDetail}
         capsule={selectedCapsule}
+        currentLocation={currentLocation}
       />
       <EggSlotModal
         visible={isEggSlotModalVisible}
