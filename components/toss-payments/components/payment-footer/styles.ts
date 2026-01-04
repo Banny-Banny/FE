@@ -8,7 +8,7 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   footer: {
     width: '100%',
-    borderTopWidth: 0.66,
+    borderTopWidth: 1,
     borderTopColor: Colors.grey[200],
     paddingHorizontal: 24,
     paddingTop: 25,

@@ -15,10 +15,16 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useToggle } from '@/commons/hooks';
 import { FriendsModal } from './friends';
+import { useFriends } from './friends/hooks/useFriends';
 import { styles } from './styles';
 
 export function ActivityStats() {
   const { isOpen: isFriendsModalVisible, open: handleFriendsPress, close: handleCloseFriendsModal } = useToggle();
+
+  // ============================================
+  // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)
+  // ============================================
+  const { friends, isRefreshing, refreshFriends, toggleBlock } = useFriends();
 
   return (
     <>
@@ -61,7 +67,14 @@ export function ActivityStats() {
       </View>
 
       {/* 친구 관리 모달 */}
-      <FriendsModal visible={isFriendsModalVisible} onClose={handleCloseFriendsModal} />
+      <FriendsModal
+        visible={isFriendsModalVisible}
+        onClose={handleCloseFriendsModal}
+        friends={friends}
+        onRefresh={refreshFriends}
+        onToggleBlock={toggleBlock}
+        isRefreshing={isRefreshing}
+      />
     </>
   );
 }

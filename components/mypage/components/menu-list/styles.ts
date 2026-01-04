@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   // 메인 컨테이너 (Input form)
   container: {
     backgroundColor: Colors.white[500],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: Colors.grey[300],
     borderRadius: BorderRadius.lg,
     flexDirection: 'column',
@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
     height: 60,
     paddingHorizontal: 8,
     paddingVertical: 0,
-    borderBottomWidth: 1.111,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.grey[300],
   },
 

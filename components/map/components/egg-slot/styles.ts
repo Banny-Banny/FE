@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0,
     shadowRadius: 6,
     elevation: 10, // Android shadow
   },
@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
   eggSlotIconOutline: {
     width: 20,
     height: 24,
-    opacity: 0.5, // 빈 슬롯은 투명도 적용 (Figma 디자인 참고)
+    opacity: 1, // 빈 슬롯은 투명도 적용 (Figma 디자인 참고)
     tintColor: Colors.white[50], // 빈 슬롯도 흰색으로 표시
   },
 });

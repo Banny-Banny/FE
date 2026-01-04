@@ -107,7 +107,7 @@ export const styles = StyleSheet.create({
    * 정보 카드 내부 - 캡슐 이름
    */
   capsuleNameContainer: {
-    borderBottomWidth: 0.613,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.whiteGrey[400], // 피그마: #e0e0e0
     paddingBottom: 12,
     marginBottom: 12,
@@ -117,7 +117,7 @@ export const styles = StyleSheet.create({
     ...Typography.header.h1, // 24px Bold
     fontSize: 18,
     lineHeight: 36,
-    letterSpacing: 0.3955,
+    letterSpacing: 0,
     color: Colors.black[500],
     textAlign: 'center' as const,
   },

@@ -1,6 +1,6 @@
 /**
- * components/mypage/components/notification/types.ts
- * 알림 컴포넌트 타입 정의
+ * components/notification/types.ts
+ * 알림 Feature 타입 정의
  */
 
 export interface Notification {
@@ -20,3 +20,4 @@ export interface NotificationItemProps {
   isRead: boolean;
   onDelete?: () => void;
 }
+

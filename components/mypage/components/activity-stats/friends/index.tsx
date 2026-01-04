@@ -18,7 +18,9 @@ import { Colors } from '@/commons/constants';
 import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
 import React, { useMemo } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Icon, { IconName } from 'react-native-remix-icon';
+import { useRefreshAnimation } from './hooks/useRefreshAnimation';
 import { styles } from './styles';
 import type { Friend, FriendsModalProps } from './types';
 
@@ -28,6 +30,7 @@ export function FriendsModal({
   friends = DEFAULT_FRIENDS,
   onRefresh,
   onToggleBlock,
+  isRefreshing = false,
 }: FriendsModalProps) {
   // ============================================
   // 계산된 값 (useMemo로 최적화)
@@ -43,6 +46,13 @@ export function FriendsModal({
   const totalFriendsCount = friends.length;
 
   // ============================================
+  // 애니메이션
+  // ============================================
+
+  /** 새로고침 버튼 회전 애니메이션 */
+  const { animatedRotationStyle } = useRefreshAnimation(isRefreshing);
+
+  // ============================================
   // 이벤트 핸들러
   // ============================================
 
@@ -55,7 +65,7 @@ export function FriendsModal({
 
   /** 새로고침 핸들러 */
   const handleRefresh = () => {
-    if (onRefresh) {
+    if (onRefresh && !isRefreshing) {
       onRefresh();
     }
   };
@@ -69,8 +79,14 @@ export function FriendsModal({
           <View style={styles.headerTop}>
             <Text style={styles.title}>친구 관리</Text>
             <View style={styles.headerButtons}>
-              <Pressable style={styles.refreshButton} onPress={handleRefresh}>
-                <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+              <Pressable
+                style={styles.refreshButton}
+                onPress={handleRefresh}
+                disabled={isRefreshing}
+                pointerEvents={isRefreshing ? 'none' : 'auto'}>
+                <Animated.View style={animatedRotationStyle}>
+                  <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+                </Animated.View>
               </Pressable>
               <Pressable style={styles.closeButton} onPress={onClose}>
                 <Icon name={'ri-close-line' as IconName} size={24} color={Colors.black[500]} />

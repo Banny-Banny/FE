@@ -39,7 +39,7 @@ export const styles = StyleSheet.create({
   participantRow: {
     paddingHorizontal: 17,
     height: 37,
-    borderBottomWidth: 0.613,
+    borderBottomWidth: 1,
     borderBottomColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
   totalRow: {
     paddingHorizontal: 17,
     height: 37,
-    borderTopWidth: 0.613,
+    borderTopWidth: 1,
     borderTopColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',

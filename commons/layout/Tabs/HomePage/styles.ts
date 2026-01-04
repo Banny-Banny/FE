@@ -30,7 +30,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: Colors.black[500],
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0,
     shadowRadius: 8,
     elevation: 8,
   },

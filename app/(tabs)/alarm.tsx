@@ -1,3 +1,3 @@
-import { Notification } from '@/src/components/notification';
+import NotificationFeature from '@/components/notification';
 
-export default Notification;
+export default NotificationFeature;

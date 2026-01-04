@@ -202,7 +202,7 @@ export const styles = StyleSheet.create({
     borderColor: Colors.black.darker,
     shadowColor: Colors.black.darker,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0,
     shadowRadius: 6,
     elevation: 4,
   },
@@ -275,7 +275,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 9999,
-    borderWidth: 1.11,
+    borderWidth: 1,
   },
 
   checkboxActive: {

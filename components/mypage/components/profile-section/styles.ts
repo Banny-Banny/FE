@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   // 메인 컨테이너 (Vertical container)
   container: {
     width: 'auto',
-    height: 250.35,
+    height: 250,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -71,8 +71,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     alignItems: 'flex-end',
-    paddingRight: 4.99, // Figma: 오른쪽 여백
-    paddingBottom: 4.99, // Figma: 아래 여백
+    paddingRight: 5, // Figma: 오른쪽 여백
+    paddingBottom: 5, // Figma: 아래 여백
   },
 
   // 작은 원형 버튼
@@ -96,10 +96,10 @@ export const styles = StyleSheet.create({
   // Button (토끼유저 텍스트)
   buttonContainer: {
     width: 'auto',
-    height: 26.39,
+    height: 26,
     justifyContent: 'center',
     alignItems: 'flex-start',
-    marginBottom: 3.99, // Figma: Text input과의 간격
+    marginBottom: 4, // Figma: Text input과의 간격
   },
 
   buttonText: {
@@ -109,8 +109,8 @@ export const styles = StyleSheet.create({
 
   // Text input (이메일)
   textInputContainer: {
-    width: 139.48,
-    height: 19.98,
+    width: 139,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },

@@ -21,5 +21,7 @@ export interface FriendsModalProps {
   onRefresh?: () => void;
   /** 친구 차단/해제 함수 */
   onToggleBlock?: (friendId: string) => void;
+  /** 동기화 진행 중 여부 */
+  isRefreshing?: boolean;
 }
 
