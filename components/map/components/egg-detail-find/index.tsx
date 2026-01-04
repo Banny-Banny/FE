@@ -16,16 +16,15 @@
  */
 
 import { Image } from 'expo-image';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 import Icon from 'react-native-remix-icon';
 
 import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 
-import { FIGMA_IMAGES } from './constants';
+import { AudioPlayer } from '../shared/audio-player';
 import { useEggDetailFind } from './hooks/useEggDetailFind';
 import { styles } from './styles';
 import type { EggDetailFindProps } from './types';
@@ -78,51 +77,16 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
         ))}
 
         {/* 오디오 플레이어 렌더링 */}
-        {audios.map((audio) => {
-          const progress = useMemo(
-            () => (duration > 0 ? currentTime / duration : 0),
-            [currentTime, duration],
-          );
-          const progressValue = useSharedValue(progress);
-
-          // progress 값이 변경될 때마다 업데이트
-          React.useEffect(() => {
-            progressValue.value = progress;
-          }, [progress, progressValue]);
-
-          const formatTime = (seconds: number) => {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-          };
-
-          // 동적 width를 위한 animated style
-          const progressBarStyle = useAnimatedStyle(() => ({
-            width: `${progressValue.value * 100}%`,
-          }));
-
-          return (
-            <View key={audio.id} style={styles.audioPlayerContainer}>
-              <Pressable
-                style={styles.playButton}
-                onPress={togglePlay}
-                accessibilityLabel="재생/일시정지">
-                <Icon
-                  name={isPlaying ? 'pause-fill' : 'play-fill'}
-                  size={20}
-                  color={Colors.white[50]}
-                />
-              </Pressable>
-              <View style={styles.audioControls}>
-                <Icon name="music-2-line" size={20} color={Colors.grey[600]} />
-                <View style={styles.progressBarContainer}>
-                  <Animated.View style={[styles.progressBar, progressBarStyle]} />
-                </View>
-                <Text style={styles.audioTime}>{formatTime(currentTime)}</Text>
-              </View>
-            </View>
-          );
-        })}
+        {audios.map((audio) => (
+          <AudioPlayer
+            key={audio.id}
+            audio={audio}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            onTogglePlay={togglePlay}
+          />
+        ))}
 
         {/* 비디오 렌더링 */}
         {videos.map((video) => (
@@ -157,7 +121,7 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
       height="80%"
       padding={0}
       closeOnBackdropPress>
-      <View style={styles.scrollViewWrapper} pointerEvents="box-none">
+      <View style={styles.scrollViewWrapper}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.modalContent}
@@ -171,14 +135,7 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
           {/* 상단 알 아이콘 */}
           <View style={styles.eggIconContainer}>
             <View style={styles.eggIconWrapper}>
-              <Image
-                source={{ uri: FIGMA_IMAGES.container }}
-                style={styles.eggIconWrapper}
-                contentFit="contain"
-                accessibilityLabel="이스터에그 아이콘"
-                placeholder={{ blurhash: 'LKO2?U%2Tw=w]~RBVZRi};RPxuwH' }}
-                transition={200}
-              />
+              <Icon name="gift-fill" size={128} color={Colors.black[500]} />
             </View>
           </View>
 
@@ -190,14 +147,7 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
 
           {/* 발견자 배지 */}
           <View style={styles.badgeContainer}>
-            <Image
-              source={{ uri: FIGMA_IMAGES.icon }}
-              style={styles.badgeIcon}
-              contentFit="contain"
-              accessibilityLabel="발견자 아이콘"
-              placeholder={{ blurhash: 'LKO2?U%2Tw=w]~RBVZRi};RPxuwH' }}
-              transition={200}
-            />
+            <Icon name="award-fill" size={16} color={Colors.black[500]} />
             <Text style={styles.badgeText}>{getBadgeText()}</Text>
           </View>
 
@@ -212,14 +162,9 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
                 <Text style={styles.authorName}>{discoveryData.author.name}</Text>
               </View>
               <View style={styles.dateBadge}>
-                <Image
-                  source={{ uri: FIGMA_IMAGES.icon1 }}
-                  style={styles.dateIcon}
-                  contentFit="contain"
-                  accessibilityLabel="날짜 아이콘"
-                  placeholder={{ blurhash: 'LKO2?U%2Tw=w]~RBVZRi};RPxuwH' }}
-                  transition={200}
-                />
+                <View style={styles.dateIcon}>
+                  <Icon name="calendar-line" size={14} color={Colors.grey[600]} />
+                </View>
                 <Text style={styles.dateText}>{discoveryData.createdAt}</Text>
               </View>
             </View>
@@ -251,7 +196,7 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
           )}
 
           {/* 확인 버튼 */}
-          <Button label="확인했어요" variant="primary" size="M" onPress={onClose} />
+          <Button label="확인했어요" variant="primary" size="S" onPress={onClose} />
         </ScrollView>
       </View>
     </Modal>

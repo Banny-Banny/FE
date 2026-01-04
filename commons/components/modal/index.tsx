@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Pressable, Modal as RNModal, View } from 'react-native';
+import { Pressable, Modal as RNModal, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import { DEFAULT_CONFIG, styles } from './styles';
 import { ModalConfig } from './types';
@@ -94,12 +94,10 @@ export const Modal: React.FC<ModalProps> = ({
       {disableAnimation ? (
         <View style={styles.backdrop}>
           {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
-          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleBackdropPress} />
           {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
           <View
-            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
-            onStartShouldSetResponder={() => false}
-            onMoveShouldSetResponder={() => false}>
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}>
             {/* Modal Content - children을 그대로 렌더링 */}
             {children}
           </View>
@@ -110,14 +108,12 @@ export const Modal: React.FC<ModalProps> = ({
           exiting={FadeOut.duration(200)}
           style={styles.backdrop}>
           {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
-          <Pressable style={styles.backdropPressable} onPress={handleBackdropPress} />
+          <Pressable style={StyleSheet.absoluteFill} onPress={handleBackdropPress} />
           {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
           <Animated.View
             entering={SlideInUp.duration(300).springify()}
             exiting={SlideOutDown.duration(200)}
-            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
-            onStartShouldSetResponder={() => false}
-            onMoveShouldSetResponder={() => false}>
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}>
             {/* Modal Content - children을 그대로 렌더링 */}
             {children}
           </Animated.View>

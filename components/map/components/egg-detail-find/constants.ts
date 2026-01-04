@@ -98,16 +98,3 @@ export const MOCK_DATA_LAST: EggDiscoveryData = {
   },
   isExpiring: true,
 };
-
-/**
- * Figma에서 가져온 이미지 URL 상수
- */
-export const FIGMA_IMAGES = {
-  container: 'http://localhost:3845/assets/139ef261f3f8e3d974bb85b56440d1e7e59685e5.svg',
-  icon: 'http://localhost:3845/assets/e4505f0b1b0046e59ca56d0222593c0dc708afa6.svg',
-  icon1: 'http://localhost:3845/assets/89c5e6e0afdb493770f11dae7d35effe98ac92ac.svg',
-  icon2: 'http://localhost:3845/assets/7401bf1026a71017113362c5199e280af9ca0730.svg',
-  icon3: 'http://localhost:3845/assets/2c71746fc25a0f2ddcb440c04b35809fceb8052d.svg',
-  icon4: 'http://localhost:3845/assets/347a1eb7a8e04ed54518a4ffbbf633f1f74a8e2a.svg',
-  videoThumbnail: 'http://localhost:3845/assets/1a5305d481814bf4fdf0bb6459731d00332e402c.png',
-} as const;

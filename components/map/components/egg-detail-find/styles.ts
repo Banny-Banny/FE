@@ -85,11 +85,6 @@ export const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
 
-  badgeIcon: {
-    width: 16,
-    height: 16,
-  },
-
   // 배지 텍스트 "첫 번째 발견자"
   // Figma: fontSize 14, lineHeight 20, fontWeight ExtraBold, letterSpacing -0.1504
   // 가장 유사: body11 (fontSize 14, lineHeight 20, fontWeight semibold, letterSpacing -0.150390625)
@@ -152,6 +147,7 @@ export const styles = StyleSheet.create({
   dateBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6, // Figma 정확한 값 (Spacing.xs=4, Spacing.sm=8 사이)
     paddingHorizontal: 11, // Figma 정확한 값 (Spacing.sm=8, Spacing.md=16 사이)
     paddingVertical: 2,
@@ -163,13 +159,18 @@ export const styles = StyleSheet.create({
   },
 
   dateIcon: {
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   dateText: {
     ...Typography.body.body8,
     color: Colors.grey[600],
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 
   // 콘텐츠 제목 "우리의 첫 만남"
@@ -208,70 +209,6 @@ export const styles = StyleSheet.create({
     height: '100%',
   },
 
-  // 오디오 플레이어 컨테이너
-  audioPlayerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md, // 16px
-    paddingHorizontal: 18, // Figma 정확한 값 (Spacing.md=16, Spacing.lg=24 사이)
-    paddingVertical: 2,
-    height: 83,
-    backgroundColor: Colors.white[500],
-    borderWidth: 2,
-    borderColor: Colors.whiteGrey[300],
-    borderRadius: BorderRadius.lg,
-  },
-
-  playButton: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.black[500],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  playButtonIcon: {
-    width: 20,
-    height: 20,
-    tintColor: Colors.white[500],
-  },
-
-  audioControls: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm, // 8px
-  },
-
-  audioIcon: {
-    width: 20,
-    height: 20,
-  },
-
-  progressBarContainer: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.whiteGrey[200],
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-
-  progressBar: {
-    height: 6,
-    backgroundColor: Colors.black[500],
-    borderRadius: BorderRadius.full,
-  },
-
-  // 오디오 시간 "0:00"
-  // Figma: fontSize 11, lineHeight 16.5, fontWeight SemiBold, letterSpacing -0.1
-  // 가장 유사: body8 (fontSize 12, lineHeight 16, fontWeight semibold, letterSpacing 0)
-  audioTime: {
-    ...Typography.body.body8,
-    color: Colors.grey[600],
-    minWidth: 24,
-  },
-
   // 비디오 컨테이너
   videoContainer: {
     width: '100%',
@@ -292,7 +229,7 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)', // Colors.black[500] with 30% opacity (Figma 디자인 정확도)
+    backgroundColor: Colors.black[500] + '4D', // 30% opacity (0.3 * 255 = 76.5 ≈ 77 = 4D in hex)
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -301,16 +238,11 @@ export const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: BorderRadius.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)', // Colors.white[500] with 95% opacity (Figma 디자인 정확도)
+    backgroundColor: Colors.white[500] + 'F2', // 95% opacity (0.95 * 255 = 242.25 ≈ 242 = F2 in hex)
     borderWidth: 2,
     borderColor: Colors.white[500],
     justifyContent: 'center',
     alignItems: 'center',
-  },
-
-  videoPlayIcon: {
-    width: 28,
-    height: 28,
   },
 
   // 열람 횟수 배지
