@@ -73,8 +73,8 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   };
 
   // 에그 디테일 발견 모달 상태 관리 (내꺼가 아닌 경우, 근접해지면 모달이 뜨게 할 것 - 추후 기능단에서 구현)
-  // UI 확인용: 기본값 true로 설정
-  const [isEggDetailFindVisible, setIsEggDetailFindVisible] = useState(true);
+  // UI 확인용: 기본값 false로 설정
+  const [isEggDetailFindVisible, setIsEggDetailFindVisible] = useState(false);
 
   const handleCloseEggDetailFind = () => {
     setIsEggDetailFindVisible(false);
@@ -94,7 +94,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         center={mapConfig.center}
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
-        onEggSlotPress={handleEggDetailHintPress}
+        onEggSlotPress={handleEggSlotPress}
       />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <ResetEggSlot />
