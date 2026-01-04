@@ -3,7 +3,7 @@
  * 지도 초기화, 마커 관리, 이벤트 핸들링
  */
 
-import { getCurrentLocationMarkerScript } from '../../current-location-marker/utils';
+import { getCurrentLocationMarkerScript } from '@/components/map/components/current-location-marker/utils';
 
 /**
  * 카카오맵 WebView 내부 JavaScript 코드 생성

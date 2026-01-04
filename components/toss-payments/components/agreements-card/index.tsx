@@ -63,4 +63,3 @@ export const AgreementsCard: React.FC<AgreementsCardProps> = ({
     </View>
   );
 };
-

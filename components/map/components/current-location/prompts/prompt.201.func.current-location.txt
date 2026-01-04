@@ -11,7 +11,7 @@
 조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/current-location/index.tsx
 조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/current-location/styles.ts
 
-조건-환경변수) `process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY` 사용.
+조건-환경변수) `process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY` 사용.
 조건-라이브러리) expo-location
 
 ==============================================
@@ -19,7 +19,7 @@
 핵심요구사항) 아래의 기능 상세를 따를 것
 1. KaKao Local API
   - 사용자의 현재 위도/경도가 확보되면 카카오 로컬 API(https://dapi.kakao.com/v2/local/geo/coord2address.json)를 호출해 행정 구역 주소를 가져올 것.
-  - Headers: Authorization: KakaoAK ${process.env.EXPO_PUBLIC_KAKAO_MAP_API_KEY}
+  - Headers: Authorization: KakaoAK ${process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY}
   - 변환된 주소(예: 서울특별시 강남구)를 화면 상단 UI에 표시할 것.
 
 2. 구현 로직

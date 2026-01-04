@@ -50,4 +50,3 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({ orderSummary
     </View>
   );
 };
-
