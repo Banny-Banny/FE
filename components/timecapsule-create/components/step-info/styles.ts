@@ -9,7 +9,7 @@
  * - [x] Figma 디자인과 1px 단위 정밀 일치
  */
 
-import { Colors, Typography } from '@/commons/constants';
+import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -21,51 +21,10 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[500],
   },
 
-  // ============================================
-  // Header
-  // ============================================
-  header: {
-    width: '100%',
-  },
-
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 16,
-    height: 84,
-  },
-
-  headerBorder: {
-    width: '100%',
-    height: 1,
-    backgroundColor: Colors.grey[200],
-  },
-
-  backButton: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-
-  backButtonText: {
-    fontSize: 20,
-    color: Colors.black[500],
-    includeFontPadding: false,
-  },
-
-  headerTitle: {
-    ...Typography.header.h1,
-    color: Colors.black[500],
-  },
-
   scrollContent: {
     paddingTop: 24,
     paddingHorizontal: 24,
-    paddingBottom: 48,
+    paddingBottom: 24,
   },
 
   // ============================================
@@ -337,8 +296,8 @@ export const styles = StyleSheet.create({
   // Payment Section (총 결제금액 및 결제 버튼)
   // ============================================
   paymentSection: {
-    marginTop: 32,
-    gap: 16,
+    marginTop: Spacing.xl,
+    gap: Spacing.md,
   },
 
   totalContainer: {
@@ -360,24 +319,6 @@ export const styles = StyleSheet.create({
     lineHeight: 32,
     fontWeight: '700',
     color: Colors.red[500],
-  },
-
-  submitButton: {
-    backgroundColor: Colors.black[500],
-    borderRadius: 20,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  submitButtonDisabled: {
-    backgroundColor: Colors.grey[300],
-  },
-
-  submitButtonText: {
-    ...Typography.caption.button,
-    color: Colors.white[500],
-    textAlign: 'center',
   },
 
   // ============================================

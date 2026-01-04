@@ -10,16 +10,12 @@
  * - [x] Figma 디자인 정확히 반영
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors, Spacing } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   footer: {
     width: '100%',
-    borderTopWidth: 1,
-    borderTopColor: Colors.grey[200], // Figma: #e0e0e0
-    paddingTop: 24,
-    paddingBottom: 24,
     backgroundColor: Colors.white[500], // Figma: #fafafa
   },
 });

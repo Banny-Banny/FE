@@ -3,6 +3,7 @@
  * 토스페이먼츠 결제 Feature Container (WebView 기반)
  */
 
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import ConfirmModal from '@/components/timecapsule-create/components/confirm-modal';
 import React, { useCallback, useState } from 'react';
@@ -153,19 +154,7 @@ export default function TossPayment({
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBackPress}
-            accessibilityRole="button"
-            accessibilityLabel="뒤로가기">
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{TEXTS.header.title}</Text>
-        </View>
-        <View style={styles.headerBorder} />
-      </View>
+      <TimeCapsuleHeader title={TEXTS.header.title} onBack={handleBackPress} titleAlign="left" />
 
       {/* 스크롤 영역 */}
       <ScrollView

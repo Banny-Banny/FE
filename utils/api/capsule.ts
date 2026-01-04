@@ -17,6 +17,24 @@ const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3
  * @throws 500: 서버 내부 오류
  */
 export async function fetchRoomSettings(capsuleId: string): Promise<RoomSettingsResponse> {
+  // ========================================
+  // 🚧 임시 Mock 데이터 (백엔드 준비 전)
+  // ========================================
+  // TODO: 백엔드 준비되면 아래 주석 해제하고 Mock 데이터 제거
+  await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
+
+  return {
+    room_id: capsuleId,
+    capsule_name: '우리들의 추억',
+    open_date: '2025-12-31',
+    max_participants: 5,
+    max_images_per_person: 3,
+    has_music: true,
+    has_video: false,
+  };
+  // ========================================
+
+  /* 실제 API 호출 코드 (백엔드 준비되면 주석 해제)
   try {
     const response = await fetch(
       `${API_BASE_URL}/api/capsules/step-rooms/${capsuleId}/settings`,
@@ -41,4 +59,5 @@ export async function fetchRoomSettings(capsuleId: string): Promise<RoomSettings
     console.error('대기실 설정값 조회 실패:', error);
     throw error;
   }
+  */
 }

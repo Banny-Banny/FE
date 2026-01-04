@@ -23,6 +23,7 @@ export const styles = StyleSheet.create({
   scrollContent: {
     flex: 1,
     paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
 
   // 중앙 정렬 컨텐츠 (로딩, 에러 상태)
@@ -33,52 +34,14 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
 
-  // 상단 헤더 영역
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    height: 84,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.whiteGrey[500],
-  },
-
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  // 헤더 아이콘 영역
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  iconButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
   icon: {
     width: 24,
     height: 24,
   },
 
-  // 타이틀
-  title: {
-    fontFamily: 'Pretendard Variable',
-    fontSize: 24,
-    lineHeight: 26.4,
-    fontWeight: '700',
-    letterSpacing: -0.4097000062465668,
-    color: Colors.black[500],
-  },
-
   // 정보 카드
   infoCard: {
-    marginTop: 24,
+    marginTop: Spacing.lg,
     padding: 25,
     backgroundColor: Colors.white[100],
     borderWidth: 1,
@@ -109,7 +72,7 @@ export const styles = StyleSheet.create({
   infoCardDetailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.sm,
   },
 
   infoCardIconWrapper: {
@@ -136,7 +99,7 @@ export const styles = StyleSheet.create({
 
   // 참여자 목록
   participantSection: {
-    marginTop: 20,
+    marginTop: Spacing.md,
     gap: Spacing.md,
   },
 
@@ -201,7 +164,7 @@ export const styles = StyleSheet.create({
   },
 
   participantDetails: {
-    gap: 4,
+    gap: Spacing.xs,
   },
 
   participantNameRow: {
@@ -262,7 +225,7 @@ export const styles = StyleSheet.create({
 
   // 하단 정보 영역
   bottomSection: {
-    marginTop: 34,
+    marginTop: Spacing.xl,
     gap: Spacing.md,
   },
 
@@ -280,7 +243,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: Spacing.sm,
   },
 
   deadlineIcon: {

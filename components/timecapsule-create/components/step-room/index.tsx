@@ -13,9 +13,11 @@
  */
 
 import { Button } from '@/commons/components/button';
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants/color';
 import dayjs from 'dayjs';
+import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
@@ -41,6 +43,9 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
 
   /** 호스트 여부 확인 */
   const isHost = role === 'host';
+
+  /** 라우터 */
+  const router = useRouter();
 
   /** 모달 제어 Hook */
   const { openModal, closeModal } = useModal();
@@ -253,27 +258,30 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* 헤더 */}
-        <View style={styles.header}>
-        {/* 뒤로 가기 */}
-        <View style={styles.headerLeft}>
-          <Pressable style={styles.iconButton}>
-            <Icon name="arrow-left-line" size={24} color={Colors.black[500]} />
-          </Pressable>
-          <Text style={styles.title}>캡슐 대기실</Text>
-        </View>
+      {/* 헤더 */}
+      <TimeCapsuleHeader
+        title="캡슐 대기실"
+        onBack={() => router.back()}
+        titleAlign="left"
+        rightIcons={[
+          {
+            icon: 'more-2-fill',
+            onPress: () => {
+              // TODO: 더보기 메뉴 구현
+              console.log('더보기 메뉴');
+            },
+          },
+          {
+            icon: 'close-line',
+            onPress: () => {
+              // TODO: 닫기 기능 구현
+              router.back();
+            },
+          },
+        ]}
+      />
 
-        {/* 헤더 아이콘 */}
-        <View style={styles.headerIcons}>
-          <Pressable style={styles.iconButton}>
-            <Icon name="more-2-fill" size={24} color={Colors.black[500]} />
-          </Pressable>
-          <Pressable style={styles.iconButton}>
-            <Icon name="close-line" size={24} color={Colors.black[500]} />
-          </Pressable>
-        </View>
-      </View>
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
       {/* 정보 카드 */}
       <View style={styles.infoCard}>
