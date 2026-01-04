@@ -22,12 +22,13 @@
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { styles } from './styles';
 
 export function Notification() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* 헤더 섹션 */}
       <View style={styles.headerContainer}>
         <View style={styles.headerContent}>
@@ -202,7 +203,7 @@ export function Notification() {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
