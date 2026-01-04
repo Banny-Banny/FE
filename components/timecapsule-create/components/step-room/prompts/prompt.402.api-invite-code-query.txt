@@ -1,0 +1,471 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- 인증 불필요 (공개 엔드포인트)
+- 초대 코드만으로 조회 가능
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-room/index.tsx (기존 대기실 컴포넌트)
+            - components/timecapsule-create/components/step-room/types.ts (기존 타입 정의)
+            - utils/api/capsule.ts (기존 API 함수)
+조건-파일경로) 수정할 파일:
+            - utils/api/capsule.ts (초대 코드 조회 API 함수 추가)
+            - components/timecapsule-create/components/step-room/types.ts (응답 타입 추가)
+조건-파일경로) 생성할 파일:
+            - 없음 (기존 파일에 추가)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 API 함수는 유지하고 새로운 함수만 추가
+조건-기능유지) 기존 타입 정의는 유지하고 새로운 타입만 추가
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 엔드포인트: GET /api/capsules/step-rooms?invite_code={code}
+조건-API명세) 인증: 불필요 (공개 엔드포인트)
+조건-API명세) 응답 형식: JSON
+조건-API명세) 초대 코드는 대소문자 구분 없음 (ABC123 = abc123)
+
+==============================================
+
+핵심요구사항) 초대 코드로 대기실 조회 API 연동
+핵심요구사항-1) invite_code를 쿼리 파라미터로 전달하여 대기실 정보 조회
+핵심요구사항-2) 대기실 기본 정보와 참여 현황 반환
+핵심요구사항-3) 참여 가능 여부(is_joinable) 판단 로직 확인
+핵심요구사항-4) 에러 처리 및 타입 안정성 보장
+핵심요구사항-5) 초대 코드 대소문자 구분 없이 처리
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+성공 응답 (200 OK):
+{
+  "room_id": "550e8400-e29b-41d4-a716-446655440000",
+  "capsule_name": "나의 타임캡슐",
+  "open_date": "2026-01-07T10:52:49.438Z",
+  "deadline": "2026-01-01T10:52:49.438Z",
+  "participant_count": 3,
+  "current_participants": 1,
+  "status": "WAITING",
+  "is_joinable": true
+}
+
+에러 응답:
+- 404 Not Found: 존재하지 않는 초대 코드
+- 500 Internal Server Error: 서버 내부 오류
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. room_id (string, UUID)
+   - 대기실 고유 ID
+   - 추후 참여 API 호출 시 사용
+   - 예: "550e8400-e29b-41d4-a716-446655440000"
+
+2. capsule_name (string)
+   - 캡슐(대기실) 이름
+   - UI 정보 카드에 표시
+   - 예: "나의 타임캡슐"
+
+3. open_date (string, ISO 8601)
+   - 캡슐 열람 가능 날짜
+   - UI 정보 카드에 표시
+   - 예: "2026-01-07T10:52:49.438Z"
+
+4. deadline (string, ISO 8601)
+   - 작성 마감 시한 (결제 승인 시각 + 24시간)
+   - 참여 가능 여부 판단에 사용
+   - 예: "2026-01-01T10:52:49.438Z"
+
+5. participant_count (number)
+   - 총 참여 가능 인원수
+   - UI 정보 카드에 "최대 N명" 형태로 표시
+   - 예: 3 (최대 3명)
+
+6. current_participants (number)
+   - 현재 참여 중인 인원수
+   - 슬롯에 user_id가 배정된 개수 (방장 포함)
+   - 참여 가능 여부 판단에 사용
+   - 예: 1 (현재 1명 참여 중)
+
+7. status (string)
+   - 대기실 상태
+   - 값: "WAITING" (대기 중), "COMPLETED" (작성 완료), "EXPIRED" (deadline 경과)
+   - 참여 가능 여부 판단에 사용
+   - 예: "WAITING"
+
+8. is_joinable (boolean)
+   - 현재 참여 가능 여부
+   - true: 참여 가능
+   - false: deadline 경과, 정원 초과, 또는 status가 WAITING이 아님
+   - UI에서 참여 버튼 활성화/비활성화에 사용
+   - 예: true
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+// 백엔드 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용
+export interface InviteCodeQueryResponse {
+  room_id: string;                    // 대기실 ID (UUID)
+  capsule_name: string;               // 캡슐 이름
+  open_date: string;                  // 개봉 날짜 (ISO 8601)
+  deadline: string;                   // 작성 마감 시한 (ISO 8601)
+  participant_count: number;          // 총 참여 가능 인원수
+  current_participants: number;       // 현재 참여 중인 인원수
+  status: 'WAITING' | 'COMPLETED' | 'EXPIRED';  // 대기실 상태
+  is_joinable: boolean;               // 참여 가능 여부
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: utils/api/capsule.ts
+
+목적:
+- 초대 코드로 대기실 조회 API 호출
+- 에러 처리
+- 재사용 가능한 API 함수 제공
+
+기능:
+1. fetchRoomByInviteCode(inviteCode: string): Promise<InviteCodeQueryResponse>
+   - GET /api/capsules/step-rooms?invite_code={code} 호출
+   - 초대 코드는 대소문자 구분 없이 처리 (서버에서 처리하지만 클라이언트에서도 대문자로 변환하여 일관성 유지)
+   - 응답을 그대로 반환 (snake_case 유지, 프로젝트 일관성)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { InviteCodeQueryResponse } from '@/components/timecapsule-create/components/step-room/types';
+
+// .env에 이미 설정된 API URL 사용
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+
+/**
+ * 초대 코드로 대기실 조회 API
+ * @param inviteCode 초대 코드 (6자리 영숫자, 대소문자 구분 없음)
+ * @returns 대기실 정보 (snake_case)
+ * @throws 404: 존재하지 않는 초대 코드
+ * @throws 500: 서버 내부 오류
+ */
+export async function fetchRoomByInviteCode(
+  inviteCode: string
+): Promise<InviteCodeQueryResponse> {
+  try {
+    // 초대 코드 검증 (6자리 영숫자)
+    if (!inviteCode || !/^[A-Za-z0-9]{6}$/.test(inviteCode)) {
+      throw new Error('유효하지 않은 초대 코드입니다. (6자리 영숫자)');
+    }
+
+    // 대소문자 구분 없이 처리 (대문자로 변환하여 일관성 유지)
+    const normalizedCode = inviteCode.toUpperCase();
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/capsules/step-rooms?invite_code=${encodeURIComponent(normalizedCode)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('존재하지 않는 초대 코드입니다.');
+      }
+      throw new Error(`API 호출 실패: ${response.status}`);
+    }
+
+    const data: InviteCodeQueryResponse = await response.json();
+    return data;
+  } catch (error) {
+    console.error('초대 코드로 대기실 조회 실패:', error);
+    throw error;
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) 초대 코드 검증
+
+초대 코드 형식:
+- 6자리 영숫자 (대소문자 구분 없음)
+- 정규식: /^[A-Za-z0-9]{6}$/
+- 예: "ABC123", "abc123", "AbC123" 모두 동일하게 처리
+
+검증 로직:
+1. 클라이언트에서 기본 형식 검증 (6자리 영숫자)
+2. 서버에서 존재 여부 확인
+3. 대소문자 구분 없이 처리 (대문자로 정규화하여 일관성 유지)
+
+==============================================
+
+구현가이드-3) 참여 가능 여부 판단 로직
+
+서버에서 is_joinable을 계산하여 반환하지만, 클라이언트에서도 이해할 수 있도록 로직 설명:
+
+참여 가능 조건 (모두 만족해야 함):
+1. deadline이 지나지 않음 (현재 시간 < deadline)
+2. 정원이 차지 않음 (current_participants < participant_count)
+3. status가 "WAITING"
+
+참여 불가능한 경우:
+- deadline 경과 → is_joinable = false
+- 정원 초과 → is_joinable = false
+- status가 "COMPLETED" 또는 "EXPIRED" → is_joinable = false
+
+주의:
+- 서버에서 이미 계산된 is_joinable 값을 사용
+- 클라이언트에서 별도 계산 불필요 (서버 값 신뢰)
+
+==============================================
+
+활용시나리오-1) 초대 링크로 대기실 조회
+
+1. 사용자가 초대 링크 클릭
+   - URL에 invite_code 포함 (예: /room?invite_code=ABC123)
+
+2. 대기실 페이지 진입
+   - invite_code를 URL 파라미터에서 추출
+   - fetchRoomByInviteCode(inviteCode) 호출
+
+3. API 호출 및 대기실 정보 로드
+   - GET /api/capsules/step-rooms?invite_code=ABC123 호출
+   - 응답 데이터 수신 (캡슐 이름, 개봉일, 참여 현황, 참여 가능 여부 등)
+
+4. UI 동적 구성
+   - 정보 카드: 캡슐 이름, 개봉일, 참여자 수 표시
+   - 참여 버튼: is_joinable에 따라 활성화/비활성화
+   - 상태 표시: status에 따라 "대기 중", "작성 완료", "마감됨" 표시
+
+5. 참여 결정
+   - is_joinable이 true이면 참여 가능
+   - is_joinable이 false이면 정원 초과 또는 마감 안내
+
+==============================================
+
+활용시나리오-2) 에러 처리
+
+시나리오 A) 정상 케이스
+1. API 호출 성공
+2. 대기실 정보 로드 완료
+3. UI에 실시간 데이터 표시
+
+시나리오 B) 존재하지 않는 초대 코드
+1. API 호출: 404 에러 반환
+2. 에러 메시지: "존재하지 않는 초대 코드입니다."
+3. 사용자 피드백: 에러 토스트 표시
+4. 재입력 안내
+
+시나리오 C) 유효하지 않은 초대 코드 형식
+1. 클라이언트 검증: 정규식 불일치
+2. 에러 메시지: "유효하지 않은 초대 코드입니다. (6자리 영숫자)"
+3. 사용자 피드백: 즉시 에러 표시 (API 호출 전)
+
+시나리오 D) 서버 오류
+1. API 호출: 500 에러 반환
+2. 에러 메시지: "API 호출 실패: 500"
+3. 사용자 피드백: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+
+시나리오 E) 네트워크 오류
+1. API 호출: 네트워크 연결 실패
+2. catch 블록에서 에러 처리
+3. 사용자 피드백: "네트워크 연결을 확인해주세요."
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 404 Not Found (존재하지 않는 초대 코드)
+   - 원인: 잘못된 초대 코드, 삭제된 캡슐
+   - 대응: 에러 토스트 + 재입력 안내
+   - 메시지: "존재하지 않는 초대 코드입니다."
+
+2. 유효하지 않은 초대 코드 형식
+   - 원인: 6자리가 아니거나 영숫자가 아님
+   - 대응: 즉시 에러 표시 (API 호출 전)
+   - 메시지: "유효하지 않은 초대 코드입니다. (6자리 영숫자)"
+
+3. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: 에러 토스트 + 재시도 버튼 (선택사항)
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+4. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: 에러 토스트 + 재시도 버튼
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+5. Timeout Error
+   - 원인: API 응답 지연
+   - 대응: 에러 토스트 + 재시도 버튼
+   - 메시지: "요청 시간이 초과되었습니다."
+
+에러 처리 우선순위:
+1. 클라이언트 검증 (형식 검증, API 호출 전)
+2. API 에러 처리 (404, 500 등)
+3. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+4. 사용자 피드백 제공 (토스트, 모달 등)
+5. 재시도 기능 제공 (선택사항)
+
+==============================================
+
+구현순서)
+
+1. Types 파일 수정
+   - InviteCodeQueryResponse 인터페이스 추가 (snake_case)
+   - status 타입을 union type으로 정의 ('WAITING' | 'COMPLETED' | 'EXPIRED')
+
+2. API 함수 작성
+   - utils/api/capsule.ts에 fetchRoomByInviteCode() 함수 추가
+   - 초대 코드 검증 로직 추가 (6자리 영숫자)
+   - 대소문자 정규화 (대문자로 변환)
+   - API 호출 및 에러 처리
+   - API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+
+3. 테스트
+   - 정상 케이스: 유효한 초대 코드로 조회 성공
+   - 에러 케이스: 404, 500, 네트워크 오류
+   - 검증 케이스: 유효하지 않은 형식의 초대 코드
+   - 대소문자 케이스: ABC123, abc123, AbC123 모두 동일하게 처리
+
+4. 체크리스트 작성
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 snake_case로 응답
+   - 프론트엔드는 snake_case를 그대로 사용 (프로젝트 일관성)
+   - 타입 불일치 방지
+
+2. 초대 코드 처리
+   - 대소문자 구분 없이 처리 (서버에서 처리하지만 클라이언트에서도 정규화)
+   - 6자리 영숫자 형식 검증
+   - URL 인코딩 처리 (encodeURIComponent)
+
+3. TypeScript 타입 안정성
+   - API 응답 타입 명시 (InviteCodeQueryResponse, snake_case)
+   - status 타입을 union type으로 정의
+   - any 사용 금지
+
+4. 에러 처리
+   - try-catch 블록 필수
+   - 클라이언트 검증 (형식 검증)
+   - API 에러 처리 (404, 500 등)
+   - 에러 로깅 (console.error)
+   - 사용자 피드백 (토스트, 모달 등)
+
+5. 인증 불필요
+   - 공개 엔드포인트
+   - Authorization 헤더 불필요
+   - 초대 코드만으로 조회 가능
+
+6. 날짜 형식
+   - 백엔드: ISO 8601 형식 (예: "2026-01-07T10:52:49.438Z")
+   - 프론트엔드 표시: 필요시 포맷 변환 (예: YYYY.MM.DD)
+   - dayjs 등 날짜 라이브러리 활용
+
+7. 참여 가능 여부
+   - 서버에서 계산된 is_joinable 값을 사용
+   - 클라이언트에서 별도 계산 불필요
+   - 서버 값 신뢰
+
+==============================================
+
+Q&A) 자주 묻는 질문
+
+Q. 존재하지 않는 초대 코드를 입력하면?
+A. 404 Not Found (존재하지 않는 초대 코드)
+
+Q. 초대 코드는 대소문자를 구분하나?
+A. 아니요. ABC123과 abc123은 동일하게 처리됩니다.
+
+Q. 인증 없이 조회할 수 있나?
+A. 네, 초대 코드만 있으면 누구나 조회 가능합니다.
+
+Q. is_joinable이 false인 경우는?
+A. deadline 경과, 정원 초과, 또는 status가 WAITING이 아닐 때
+
+Q. current_participants는 어떻게 계산되나?
+A. 슬롯에 user_id가 배정된 개수 (방장 포함)
+
+Q. status는 어떤 값이 있나?
+A. WAITING (대기 중), COMPLETED (작성 완료), EXPIRED (deadline 경과)
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] InviteCodeQueryResponse 인터페이스 추가됨 (snake_case)
+- [ ] status 타입이 union type으로 정의됨 ('WAITING' | 'COMPLETED' | 'EXPIRED')
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+API 함수:
+- [ ] utils/api/capsule.ts에 fetchRoomByInviteCode() 함수 추가됨
+- [ ] 초대 코드 검증 로직 추가됨 (6자리 영숫자)
+- [ ] 대소문자 정규화 처리됨 (대문자로 변환)
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] URL 인코딩 처리됨 (encodeURIComponent)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] 404, 500 에러별 처리 구현됨
+- [ ] 클라이언트 검증 (형식 검증) 구현됨
+
+에러 처리:
+- [ ] 404 에러 처리 구현됨
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 유효하지 않은 형식 검증 구현됨
+- [ ] 에러 로깅 추가됨 (console.error)
+- [ ] 사용자 피드백 제공됨 (선택사항)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] 기존 API 함수 수정 0건 (새 함수만 추가)
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] API 호출 성공 케이스 테스트됨
+- [ ] 404 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] 유효하지 않은 형식 검증 테스트됨
+- [ ] 대소문자 처리 테스트됨 (ABC123 = abc123)
+- [ ] URL 인코딩 처리 테스트됨
+
+==============================================
+
