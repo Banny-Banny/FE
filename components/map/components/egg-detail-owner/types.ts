@@ -11,3 +11,4 @@ export interface EggDetailProps {
   onClose: () => void;
   capsule: CapsuleItem | null;
 }
+

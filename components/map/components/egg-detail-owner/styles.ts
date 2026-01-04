@@ -1,5 +1,5 @@
 /**
- * components/map/components/egg-detail/styles.ts
+ * components/map/components/egg-detail-owner/styles.ts
  * 이스터에그 상세 정보 스타일 정의
  *
  * 체크리스트:
@@ -124,3 +124,4 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

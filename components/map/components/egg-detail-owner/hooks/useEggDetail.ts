@@ -1,5 +1,5 @@
 /**
- * components/map/components/egg-detail/hooks/useEggDetail.ts
+ * components/map/components/egg-detail-owner/hooks/useEggDetail.ts
  * 이스터에그 상세 컴포넌트 비즈니스 로직 Hook
  *
  * @description
@@ -48,3 +48,4 @@ export function useEggDetail({ capsule }: UseEggDetailProps): UseEggDetailReturn
     discoveryCount,
   };
 }
+

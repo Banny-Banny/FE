@@ -13,14 +13,15 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 
-import { EggDetail } from './components/egg-detail';
+import { EggDetailHint } from './components/egg-detail-hint';
+import { EggDetail } from './components/egg-detail-owner';
 import { EggForm } from './components/egg-form';
 import { EggSlotModal } from './components/egg-slot-modal';
+import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
-import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
-import ResetEggSlot from './components/reset-egg-slot';
 import type { CapsuleItem } from './components/map-view/types';
+import ResetEggSlot from './components/reset-egg-slot';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
 import { styles } from './styles';
@@ -59,13 +60,24 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setIsEggSlotModalVisible(false);
   };
 
+  // 에그 디테일 힌트 모달 상태 관리 (UI 확인용: 기본값 true)
+  const [isEggDetailHintVisible, setIsEggDetailHintVisible] = useState(true);
+
+  const handleEggDetailHintPress = () => {
+    setIsEggDetailHintVisible(true);
+  };
+
+  const handleCloseEggDetailHint = () => {
+    setIsEggDetailHintVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
         center={mapConfig.center}
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
-        onEggSlotPress={handleEggSlotPress}
+        onEggSlotPress={handleEggDetailHintPress}
       />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <ResetEggSlot />
@@ -81,6 +93,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         usedCount={slotData?.usedSlots ?? 0}
         totalCount={slotData?.totalSlots ?? 3}
       />
+      <EggDetailHint visible={isEggDetailHintVisible} onClose={handleCloseEggDetailHint} />
     </View>
   );
 }

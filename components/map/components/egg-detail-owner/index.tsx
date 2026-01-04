@@ -106,3 +106,4 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
     </BottomSheet>
   );
 };
+
