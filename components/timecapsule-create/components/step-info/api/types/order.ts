@@ -49,6 +49,8 @@ export interface CreateOrderRequest {
 export interface CreateOrderResponse {
   /** 생성된 주문 ID (UUID) */
   order_id: string;
+  /** 자동 생성된 대기실 ID (UUID) - 주문 완료 시 자동 생성됨 */
+  capsule_id: string;
   /** 총 결제 금액 */
   total_amount: number;
   /** 토스페이먼츠 고객 키 */

@@ -5,7 +5,7 @@
 
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
-import ConfirmModal from '@/components/timecapsule-create/components/confirm-modal';
+import PaymentCompleteModal from '@/components/timecapsule-create/modals/payment-complete-modal';
 import React, { useCallback, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -88,7 +88,7 @@ export default function TossPayment({
           width: 344,
           height: 242,
           closeOnBackdropPress: true,
-          children: <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />,
+          children: <PaymentCompleteModal onConfirm={handlePaymentCompleteConfirm} />,
         });
 
         if (onPaymentSuccess) {

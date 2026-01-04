@@ -21,7 +21,8 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import ConfirmModal from '../confirm-modal';
+import SubmitConfirmModal from '../../modals/submit-confirm-modal';
+import SubmitCompleteModal from '../../modals/submit-complete-modal';
 import UserBottomSheet from '../write-bottomsheet';
 import { useParticipants } from './hooks/useParticipants';
 import { useRoomData } from './hooks/useRoomData';
@@ -369,8 +370,8 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
                   height: 'auto',
                   closeOnBackdropPress: false,
                   children: (
-                    <ConfirmModal
-                      type="SUBMIT_CONFIRM"
+                    <SubmitConfirmModal
+                      openDate={roomData.openDate}
                       onConfirm={async () => {
                         console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
                         closeModal();
@@ -392,20 +393,17 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
                             height: 'auto',
                             closeOnBackdropPress: true,
                             children: (
-                              <ConfirmModal
-                                type="SUBMIT_COMPLETE"
+                              <SubmitCompleteModal
+                                capsuleName={roomData.capsuleName}
+                                openDate={roomData.openDate}
+                                dDay={dDay}
+                                participantCount={progress.total}
                                 onConfirm={() => {
                                   console.log('✅ [StepRoom] 제출 완료 모달 확인!');
                                   closeModal();
                                   if (onSubmit) {
                                     onSubmit();
                                   }
-                                }}
-                                data={{
-                                  capsuleName: roomData.capsuleName,
-                                  openDate: roomData.openDate,
-                                  dDay,
-                                  participantCount: progress.total,
                                 }}
                               />
                             ),

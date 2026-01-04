@@ -14,10 +14,10 @@ export const BASE_PRICE = 1000;
 /** 이미지 1장당 가격 */
 export const PHOTO_PRICE = 500;
 
-/** 음악 파일 가격 (파일당, 인원 무관) */
+/** 음악 파일 가격 (인원당) */
 export const MUSIC_PRICE = 1000;
 
-/** 동영상 파일 가격 (파일당, 인원 무관) */
+/** 동영상 파일 가격 (인원당) */
 export const VIDEO_PRICE = 2000;
 
 /**

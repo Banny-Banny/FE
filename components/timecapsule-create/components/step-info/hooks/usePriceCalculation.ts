@@ -28,7 +28,7 @@ export const usePriceCalculation = (
   datePrice: number,
   personnelCount: number,
   storageCount: number,
-  selectedOptions: AdditionalOptionsState
+  selectedOptions: AdditionalOptionsState,
 ): UsePriceCalculationReturn => {
   // ============================================
   // UI 표시용 예상 금액 계산
@@ -42,20 +42,20 @@ export const usePriceCalculation = (
     return storageCount * PHOTO_PRICE * personnelCount;
   }, [storageCount, personnelCount]);
 
-  // 추가 옵션: 파일당 가격 (인원 무관)
+  // 추가 옵션: 인원당 가격
   const optionsPrice = useMemo(() => {
     let total = 0;
 
     if (selectedOptions.music) {
-      total += MUSIC_PRICE; // 1000원 (파일당)
+      total += personnelCount * MUSIC_PRICE; // 인원당 1000원
     }
 
     if (selectedOptions.video) {
-      total += VIDEO_PRICE; // 2000원 (파일당)
+      total += personnelCount * VIDEO_PRICE; // 인원당 2000원
     }
 
     return total;
-  }, [selectedOptions]);
+  }, [selectedOptions, personnelCount]);
 
   // 총 가격 = 개봉일 가격 + 이미지 가격 + 옵션 가격
   const totalPrice = useMemo(() => {
@@ -70,7 +70,7 @@ export const usePriceCalculation = (
       optionsPrice,
       totalPrice,
     }),
-    [datePrice, storagePrice, optionsPrice, totalPrice]
+    [datePrice, storagePrice, optionsPrice, totalPrice],
   );
 
   // ============================================

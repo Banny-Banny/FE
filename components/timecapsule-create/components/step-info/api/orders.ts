@@ -48,6 +48,19 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
   // 실제 API 호출 코드
   try {
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
+
+    // 🔍 응답 데이터 확인 (개발 모드)
+    if (__DEV__) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ [createOrder] 주문 생성 성공');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📦 전체 응답 데이터:', JSON.stringify(response.data, null, 2));
+      console.log('🆔 주문 ID (order_id):', response.data.order_id);
+      console.log('🏠 대기실 ID (capsule_id):', response.data.capsule_id);
+      console.log('💰 총 금액 (total_amount):', response.data.total_amount);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
+
     return response.data;
   } catch (error: any) {
     const status = error.response?.status || 0;

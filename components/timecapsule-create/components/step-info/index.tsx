@@ -10,9 +10,9 @@
  * - [x] Figma 디자인과 정밀 일치
  */
 
-import { Colors } from '@/commons/constants';
 import { Button } from '@/commons/components/button';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
+import { Colors } from '@/commons/constants';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
