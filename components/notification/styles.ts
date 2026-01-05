@@ -72,6 +72,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  notificationOffIcon: {
+    width: 20,
+    height: 20,
+  },
   headerSubtitle: {
     flexDirection: 'row',
     alignItems: 'center',

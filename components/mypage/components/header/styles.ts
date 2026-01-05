@@ -14,119 +14,115 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { Colors, Spacing, Typography } from '@/commons/constants';
+import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // 외부 컨테이너
+  // ============================================
+  // Layout
+  // ============================================
   outerContainer: {
     width: '100%',
     position: 'relative',
     overflow: 'visible', // absolute positioned border가 화면 밖으로 나갈 수 있도록
   },
 
-  // 메인 컨테이너 (Text input)
+  // ============================================
+  // Header Container
+  // ============================================
   container: {
     width: '100%',
     height: 73,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // paddingHorizontal: 23.993,
     paddingTop: 0,
     paddingBottom: 1,
   },
 
-  // border-bottom line (화면 양끝까지 확장)
+  // ============================================
+  // Border
+  // ============================================
   borderLine: {
     position: 'absolute',
     bottom: 0,
     left: -Spacing.lg, // 부모의 paddingHorizontal 상쇄
     right: -Spacing.lg, // 부모의 paddingHorizontal 상쇄
     height: 1,
-    backgroundColor: Colors.whiteGrey[400], // #E9E9E9 (가장 가까운 연한 회색)
+    backgroundColor: Colors.whiteGrey[400],
   },
 
-  // 왼쪽: 타이틀 컨테이너 (Button)
+  // ============================================
+  // Title
+  // ============================================
   titleContainer: {
     height: 22,
     width: 85,
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
-
-  // 타이틀 텍스트
   titleText: {
     fontFamily: Typography.header.h1.fontFamily,
     fontSize: 20,
     lineHeight: 22,
     fontWeight: Typography.header.h1.fontWeight, // ExtraBold (800)
-    color: Colors.black[500], // #0a0a0a
-    letterSpacing: -0.8492,
+    color: Colors.black[500],
+    letterSpacing: -1, // -0.8492 반올림
   },
 
-  // 오른쪽: 아이콘 컨테이너 (Container)
+  // ============================================
+  // Icons
+  // ============================================
   iconContainer: {
     height: 32,
     width: 68,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    // 아이콘 간 간격: Figma에서 35.99 - 23.993 = 11.997 ≈ 12
-    // React Native에서는 gap 대신 marginLeft 사용
+    gap: Spacing.sm, // 12px - marginRight 대신 gap 사용
   },
-
-  // 알림 버튼 (Button)
   notificationButton: {
     width: 24,
     height: 24,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12, // 아이콘 간 간격
   },
-
-  // 알림 아이콘
   notificationIcon: {
     width: 24,
     height: 24,
   },
-
-  // 알림 배지 (MyPageScreen)
+  notificationOffIcon: {
+    width: 24,
+    height: 24,
+  },
   badge: {
     position: 'absolute',
     top: -4,
     left: 12,
     width: 16,
     height: 16,
-    // 피그마 디자인: #ff7b7b - Colors.red 팔레트에서 가장 가까운 색상 사용
-    backgroundColor: Colors.red[500], // #FF515A (가장 가까운 빨간색)
-    borderRadius: 9999,
+    backgroundColor: Colors.red[500],
+    borderRadius: BorderRadius.full, // 9999 → BorderRadius.full
     justifyContent: 'center',
     alignItems: 'center',
   },
-
-  // 배지 텍스트
   badgeText: {
     fontFamily: Typography.body.body3.fontFamily,
     fontSize: 9,
     lineHeight: 14,
     fontWeight: Typography.body.body3.fontWeight, // Bold
-    color: Colors.white[500], // #fafafa
+    color: Colors.white[500],
     textAlign: 'center',
     letterSpacing: 0,
   },
-
-  // 닫기 버튼 (Button)
   closeButton: {
     width: 32,
     height: 32,
-    backgroundColor: Colors.whiteGrey[500], // #e8e8e8
+    backgroundColor: Colors.whiteGrey[500],
     borderWidth: 1,
-    // borderColor: rgba(10, 10, 10, 0.08) - Colors.black[500]의 8% 투명도
-    // 가장 가까운 연한 회색 토큰 사용
-    borderColor: Colors.whiteGrey[400], // #E9E9E9 (가장 가까운 연한 회색)
-    borderRadius: 20,
+    borderColor: Colors.whiteGrey[400],
+    borderRadius: BorderRadius.xl, // 20 → BorderRadius.xl
     justifyContent: 'center',
     alignItems: 'center',
     padding: 1,

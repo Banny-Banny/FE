@@ -34,7 +34,7 @@ export function Header() {
   };
 
   const handleClosePress = () => {
-    navigation.back();
+    navigation.toHome();
   };
 
   return (

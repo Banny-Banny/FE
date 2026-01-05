@@ -27,7 +27,8 @@
 import { Colors } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
 import { DEFAULT_NEW_NOTIFICATIONS, DEFAULT_OLD_NOTIFICATIONS } from '@/egg/constants/MOCK_DATA';
-import React from 'react';
+import { Image } from 'expo-image';
+import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { NotificationItem } from './components/notification-item';
@@ -35,6 +36,7 @@ import { styles } from './styles';
 
 export default function NotificationFeature() {
   const navigation = useNavigation();
+  const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
 
   const handleMarkAllAsRead = () => {
     // TODO: 모든 알림 읽음 처리
@@ -42,6 +44,11 @@ export default function NotificationFeature() {
 
   const handleDelete = (id: string) => {
     // TODO: 알림 삭제 처리
+  };
+
+  const handleToggleNotification = () => {
+    setIsNotificationEnabled((prev) => !prev);
+    // TODO: 실제 알림 설정 API 호출
   };
 
   const handleClose = () => {
@@ -64,13 +71,26 @@ export default function NotificationFeature() {
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>알림</Text>
             <View style={styles.headerIcons}>
-              <View style={styles.iconButtonActive}>
-                <Icon
-                  name={'ri-notification-line' as IconName}
-                  size={20}
-                  color={Colors.black[500]}
-                />
-              </View>
+              <Pressable
+                style={styles.iconButtonActive}
+                onPress={handleToggleNotification}
+                accessibilityRole="button"
+                accessibilityLabel={isNotificationEnabled ? '알림 끄기' : '알림 켜기'}>
+                {isNotificationEnabled ? (
+                  <Icon
+                    name={'ri-notification-line' as IconName}
+                    size={20}
+                    color={Colors.black[500]}
+                  />
+                ) : (
+                  <Image
+                    source={require('@/assets/icons/unnotification.png')}
+                    style={styles.notificationOffIcon}
+                    contentFit="contain"
+                    accessibilityLabel="알림 꺼짐"
+                  />
+                )}
+              </Pressable>
               <Pressable
                 style={styles.iconButton}
                 onPress={handleClose}
