@@ -13,7 +13,7 @@ import { useMemo, useState } from 'react';
 
 import type { CapsuleDetailResponse } from '../../egg-detail-owner/types';
 import type { MediaItem } from '../../shared/types';
-import type { DiscoveryOrder, EggDiscoveryData, EggDetailFindProps } from '../types';
+import type { DiscoveryOrder, EggDetailFindProps, EggDiscoveryData } from '../types';
 
 export interface UseEggDetailFindReturn {
   /** 발견 데이터 */
@@ -34,14 +34,14 @@ export interface UseEggDetailFindReturn {
 
 /**
  * 발견 순서 계산
- * @param viewCount 현재 열람 횟수
+ * @param viewersLength 현재 열람자 수 (viewers 배열 길이)
  * @param viewLimit 최대 열람 횟수
  * @returns 발견 순서
  */
-function calculateDiscoveryOrder(viewCount: number, viewLimit: number): DiscoveryOrder {
-  if (viewCount === 1) {
+function calculateDiscoveryOrder(viewersLength: number, viewLimit: number): DiscoveryOrder {
+  if (viewersLength === 1) {
     return 'first';
-  } else if (viewCount === viewLimit) {
+  } else if (viewersLength === viewLimit) {
     return 'last';
   } else {
     return 'second';
@@ -54,8 +54,10 @@ function calculateDiscoveryOrder(viewCount: number, viewLimit: number): Discover
 function transformCapsuleDetailToDiscoveryData(
   detailData: CapsuleDetailResponse,
 ): EggDiscoveryData {
-  // 발견 순서 계산
-  const discoveryOrder = calculateDiscoveryOrder(detailData.view_count, detailData.view_limit);
+  // 발견 순서 계산 (viewers 배열 길이 사용)
+  const viewersLength = detailData.viewers?.length || 0;
+  const viewLimit = detailData.view_limit || 3; // 기본값 3
+  const discoveryOrder = calculateDiscoveryOrder(viewersLength, viewLimit);
 
   // 날짜 포맷팅 (MM.DD 형식)
   const createdAt = dayjs(detailData.created_at).format('MM.DD');
@@ -88,8 +90,8 @@ function transformCapsuleDetailToDiscoveryData(
     content: detailData.content || '',
     media,
     viewCount: {
-      current: detailData.view_count,
-      max: detailData.view_limit,
+      current: viewersLength,
+      max: viewLimit,
     },
     isExpiring: discoveryOrder === 'last',
   };
