@@ -1,0 +1,326 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/03-ui.mdc
+
+==============================================
+
+조건-피그마) 활용할MCP: 피그마mcp
+조건-피그마) 구현된 컴포넌트 참고 노드ID:https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=356-703&t=secdtfLu18BiePe9-4
+
+==============================================
+
+조건-파일경로) 구현될 TIMECAPSULE_HEADER 컴포넌트 파일경로: commons/components/timecapsule-header/index.tsx
+조건-파일경로) 구현될 TIMECAPSULE_HEADER 스타일 파일경로: commons/components/timecapsule-header/styles.ts
+
+==============================================
+
+조건-디자인시스템) 기존 디자인 시스템 사용
+                  - 색상: @commons/constants/color.ts의 Colors 사용
+                  - 타이포그래피: @commons/constants/typography.ts의 Typography 사용
+                  - 간격: @commons/constants/spacing.ts의 Spacing 사용
+                  - 새로운 색상이나 타이포 정의 금지
+
+==============================================
+
+핵심요구사항) 타임캡슐 헤더 공통 컴포넌트 구현을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) 라이브러리 조건
+                - UI Framework: React Native 기본 컴포넌트 사용
+                - 아이콘: 이미 설치되어있는 react-native-remix-icon 사용
+                - Pressable 또는 TouchableOpacity 사용
+
+            2) 헤더 종류 (기존 컴포넌트 기준)
+                1. 기본 헤더 (Basic Header)
+                   - 뒤로가기 버튼 (왼쪽)
+                   - 제목 (중앙)
+                   - 하단 보더 (선택)
+                   - 용도: step-info 컴포넌트의 헤더
+
+                2. 확장 헤더 (Extended Header)
+                   - 뒤로가기 버튼 (왼쪽)
+                   - 제목 (중앙)
+                   - 오른쪽 아이콘 버튼들 (선택, 여러 개 가능)
+                   - 하단 보더 (선택)
+                   - 용도: step-room 컴포넌트의 헤더
+
+            3) 디자인 시스템 (기존 컴포넌트 기준)
+                CRITICAL: 기존 step-info, step-room 컴포넌트의 헤더 스타일을 확인하여 동일하게 구현할 것
+
+                참고: step-info와 step-room의 헤더 스타일 차이
+                - step-info: paddingHorizontal: 24px (헤더 내부 컨테이너에 적용)
+                - step-room: paddingHorizontal 없음 (스크롤 컨텐츠에 적용)
+                - 통일 기준: paddingHorizontal을 헤더 컨테이너에 적용 (step-info 방식)
+                - borderBottomColor: step-info는 Colors.grey[200], step-room은 Colors.whiteGrey[500]
+                - 통일 기준: Colors.grey[200] 사용 (기본값), 필요시 prop으로 변경 가능
+
+                1. 기본 헤더 스타일
+                   - height: 84px
+                   - paddingHorizontal: 24px (헤더 컨테이너에 적용)
+                   - paddingTop: 16px
+                   - paddingBottom: 16px
+                   - backgroundColor: Colors.white[500] (또는 투명)
+                   - borderBottomWidth: 1px (선택)
+                   - borderBottomColor: Colors.grey[200] (기본값, step-info 기준)
+
+                2. 뒤로가기 버튼 스타일
+                   - width: 24px
+                   - height: 24px
+                   - 아이콘: "arrow-left-line" (기본값, step-room 방식) 또는 텍스트 "←" (step-info 방식)
+                   - 아이콘 size: 24px (아이콘 사용 시) 또는 20px (텍스트 사용 시)
+                   - 아이콘 color: Colors.black[500]
+                   - marginRight: 16px
+                   - 참고: step-info는 텍스트 "←" 사용, step-room은 아이콘 "arrow-left-line" 사용
+                   - 통일 기준: 아이콘 "arrow-left-line" 사용 (기본값)
+
+                3. 제목 스타일
+                   - Typography.header.h1 사용
+                   - color: Colors.black[500]
+
+                4. 오른쪽 아이콘 버튼 스타일
+                   - width: 40px
+                   - height: 40px
+                   - 아이콘 size: 24px
+                   - 아이콘 color: Colors.black[500]
+                   - flexDirection: 'row' (여러 개일 경우)
+                   - gap: 적절한 간격
+
+            4) TimeCapsuleHeader 컴포넌트 구현
+                1. Props 정의 (TimeCapsuleHeaderProps)
+                   - title: string (필수) - 헤더 제목
+                   - onBack?: () => void (선택) - 뒤로가기 핸들러
+                     - CRITICAL: onBack 핸들러는 각 페이지에서 정의하여 전달함
+                     - CRITICAL: 헤더 컴포넌트는 순수 UI만 담당하며, 비즈니스 로직은 포함하지 않음
+                   - rightIcons?: Array<{ icon: string; onPress: () => void }> (선택) - 오른쪽 아이콘 버튼들
+                     - CRITICAL: rightIcons의 onPress 핸들러는 각 페이지에서 정의하여 전달함
+                     - CRITICAL: 헤더 컴포넌트는 순수 UI만 담당하며, 비즈니스 로직은 포함하지 않음
+                     - 예시: [{ icon: 'more-2-fill', onPress: handleMore }, { icon: 'close-line', onPress: handleClose }]
+                   - showBorder?: boolean (선택, 기본값: true) - 하단 보더 표시 여부
+                   - backgroundColor?: string (선택) - 배경색 (기본값: Colors.white[500])
+
+                2. 컴포넌트 구조
+                   - View 컨테이너 (header)
+                   - 왼쪽: 뒤로가기 버튼 (onBack이 있을 때만 표시)
+                   - 중앙: 제목
+                   - 오른쪽: 아이콘 버튼들 (rightIcons가 있을 때만 표시)
+                   - 하단: 보더 (showBorder가 true일 때만 표시)
+
+                3. 뒤로가기 버튼 렌더링
+                   - onBack이 있으면 Pressable/TouchableOpacity로 렌더링
+                   - 기본값: react-native-remix-icon의 "arrow-left-line" 사용 (step-room 방식)
+                   - 참고: step-info는 텍스트 "←" 사용하지만, 통일성을 위해 아이콘 사용 권장
+                   - CRITICAL: onBack 핸들러는 각 페이지에서 정의하여 전달함
+
+                4. 오른쪽 아이콘 버튼 렌더링
+                   - rightIcons 배열을 map하여 렌더링
+                   - 각 아이콘은 Pressable/TouchableOpacity로 감싸기
+                   - react-native-remix-icon 사용
+                   - CRITICAL: 각 아이콘의 onPress 핸들러는 각 페이지에서 정의하여 전달함
+                   - CRITICAL: 헤더 컴포넌트는 순수 UI만 담당하며, 비즈니스 로직은 포함하지 않음
+
+            5) Props/Config 타입 정의
+                1. TimeCapsuleHeaderProps 타입
+                   - title: string
+                   - onBack?: () => void
+                   - rightIcons?: Array<{ icon: string; onPress: () => void }>
+                   - showBorder?: boolean
+                   - backgroundColor?: string
+
+                2. RightIcon 타입
+                   - icon: string (react-native-remix-icon 아이콘 이름)
+                   - onPress: () => void
+
+==============================================
+
+구현 가이드라인
+
+1. TimeCapsuleHeader 컴포넌트 구현
+   - 파일: commons/components/timecapsule-header/index.tsx
+   - 타입 정의 (파일 상단에 inline으로 정의)
+     - RightIcon: { icon: string; onPress: () => void }
+     - TimeCapsuleHeaderProps: { title, onBack?, rightIcons?, showBorder?, backgroundColor? }
+   - TimeCapsuleHeaderProps props 받기
+   - View 컨테이너로 구조화
+   - 뒤로가기 버튼 조건부 렌더링 (onBack이 있을 때만)
+   - 제목 중앙 배치
+   - 오른쪽 아이콘 버튼들 조건부 렌더링 (rightIcons가 있을 때만)
+   - 하단 보더 조건부 렌더링 (showBorder가 true일 때만)
+   - react-native-remix-icon 사용
+
+2. Styles 파일 구현
+   - 파일: commons/components/timecapsule-header/styles.ts
+   - StyleSheet.create 사용
+   - CRITICAL: 기존 step-info, step-room 컴포넌트의 헤더 스타일 값을 확인하여 직접 정의
+   - Colors, Typography, Spacing은 commons/constants에서 import하여 사용
+   - container: 헤더 컨테이너 스타일
+   - headerContainer: 헤더 내부 컨테이너 (flexDirection: 'row')
+   - headerLeft: 왼쪽 영역 (뒤로가기 버튼)
+   - headerCenter: 중앙 영역 (제목)
+   - headerRight: 오른쪽 영역 (아이콘 버튼들)
+   - backButton: 뒤로가기 버튼 스타일
+   - title: 제목 스타일
+   - iconButton: 아이콘 버튼 스타일
+   - border: 하단 보더 스타일
+
+==============================================
+
+구현 순서
+
+1. 기존 step-info, step-room 컴포넌트의 헤더 스타일 확인
+2. TimeCapsuleHeader 컴포넌트 구현 (타입은 index.tsx에 inline으로 정의)
+3. Styles 파일 작성 (Colors/Typography/Spacing import하여 직접 사용)
+4. index.tsx에서 TimeCapsuleHeader export
+5. 테스트 (기존 step-info, step-room에서 사용해보기)
+6. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 디자인 시스템 준수
+   - CRITICAL: 기존 step-info, step-room 컴포넌트의 헤더 스타일을 정확히 재현할 것
+   - CRITICAL: commons/constants/color.ts의 Colors만 사용
+   - CRITICAL: commons/constants/typography.ts의 Typography만 사용
+   - CRITICAL: commons/constants/spacing.ts의 Spacing만 사용
+   - 새로운 색상 코드 직접 정의 금지
+   - 새로운 타이포 스타일 직접 정의 금지
+
+8. 컴포넌트 책임 분리 (Separation of Concerns)
+   - CRITICAL: 헤더 컴포넌트는 순수 UI 컴포넌트로만 구현
+   - CRITICAL: 모든 이벤트 핸들러(onBack, rightIcons의 onPress)는 props로 받아서 사용
+   - CRITICAL: 비즈니스 로직(navigation, API 호출 등)은 헤더 컴포넌트에 포함하지 않음
+   - CRITICAL: 각 페이지에서 필요한 핸들러를 정의하여 props로 전달
+   - 예시: onBack={() => navigation.back()} 또는 onBack={handleBack}
+
+2. 타입 안정성
+   - 모든 props에 타입 정의
+   - TypeScript strict mode 준수
+
+3. 접근성 (Accessibility)
+   - Pressable의 accessibilityRole='button' 설정
+   - 명확한 accessibilityLabel 설정
+   - 뒤로가기 버튼: accessibilityLabel="뒤로가기"
+   - 아이콘 버튼: accessibilityLabel을 icon 이름 기반으로 생성
+
+4. 성능 최적화
+   - 불필요한 리렌더링 방지
+   - 스타일 객체 미리 계산
+   - useMemo 활용 (필요시)
+
+5. 사용자 경험
+   - 터치 영역 충분히 확보 (최소 44px)
+   - press 상태 시각적 피드백 제공
+
+6. 확장성
+   - 추가 아이콘 쉽게 확장 가능
+   - 커스텀 스타일 props 추가 가능하도록 구조화
+
+7. 코드 품질
+   - 명확한 함수명 및 변수명
+   - 재사용 가능한 컴포넌트 구조
+   - 주석으로 복잡한 로직 설명
+   - 일관된 네이밍 컨벤션
+
+==============================================
+
+사용 예시
+
+```typescript
+// 기본 헤더 사용 예시 (step-info 스타일)
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
+
+<TimeCapsuleHeader
+  title="타임캡슐 만들기"
+  onBack={() => navigation.back()}
+/>
+
+// 확장 헤더 사용 예시 (step-room 스타일)
+<TimeCapsuleHeader
+  title="캡슐 대기실"
+  onBack={() => navigation.back()}
+  rightIcons={[
+    { icon: 'more-2-fill', onPress: handleMore },
+    { icon: 'close-line', onPress: handleClose },
+  ]}
+/>
+
+// 보더 없는 헤더
+<TimeCapsuleHeader
+  title="타임캡슐 만들기"
+  onBack={() => navigation.back()}
+  showBorder={false}
+/>
+
+// 커스텀 배경색
+<TimeCapsuleHeader
+  title="타임캡슐 만들기"
+  onBack={() => navigation.back()}
+  backgroundColor={Colors.white[100]}
+/>
+```
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] 기존 step-info, step-room 컴포넌트의 헤더 스타일을 확인함
+- [ ] index.tsx에 타입 정의됨 (TimeCapsuleHeaderProps, RightIcon - inline으로 정의)
+- [ ] Styles 파일에서 Colors를 import하여 사용함
+- [ ] Styles 파일에서 Typography를 import하여 사용함
+- [ ] Styles 파일에서 Spacing을 import하여 사용함
+- [ ] 새로운 색상 코드를 직접 정의하지 않았음
+- [ ] 새로운 타이포 스타일을 직접 정의하지 않았음
+- [ ] TimeCapsuleHeader 컴포넌트 구현 완료
+  - [ ] title prop 정상 작동
+  - [ ] onBack prop 정상 작동 (뒤로가기 버튼 표시/숨김)
+  - [ ] rightIcons prop 정상 작동 (오른쪽 아이콘 버튼들 표시)
+  - [ ] showBorder prop 정상 작동 (하단 보더 표시/숨김)
+  - [ ] backgroundColor prop 정상 작동
+- [ ] Styles 파일에서 Colors/Typography/Spacing 직접 사용함
+- [ ] 접근성 속성 적용됨 (accessibilityRole, accessibilityLabel)
+- [ ] TypeScript 타입 에러 0건
+- [ ] 코드 가독성 및 유지보수성 확보
+- [ ] 샘플 테스트 완료
+  - [ ] 기본 헤더 (뒤로가기 + 제목)
+  - [ ] 확장 헤더 (뒤로가기 + 제목 + 오른쪽 아이콘들)
+  - [ ] 보더 없는 헤더
+  - [ ] 커스텀 배경색
+- [ ] 기존 step-info, step-room 컴포넌트에서 사용 가능한지 확인
+
+==============================================
+
+추가 고려사항
+
+1) 커스텀 스타일 지원
+   - style?: StyleProp<ViewStyle> prop 추가
+   - titleStyle?: StyleProp<TextStyle> prop 추가
+   - 기본 스타일과 병합
+
+2) 햅틱 피드백
+   - expo-haptics 사용
+   - 버튼 클릭 시 가벼운 햅틱 피드백 제공
+
+3) 애니메이션
+   - react-native-reanimated 사용
+   - press 상태 부드러운 애니메이션
+   - scale, opacity 조절
+
+4) 다양한 뒤로가기 버튼 스타일
+   - icon?: string prop 추가 (기본값: 'arrow-left-line')
+   - text?: string prop 추가 (기본값: '←')
+   - icon 또는 text 중 하나 선택
+
+5) 제목 정렬 옵션
+   - titleAlign?: 'left' | 'center' | 'right' prop 추가
+   - 기본값: 'center'
+
+6) SafeAreaView 통합
+   - SafeAreaView를 내부에서 처리할지, 외부에서 처리할지 결정
+   - edges prop 추가 가능
+
+==============================================
+

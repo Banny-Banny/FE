@@ -5,30 +5,84 @@
 
 import { DATE_OPTION_INDEX } from '@/components/timecapsule-create/components/step-info/constants';
 import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
-import { apiClient } from '@/utils';
+import { apiClient } from '@/utils/apiClient';
 import dayjs from 'dayjs';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
+
+// ========================================
+// 🔧 테스트 모드 설정
+// ========================================
+// true: Mock 데이터 사용 (백엔드 없이 테스트)
+// false: 실제 API 호출
+const USE_MOCK_DATA = false;
+// ========================================
 
 /**
  * 타임캡슐 주문 생성 API 호출
  */
 export async function createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
-  try {
-    console.log('📤 [createOrder] 백엔드 API 호출 시작');
-    console.log('  - 요청 데이터:', JSON.stringify(data, null, 2));
-    console.log('  - 엔드포인트: POST /api/orders');
+  // Mock 데이터 사용 모드
+  if (USE_MOCK_DATA) {
+    await new Promise((resolve) => setTimeout(resolve, 500)); // 로딩 시뮬레이션
 
+    return {
+      order_id: 'mock-order-' + Date.now(),
+      total_amount: 10000,
+      customer_key: 'mock-customer-key',
+      created_at: new Date().toISOString(),
+      image_amount: 0,
+      audio_amount: data.add_music ? 2000 : 0,
+      video_amount: data.add_video ? 3000 : 0,
+      time_option_amount:
+        data.time_option === '1_WEEK' ? 1000 : data.time_option === '1_YEAR' ? 5000 : 0,
+      time_option: data.time_option,
+      custom_open_at: data.custom_open_at || null,
+      headcount: data.headcount,
+      photo_count: data.photo_count || 0,
+      add_music: data.add_music || false,
+      add_video: data.add_video || false,
+      status: 'PENDING_PAYMENT' as const,
+    };
+  }
+
+  // 실제 API 호출 코드
+  try {
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
 
-    console.log('✅ [createOrder] 백엔드 API 응답 수신');
-    console.log('  - 응답 상태:', response.status);
-    console.log('  - 응답 데이터:', JSON.stringify(response.data, null, 2));
-    console.log('  - 💰 total_amount:', response.data.total_amount);
+    // 🔍 응답 데이터 확인 (개발 모드)
+    if (__DEV__) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('✅ [createOrder] 주문 생성 성공');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📦 전체 응답 데이터:', JSON.stringify(response.data, null, 2));
+      console.log('🆔 주문 ID (order_id):', response.data.order_id);
+      console.log('🏠 대기실 ID (capsule_id):', response.data.capsule_id);
+      console.log('💰 총 금액 (total_amount):', response.data.total_amount);
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
 
     return response.data;
   } catch (error: any) {
     const status = error.response?.status || 0;
     let errorMessage = '주문 생성에 실패했습니다';
+
+    // 개발 모드에서 상세 오류 정보 로깅
+    if (__DEV__) {
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('❌ [createOrder] 주문 생성 실패');
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.error('📊 HTTP 상태 코드:', status);
+      console.error('📝 에러 메시지:', error.message);
+      console.error('📤 요청 데이터:', JSON.stringify(data, null, 2));
+      if (error.response?.data) {
+        console.error('📥 서버 응답 데이터:', JSON.stringify(error.response.data, null, 2));
+      }
+      if (error.response?.headers) {
+        console.error('📋 응답 헤더:', error.response.headers);
+      }
+      console.error('🌐 네트워크 오류 여부:', !error.response);
+      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
 
     if (status === 400) {
       const msg = error.response?.data?.message;
@@ -45,9 +99,18 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
           ? '유효하지 않은 상품입니다'
           : '요청한 리소스를 찾을 수 없습니다';
     } else if (status === 500) {
-      errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+      // 서버 에러 메시지가 있으면 사용 (개발 모드에서만)
+      const serverMessage = error.response?.data?.message || error.response?.data?.error;
+      if (__DEV__ && serverMessage) {
+        errorMessage = `서버 오류: ${serverMessage}`;
+      } else {
+        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+      }
     } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message;
+    } else if (!error.response) {
+      // 네트워크 오류 또는 서버 연결 실패
+      errorMessage = '서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요';
     }
 
     throw new Error(errorMessage);

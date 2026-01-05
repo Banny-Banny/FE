@@ -10,6 +10,8 @@
  * - [x] Figma 디자인과 정밀 일치
  */
 
+import { Button } from '@/commons/components/button';
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { Colors } from '@/commons/constants';
 import { formatPriceWithSymbol as formatPrice } from '@/utils';
 import dayjs from 'dayjs';
@@ -397,19 +399,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
       )}
 
       {/* 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={onBack}
-            accessibilityRole="button"
-            accessibilityLabel="뒤로가기">
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>타임캡슐 만들기</Text>
-        </View>
-        <View style={styles.headerBorder} />
-      </View>
+      <TimeCapsuleHeader title="타임캡슐 만들기" onBack={onBack} titleAlign="left" />
 
       <ScrollView
         style={styles.container}
@@ -623,16 +613,14 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
             <Text style={styles.totalLabel}>{TEXTS.footer.totalLabel}</Text>
             <Text style={styles.totalPrice}>{formatPrice(totalPrice)}</Text>
           </View>
-          <TouchableOpacity
-            style={[styles.submitButton, (!isValid || isLoading) && styles.submitButtonDisabled]}
-            onPress={handleSubmit(onFormSubmit)}
+          <Button
+            label={isLoading ? '처리 중...' : TEXTS.footer.submitButton}
+            variant="primary"
+            size="L"
+            fullWidth
             disabled={!isValid || isLoading}
-            accessibilityRole="button"
-            accessibilityLabel={TEXTS.footer.submitButton}>
-            <Text style={styles.submitButtonText}>
-              {isLoading ? '처리 중...' : TEXTS.footer.submitButton}
-            </Text>
-          </TouchableOpacity>
+            onPress={handleSubmit(onFormSubmit)}
+          />
         </View>
 
         {/* Hidden Controllers for validation */}

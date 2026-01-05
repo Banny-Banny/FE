@@ -4,9 +4,10 @@
  */
 
 import { useModal } from '@/commons/components/modal/hooks/useModal';
-import ConfirmModal from '@/components/timecapsule-create/components/confirm-modal';
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
+import PaymentCompleteModal from '@/components/timecapsule-create/modals/payment-complete-modal';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import { updateOrderStatus } from './api/payment';
 import { PaymentError } from './api/types/types';
 import { AgreementDetailModal } from './components/agreement-detail-modal';
@@ -197,9 +198,7 @@ export default function TossPayment({
           width: 344,
           height: 242,
           closeOnBackdropPress: true,
-          children: (
-            <ConfirmModal type="PAYMENT_COMPLETE" onConfirm={handlePaymentCompleteConfirm} />
-          ),
+          children: <PaymentCompleteModal onConfirm={handlePaymentCompleteConfirm} />,
         });
 
         if (onPaymentSuccess) {
@@ -272,20 +271,7 @@ export default function TossPayment({
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <View style={styles.header}>
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={handleBackPress}
-            accessibilityRole="button"
-            accessibilityLabel="뒤로가기">
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{TEXTS.header.title}</Text>
-        </View>
-        <View style={styles.headerBorder} />
-      </View>
-
+      <TimeCapsuleHeader title={TEXTS.header.title} onBack={handleBackPress} titleAlign="left" />
       {/* 스크롤 영역 */}
       <ScrollView
         style={styles.scrollView}

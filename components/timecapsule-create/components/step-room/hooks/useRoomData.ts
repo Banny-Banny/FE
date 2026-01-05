@@ -4,35 +4,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ROOM_STATUS } from '../constants';
-import type { Participant, Progress, RoomData } from '../types';
-
-// ============================================
-// 목데이터 (백엔드 API 준비 전)
-// ============================================
-
-/**
- * 목데이터: 캡슐대기실 데이터
- * ⚠️ 추후 백엔드 API로 교체될 예정
- */
-const mockRoomData: RoomData = {
-  // 캡슐 기본 정보 (스텝 인포에서 전달)
-  capsuleId: 'capsule-001',
-  capsuleName: 'ㅋ', // 스텝 인포에서 전달
-  openDate: '2025.06.10', // 스텝 인포에서 전달
-  maxParticipants: 4, // 스텝 인포에서 전달
-  imageSlots: 3, // 스텝 인포에서 전달
-  additionalOptions: {
-    hasMusicFile: true, // 스텝 인포에서 전달
-    hasVideo: true, // 스텝 인포에서 전달
-  },
-  // 방장 정보
-  hostId: 'user-001',
-  // 작성 마감 시간
-  deadline: '2025-12-30T23:59:59Z',
-  // 대기실 상태
-  status: ROOM_STATUS.WAITING,
-};
+import { getOrderInfo, getRoomSettings } from '../api/capsule';
+import { mockRoomData, ROOM_STATUS } from '../constants';
+import type { OrderResponse, Participant, Progress, RoomData, RoomSettingsResponse } from '../types';
 
 // ============================================
 // 타입 정의
@@ -40,8 +14,10 @@ const mockRoomData: RoomData = {
 
 /** useRoomData Hook 반환 타입 */
 interface UseRoomDataReturn {
-  /** 캡슐대기실 데이터 */
-  roomData: RoomData | null;
+  /** 주문 정보 (snake_case) - 1단계 API 응답 */
+  orderInfo: OrderResponse | null;
+  /** 캡슐대기실 설정값 (snake_case) - 2단계 API 응답 */
+  roomSettings: RoomSettingsResponse | null;
   /** 로딩 상태 */
   isLoading: boolean;
   /** 에러 */
@@ -60,53 +36,93 @@ interface UseRoomDataReturn {
  * 캡슐대기실 데이터 관리 Hook
  *
  * 기능:
- * 1. fetchRoomData(): 캡슐대기실 데이터 가져오기 (목데이터)
+ * 1. loadRoomData(): 2단계 API 호출로 캡슐대기실 설정값 가져오기
+ *    - 1단계: getOrderInfo(orderId) → order.capsule_id 추출
+ *    - 2단계: getRoomSettings(capsule_id) → 대기실 설정 조회
+ *    - 실패 시 목데이터로 폴백
  * 2. calculateProgress(): 진행률 계산 (완료 인원 / 전체 인원)
  * 3. canSubmit(): 최종 제출 가능 여부 확인 (진행률 100%)
  *
+ * @param orderId 주문 ID (UUID, 옵션)
  * @returns {UseRoomDataReturn} Hook 반환값
  */
-export function useRoomData(): UseRoomDataReturn {
+export function useRoomData(orderId?: string): UseRoomDataReturn {
   // ============================================
   // 상태 관리
   // ============================================
 
-  const [roomData, setRoomData] = useState<RoomData | null>(null);
+  const [orderInfo, setOrderInfo] = useState<OrderResponse | null>(null);
+  const [roomSettings, setRoomSettings] = useState<RoomSettingsResponse | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
   // ============================================
-  // 데이터 가져오기 (목데이터)
+  // 데이터 가져오기 (API 우선, 목데이터 폴백)
   // ============================================
 
   useEffect(() => {
     /**
-     * 캡슐대기실 데이터 가져오기
-     * ⚠️ 추후 백엔드 API로 교체될 예정
+     * 캡슐대기실 설정값 가져오기
+     * - 2단계 API 호출 전략:
+     *   1단계: getOrderInfo(orderId) → order.capsule_id 추출
+     *   2단계: getRoomSettings(capsule_id) → 대기실 설정 조회
+     * - 실패 시 목데이터로 폴백
      */
-    async function fetchRoomData() {
+    async function loadRoomData() {
       try {
         setIsLoading(true);
         setError(null);
 
-        // TODO: API 연동
-        // const response = await fetch(`/api/room/${capsuleId}`);
-        // const data = await response.json();
-        // setRoomData(data);
-
-        // 목데이터 반환
+        // ⚠️ [임시] 백엔드 연결 끊음 - 커밋용
+        console.log('⚠️ [useRoomData] 백엔드 연결 끊음 - 목데이터만 사용');
         await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
-        setRoomData(mockRoomData);
+        setRoomSettings(mockRoomData);
+
+        // if (orderId) {
+        //   // ⭐ 2단계 API 호출 시작
+        //   try {
+        //     console.log('🔄 [useRoomData] 2단계 API 호출 시작 - orderId:', orderId);
+
+        //     // ⭐ 1단계: Order 조회 → capsule_id 추출
+        //     const orderData = await getOrderInfo(orderId);
+        //     setOrderInfo(orderData);
+        //     console.log('✅ [useRoomData] 1단계 완료 - capsule_id:', orderData.order.capsule_id);
+
+        //     const capsuleId = orderData.order.capsule_id;
+
+        //     // capsule_id가 null인 경우 처리
+        //     if (!capsuleId) {
+        //       throw new Error('주문에 연결된 캡슐 ID가 없습니다.');
+        //     }
+
+        //     // ⭐ 2단계: capsule_id로 Room Settings 조회
+        //     const roomData = await getRoomSettings(capsuleId);
+        //     setRoomSettings(roomData);
+        //     console.log('✅ [useRoomData] 2단계 완료 - Room Settings 조회 성공:', roomData);
+        //   } catch (apiError) {
+        //     console.warn('⚠️ [useRoomData] API 호출 실패, 목데이터 사용:', apiError);
+        //     setError(apiError instanceof Error ? apiError : new Error('API 호출 실패'));
+        //     // 목데이터로 폴백
+        //     setRoomSettings(mockRoomData);
+        //   }
+        // } else {
+        //   // orderId가 없으면 목데이터 사용
+        //   console.log('ℹ️ [useRoomData] orderId 없음, 목데이터 사용');
+        //   await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
+        //   setRoomSettings(mockRoomData);
+        // }
       } catch (err) {
         console.error('❌ [useRoomData] 데이터 로딩 실패:', err);
         setError(err instanceof Error ? err : new Error('데이터 로딩 실패'));
+        // 최종 폴백: 목데이터 사용
+        setRoomSettings(mockRoomData);
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchRoomData();
-  }, []);
+    loadRoomData();
+  }, [orderId]);
 
   // ============================================
   // 진행률 계산 (useMemo로 최적화)
@@ -168,7 +184,8 @@ export function useRoomData(): UseRoomDataReturn {
   // ============================================
 
   return {
-    roomData,
+    orderInfo,
+    roomSettings,
     isLoading,
     error,
     calculateProgress,
