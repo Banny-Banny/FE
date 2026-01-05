@@ -50,7 +50,8 @@ export const confirmTossPayment = async (
         message = errorMessage || message;
       }
     } else if (status === 401) {
-      message = errorCode === 'ORDER_NOT_OWNED' ? '다른 사용자의 주문입니다' : '로그인이 필요합니다';
+      message =
+        errorCode === 'ORDER_NOT_OWNED' ? '다른 사용자의 주문입니다' : '로그인이 필요합니다';
     } else if (status === 404) {
       if (errorCode === 'ORDER_NOT_FOUND') {
         message = '주문 정보를 찾을 수 없습니다';
@@ -153,5 +154,60 @@ export const cancelTossPayment = async (
     const paymentError: PaymentError = { status, message };
     console.error('[TossPayment API] 결제 취소 실패:', { status, errorCode, errorMessage });
     throw paymentError;
+  }
+};
+
+/**
+ * 주문 상태 변경
+ * @param orderId 주문 ID
+ * @param status 변경할 주문 상태 ('PAID' | 'CANCELLED' | 'PENDING_PAYMENT')
+ * @returns 주문 상태 변경 응답 (order_id, order_status, payment_status, updated_at)
+ */
+export const updateOrderStatus = async (
+  orderId: string,
+  status: 'PAID' | 'CANCELLED' | 'PENDING_PAYMENT',
+): Promise<{
+  order_id: string;
+  order_status: string;
+  payment_status?: string;
+  updated_at: string;
+}> => {
+  try {
+    const response = await apiClient.post<{
+      order_id: string;
+      order_status: string;
+      payment_status?: string;
+      updated_at: string;
+    }>(`/${API_ENDPOINTS.ORDER.UPDATE_STATUS}/${orderId}/status`, { status });
+
+    console.log('✅ [updateOrderStatus] 주문 상태 변경 완료');
+    console.log('  - 응답 상태:', response.status);
+    console.log('  - 응답 데이터:', JSON.stringify(response.data, null, 2));
+
+    return response.data;
+  } catch (error: any) {
+    const status = error.response?.status || 0;
+    let message = '주문 상태 변경에 실패했습니다';
+
+    const errorCode = error.response?.data?.code;
+    const errorMessage = error.response?.data?.message;
+
+    if (status === 400) {
+      message = errorMessage || message;
+    } else if (status === 401) {
+      message =
+        errorCode === 'ORDER_NOT_OWNED' ? '다른 사용자의 주문입니다' : '로그인이 필요합니다';
+    } else if (status === 404) {
+      if (errorCode === 'ORDER_NOT_FOUND') {
+        message = '주문 정보를 찾을 수 없습니다';
+      }
+    } else if (status === 500) {
+      message = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+    } else if (!status) {
+      message = '네트워크 연결을 확인해주세요';
+    }
+
+    console.error('[updateOrderStatus] 주문 상태 변경 실패:', { status, errorCode, errorMessage });
+    throw new Error(message);
   }
 };
