@@ -24,20 +24,47 @@ import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 
+import { useCapsuleDetail } from '../egg-detail-owner/hooks/useCapsuleDetail';
 import { AudioPlayer } from '../shared/audio-player';
 import { useEggDetailFind } from './hooks/useEggDetailFind';
 import { styles } from './styles';
 import type { EggDetailFindProps } from './types';
 
-export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, data }) => {
-  // 비즈니스 로직은 Hook에서 가져옴
-  const { discoveryData, isPlaying, currentTime, duration, togglePlay } = useEggDetailFind({
-    visible,
-    data,
+export const EggDetailFind: React.FC<EggDetailFindProps> = ({
+  visible,
+  onClose,
+  data,
+  capsuleId,
+  currentLocation,
+}) => {
+  // 상세 데이터 조회
+  const {
+    data: detailData,
+    isLoading: isDetailLoading,
+    error: detailError,
+  } = useCapsuleDetail({
+    capsuleId: capsuleId || null,
+    lat: currentLocation?.lat || null,
+    lng: currentLocation?.lng || null,
   });
 
+  // 비즈니스 로직은 Hook에서 가져옴
+  const { discoveryData, isPlaying, currentTime, duration, togglePlay, isLoading, error } =
+    useEggDetailFind({
+      visible,
+      data,
+      detailData,
+      isLoading: isDetailLoading,
+      error: detailError,
+    });
+
+  // 데이터가 없으면 렌더링하지 않음
+  if (!discoveryData) {
+    return null;
+  }
+
   // 발견 순서에 따른 배지 텍스트
-  const getBadgeText = () => {
+  const getBadgeText = (): string => {
     switch (discoveryData.discoveryOrder) {
       case 'first':
         return '첫 번째 발견자';
@@ -45,11 +72,15 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({ visible, onClose, 
         return '두 번째 발견자';
       case 'last':
         return '마지막 발견자';
+      default:
+        // TypeScript exhaustive check를 위한 default case
+        const _exhaustive: never = discoveryData.discoveryOrder;
+        return _exhaustive;
     }
   };
 
   // 발견 순서에 따른 서브타이틀
-  const getSubtitle = () => {
+  const getSubtitle = (): string => {
     if (discoveryData.discoveryOrder === 'last') {
       return '마지막 발견자가 되었습니다!';
     }

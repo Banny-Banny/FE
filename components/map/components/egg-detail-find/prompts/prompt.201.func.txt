@@ -1,0 +1,58 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @04-func.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/egg-detail-find/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/egg-detail-find/styles.ts
+조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/map/components/egg-detail-find/hooks 하위 폴더
+
+조건-라이브러리) axios와 이미 구현되어 있는 react-query provider 사용
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것(step-by-step)
+
+1. 리스트 데이터 감시 및 진입 감지
+  1-1) 기존 데이터 활용
+    - 기존 GET /api/capsules 리스트를 가져오는 react-query data를 참조할 것
+  1-2) 실시간 감시
+    - useEffect를 사용하여 리스트 내 items의 변화를 실시간 감시할 것
+  1-3) 자동 발견 조건 필터링
+    - item.type === 'EASTER_EGG'
+    - item.is_mine === false
+    - item.distance_m <= 30 (임시 설정 값. 추후 바뀔 수 있음)
+  1-4) 중복 호출 방지
+    - discoveredIds (Ref)뿐만 아니라, 현재 활성화된 activeCapsuleId 상태를 관리하여 "한 번에 하나의 알만 상세 정보를 보여준다"는 원칙을 고수할 것
+  1-5) 다중 발견 시 우선순위 및 큐 처리
+    - 정렬: 30m 이내의 조건에 부합하는 아이템이 여러 개일 경우, distance_m 기준 오름차순으로 정렬할 것
+    - 단일 실행 보장: 현재 EggDetailFind 모달이 켜져있는 상태이거나, 다른 API 요청이 진행 중일 때는 새로운 발견 로직이 실행되지 않도록 Early Return 처리할 것
+    - 순차 처리 로직: 가장 가까운 캡슐 하나에 대해서만 POST /viewers API를 호출할 것
+      - 사용자가 모달을 닫으면(onClose), useEffect가 다시 리스트를 감시하여 남아있는 30m 이내의 다른 캡슐을 순차적으로 트리거하게 할 것
+
+2. 상세 데이터 페칭
+  2-1) API
+    - POST /api/capsules/:id/viewers 를 호출할 것
+    - 이때, id의 경우 실시간 감지를 통해 조건에 필터링된 캡슐(이스터에그) id 임
+    - Body에 현재 위치(lat, lng)를 포함하여 전송할 것
+  2-2) 응답 판별
+    - 응답 데이터의 is_first_view boolean 값을 캡처해 상세 모달의 UI 분기 조건으로 사용할 것
+  2-3) 모달 활성화
+    - API 성공 시 EggDetailFind 모달을 띄우고, 해당 캡슐의 상세 데이터를 로드할 것.
+
+3. 상세 데이터 페칭 및 주소 변환
+  3-1) 상세 데이터 조회
+    - GET /api/capsules/{id} 를 통해 상세 정보를 가져올 것
+    - 응답의 viewers 리스트 길이와 view_limit를 비교해 '첫 번째/두 번째/마지막' 발견자 상태를 계산할 것.
+
+4. UI 
+
+주의사항)
+1. 코드 작성 시 useEffect 내에서 리스트를 감시할 때 의존성 배열(deps) 최적화에 신경 써서 무한 루프가 발생하지 않도록 해줘
+2. 30m 이내 진입 시 Expo-Haptics를 사용하여 가벼운 진동(Haptics.notificationAsync)을 주가
+3. 사용자가 30m 경계선에서 왔다 갔다 할 때 API가 튀지 않도록, 발견 성공 후에는 해당 세션 동안 해당 캡슐에 대한 거리 체크 로직을 완전히 배제해줘

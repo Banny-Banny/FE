@@ -3,19 +3,21 @@
  * 이스터에그 발견 모달 비즈니스 로직 Hook
  *
  * @description
- * - 발견 데이터 조회 (API 또는 Mock)
+ * - 발견 데이터 조회 (API)
  * - 오디오 재생 상태 관리
  * - 미디어 타입별 처리
  */
 
-import { useState } from 'react';
+import dayjs from 'dayjs';
+import { useMemo, useState } from 'react';
 
-import { MOCK_DATA_FIRST, MOCK_DATA_LAST, MOCK_DATA_SECOND } from '../constants';
-import type { EggDetailFindProps, EggDiscoveryData } from '../types';
+import type { CapsuleDetailResponse } from '../../egg-detail-owner/types';
+import type { MediaItem } from '../../shared/types';
+import type { DiscoveryOrder, EggDiscoveryData, EggDetailFindProps } from '../types';
 
 export interface UseEggDetailFindReturn {
   /** 발견 데이터 */
-  discoveryData: EggDiscoveryData;
+  discoveryData: EggDiscoveryData | null;
   /** 오디오 재생 중 여부 */
   isPlaying: boolean;
   /** 오디오 재생 시간 (초) */
@@ -24,6 +26,73 @@ export interface UseEggDetailFindReturn {
   duration: number;
   /** 오디오 재생/일시정지 토글 */
   togglePlay: () => void;
+  /** 로딩 상태 */
+  isLoading: boolean;
+  /** 에러 상태 */
+  error: string | null;
+}
+
+/**
+ * 발견 순서 계산
+ * @param viewCount 현재 열람 횟수
+ * @param viewLimit 최대 열람 횟수
+ * @returns 발견 순서
+ */
+function calculateDiscoveryOrder(viewCount: number, viewLimit: number): DiscoveryOrder {
+  if (viewCount === 1) {
+    return 'first';
+  } else if (viewCount === viewLimit) {
+    return 'last';
+  } else {
+    return 'second';
+  }
+}
+
+/**
+ * API 응답 데이터를 EggDiscoveryData로 변환
+ */
+function transformCapsuleDetailToDiscoveryData(
+  detailData: CapsuleDetailResponse,
+): EggDiscoveryData {
+  // 발견 순서 계산
+  const discoveryOrder = calculateDiscoveryOrder(detailData.view_count, detailData.view_limit);
+
+  // 날짜 포맷팅 (MM.DD 형식)
+  const createdAt = dayjs(detailData.created_at).format('MM.DD');
+
+  // 미디어 데이터 변환
+  const media: MediaItem[] = [];
+  if (detailData.media_urls && detailData.media_types) {
+    for (let i = 0; i < detailData.media_urls.length; i++) {
+      const url = detailData.media_urls[i];
+      const type = detailData.media_types[i];
+      if (url && type) {
+        media.push({
+          id: `media-${i}`,
+          type: type as MediaItem['type'],
+          url,
+        });
+      }
+    }
+  }
+
+  return {
+    eggId: detailData.id,
+    discoveryOrder,
+    author: {
+      name: detailData.author.nickname || '익명',
+      emoji: '🎁', // 기본 이모지 (API에서 제공되지 않으면 기본값)
+    },
+    createdAt,
+    title: detailData.title || '제목 없음',
+    content: detailData.content || '',
+    media,
+    viewCount: {
+      current: detailData.view_count,
+      max: detailData.view_limit,
+    },
+    isExpiring: discoveryOrder === 'last',
+  };
 }
 
 /**
@@ -32,26 +101,28 @@ export interface UseEggDetailFindReturn {
 export function useEggDetailFind({
   visible,
   data,
-}: Pick<EggDetailFindProps, 'visible' | 'data'>): UseEggDetailFindReturn {
-  // TODO: API 연동 시 여기서 발견 데이터를 가져옴
-  // 현재는 Mock 데이터 사용
-  // 발견 순서에 따라 다른 Mock 데이터 사용
-  const getMockData = (): EggDiscoveryData => {
+  detailData,
+  isLoading,
+  error,
+}: Pick<EggDetailFindProps, 'visible' | 'data'> & {
+  detailData: CapsuleDetailResponse | null;
+  isLoading: boolean;
+  error: string | null;
+}): UseEggDetailFindReturn {
+  // API 데이터를 EggDiscoveryData로 변환
+  const discoveryData = useMemo(() => {
+    // props로 전달된 data가 있으면 우선 사용
     if (data) {
       return data;
     }
-    // 랜덤하게 Mock 데이터 선택 (실제로는 API에서 받아온 데이터 사용)
-    const random = Math.floor(Math.random() * 3);
-    if (random === 0) {
-      return MOCK_DATA_FIRST;
-    } else if (random === 1) {
-      return MOCK_DATA_SECOND;
-    } else {
-      return MOCK_DATA_LAST;
-    }
-  };
 
-  const discoveryData = getMockData();
+    // API 데이터가 있으면 변환
+    if (detailData) {
+      return transformCapsuleDetailToDiscoveryData(detailData);
+    }
+
+    return null;
+  }, [data, detailData]);
 
   // 오디오 재생 상태
   const [isPlaying, setIsPlaying] = useState(false);
@@ -70,5 +141,7 @@ export function useEggDetailFind({
     currentTime,
     duration,
     togglePlay,
+    isLoading,
+    error,
   };
 }
