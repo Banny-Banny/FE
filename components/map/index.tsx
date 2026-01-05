@@ -146,10 +146,13 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setDiscoveredCapsuleId(null);
   };
 
+  // 현재 위치가 있으면 그것을 중심으로, 없으면 기본 설정 사용
+  const mapCenter = currentLocation || mapConfig.center;
+
   return (
     <View style={styles.container}>
       <MapView
-        center={mapConfig.center}
+        center={mapCenter}
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
         onEggSlotPress={handleEggSlotPress}
