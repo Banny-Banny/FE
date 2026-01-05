@@ -63,9 +63,9 @@ export const styles = StyleSheet.create({
   // 하단 테두리만 있음 (stroke #e0e0e0)
   participantRow: {
     paddingHorizontal: 17,
-    height: 37, // Figma: 36.999px ≈ 37px
+    height: 37,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.grey[200], // Figma: #e0e0e0
+    borderBottomColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -162,10 +162,9 @@ export const styles = StyleSheet.create({
   // 상단 테두리 있음 (stroke #e0e0e0)
   totalRow: {
     paddingHorizontal: 17,
-    paddingTop: 12, // 아이템 리스트와 합계 사이 간격
-    paddingBottom: 17, // 하단 여백 (상단 헤더의 paddingTop과 동일)
+    height: 37,
     borderTopWidth: 1,
-    borderTopColor: Colors.grey[200], // Figma: #e0e0e0
+    borderTopColor: Colors.grey[200],
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

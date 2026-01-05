@@ -7,6 +7,7 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
@@ -25,6 +26,7 @@ import {
   CreateCapsuleResponse,
   EggFormData,
 } from '../types';
+import { useVideoThumbnail } from './useVideoThumbnail';
 
 interface UseEggFormProps {
   onClose: () => void;
@@ -37,6 +39,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const { accessToken } = useAuth();
   const { upload: uploadMedia, isUploading: isMediaUploading } = useMediaUpload();
   const { location } = useMapLocation();
+  const { generateThumbnail } = useVideoThumbnail();
   const { control, handleSubmit, watch, setValue } = useForm<EggFormData>({
     defaultValues: {
       title: '',
@@ -55,7 +58,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     title.trim().length > 0 && content.trim().length > 0 && !isSubmitting && !isMediaUploading;
 
   // 파일 선택 핸들러 (간소화)
-  const handleAddAttachment = async (type: 'IMAGE' | 'VIDEO' | 'MUSIC') => {
+  const handleAddAttachment = async (type: MediaType) => {
     try {
       let file: { name: string; uri: string } | null = null;
 
@@ -77,7 +80,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           };
         }
       } else {
-        const mimeTypes = type === 'MUSIC' ? ['audio/*'] : ['video/*'];
+        const mimeTypes = getMimeTypes(type);
         const result = await DocumentPicker.getDocumentAsync({
           type: mimeTypes,
           copyToCacheDirectory: true,
@@ -98,10 +101,24 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           name: file.name,
           uri: file.uri,
         };
+
+        // 비디오 파일인 경우 썸네일 생성
+        if (type === 'VIDEO') {
+          try {
+            const thumbnailUri = await generateThumbnail(file.uri);
+            if (thumbnailUri) {
+              newAttachment.thumbnailUri = thumbnailUri;
+            }
+          } catch (error) {
+            console.error('비디오 썸네일 생성 오류:', error);
+            // 썸네일 생성 실패해도 파일은 추가
+          }
+        }
+
         setValue('attachments', [...otherAttachments, newAttachment]);
       }
     } catch (error) {
-      console.log('파일 선택 오류:', error);
+      console.error('파일 선택 오류:', error);
     }
   };
 
@@ -300,9 +317,23 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     }
   };
 
+  /**
+   * 오디오 파일 직접 추가 (모달에서 사용)
+   */
+  const handleAddAudioFile = (uri: string, name: string) => {
+    const otherAttachments = attachments.filter((att) => att.type !== 'AUDIO');
+    const newAttachment: AttachmentFile = {
+      id: Date.now().toString(),
+      type: 'AUDIO',
+      name,
+      uri,
+    };
+    setValue('attachments', [...otherAttachments, newAttachment]);
+  };
+
   // 각 타입별 첨부파일 확인
   const photoAttachment = attachments.find((att) => att.type === 'IMAGE');
-  const musicAttachment = attachments.find((att) => att.type === 'MUSIC');
+  const musicAttachment = attachments.find((att) => att.type === 'AUDIO');
   const videoAttachment = attachments.find((att) => att.type === 'VIDEO');
 
   return {
@@ -312,6 +343,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     isSubmitting,
     handleDeleteAttachment,
     handleAddAttachment,
+    handleAddAudioFile,
     photoAttachment,
     musicAttachment,
     videoAttachment,

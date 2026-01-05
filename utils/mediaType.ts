@@ -3,6 +3,30 @@
  * 미디어 타입 관련 유틸리티 함수 및 타입 정의
  */
 
+import { ALLOWED_EXTENSIONS, MediaType, MIME_TYPE_MAP } from '@/commons/constants/media';
+
+/**
+ * 파일 확장자 추출
+ * @param filename 파일명
+ * @returns 확장자 (소문자)
+ */
+export const getFileExtension = (filename: string): string => {
+  const parts = filename.toLowerCase().split('.');
+  return parts.length > 1 ? parts[parts.length - 1] : '';
+};
+
+/**
+ * 파일 확장자 검증
+ * @param filename 파일명
+ * @param type 미디어 타입
+ * @returns 허용된 확장자인지 여부
+ */
+export const validateFileExtension = (filename: string, type: MediaType): boolean => {
+  const extension = getFileExtension(filename);
+  const allowedExtensions = ALLOWED_EXTENSIONS[type] as readonly string[];
+  return allowedExtensions.includes(extension);
+};
+
 /**
  * 미디어 타입 정의
  */
@@ -20,8 +44,9 @@ export const getMimeType = (fileType: MediaType): string => {
     case 'AUDIO':
       return 'audio/mpeg';
     case 'VIDEO':
-      return 'video/mp4';
-    default:
-      return 'application/octet-stream';
+      mimeTypes.push('video/*');
+      break;
   }
+
+  return mimeTypes;
 };

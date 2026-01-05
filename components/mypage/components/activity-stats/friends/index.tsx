@@ -15,44 +15,14 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
+import React, { useMemo } from 'react';
+import { FlatList, Pressable, Text, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import Icon, { IconName } from 'react-native-remix-icon';
+import { useRefreshAnimation } from './hooks/useRefreshAnimation';
 import { styles } from './styles';
-
-// 타입 정의
-export interface Friend {
-  id: string;
-  name: string;
-  emoji: string;
-  isBlocked: boolean;
-}
-
-export interface FriendsModalProps {
-  /** 모달 표시 여부 */
-  visible: boolean;
-  /** 모달 닫기 함수 */
-  onClose: () => void;
-  /** 친구 목록 */
-  friends?: Friend[];
-  /** 새로고침 함수 */
-  onRefresh?: () => void;
-  /** 친구 차단/해제 함수 */
-  onToggleBlock?: (friendId: string) => void;
-}
-
-// 기본 친구 목록 데이터 (Figma 디자인 기준)
-const DEFAULT_FRIENDS: Friend[] = [
-  { id: '1', name: '김민수', emoji: '🐨', isBlocked: false },
-  { id: '2', name: '이지은', emoji: '🐼', isBlocked: false },
-  { id: '3', name: '최유나', emoji: '🐯', isBlocked: false },
-  { id: '4', name: '정우성', emoji: '🐰', isBlocked: false },
-  { id: '5', name: '한지민', emoji: '🦋', isBlocked: false },
-  { id: '6', name: '신유', emoji: '🐶', isBlocked: false },
-  { id: '7', name: '최산', emoji: '🦊', isBlocked: false },
-  { id: '8', name: '김선호', emoji: '🐮', isBlocked: false },
-  { id: '9', name: '박서준', emoji: '🐵', isBlocked: true },
-];
+import type { Friend, FriendsModalProps } from './types';
 
 export function FriendsModal({
   visible,
@@ -60,21 +30,42 @@ export function FriendsModal({
   friends = DEFAULT_FRIENDS,
   onRefresh,
   onToggleBlock,
+  isRefreshing = false,
 }: FriendsModalProps) {
-  // 차단되지 않은 친구 수 계산
-  const activeFriendsCount = friends.filter((f: Friend) => !f.isBlocked).length;
+  // ============================================
+  // 계산된 값 (useMemo로 최적화)
+  // ============================================
+
+  /** 차단되지 않은 친구 수 계산 */
+  const activeFriendsCount = useMemo(
+    () => friends.filter((f: Friend) => !f.isBlocked).length,
+    [friends],
+  );
+
+  /** 전체 친구 수 */
   const totalFriendsCount = friends.length;
 
-  // 친구 차단/해제 핸들러
+  // ============================================
+  // 애니메이션
+  // ============================================
+
+  /** 새로고침 버튼 회전 애니메이션 */
+  const { animatedRotationStyle } = useRefreshAnimation(isRefreshing);
+
+  // ============================================
+  // 이벤트 핸들러
+  // ============================================
+
+  /** 친구 차단/해제 핸들러 */
   const handleToggleBlock = (friendId: string) => {
     if (onToggleBlock) {
       onToggleBlock(friendId);
     }
   };
 
-  // 새로고침 핸들러
+  /** 새로고침 핸들러 */
   const handleRefresh = () => {
-    if (onRefresh) {
+    if (onRefresh && !isRefreshing) {
       onRefresh();
     }
   };
@@ -88,8 +79,14 @@ export function FriendsModal({
           <View style={styles.headerTop}>
             <Text style={styles.title}>친구 관리</Text>
             <View style={styles.headerButtons}>
-              <Pressable style={styles.refreshButton} onPress={handleRefresh}>
-                <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+              <Pressable
+                style={styles.refreshButton}
+                onPress={handleRefresh}
+                disabled={isRefreshing}
+                pointerEvents={isRefreshing ? 'none' : 'auto'}>
+                <Animated.View style={animatedRotationStyle}>
+                  <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+                </Animated.View>
               </Pressable>
               <Pressable style={styles.closeButton} onPress={onClose}>
                 <Icon name={'ri-close-line' as IconName} size={24} color={Colors.black[500]} />
@@ -114,18 +111,10 @@ export function FriendsModal({
 
         {/* 친구 목록 섹션 */}
         <View style={styles.friendsSectionWrapper}>
-          <ScrollView
-            style={styles.friendsSection}
-            contentContainerStyle={styles.friendsList}
-            showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            bounces={true}
-            scrollEnabled={true}
-            directionalLockEnabled={true}
-            alwaysBounceVertical={false}>
-            {friends.map((friend: Friend) => (
+          <FlatList
+            data={friends}
+            renderItem={({ item: friend }) => (
               <View
-                key={friend.id}
                 style={[styles.friendItem, friend.isBlocked && styles.friendItemBlocked]}
                 pointerEvents="box-none">
                 {/* 친구 정보 */}
@@ -167,8 +156,17 @@ export function FriendsModal({
                   </Text>
                 </Pressable>
               </View>
-            ))}
-          </ScrollView>
+            )}
+            keyExtractor={(friend) => friend.id}
+            style={styles.friendsSection}
+            contentContainerStyle={styles.friendsList}
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            bounces={true}
+            scrollEnabled={true}
+            directionalLockEnabled={true}
+            alwaysBounceVertical={false}
+          />
         </View>
       </View>
     </Modal>

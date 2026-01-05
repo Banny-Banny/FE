@@ -1,3 +1,3 @@
-import { AlarmPage } from '@/commons/layout/Tabs';
+import NotificationFeature from '@/components/notification';
 
-export default AlarmPage;
+export default NotificationFeature;

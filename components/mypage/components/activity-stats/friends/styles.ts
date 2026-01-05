@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: -20,
     marginVertical: -20,
     // 피그마 디자인에 맞는 border 스타일 적용
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
     borderRadius: BorderRadius['2xl'],
     // 스크롤이 제대로 작동하도록 overflow 설정
@@ -37,7 +37,7 @@ export const styles = StyleSheet.create({
 
   // 헤더 섹션
   headerSection: {
-    borderBottomWidth: 1.111,
+    borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.08)',
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
@@ -69,7 +69,7 @@ export const styles = StyleSheet.create({
   // 새로고침 버튼
   refreshButton: {
     backgroundColor: Colors.whiteGrey[500],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
     borderRadius: BorderRadius.xl,
     width: 36,
@@ -96,10 +96,10 @@ export const styles = StyleSheet.create({
   // 정보 박스
   infoBox: {
     backgroundColor: Colors.white[500],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
     borderRadius: BorderRadius.xl,
-    padding: 11.111,
+    padding: 11,
     flexDirection: 'row',
     gap: 8,
     alignItems: 'flex-start',
@@ -108,9 +108,9 @@ export const styles = StyleSheet.create({
   // 정보 아이콘
   infoIcon: {
     fontSize: 12,
-    lineHeight: 16.8,
-    width: 14.444,
-    height: 16.788,
+    lineHeight: 17,
+    width: 14,
+    height: 17,
   },
 
   // 정보 텍스트
@@ -118,7 +118,7 @@ export const styles = StyleSheet.create({
     ...Typography.body.body7,
     color: Colors.grey[700],
     flex: 1,
-    lineHeight: 19.5,
+    lineHeight: 20,
   },
 
   // 친구 목록 섹션 래퍼
@@ -148,20 +148,20 @@ export const styles = StyleSheet.create({
   // 친구 항목
   friendItem: {
     backgroundColor: Colors.white[500],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
     borderRadius: BorderRadius.lg,
-    paddingHorizontal: 17.111,
-    paddingVertical: 13.111,
+    paddingHorizontal: 17,
+    paddingVertical: 13,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
 
   // 차단된 친구 항목 (해제 상태)
-  // 피그마 디자인에 맞는 색상: #E0E0E0
+  // Colors 토큰 사용: whiteGrey[500] (#E4E4E4) - #E0E0E0와 가장 유사한 토큰
   friendItemBlocked: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: Colors.whiteGrey[500],
   },
 
   // 친구 정보 컨테이너
@@ -175,14 +175,14 @@ export const styles = StyleSheet.create({
   // 아바타 컨테이너
   avatarContainer: {
     backgroundColor: Colors.whiteGrey[100],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
     borderRadius: BorderRadius.full,
     width: 48,
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1.111,
+    padding: 1,
   },
 
   // 아바타 이모지
@@ -198,7 +198,7 @@ export const styles = StyleSheet.create({
 
   // 차단된 아바타 이모지
   avatarEmojiBlocked: {
-    opacity: 0.5,
+    opacity: 1,
   },
 
   // 친구 이름
@@ -218,12 +218,12 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.whiteGrey[500],
     borderRadius: 28,
     height: 36,
-    width: 80.191,
+    width: 80,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 15.99,
-    paddingRight: 15.99,
+    paddingLeft: 16,
+    paddingRight: 16,
     gap: 8,
   },
 

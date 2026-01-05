@@ -32,9 +32,9 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
   // 상태 관리
   // ============================================
 
-  /** 선택된 옵션 인덱스 (기본값: 1 = 1년 후) */
+  /** 선택된 옵션 인덱스 (기본값: 0 = 1주일 후) */
   const [selectedOptionIndex, setSelectedOptionIndex] = useState<number>(
-    initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_YEAR,
+    initialData?.selectedDateOptionIndex ?? DATE_OPTION_INDEX.ONE_WEEK,
   );
 
   /** 선택된 날짜 (직접 선택 시) */
@@ -117,7 +117,7 @@ export const useDateSelection = (initialData?: any): UseDateSelectionReturn => {
 
     // 날짜가 선택되지 않았으면 이전 옵션으로 돌아가기
     if (!selectedDate && selectedOptionIndex === DATE_OPTION_INDEX.CUSTOM) {
-      setSelectedOptionIndex(DATE_OPTION_INDEX.ONE_YEAR);
+      setSelectedOptionIndex(DATE_OPTION_INDEX.ONE_WEEK);
     }
   }, [selectedDate, selectedOptionIndex]);
 

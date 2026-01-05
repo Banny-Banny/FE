@@ -21,8 +21,9 @@ interface PaymentRequestData {
 /**
  * 개발 모드에서 결제 우회 (백엔드 연결 없이 개발 시 true로 설정)
  * true로 설정하면 토스페이먼츠 결제를 건너뛰고 Mock 데이터로 다음 단계로 진행합니다.
+ * ⚠️ 실제 서버에 결제 내역을 저장하려면 false로 설정해야 합니다.
  */
-export const SKIP_PAYMENT = __DEV__ && true;
+export const SKIP_PAYMENT = __DEV__ && false;
 
 // ============================================
 // Hook 반환 타입
@@ -76,6 +77,8 @@ export const useTossPayment = (): UseTossPaymentReturn => {
             status: 'DONE',
             amount: amount,
             approved_at: new Date().toISOString(),
+            capsule_id: '', // Mock 데이터에서는 빈 문자열
+            receipt_url: '', // Mock 데이터에서는 빈 문자열
           };
 
           // 로딩 상태 시뮬레이션 (500ms 대기)

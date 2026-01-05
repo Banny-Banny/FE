@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   // 메인 컨테이너 (Number input)
   container: {
     backgroundColor: Colors.white[500],
-    borderWidth: 1.111,
+    borderWidth: 1,
     borderColor: Colors.grey[300],
     borderRadius: BorderRadius.lg,
     flexDirection: 'row',
@@ -35,14 +35,14 @@ export const styles = StyleSheet.create({
   statItem: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    gap: 3.993,
-    height: 47.969,
+    gap: 4,
+    height: 48,
     justifyContent: 'flex-start',
   },
 
   // 통계 값 컨테이너
   statValueContainer: {
-    height: 27.986,
+    height: 28,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
@@ -53,19 +53,19 @@ export const styles = StyleSheet.create({
     fontFamily: Typography.header.h1.fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.extrabold,
-    lineHeight: 26.4,
-    letterSpacing: -0.4097,
+    lineHeight: 26,
+    letterSpacing: 0,
     color: Colors.black[500],
     textAlign: 'center',
   },
 
   // 통계 라벨 컨테이너
   statLabelContainer: {
-    height: 15.99,
+    height: 16,
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 1.11,
+    paddingTop: 1,
   },
 
   // 통계 라벨 텍스트
@@ -78,7 +78,7 @@ export const styles = StyleSheet.create({
   // 구분선
   divider: {
     backgroundColor: Colors.grey[300],
-    width: 0.99,
+    width: 1,
     height: 40,
   },
 });

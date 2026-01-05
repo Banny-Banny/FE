@@ -63,7 +63,7 @@ const MODAL_STYLES = {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0,
     shadowRadius: 12,
     elevation: 8, // Android shadow
   },

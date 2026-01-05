@@ -13,7 +13,7 @@
  */
 
 import { useState } from 'react';
-import type { Participant, RoomData } from '../types';
+import type { Participant, RoomSettingsResponse } from '../types';
 
 // ============================================
 // 타입 정의
@@ -50,7 +50,7 @@ export interface TimeCapsuleSubmitData {
 /** useRoomSubmit Hook 반환 타입 */
 interface UseRoomSubmitReturn {
   /** 타임캡슐 최종 제출 */
-  submitTimeCapsule: (roomData: RoomData, participants: Participant[]) => Promise<void>;
+  submitTimeCapsule: (roomSettings: RoomSettingsResponse, participants: Participant[]) => Promise<void>;
   /** 제출 중 여부 */
   isSubmitting: boolean;
   /** 에러 */
@@ -78,10 +78,10 @@ export function useRoomSubmit(): UseRoomSubmitReturn {
   /**
    * 타임캡슐 최종 제출 함수
    *
-   * @param {RoomData} roomData 캡슐대기실 데이터
+   * @param {RoomSettingsResponse} roomSettings 캡슐대기실 설정값 (snake_case)
    * @param {Participant[]} participants 참여자 목록
    */
-  const submitTimeCapsule = async (roomData: RoomData, participants: Participant[]): Promise<void> => {
+  const submitTimeCapsule = async (roomSettings: RoomSettingsResponse, participants: Participant[]): Promise<void> => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -101,13 +101,16 @@ export function useRoomSubmit(): UseRoomSubmitReturn {
 
       // 2. 제출 데이터 구성
       const submitData: TimeCapsuleSubmitData = {
-        // 캡슐 메타데이터
-        capsuleId: roomData.capsuleId,
-        capsuleName: roomData.capsuleName,
-        openDate: roomData.openDate,
-        maxParticipants: roomData.maxParticipants,
-        imageSlots: roomData.imageSlots,
-        additionalOptions: roomData.additionalOptions,
+        // 캡슐 메타데이터 (snake_case → camelCase 변환)
+        capsuleId: roomSettings.room_id,
+        capsuleName: roomSettings.capsule_name,
+        openDate: roomSettings.open_date,
+        maxParticipants: roomSettings.max_participants,
+        imageSlots: roomSettings.max_images_per_person,
+        additionalOptions: {
+          hasMusicFile: roomSettings.has_music,
+          hasVideo: roomSettings.has_video,
+        },
 
         // 참여자 데이터
         participants: completedParticipants.map((p) => ({

@@ -4,6 +4,7 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import { apiClient, buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
@@ -41,7 +42,7 @@ export const useCreateCapsule = () => {
 
       // 파일 업로드
       const mediaIds: string[] = [];
-      const mediaTypes: ('IMAGE' | 'VIDEO' | 'MUSIC')[] = [];
+      const mediaTypes: MediaType[] = [];
 
       for (const attachment of data.attachments) {
         if (attachment.uri) {
