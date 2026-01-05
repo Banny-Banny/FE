@@ -3,11 +3,66 @@
  * 캡슐 대기실 API 함수
  */
 
-import { apiClient } from '@/utils/apiClient';
-import type { OrderResponse, RoomSettingsResponse } from '../types';
+import { apiClient, publicApiClient } from '@/utils/apiClient';
+import type {
+  CreateRoomRequest,
+  CreateRoomResponse,
+  InviteCodeQueryResponse,
+  OrderResponse,
+  RoomDetailResponse,
+  RoomSettingsResponse,
+} from '../types';
 
 /**
- * 1단계) 주문 정보 조회 API
+ * 대기실 생성 및 설정값 조회 API (1단계)
+ * @param orderId 주문 ID (UUID)
+ * @returns 대기실 생성 응답 (snake_case) - 실제 API 응답 구조
+ * @throws 400: 잘못된 order_id 형식
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 404: 존재하지 않는 order_id
+ * @throws 500: 서버 내부 오류
+ */
+export async function createRoomAndGetSettings(
+  orderId: string,
+): Promise<CreateRoomResponse> {
+  try {
+    console.log('🔄 [API] 대기실 생성 및 설정값 조회 시작 - orderId:', orderId);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.post<CreateRoomResponse, CreateRoomRequest>(
+      '/api/capsules/step-rooms/create',
+      {
+        order_id: orderId,
+      },
+    );
+
+    console.log('✅ [API] 대기실 생성 및 설정값 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      console.error('❌ [API] 잘못된 order_id 형식 (400)');
+      throw new Error('잘못된 주문 ID 형식입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 order_id (404)');
+      throw new Error('주문 정보를 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 대기실 생성 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 1단계) 주문 정보 조회 API (레거시 호환용)
+ * @deprecated 새로운 코드에서는 createRoomAndGetSettings 사용 권장
  * @param orderId 주문 ID (UUID)
  * @returns 주문 정보 (snake_case), order.capsule_id를 추출하여 2단계에서 사용
  * @throws 404: 존재하지 않는 orderId
@@ -38,7 +93,8 @@ export async function getOrderInfo(orderId: string): Promise<OrderResponse> {
 }
 
 /**
- * 2단계) 대기실 설정값 조회 API
+ * 2단계) 대기실 설정값 조회 API (레거시 호환용)
+ * @deprecated 새로운 코드에서는 createRoomAndGetSettings 사용 권장
  * @param capsuleId 캡슐 ID (UUID) - 1단계에서 추출한 order.capsule_id
  * @returns 대기실 설정값 (snake_case)
  * @throws 404: 존재하지 않는 capsuleId 또는 주문 정보 없음
@@ -78,4 +134,99 @@ export async function getRoomSettings(capsuleId: string): Promise<RoomSettingsRe
 export async function fetchRoomSettings(capsuleId: string): Promise<RoomSettingsResponse> {
   console.log('⚠️ [API] fetchRoomSettings (레거시) 호출 - capsuleId:', capsuleId);
   return getRoomSettings(capsuleId);
+}
+
+/**
+ * 대기실 상세 조회 API (참여자 슬롯 정보 포함)
+ * @param capsuleId 캡슐 ID (UUID)
+ * @returns 대기실 상세 정보 (슬롯 정보 포함)
+ * @throws 400: 잘못된 UUID 형식
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 403: 참여자가 아닌 사용자의 접근
+ * @throws 404: 존재하지 않는 capsuleId
+ * @throws 500: 서버 내부 오류
+ */
+export async function getRoomDetail(capsuleId: string): Promise<RoomDetailResponse> {
+  try {
+    console.log('🔄 [API] 대기실 상세 조회 시작 - capsuleId:', capsuleId);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.get<RoomDetailResponse>(
+      `/api/capsules/step-rooms/${capsuleId}`,
+    );
+
+    console.log('✅ [API] 대기실 상세 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      console.error('❌ [API] 잘못된 UUID 형식 (400)');
+      throw new Error('잘못된 캡슐 ID 형식입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 권한 없음 (403)');
+      throw new Error('참여자만 조회할 수 있습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
+      throw new Error('대기실을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 대기실 상세 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 초대 코드로 대기실 조회 API
+ * @param inviteCode 초대 코드 (6자리 영숫자, 대소문자 구분 없음)
+ * @returns 대기실 정보 (snake_case)
+ * @throws 404: 존재하지 않는 초대 코드
+ * @throws 500: 서버 내부 오류
+ */
+export async function fetchRoomByInviteCode(
+  inviteCode: string,
+): Promise<InviteCodeQueryResponse> {
+  try {
+    // 초대 코드 검증 (6자리 영숫자)
+    if (!inviteCode || !/^[A-Za-z0-9]{6}$/.test(inviteCode)) {
+      throw new Error('유효하지 않은 초대 코드입니다. (6자리 영숫자)');
+    }
+
+    // 대소문자 구분 없이 처리 (대문자로 변환하여 일관성 유지)
+    const normalizedCode = inviteCode.toUpperCase();
+
+    console.log('🔄 [API] 초대 코드로 대기실 조회 시작 - inviteCode:', normalizedCode);
+
+    const response = await publicApiClient.get<InviteCodeQueryResponse>(
+      `/api/capsules/step-rooms?invite_code=${encodeURIComponent(normalizedCode)}`,
+    );
+
+    console.log('✅ [API] 초대 코드로 대기실 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 초대 코드입니다 (404)');
+      throw new Error('존재하지 않는 초대 코드입니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    // 클라이언트 검증 에러 (형식 검증)
+    if (error.message && error.message.includes('유효하지 않은 초대 코드')) {
+      console.error('❌ [API] 유효하지 않은 초대 코드 형식:', inviteCode);
+      throw error;
+    }
+    console.error('❌ [API] 초대 코드로 대기실 조회 실패:', error.message);
+    throw new Error(
+      `API 호출 실패: ${error.response?.status || 'Network Error'}`,
+    );
+  }
 }

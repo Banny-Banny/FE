@@ -23,7 +23,11 @@ export const styles = StyleSheet.create({
   scrollContent: {
     flex: 1,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+  },
+
+  // 스크롤 컨텐츠 컨테이너
+  scrollContentContainer: {
+    paddingBottom: Spacing.lg, // 24px
   },
 
   // 중앙 정렬 컨텐츠 (로딩, 에러 상태)

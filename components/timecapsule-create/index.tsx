@@ -81,9 +81,16 @@ export default function TimeCapsuleCreate() {
     // 현재는 임시로 호스트로 설정
     const userRole: 'host' | 'guest' = 'host';
 
+    // orderData가 없으면 에러 처리
+    if (!orderData) {
+      console.error('❌ [TimeCapsuleCreate] orderData가 없습니다!');
+      return null;
+    }
+
     return (
       <StepRoom
         role={userRole}
+        orderId={orderData.order_id} // 백엔드에서 생성한 order_id 전달
         onSubmit={() => {
           console.log('✅ [TimeCapsuleCreate] 타임캡슐 제출 완료!');
           // TODO: 메인 화면으로 이동 또는 완료 페이지로 이동

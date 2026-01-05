@@ -1,0 +1,390 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-데이터소스) RoomSettingsResponse 활용
+
+현재 useRoomData Hook에서 반환하는 roomSettings 데이터:
+- roomSettings: RoomSettingsResponse | null
+  - max_images_per_person: number (1인당 최대 사진 개수)
+  - has_music: boolean (음성 추가 여부)
+  - has_video: boolean (동영상 추가 여부)
+
+중요:
+- ⭐ roomSettings는 step-room/index.tsx에서 useRoomData Hook으로 가져옴
+- ⭐ roomSettings를 write-bottomsheet에 props로 전달해야 함
+- ⭐ roomSettings가 null이면 기본값 사용 (max_images_per_person: 3, has_music: false, has_video: false)
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-room/hooks/useRoomData.ts (roomSettings 반환)
+            - components/timecapsule-create/components/step-room/types.ts (RoomSettingsResponse 타입)
+            - components/timecapsule-create/components/step-room/index.tsx (roomSettings 전달)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/write-bottomsheet/index.tsx (Props 추가, 동적 UI 적용)
+            - components/timecapsule-create/components/write-bottomsheet/types.ts (Props 타입 추가)
+            - components/timecapsule-create/components/write-bottomsheet/hooks/useMediaPicker.ts (max_images_per_person 파라미터 추가)
+            - components/timecapsule-create/components/step-room/index.tsx (roomSettings props 전달)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 폼 로직, 검증 로직 유지
+조건-기능유지) 기존 이벤트 핸들러 로직 유지
+조건-기능유지) 오직 동적 설정값만 적용 (하드코딩된 값 제거)
+
+==============================================
+
+조건-API명세) RoomSettingsResponse 타입 (snake_case)
+조건-API명세) max_images_per_person: number (1인당 최대 사진 개수)
+조건-API명세) has_music: boolean (음성 추가 여부, true면 음악 섹션 표시)
+조건-API명세) has_video: boolean (동영상 추가 여부, true면 동영상 섹션 표시)
+
+==============================================
+
+핵심요구사항) 대기실 설정값에 따른 동적 UI 구성
+핵심요구사항-1) ⭐ roomSettings를 write-bottomsheet에 props로 전달
+핵심요구사항-2) ⭐ max_images_per_person으로 사진 개수 제한 동적 설정 (현재 5개 하드코딩 제거)
+핵심요구사항-3) ⭐ has_music이 false면 음악 섹션 숨김
+핵심요구사항-4) ⭐ has_video가 false면 동영상 섹션 숨김
+핵심요구사항-5) ⭐ roomSettings가 null이면 기본값 사용 (max_images_per_person: 3, has_music: false, has_video: false)
+핵심요구사항-6) TypeScript 타입 안정성 보장
+
+==============================================
+
+데이터구조-RoomSettingsResponse) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+// 대기실 설정값 조회 API 응답 타입 (snake_case)
+export interface RoomSettingsResponse {
+  room_id: string;                    // 대기실 ID (UUID)
+  capsule_name: string;               // 캡슐 이름
+  open_date: string;                  // 개봉 날짜 (YYYY-MM-DD)
+  max_participants: number;           // 총 인원수
+  max_images_per_person: number;      // ⭐ 1인당 최대 사진 개수
+  has_music: boolean;                 // ⭐ 음성 추가 여부
+  has_video: boolean;                 // ⭐ 동영상 추가 여부
+}
+
+==============================================
+
+구현가이드-1) write-bottomsheet Props 타입 추가
+
+파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+
+추가할 타입:
+```typescript
+import type { RoomSettingsResponse } from '../../step-room/types';
+
+// UserBottomSheet Props 인터페이스 확장
+export interface UserBottomSheetProps {
+  isVisible: boolean;
+  onClose: () => void;
+  participant: Participant;
+  onSave?: (content: any) => Promise<void>;
+  // ⭐ 추가: 대기실 설정값 (옵션, 없으면 기본값 사용)
+  roomSettings?: RoomSettingsResponse | null;
+}
+```
+
+==============================================
+
+구현가이드-2) write-bottomsheet/index.tsx 수정
+
+파일: components/timecapsule-create/components/write-bottomsheet/index.tsx
+
+수정 사항:
+1. Props 인터페이스에 roomSettings 추가
+2. 기본값 설정 (roomSettings가 null이면 기본값 사용)
+3. 사진 개수 제한 동적 설정 (max_images_per_person 사용)
+4. 음악 섹션 조건부 렌더링 (has_music에 따라)
+5. 동영상 섹션 조건부 렌더링 (has_video에 따라)
+
+기능:
+1. 기본값 설정
+   - maxImagesPerPerson = roomSettings?.max_images_per_person ?? 3
+   - hasMusic = roomSettings?.has_music ?? false
+   - hasVideo = roomSettings?.has_video ?? false
+
+2. 사진 개수 제한 동적 적용
+   - 하드코딩된 5 → maxImagesPerPerson으로 변경
+   - 사진 섹션 제목: "사진 ({watch('photos').length}/{maxImagesPerPerson})"
+   - disabled 조건: currentPhotos.length >= maxImagesPerPerson
+   - validate 규칙: value.length <= maxImagesPerPerson
+
+3. 음악 섹션 조건부 렌더링
+   - hasMusic이 true일 때만 섹션 표시
+   - false면 섹션 전체 숨김
+
+4. 동영상 섹션 조건부 렌더링
+   - hasVideo가 true일 때만 섹션 표시
+   - false면 섹션 전체 숨김
+
+구현 예시:
+```typescript
+export default function UserBottomSheet({ 
+  isVisible, 
+  onClose, 
+  participant, 
+  onSave,
+  roomSettings, // ⭐ 추가
+}: UserBottomSheetProps) {
+  // ⭐ 기본값 설정
+  const maxImagesPerPerson = roomSettings?.max_images_per_person ?? 3;
+  const hasMusic = roomSettings?.has_music ?? false;
+  const hasVideo = roomSettings?.has_video ?? false;
+
+  // useMediaPicker Hook에 maxImagesPerPerson 전달
+  const { pickImage, pickVideo, pickAudio, ... } = useMediaPicker(
+    // ... 기존 콜백
+    currentPhotos.length,
+    !!currentVideo,
+    !!currentMusic,
+    maxImagesPerPerson, // ⭐ 추가
+  );
+
+  // 사진 섹션 제목
+  <Text style={styles.sectionTitle}>
+    사진 ({watch('photos').length}/{maxImagesPerPerson})
+  </Text>
+
+  // 사진 추가 버튼 disabled 조건
+  <Button
+    disabled={isPickingImage || currentPhotos.length >= maxImagesPerPerson}
+    // ...
+  />
+
+  // 음악 섹션 조건부 렌더링
+  {hasMusic && (
+    <View style={styles.section}>
+      {/* 음악 섹션 내용 */}
+    </View>
+  )}
+
+  // 동영상 섹션 조건부 렌더링
+  {hasVideo && (
+    <View style={styles.section}>
+      {/* 동영상 섹션 내용 */}
+    </View>
+  )}
+}
+```
+
+==============================================
+
+구현가이드-3) useMediaPicker Hook 수정
+
+파일: components/timecapsule-create/components/write-bottomsheet/hooks/useMediaPicker.ts
+
+수정 사항:
+1. maxImagesPerPerson 파라미터 추가 (기본값: 5, 하위 호환성)
+2. 하드코딩된 5를 maxImagesPerPerson으로 변경
+
+기능:
+1. pickImage 함수에서 최대 개수 체크
+   - currentPhotosCount >= maxImagesPerPerson 체크
+   - selectionLimit: maxImagesPerPerson - currentPhotosCount
+
+구현 예시:
+```typescript
+export function useMediaPicker(
+  onImagesPicked: (uris: string[]) => void,
+  onVideoPicked: (uri: string) => void,
+  onAudioPicked: (uri: string) => void,
+  currentPhotosCount: number = 0,
+  hasVideo: boolean = false,
+  hasMusic: boolean = false,
+  maxImagesPerPerson: number = 5, // ⭐ 추가 (기본값 5로 하위 호환성 유지)
+): UseMediaPickerReturn {
+  const pickImage = async () => {
+    // 최대 개수 체크
+    if (currentPhotosCount >= maxImagesPerPerson) {
+      Alert.alert('알림', `사진은 최대 ${maxImagesPerPerson}개까지 추가할 수 있습니다.`);
+      return;
+    }
+
+    // 선택 가능한 최대 개수 계산
+    const maxSelectable = maxImagesPerPerson - currentPhotosCount;
+
+    // 이미지 피커 실행
+    const result = await ImagePicker.launchImageLibraryAsync({
+      // ...
+      selectionLimit: maxSelectable,
+    });
+
+    // 최대 개수 재확인
+    if (currentPhotosCount + selectedUris.length > maxImagesPerPerson) {
+      Alert.alert(
+        '알림',
+        `사진은 최대 ${maxImagesPerPerson}개까지 추가할 수 있습니다.\n현재 ${currentPhotosCount}개 선택됨`,
+      );
+      return;
+    }
+  };
+}
+```
+
+==============================================
+
+구현가이드-4) step-room/index.tsx 수정
+
+파일: components/timecapsule-create/components/step-room/index.tsx
+
+수정 사항:
+1. UserBottomSheet에 roomSettings props 전달
+
+구현 예시:
+```typescript
+<UserBottomSheet
+  isVisible={isBottomSheetVisible}
+  onClose={() => setIsBottomSheetVisible(false)}
+  participant={selectedParticipant}
+  onSave={handleBottomSheetSave}
+  roomSettings={roomSettings} // ⭐ 추가
+/>
+```
+
+==============================================
+
+활용시나리오) 동적 UI 구성 플로우
+
+1. 대기실 설정값 조회 완료
+   - useRoomData Hook에서 roomSettings 반환
+   - 예: { max_images_per_person: 5, has_music: true, has_video: false }
+
+2. write-bottomsheet에 설정값 전달
+   - step-room/index.tsx에서 roomSettings를 props로 전달
+   - UserBottomSheet 컴포넌트에서 받음
+
+3. 동적 UI 구성
+   - 사진 섹션: "사진 (0/5)" 표시, 최대 5개까지 추가 가능
+   - 음악 섹션: has_music=true → 섹션 표시
+   - 동영상 섹션: has_video=false → 섹션 숨김
+
+4. 사용자 입력 제한
+   - 사용자가 사진 6장 업로드 시도 → "사진은 최대 5개까지 추가할 수 있습니다" 경고
+   - 음악 섹션이 숨겨져 있으면 음악 추가 불가
+   - 동영상 섹션이 숨겨져 있으면 동영상 추가 불가
+
+==============================================
+
+에러처리가이드) roomSettings가 null인 경우
+
+1. roomSettings가 null인 경우
+   - 원인: API 호출 실패, 로딩 중
+   - 대응: 기본값 사용
+     - max_images_per_person: 3
+     - has_music: false
+     - has_video: false
+   - UI: 기본값으로 동작 (사진 3개 제한, 음악/동영상 섹션 숨김)
+
+2. roomSettings가 undefined인 경우
+   - 원인: Props로 전달되지 않음
+   - 대응: 기본값 사용 (동일)
+
+에러 처리 우선순위:
+1. 기본값 사용 (앱이 멈추지 않도록)
+2. 콘솔 로그로 경고 기록 (개발자 디버깅용)
+3. 사용자 피드백 제공 (선택사항)
+
+==============================================
+
+주의사항)
+
+1. 하위 호환성 유지
+   - useMediaPicker의 maxImagesPerPerson 기본값을 5로 설정
+   - roomSettings가 없어도 기존 동작 유지
+
+2. TypeScript 타입 안정성
+   - roomSettings는 옵셔널 (roomSettings?: RoomSettingsResponse | null)
+   - null 체크 필수 (roomSettings?.max_images_per_person ?? 3)
+
+3. 조건부 렌더링
+   - has_music, has_video가 false면 섹션 전체 숨김
+   - 단순히 버튼만 숨기는 것이 아님
+
+4. 하드코딩 제거
+   - 사진 개수: 5 → maxImagesPerPerson
+   - 모든 하드코딩된 값 제거
+
+5. 기본값 일관성
+   - roomSettings가 null이면 max_images_per_person: 3 사용
+   - 이는 prompt.403의 fallback 기본값과 일치
+
+6. Props 전달 경로
+   - step-room/index.tsx → UserBottomSheet
+   - roomSettings는 useRoomData Hook에서 가져옴
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] UserBottomSheetProps에 roomSettings 추가됨 (옵셔널)
+- [ ] RoomSettingsResponse 타입 import 확인됨
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+Props 전달:
+- [ ] step-room/index.tsx에서 roomSettings props 전달됨
+- [ ] write-bottomsheet/index.tsx에서 roomSettings 받음
+- [ ] 기본값 설정 로직 구현됨 (null 체크)
+
+사진 개수 제한:
+- [ ] ⭐ max_images_per_person으로 동적 설정됨
+- [ ] ⭐ 하드코딩된 5 제거됨
+- [ ] 사진 섹션 제목에 동적 개수 표시됨 ({current}/{max})
+- [ ] 사진 추가 버튼 disabled 조건 동적 적용됨
+- [ ] validate 규칙 동적 적용됨
+- [ ] useMediaPicker Hook에 maxImagesPerPerson 전달됨
+- [ ] useMediaPicker Hook에서 하드코딩된 5 제거됨
+
+음악 섹션:
+- [ ] ⭐ has_music이 false면 섹션 숨김됨
+- [ ] ⭐ has_music이 true면 섹션 표시됨
+- [ ] 조건부 렌더링 구현됨 ({hasMusic && ...})
+
+동영상 섹션:
+- [ ] ⭐ has_video가 false면 섹션 숨김됨
+- [ ] ⭐ has_video가 true면 섹션 표시됨
+- [ ] 조건부 렌더링 구현됨 ({hasVideo && ...})
+
+기본값 처리:
+- [ ] ⭐ roomSettings가 null이면 기본값 사용됨
+- [ ] max_images_per_person 기본값: 3
+- [ ] has_music 기본값: false
+- [ ] has_video 기본값: false
+
+하위 호환성:
+- [ ] useMediaPicker의 maxImagesPerPerson 기본값: 5
+- [ ] roomSettings가 없어도 기존 동작 유지됨
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] 하드코딩된 값 제거됨 (5 → maxImagesPerPerson)
+- [ ] null 체크 필수 (roomSettings?.max_images_per_person ?? 3)
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ max_images_per_person=5일 때 사진 5개 제한 동작 확인됨
+- [ ] ⭐ max_images_per_person=3일 때 사진 3개 제한 동작 확인됨
+- [ ] ⭐ has_music=true일 때 음악 섹션 표시 확인됨
+- [ ] ⭐ has_music=false일 때 음악 섹션 숨김 확인됨
+- [ ] ⭐ has_video=true일 때 동영상 섹션 표시 확인됨
+- [ ] ⭐ has_video=false일 때 동영상 섹션 숨김 확인됨
+- [ ] roomSettings가 null일 때 기본값 동작 확인됨
+- [ ] 사진 개수 초과 시 경고 메시지 확인됨
+- [ ] UI에 설정값이 올바르게 표시됨
+
+==============================================
+

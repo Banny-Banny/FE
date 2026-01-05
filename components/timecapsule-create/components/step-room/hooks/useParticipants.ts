@@ -3,9 +3,13 @@
  * 참여자 목록 관리,상태 관리, 작성 내용 저장 Hook
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
+import { getUserFromToken } from '@/utils/auth';
+import { STORAGE_KEYS } from '@/commons/constants/storage';
 
 // ============================================
 // 테스트 모드 설정
@@ -218,12 +222,24 @@ interface UseParticipantsReturn {
   participants: Participant[];
   /** 본인 참여자 정보 */
   myParticipant: Participant | undefined;
+  /** 로딩 상태 */
+  isLoading: boolean;
+  /** 에러 */
+  error: Error | null;
   /** 참여자 상태 업데이트 (pending → completed) */
   updateStatus: (participantId: string, status: ParticipantStatus) => void;
   /** 참여자 작성 내용 저장 (본인만) */
   saveContent: (participantId: string, content: ParticipantContent) => Promise<void>;
   /** 편집 가능 여부 확인 (본인만) */
   canEdit: (participantId: string) => boolean;
+}
+
+/** useParticipants Hook 파라미터 */
+interface UseParticipantsParams {
+  /** 캡슐 ID (UUID) - 참여자 슬롯 정보 조회용 */
+  capsuleId: string | null;
+  /** 최대 참여 인원수 - 빈 슬롯 생성용 */
+  maxParticipants: number;
 }
 
 // ============================================
@@ -234,19 +250,25 @@ interface UseParticipantsReturn {
  * 참여자 목록 관리 Hook
  *
  * 기능:
- * 1. fetchParticipants(): 참여자 목록 가져오기 (목데이터)
+ * 1. fetchParticipants(): 참여자 목록 가져오기 (API 또는 목데이터)
  * 2. updateParticipantStatus(): 참여자 상태 업데이트 (pending → completed)
  * 3. saveParticipantContent(): 참여자 작성 내용 저장 (본인만)
  * 4. canEditParticipant(): 편집 가능 여부 확인 (본인만)
  *
+ * @param {UseParticipantsParams} params Hook 파라미터
  * @returns {UseParticipantsReturn} Hook 반환값
  */
-export function useParticipants(): UseParticipantsReturn {
+export function useParticipants({
+  capsuleId,
+  maxParticipants,
+}: UseParticipantsParams): UseParticipantsReturn {
   // ============================================
   // 상태 관리
   // ============================================
 
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // ============================================
   // 데이터 가져오기 (목데이터)
@@ -255,25 +277,79 @@ export function useParticipants(): UseParticipantsReturn {
   useEffect(() => {
     /**
      * 참여자 목록 가져오기
-     * ⚠️ 추후 백엔드 API로 교체될 예정
+     * - capsuleId가 있으면 API 호출
+     * - 없으면 대기 (로딩 상태 유지, 목데이터 사용 안 함)
      */
     async function fetchParticipants() {
-      try {
-        // TODO: API 연동
-        // const response = await fetch(`/api/room/${capsuleId}/participants`);
-        // const data = await response.json();
-        // setParticipants(data);
+      // capsuleId가 없으면 아무것도 하지 않음 (로딩 상태 유지)
+      if (!capsuleId) {
+        // capsuleId가 설정될 때까지 대기 (다음 useEffect 실행에서 처리됨)
+        return;
+      }
 
-        // 목데이터 반환
-        await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
-        setParticipants(mockParticipants);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+
+        // ⭐ API 호출: 대기실 상세 조회
+        console.log('🔄 [useParticipants] 참여자 슬롯 정보 조회 시작 - capsuleId:', capsuleId);
+        const roomDetail = await getRoomDetail(capsuleId);
+
+          // 현재 사용자 ID 가져오기 (본인 여부 판단용)
+          const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+          const currentUser = token ? getUserFromToken(token) : null;
+          const currentUserId = currentUser?.id || null;
+
+          // slots[] 배열을 Participant[] 형식으로 변환
+          const participantsList: Participant[] = [];
+
+          // 실제 슬롯 정보 변환
+          for (const slot of roomDetail.slots) {
+            if (slot.user_id && slot.nickname) {
+              // 배정된 슬롯
+              const isMe = slot.user_id === currentUserId;
+              participantsList.push({
+                id: slot.user_id,
+                name: slot.nickname,
+                emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
+                status:
+                  slot.status === 'ACCEPTED'
+                    ? PARTICIPANT_STATUS.PENDING
+                    : PARTICIPANT_STATUS.WAITING,
+                isHost: slot.is_host,
+                isMe,
+                // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
+                // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+              });
+            }
+          }
+
+          // 빈 슬롯 추가 (maxParticipants까지)
+          const filledSlots = roomDetail.slots.length;
+          for (let i = filledSlots; i < maxParticipants; i++) {
+            participantsList.push({
+              id: `slot-${i + 1}`,
+              name: '',
+              emoji: EMPTY_SLOT_EMOJI,
+              status: PARTICIPANT_STATUS.WAITING,
+            });
+          }
+
+        setParticipants(participantsList);
+        console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
       } catch (err) {
-        console.error('❌ [useParticipants] 참여자 목록 로딩 실패:', err);
+        console.warn('⚠️ [useParticipants] API 호출 실패, 목데이터 사용:', err);
+        setError(err instanceof Error ? err : new Error('API 호출 실패'));
+        // 목데이터로 폴백
+        setParticipants(mockParticipants);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchParticipants();
-  }, []);
+  }, [capsuleId, maxParticipants]);
 
   // ============================================
   // 본인 참여자 정보
@@ -385,6 +461,8 @@ export function useParticipants(): UseParticipantsReturn {
   return {
     participants,
     myParticipant,
+    isLoading,
+    error,
     updateStatus,
     saveContent,
     canEdit,
