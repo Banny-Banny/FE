@@ -40,10 +40,11 @@ export const styles = StyleSheet.create({
   /**
    * 텍스트 영역
    * - 중앙 정렬
+   * - 피그마 214:1721: 텍스트와 버튼 사이 간격 32px
    */
   textContainer: {
     alignItems: 'center',
-    marginBottom: MODAL_DESIGN.spacing.descriptionToContent,
+    marginBottom: MODAL_DESIGN.spacing.contentToButton,
   },
 
   /**
@@ -59,12 +60,12 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.8492,
     color: Colors.black[500], // 피그마: #1a1a1a
     textAlign: 'center' as const,
-    marginBottom: MODAL_DESIGN.spacing.titleToDescription,
   },
 
   /**
    * 부제목 텍스트 (SUBMIT_COMPLETE에서 사용)
    * - 제목과 동일한 스타일
+   * - title 아래에 표시되므로 marginTop 추가
    */
   subtitle: {
     fontFamily: Typography.caption.caption2.fontFamily,
@@ -74,18 +75,20 @@ export const styles = StyleSheet.create({
     letterSpacing: -0.8492,
     color: Colors.black[500],
     textAlign: 'center' as const,
+    marginTop: MODAL_DESIGN.spacing.titleToDescription,
   },
 
   /**
    * 설명 텍스트
    * - 피그마: Pretendard Bold, 16px, #666
+   * - title 아래에 표시되므로 marginTop 추가
    */
   description: {
     ...Typography.body.body4, // 16px Regular
     fontWeight: '700' as const, // Bold로 변경
     color: Colors.grey[800], // 피그마: #666 (grey[800]와 유사)
     textAlign: 'center' as const,
-    marginTop: 4,
+    marginTop: MODAL_DESIGN.spacing.titleToDescription,
   },
 
   /**
@@ -175,75 +178,9 @@ export const styles = StyleSheet.create({
 
   /**
    * 버튼 컨테이너
+   * - 공통 Button/DualButton 컴포넌트 사용으로 추가 스타일 불필요
    */
   buttonContainer: {
     width: '100%',
-  },
-
-  /**
-   * 버튼 2개일 때 가로 배치
-   */
-  buttonRow: {
-    flexDirection: 'row' as const,
-    gap: MODAL_DESIGN.spacing.buttonGap,
-  },
-
-  /**
-   * 버튼 기본 스타일
-   * - 피그마: 높이 60px, border-radius 20px
-   */
-  button: {
-    height: MODAL_DESIGN.button.height,
-    borderRadius: MODAL_DESIGN.button.borderRadius,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  },
-
-  /**
-   * Primary 버튼 (확인, 제출)
-   * - 피그마: 배경 #0a0a0a (검정)
-   */
-  buttonPrimary: {
-    backgroundColor: Colors.black[500], // 피그마: #0a0a0a
-  },
-
-  /**
-   * Secondary 버튼 (취소)
-   * - 피그마: 배경 #fafafa, border #e5e7eb
-   */
-  buttonSecondary: {
-    backgroundColor: Colors.white[500], // 피그마: #fafafa
-    borderWidth: 2,
-    borderColor: Colors.whiteGrey[300], // 피그마: #e5e7eb
-  },
-
-  /**
-   * 버튼 2개일 때 각 버튼 너비 (flex: 1)
-   */
-  buttonHalf: {
-    flex: 1,
-  },
-
-  /**
-   * 버튼 텍스트 기본
-   * - 피그마: Pretendard Bold, 16px
-   */
-  buttonText: {
-    ...Typography.caption.caption2, // 16px Bold
-    fontWeight: '700' as const,
-  },
-
-  /**
-   * Primary 버튼 텍스트 색상
-   */
-  buttonTextPrimary: {
-    color: Colors.white[500], // 피그마: #fafafa
-  },
-
-  /**
-   * Secondary 버튼 텍스트 색상
-   */
-  buttonTextSecondary: {
-    color: Colors.black[500], // 피그마: #0a0a0a
   },
 });

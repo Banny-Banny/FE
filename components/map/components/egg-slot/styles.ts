@@ -15,10 +15,14 @@ import { Colors } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  container: {
+  // Pressable wrapper 스타일 (absolute positioning)
+  pressableWrapper: {
     position: 'absolute',
     top: 48,
     right: 18,
+    zIndex: 10, // 지도 위에 표시되도록
+  },
+  container: {
     height: 44,
     backgroundColor: Colors.black[900], // #040404 (Figma #111827에 가장 가까운 토큰)
     borderWidth: 2,

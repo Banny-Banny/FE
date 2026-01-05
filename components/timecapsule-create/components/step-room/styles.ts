@@ -13,10 +13,23 @@ import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // 메인 컨테이너
+  // 메인 컨테이너 (SafeAreaView)
   container: {
     flex: 1,
     backgroundColor: Colors.white[100],
+  },
+
+  // 스크롤 영역
+  scrollContent: {
+    flex: 1,
+    paddingHorizontal: Spacing.lg,
+  },
+
+  // 중앙 정렬 컨텐츠 (로딩, 에러 상태)
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: Spacing.lg,
   },
 
@@ -25,51 +38,25 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 44,
-    marginTop: 44,
+    height: 84,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.whiteGrey[500],
   },
 
-  // 역할 배지 (HOST/GUEST)
-  roleBadge: {
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 35,
-    paddingHorizontal: Spacing.md,
-    borderWidth: 1,
-    borderColor: Colors.black.darker,
-    borderRadius: 9999,
-  },
-
-  roleBadgeHost: {
-    paddingLeft: 38,
-  },
-
-  roleBadgeGuest: {
-    paddingLeft: Spacing.md,
-  },
-
-  roleBadgeText: {
-    ...Typography.body.body6,
-    color: Colors.black[500],
-  },
-
-  crownIcon: {
-    position: 'absolute',
-    left: 8,
-    width: 24,
-    height: 24,
   },
 
   // 헤더 아이콘 영역
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
   },
 
   iconButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -81,9 +68,12 @@ export const styles = StyleSheet.create({
 
   // 타이틀
   title: {
-    ...Typography.header.h5,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 24,
+    lineHeight: 26.4,
+    fontWeight: '700',
+    letterSpacing: -0.4097000062465668,
     color: Colors.black[500],
-    marginTop: 24,
   },
 
   // 정보 카드
@@ -103,7 +93,11 @@ export const styles = StyleSheet.create({
   },
 
   infoCardValue: {
-    ...Typography.header.h5,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 26,
+    lineHeight: 36,
+    fontWeight: '700',
+    letterSpacing: 0.3955078125,
     color: Colors.black[500],
   },
 
@@ -115,71 +109,40 @@ export const styles = StyleSheet.create({
   infoCardDetailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 10,
   },
 
-  infoCardDetailIcon: {
-    width: 16,
-    height: 16,
+  infoCardIconWrapper: {
+    width: 28,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   infoCardDetailLabel: {
     ...Typography.body.body3,
     color: Colors.grey[500],
-    marginBottom: 4,
   },
 
   infoCardDetailValue: {
-    ...Typography.body.body6,
+    ...Typography.caption.caption1,
     color: Colors.black[500],
   },
 
-  // 진행 상황 바
-  progressSection: {
-    marginTop: 45,
-    gap: Spacing.sm,
-  },
-
-  progressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-
-  progressLabel: {
-    ...Typography.body.body6,
-    color: Colors.black[500],
-  },
-
-  progressValue: {
-    ...Typography.body.body6,
-    color: Colors.black[500],
-  },
-
-  progressBarContainer: {
-    height: 8,
-    backgroundColor: Colors.grey[300],
-    borderWidth: 1,
-    borderColor: Colors.black.darker,
-    borderRadius: 9999,
-    overflow: 'hidden',
-  },
-
-  progressBarFill: {
-    height: 6,
-    backgroundColor: Colors.black.darker,
-    margin: 1,
+  // 친구 초대하기 버튼 래퍼
+  inviteButtonWrapper: {
+    marginVertical: 20,
   },
 
   // 참여자 목록
   participantSection: {
-    marginTop: 30,
+    marginTop: 20,
     gap: Spacing.md,
   },
 
   participantLabel: {
-    ...Typography.body.body6,
-    color: Colors.grey[500],
+    ...Typography.caption.caption1,
+    color: Colors.black[500],
   },
 
   participantList: {
@@ -191,24 +154,20 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 84,
-    paddingHorizontal: 18,
+    height: 78,
+    paddingHorizontal: 21,
     backgroundColor: Colors.white[100],
-    borderWidth: 1,
-    borderRadius: 16,
   },
 
   participantCardActive: {
-    borderColor: Colors.black.darker,
-    shadowColor: Colors.black.darker,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: Colors.lightBlack[500],
+    borderRadius: 20,
   },
 
   participantCardInactive: {
-    borderColor: Colors.grey[200],
+    backgroundColor: Colors.whiteGrey[200],
+    borderRadius: 16,
   },
 
   participantInfo: {
@@ -218,26 +177,27 @@ export const styles = StyleSheet.create({
   },
 
   avatar: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: 9999,
     borderWidth: 1,
-    borderColor: Colors.grey[200],
+    borderColor: Colors.whiteGrey[500],
     backgroundColor: Colors.white[100],
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   avatarActive: {
-    borderColor: Colors.black.darker,
+    borderColor: Colors.lightBlack[500],
   },
 
   avatarEmoji: {
-    fontSize: 24, // Typography.header.h1의 fontSize
+    fontSize: 24,
   },
 
   avatarEmojiDisabled: {
-    color: Colors.grey[400],
+    backgroundColor: Colors.grey[100],
+    borderColor: Colors.whiteGrey[500],
   },
 
   participantDetails: {
@@ -250,7 +210,11 @@ export const styles = StyleSheet.create({
   },
 
   participantName: {
-    ...Typography.body.body1,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 16,
+    lineHeight: 24,
+    fontWeight: '700',
+    letterSpacing: -0.612500011920929,
     color: Colors.black[500],
   },
 
@@ -263,11 +227,16 @@ export const styles = StyleSheet.create({
   },
 
   statusPending: {
-    color: Colors.green[500],
+    color: Colors.blue[500],
   },
 
   statusWaiting: {
-    color: Colors.grey[400],
+    color: Colors.darkGrey[500],
+  },
+
+  emptySlotText: {
+    ...Typography.body.body3,
+    color: Colors.darkGrey[500],
   },
 
   // 체크박스
@@ -298,8 +267,12 @@ export const styles = StyleSheet.create({
   },
 
   infoText: {
-    ...Typography.body.body3,
-    color: Colors.grey[400],
+    fontFamily: 'Pretendard Variable',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    letterSpacing: 0,
+    color: Colors.grey[600],
     textAlign: 'center',
   },
 
@@ -316,7 +289,11 @@ export const styles = StyleSheet.create({
   },
 
   deadlineText: {
-    ...Typography.body.body6,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: '700',
+    letterSpacing: -0.150390625,
     color: Colors.grey[500],
   },
 
@@ -326,32 +303,20 @@ export const styles = StyleSheet.create({
     gap: Spacing.md,
   },
 
-  submitButton: {
-    height: 60,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.darkGrey[900], // 기본 색상: 진한 회색/검정
-  },
-
-  submitButtonDisabled: {
-    backgroundColor: Colors.grey[400],
-  },
-
-  submitButtonText: {
-    ...Typography.caption.button,
-    color: Colors.white[50],
-  },
-
   buttonHint: {
-    ...Typography.body.body3,
+    fontFamily: 'Pretendard Variable',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    letterSpacing: 0,
     color: Colors.grey[500],
     textAlign: 'center',
   },
 
   // 크라운 아이콘 (참여자 이름 옆)
   crownEmoji: {
-    fontSize: 16, // Typography.body.body1의 fontSize
-    marginLeft: 4,
+    fontSize: 16,
+    lineHeight: 24,
+    marginLeft: 0,
   },
 });

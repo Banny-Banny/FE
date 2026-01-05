@@ -27,6 +27,8 @@ export interface AttachmentFile {
 
 // API 요청 타입 정의
 export interface CreateCapsuleRequest {
+  latitude: number;
+  longitude: number;
   title: string;
   content?: string;
   media_urls: string[];
@@ -55,8 +57,9 @@ export interface ApiErrorResponse {
   message?: string;
   code?: string;
   details?: {
-    used_slots?: number;
     max_slots?: number;
+    used_slots?: number;
     remaining_slots?: number;
+    [key: string]: unknown;
   };
 }

@@ -10,13 +10,20 @@
  * - useMapFeature: 비즈니스 로직
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
+
+import { EggDetail } from './components/egg-detail';
 import { EggForm } from './components/egg-form';
+import { EggSlotModal } from './components/egg-slot-modal';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
+import ResetEggSlot from './components/reset-egg-slot';
+import type { CapsuleItem } from './components/map-view/types';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
+import { styles } from './styles';
 import type { MapFeatureProps } from './types';
 
 export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: MapFeatureProps = {}) {
@@ -25,11 +32,55 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     onEasterEggPress,
   });
 
+  // 캡슐 상세 바텀시트 상태 관리
+  const [selectedCapsule, setSelectedCapsule] = useState<CapsuleItem | null>(null);
+  const [isCapsuleDetailVisible, setIsCapsuleDetailVisible] = useState(false);
+
+  const handleCapsuleClick = (capsule: CapsuleItem) => {
+    setSelectedCapsule(capsule);
+    setIsCapsuleDetailVisible(true);
+  };
+
+  const handleCloseCapsuleDetail = () => {
+    setIsCapsuleDetailVisible(false);
+    setSelectedCapsule(null);
+  };
+
+  // 에그 슬롯 모달 상태 관리
+  const [isEggSlotModalVisible, setIsEggSlotModalVisible] = useState(false);
+  const [slotData, setSlotData] = useState<EggSlotDataResponse | null>(null);
+
+  const handleEggSlotPress = (data: EggSlotDataResponse | null) => {
+    setSlotData(data);
+    setIsEggSlotModalVisible(true);
+  };
+
+  const handleCloseEggSlotModal = () => {
+    setIsEggSlotModalVisible(false);
+  };
+
   return (
-    <View style={{ flex: 1 }}>
-      <MapView center={mapConfig.center} level={mapConfig.level} />
+    <View style={styles.container}>
+      <MapView
+        center={mapConfig.center}
+        level={mapConfig.level}
+        onCapsuleClick={handleCapsuleClick}
+        onEggSlotPress={handleEggSlotPress}
+      />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
+      <ResetEggSlot />
       <EggForm isVisible={isEggFormVisible} onClose={handleCloseEggForm} />
+      <EggDetail
+        isVisible={isCapsuleDetailVisible}
+        onClose={handleCloseCapsuleDetail}
+        capsule={selectedCapsule}
+      />
+      <EggSlotModal
+        visible={isEggSlotModalVisible}
+        onClose={handleCloseEggSlotModal}
+        usedCount={slotData?.usedSlots ?? 0}
+        totalCount={slotData?.totalSlots ?? 3}
+      />
     </View>
   );
 }

@@ -15,10 +15,14 @@ export interface ModalConfig {
   width?: number | string;
   /** 모달 세로 크기 (number: px, string: '%' 또는 'auto') */
   height?: number | string;
+  /** 모달 컨테이너 패딩 (기본값: 20) */
+  padding?: number;
   /** 뒷배경 클릭 시 모달 닫기 여부 (기본값: true) */
   closeOnBackdropPress?: boolean;
   /** 모달 닫힐 때 호출되는 콜백 함수 */
   onClose?: () => void;
+  /** 애니메이션 비활성화 여부 (기본값: false) */
+  disableAnimation?: boolean;
 }
 
 /**
