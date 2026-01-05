@@ -44,14 +44,16 @@ export const styles = StyleSheet.create({
     left: 0,
     bottom: 0,
     width: '100%',
-    height: 1,
-    backgroundColor: Colors.grey[200], // Figma: #e0e0e0
+    height: 73,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.grey[200],
+    pointerEvents: 'none',
   },
 
   backButton: {
     position: 'absolute',
     left: 24,
-    top: 16,
+    top: 14,
     width: 44,
     height: 44,
     backgroundColor: Colors.white[50],
@@ -73,7 +75,7 @@ export const styles = StyleSheet.create({
   headerTitle: {
     position: 'absolute',
     left: 80,
-    top: 27,
+    top: 23,
     ...Typography.header.h1,
     fontSize: 24,
     lineHeight: 26.4,

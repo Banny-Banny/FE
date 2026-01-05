@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
   openDateText: {
     ...Typography.body.body9,
     fontSize: 13,
-    lineHeight: 19.5,
+    lineHeight: 20,
     color: Colors.grey[700],
     marginTop: 4,
   },
@@ -156,10 +156,10 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.black[500],
     borderColor: Colors.black[500],
     shadowColor: Colors.black[500],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0,
+    shadowRadius: 6,
+    elevation: 4,
   },
 
   dateButtonTitle: {
@@ -453,7 +453,7 @@ export const styles = StyleSheet.create({
     borderColor: Colors.black[500],
     shadowColor: Colors.black[500],
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0,
     shadowRadius: 4,
     elevation: 3,
   },

@@ -36,11 +36,12 @@ export const styles = StyleSheet.create({
   // Figma: CheckboxItem (429:370) - 311.016×56.992px
   // 패딩: 좌우 17px, 내부 컨텐츠 세로 가운데 정렬
   allAgreeRow: {
-    paddingHorizontal: 17, // Figma: 정확히 17px
-    height: 57, // Figma: 56.992px ≈ 57px (고정 높이)
+    paddingHorizontal: 17,
+    paddingTop: 17,
+    paddingBottom: 17,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.grey[200], // Figma: #e0e0e0
-    justifyContent: 'center', // 내부 컨텐츠 세로 가운데 정렬
+    borderBottomColor: Colors.grey[200],
+    justifyContent: 'center',
   },
 
   // 체크박스 + 텍스트 행
@@ -53,8 +54,8 @@ export const styles = StyleSheet.create({
   // 전체 동의 체크박스 (큰 사이즈)
   // Figma: Icon (429:402, 429:436) - 28×28px
   checkbox: {
-    width: 28, // Figma: 정확히 28px
-    height: 28, // Figma: 정확히 28px
+    width: 24,
+    height: 24,
     backgroundColor: Colors.white[50],
     borderRadius: 14,
     borderWidth: 1.5,
@@ -64,7 +65,14 @@ export const styles = StyleSheet.create({
   },
 
   checkboxBorder: {
-    display: 'none', // border는 checkbox에 직접 적용
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    width: 24,
+    height: 24,
+    borderWidth: 1,
+    borderColor: Colors.darkGrey[900],
+    borderRadius: 20,
   },
 
   checkboxChecked: {

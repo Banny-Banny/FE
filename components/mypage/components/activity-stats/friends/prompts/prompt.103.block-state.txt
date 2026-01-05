@@ -1,0 +1,135 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+⚠️ 중요: 이 프롬프트는 기존 코드를 검증하고 개선하는 작업입니다.
+⚠️ 기존 파일: components/mypage/components/activity-stats/friends/index.tsx (이미 존재)
+⚠️ 기존 파일: components/mypage/components/activity-stats/friends/types.ts (이미 존재)
+⚠️ 기존 파일: components/mypage/components/activity-stats/friends/styles.ts (이미 존재)
+⚠️ 기존 차단 기능이 이미 구현되어 있으므로, 검증 후 필요한 부분만 수정할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @02-wireframe.mdc
+            - @03-ui.mdc
+
+==============================================
+
+조건-파일경로) 검증/수정할 TSX 파일경로: components/mypage/components/activity-stats/friends/index.tsx (기존 파일)
+조건-파일경로) 검증/수정할 스타일 파일경로: components/mypage/components/activity-stats/friends/styles.ts (기존 파일)
+조건-파일경로) 검증할 타입 파일경로: components/mypage/components/activity-stats/friends/types.ts (기존 파일)
+
+==============================================
+
+조건-기존코드) 기존 index.tsx의 125-141줄에 차단 기능이 이미 구현되어 있음
+조건-기존코드) 기존 index.tsx의 101-122줄에 차단 상태에 따른 조건부 스타일이 적용되어 있음
+조건-기존코드) 기존 handleToggleBlock 함수가 이미 구현되어 있음
+조건-기존코드) 기존 코드 구조는 유지하고, 필요한 부분만 수정/개선할 것
+
+==============================================
+
+조건-스타일시스템) React Native StyleSheet 사용할 것
+조건-스타일시스템) StyleSheet.create() 방식으로 styles.ts 작성
+조건-스타일시스템) 인라인 스타일 금지 (style={{...}} 금지)
+조건-스타일시스템) 모든 스타일은 styles.ts에서만 선언하고 index.tsx에서 import하여 사용
+조건-스타일시스템) 조건부 스타일은 배열로 병합하여 사용: style={[styles.base, condition && styles.conditional]}
+
+==============================================
+
+조건-상태관리) Friend 타입의 isBlocked 속성 활용 (이미 정의됨)
+조건-상태관리) onToggleBlock prop을 통해 부모 컴포넌트에서 상태 변경 처리
+조건-상태관리) 차단 버튼 클릭 시 즉시 UI 업데이트 (낙관적 업데이트)
+조건-상태관리) 차단된 친구는 시각적으로 구분되어 보여야 함
+
+==============================================
+
+조건-색상토큰) commons/constants/color.ts에 명시된 Colors 토큰 활용
+조건-색상토큰) @/commons/constants에서 Colors import하여 사용
+조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+조건-색상토큰) hex, rgb, hsl 직접 입력 금지
+조건-색상토큰) 차단된 친구 항목 배경색: Colors.grey[300] 또는 유사한 토큰 사용
+조건-색상토큰) 차단된 친구 아바타 배경색: Colors.grey[300] 또는 유사한 토큰 사용
+조건-색상토큰) 차단된 친구 이름 색상: Colors.black[500] 유지 (기존 스타일 확인)
+조건-색상토큰) 차단 해제 버튼 배경색: Colors.black[500]
+조건-색상토큰) 차단 해제 버튼 텍스트 색상: Colors.white[500]
+조건-색상토큰) styles.ts의 하드코딩된 색상 값('#E0E0E0' 등)을 Colors 토큰으로 변경
+
+조건-타이포그래피) commons/constants/typography.ts에 명시된 Typography 토큰 활용
+조건-타이포그래피) @/commons/constants에서 Typography import하여 사용
+조건-타이포그래피) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+
+==============================================
+
+조건-아이콘/이미지) 아이콘 라이브러리: react-native-remix-icon 사용 (이미 설치됨)
+조건-아이콘/이미지) 차단 버튼 아이콘: 'ri-user-forbid-line' (차단 상태)
+조건-아이콘/이미지) 차단 해제 버튼 아이콘: 'ri-user-unfollow-line' (해제 상태)
+조건-아이콘/이미지) 외부 아이콘 패키지 추가 설치 금지
+
+==============================================
+
+핵심요구사항) 기존 차단 기능의 UI 상태 변경이 올바르게 작동하는지 검증
+핵심요구사항) 차단 버튼 클릭 시 즉시 UI 상태 변경
+핵심요구사항) 차단된 친구 항목은 시각적으로 구분되어 표시 (배경색, 아바타 스타일 변경)
+핵심요구사항) 차단된 친구의 아바타는 opacity 0.5로 표시
+핵심요구사항) 차단 버튼 클릭 시 버튼 텍스트가 "차단" → "해제"로 변경
+핵심요구사항) 차단 해제 버튼은 검은색 배경에 흰색 텍스트로 표시
+핵심요구사항) 차단된 친구 항목 배경색이 회색으로 변경
+핵심요구사항) 기존 디자인과 레이아웃 유지 (크기, 간격 변경 없음)
+핵심요구사항) styles.ts의 하드코딩된 색상 값을 Colors 토큰으로 변경
+
+==============================================
+
+사전분석단계)
+1. 기존 index.tsx의 차단 버튼 및 친구 항목 구조 확인 (125-141줄)
+2. 기존 index.tsx의 조건부 스타일 적용 확인 (101-122줄)
+3. Friend 타입의 isBlocked 속성 확인
+4. onToggleBlock prop의 동작 방식 확인
+5. styles.ts의 기존 차단 관련 스타일 확인 (friendItemBlocked, avatarContainerBlocked 등)
+6. styles.ts의 하드코딩된 색상 값 확인 (#E0E0E0 등)
+7. commons/constants의 Colors 토큰 목록 확인 (차단 상태에 적합한 회색 토큰 선택)
+
+==============================================
+
+구현단계)
+1. types.ts 검증:
+   - Friend 타입에 isBlocked: boolean이 있는지 확인
+   - FriendsModalProps에 onToggleBlock?: (friendId: string) => void가 있는지 확인
+2. index.tsx 검증 및 수정:
+   - friend.isBlocked 조건에 따라 조건부 스타일이 올바르게 적용되는지 확인
+   - 차단 버튼의 아이콘과 텍스트가 isBlocked 상태에 따라 변경되는지 확인
+   - handleToggleBlock 함수가 onToggleBlock을 올바르게 호출하는지 확인
+   - 기존 코드 구조는 유지
+3. styles.ts 검증 및 수정:
+   - friendItemBlocked 스타일이 차단된 친구 항목 배경색을 올바르게 설정하는지 확인
+   - 하드코딩된 색상 값('#E0E0E0' 등)을 Colors 토큰으로 변경
+   - avatarContainerBlocked 스타일이 차단된 아바타 배경색을 올바르게 설정하는지 확인
+   - avatarEmojiBlocked 스타일이 opacity: 0.5로 설정되어 있는지 확인
+   - unblockButton 스타일이 검은색 배경으로 설정되어 있는지 확인
+   - buttonTextUnblock 스타일이 흰색 텍스트로 설정되어 있는지 확인
+   - 모든 색상이 Colors 토큰을 사용하는지 확인 (하드코딩 제거)
+
+==============================================
+
+최종검토) 아래 체크리스트를 모두 통과해야 완료
+- [ ] 기존 차단 기능 코드 구조가 유지됨
+- [ ] 차단 버튼 클릭 시 즉시 UI 상태가 변경됨
+- [ ] 차단된 친구 항목 배경색이 회색으로 표시됨 (Colors 토큰 사용)
+- [ ] 차단된 친구 아바타 배경색이 회색으로 표시됨 (Colors 토큰 사용)
+- [ ] 차단된 친구 아바타 이모지가 opacity 0.5로 표시됨
+- [ ] 차단 버튼 텍스트가 "차단" → "해제"로 변경됨
+- [ ] 차단 해제 버튼이 검은색 배경에 흰색 텍스트로 표시됨
+- [ ] 차단 해제 버튼 아이콘이 'ri-user-unfollow-line'으로 변경됨
+- [ ] styles.ts의 하드코딩된 색상 값이 모두 Colors 토큰으로 변경됨
+- [ ] 색상 하드코딩 0건 (Colors 토큰만 사용)
+- [ ] 인라인 스타일 0건
+- [ ] 조건부 스타일이 배열로 올바르게 병합됨
+- [ ] 기존 디자인과 레이아웃이 유지됨
+- [ ] 명시된 파일(index.tsx, styles.ts, types.ts) 외 수정 0건
+- [ ] commons/constants 수정 0건
+- [ ] onToggleBlock prop이 올바르게 동작함
+
+==============================================
+

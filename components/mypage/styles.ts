@@ -28,6 +28,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white[500],
     paddingHorizontal: Spacing.lg, // Figma: 23.99px ≈ 24px
+    overflow: 'visible', // Header의 border가 화면 양끝까지 확장될 수 있도록
   },
   
   // 컴포넌트 간 간격을 위한 래퍼
