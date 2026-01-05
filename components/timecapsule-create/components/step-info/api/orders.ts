@@ -14,7 +14,17 @@ import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './type
  */
 export async function createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
   try {
+    console.log('📤 [createOrder] 백엔드 API 호출 시작');
+    console.log('  - 요청 데이터:', JSON.stringify(data, null, 2));
+    console.log('  - 엔드포인트: POST /api/orders');
+
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
+
+    console.log('✅ [createOrder] 백엔드 API 응답 수신');
+    console.log('  - 응답 상태:', response.status);
+    console.log('  - 응답 데이터:', JSON.stringify(response.data, null, 2));
+    console.log('  - 💰 total_amount:', response.data.total_amount);
+
     return response.data;
   } catch (error: any) {
     const status = error.response?.status || 0;

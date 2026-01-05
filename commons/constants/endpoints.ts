@@ -28,6 +28,7 @@ export const API_ENDPOINTS = {
   // 주문 (Order)
   ORDER: {
     CREATE: 'api/order', // 타임캡슐 주문 생성 (POST)
+    UPDATE_STATUS: 'api/orders', // 주문 상태 변경 (PATCH) - {orderId}/status 파라미터 필요
   },
 
   // 결제 (Payment)
