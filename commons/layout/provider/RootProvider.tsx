@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider } from './auth/auth.provider';
 import { ModalProvider } from './modal/modal.provider';
 import { ReactQueryProvider } from './react-query/react-query.provider';
-import { SafeAreaProvider as AppSafeAreaProvider } from './safe-area/safe-area.provider';
+import { AppSafeAreaProvider } from './safe-area/safe-area.provider';
 
 interface RootProviderProps {
   children: React.ReactNode;

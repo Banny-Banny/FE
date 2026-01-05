@@ -1,50 +1,54 @@
-/**
- * commons/layout/provider/safe-area/safe-area.provider.tsx
- * SafeAreaView를 통합 관리하는 Provider
- * 라우터 컨텍스트 내부에서 경로를 확인하여 SafeAreaView를 조건부로 적용합니다.
- */
-
-import { useSegments } from 'expo-router';
-import React from 'react';
-import { View } from 'react-native';
+import { usePathname, useSegments } from 'expo-router';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface SafeAreaProviderProps {
+interface AppSafeAreaProviderProps {
   children: React.ReactNode;
 }
 
-/**
- * SafeAreaProvider 컴포넌트
- * 경로에 따라 SafeAreaView를 조건부로 적용합니다.
- *
- * 규칙:
- * - 경로에 /map이 있으면 SafeAreaView를 적용하지 않음
- * - (auth) 경로: edges={['top', 'bottom', 'left', 'right']} (하단 탭이 없는 페이지)
- * - 기본: edges={['top', 'left', 'right']} (탭 바나 하단 버튼이 있는 페이지가 많기 때문)
- */
-export const SafeAreaProvider: React.FC<SafeAreaProviderProps> = ({ children }) => {
-  const segments = useSegments();
-  const path = segments.join('/');
+export const AppSafeAreaProvider: React.FC<AppSafeAreaProviderProps> = ({ children }) => {
+  const segments = useSegments() as string[]; // 1. string[]로 단언하여 never 에러 해결
+  const pathname = usePathname();
 
-  // 경로에 /map이 있으면 SafeAreaView를 적용하지 않음
-  const isMapRoute = path.includes('map');
+  const { isMapRoute, edges } = useMemo(() => {
+    // [디버깅 로그] 지도가 켜진 상태에서 터미널에 찍히는 이 값을 반드시 확인하세요!
+    // console.log('📍 현재 경로:', { pathname, segments });
 
-  // (auth) 경로인지 확인
-  const isAuthRoute = segments[0] === '(auth)';
+    // 2. 지도 판별:
+    // 파일 구조상 app/(tabs)/index.tsx가 '홈'이면서 '지도'라면 pathname은 '/' 또는 '/(tabs)' 입니다.
+    const isMap =
+      pathname === '/' ||
+      pathname === '/index' ||
+      pathname.includes('map') ||
+      segments.includes('map');
 
-  // Edge 결정 로직
-  const edges = isAuthRoute
-    ? (['top', 'bottom', 'left', 'right'] as const)
-    : (['top', 'left', 'right'] as const);
+    // 3. (auth) 판별: string[] 형변환 덕분에 이제 에러가 나지 않습니다.
+    const isAuth = segments.includes('(auth)');
 
+    return {
+      isMapRoute: isMap,
+      edges: isAuth
+        ? (['top', 'bottom', 'left', 'right'] as const)
+        : (['top', 'left', 'right'] as const),
+    };
+  }, [segments, pathname]);
+
+  // 4. 지도일 때: SafeAreaView를 완전히 제거하고 일반 View만 반환
   if (isMapRoute) {
-    return <View style={{ flex: 1 }}>{children}</View>;
+    return <View style={{ flex: 1, backgroundColor: 'transparent' }}>{children}</View>;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={edges}>
+    <SafeAreaView key={pathname} style={styles.safeArea} edges={edges}>
       {children}
     </SafeAreaView>
   );
 };
 
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: 'hotpink', //추후 수정 예정
+  },
+});

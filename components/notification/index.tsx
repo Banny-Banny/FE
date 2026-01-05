@@ -28,7 +28,6 @@ import { Colors } from '@/commons/constants';
 import { DEFAULT_NEW_NOTIFICATIONS, DEFAULT_OLD_NOTIFICATIONS } from '@/egg/constants/MOCK_DATA';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { NotificationItem } from './components/notification-item';
 import { styles } from './styles';
@@ -43,7 +42,7 @@ export default function NotificationFeature() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
@@ -116,7 +115,6 @@ export default function NotificationFeature() {
           </View>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
-
