@@ -9,7 +9,9 @@
  */
 
 import dayjs from 'dayjs';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+
+import { getMediaUrls } from '@/utils/mediaUrl';
 
 import type { CapsuleDetailResponse } from '../../egg-detail-owner/types';
 import type { MediaItem } from '../../shared/types';
@@ -49,7 +51,16 @@ function calculateDiscoveryOrder(viewersLength: number, viewLimit: number): Disc
 }
 
 /**
+ * URL인지 미디어 ID인지 확인하는 함수
+ * URL은 http:// 또는 https://로 시작하거나, data:로 시작하는 data URL
+ */
+function isUrl(value: string): boolean {
+  return value.startsWith('http://') || value.startsWith('https://') || value.startsWith('data:');
+}
+
+/**
  * API 응답 데이터를 EggDiscoveryData로 변환
+ * 미디어 URL이 ID인 경우 URL로 변환하지 않고 그대로 사용 (비동기 변환은 Hook에서 처리)
  */
 function transformCapsuleDetailToDiscoveryData(
   detailData: CapsuleDetailResponse,
@@ -72,7 +83,7 @@ function transformCapsuleDetailToDiscoveryData(
         media.push({
           id: `media-${i}`,
           type: type as MediaItem['type'],
-          url,
+          url, // URL 또는 ID (Hook에서 변환)
         });
       }
     }
@@ -111,8 +122,8 @@ export function useEggDetailFind({
   isLoading: boolean;
   error: string | null;
 }): UseEggDetailFindReturn {
-  // API 데이터를 EggDiscoveryData로 변환
-  const discoveryData = useMemo(() => {
+  // API 데이터를 EggDiscoveryData로 변환 (초기 변환)
+  const initialDiscoveryData = useMemo(() => {
     // props로 전달된 data가 있으면 우선 사용
     if (data) {
       return data;
@@ -125,6 +136,51 @@ export function useEggDetailFind({
 
     return null;
   }, [data, detailData]);
+
+  // 미디어 URL 변환 상태
+  const [discoveryData, setDiscoveryData] = useState<EggDiscoveryData | null>(initialDiscoveryData);
+
+  // 미디어 URL 변환 (ID인 경우 URL로 변환)
+  useEffect(() => {
+    if (!initialDiscoveryData || !initialDiscoveryData.media.length) {
+      setDiscoveryData(initialDiscoveryData);
+      return;
+    }
+
+    // 미디어 URL이 이미 URL인지 확인
+    const needsConversion = initialDiscoveryData.media.some((m) => !isUrl(m.url));
+
+    if (!needsConversion) {
+      // 이미 URL이면 그대로 사용
+      setDiscoveryData(initialDiscoveryData);
+      return;
+    }
+
+    // 미디어 ID를 URL로 변환
+    const convertMediaUrls = async () => {
+      try {
+        const mediaIds = initialDiscoveryData.media.map((m) => m.url);
+        const convertedUrls = await getMediaUrls(mediaIds);
+
+        // 변환된 URL로 미디어 데이터 업데이트
+        const updatedMedia: MediaItem[] = initialDiscoveryData.media.map((m, index) => ({
+          ...m,
+          url: convertedUrls[index] || m.url,
+        }));
+
+        setDiscoveryData({
+          ...initialDiscoveryData,
+          media: updatedMedia,
+        });
+      } catch (err) {
+        console.error('[useEggDetailFind] 미디어 URL 변환 실패:', err);
+        // 변환 실패 시 원본 데이터 사용
+        setDiscoveryData(initialDiscoveryData);
+      }
+    };
+
+    convertMediaUrls();
+  }, [initialDiscoveryData]);
 
   // 오디오 재생 상태
   const [isPlaying, setIsPlaying] = useState(false);
