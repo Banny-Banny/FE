@@ -17,7 +17,8 @@
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
 import { Colors } from '@/commons/constants';
-import React from 'react';
+import { AudioAttachment } from '@/components/shared/audio-attachment';
+import React, { useState } from 'react';
 import { Controller } from 'react-hook-form';
 import { Image, Pressable, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
@@ -27,6 +28,8 @@ import { styles } from './styles';
 import { EggFormProps } from './types';
 
 export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
+  const [isAudioModalVisible, setIsAudioModalVisible] = useState(false);
+
   // 폼 관리 통합 Hook
   const {
     control,
@@ -35,6 +38,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
     isSubmitting,
     handleDeleteAttachment,
     handleAddAttachment,
+    handleAddAudioFile,
     photoAttachment,
     musicAttachment,
     videoAttachment,
@@ -47,15 +51,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
         styles.hideButton,
         isFormValid && !isSubmitting ? styles.hideButtonActive : styles.hideButtonInactive,
       ]}
-      onPress={() => {
-        console.log('🔘 숨기기 버튼 클릭됨');
-        console.log('📊 버튼 상태:', {
-          isFormValid,
-          isSubmitting,
-          disabled: !isFormValid || isSubmitting,
-        });
-        handleSubmit();
-      }}
+      onPress={handleSubmit}
       disabled={!isFormValid || isSubmitting}>
       <Text
         style={[
@@ -172,7 +168,7 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
             {/* 음악 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.musicButton]}
-              onPress={() => handleAddAttachment('MUSIC')}>
+              onPress={() => setIsAudioModalVisible(true)}>
               {musicAttachment ? (
                 <>
                   {/* 음악 아이콘 */}
@@ -245,6 +241,16 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
           </View>
         </View>
       </View>
+
+      {/* 오디오 첨부 모달 */}
+      <AudioAttachment
+        visible={isAudioModalVisible}
+        onClose={() => setIsAudioModalVisible(false)}
+        onSelectAudio={(uri, name) => {
+          handleAddAudioFile(uri, name);
+          setIsAudioModalVisible(false);
+        }}
+      />
     </BottomSheet>
   );
 };

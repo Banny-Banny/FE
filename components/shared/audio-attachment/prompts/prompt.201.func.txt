@@ -1,0 +1,41 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @04-func.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/shared/audio-attachment/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/shared/audio-attachment/styles.ts
+조건-파일경로) 구현될 hooks 파일경로: FE/components/shared/audio-attachment/hooks 내부
+조건-파일연결경로) 연결된 TSX 파일경로: FE/components/map/components/egg-form/index.tsx
+
+조건-폼) 설치되어 있는 'react-hook-form'을 사용할 것.
+조건-http) 설치되어 있는 'axios'를 사용할 것.
+조건-상태 관리) 프로젝트에 세팅된 `react-provider` (React Query 등) 활용.
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것
+1. 탭 시스템: '직접 녹음'과 '파일 업로드' 두 가지 모드를 제공함.
+  1-1) '직접 녹음'
+    - expo-av 를 사용하여 구현
+    - 녹음 시간 타이머(0:00 형식)와 시작/중지 버튼을 포함함
+    - 녹음 중 중지 시 S3에 바로 올리지 말고, 로컬 URI 상태로 보관
+  1-2) '파일 업로드'
+    - 파일 업로드 시, 바로 S3에 올리지 말고, 로컬 URI 상태로 보관
+  1-3) 미리보기
+    - 보관된 로컬 URI를 사용해 사용자가 녹음 내용을 다시 들어볼 수 있는 미리보기 UI를 제공
+  1-4) 업로드 트리거
+    - 실제 업로드(presign - S3 - complete : useMediaUpload)는 사용자가 egg-form에서 '숨기기' 버튼을 확정적으로 눌렀을 때만 실행하거나, 부모 폼의 제출 시점에 맞춰 실행될 수 있도록 할 것
+
+2. 구현 로직 (hooks 분리)
+  2-1) 로직 분리
+    - hooks/useAudioRecorder.ts는 녹음과 로컬 URI 생성만 담당하고, API 호출은 전경 hooks/useMediaUpload.ts에서 진행
+  2-2) API
+    - axios를 사용하여, 백엔드 규격에 따라 음원은 반드시 type: "AUDIO"로 요청
+  2-3) 에러 핸들링
+    - 업로드 실패 시 사용자에게 알림을 주고, 로컬 파일은 유지하여 재시도 할 수 있게 함

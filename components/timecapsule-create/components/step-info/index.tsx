@@ -1,12 +1,13 @@
 /**
  * step-info/index.tsx
  * 생성 시각: 2024-12-16
- * 수정 시각: 2024-12-19 (react-hook-form 마이그레이션)
+ * 수정 시각: 2024-12-30 (Figma 디자인 node 303:654 기반 UI 개선)
  * 규칙 준수 체크리스트:
- * - [x] 인라인 스타일 0건
+ * - [x] 인라인 스타일 0건 (로딩 오버레이 포함)
  * - [x] 색상 하드코딩 0건 (styles.ts에서 토큰 사용)
  * - [x] 외부 라이브러리 설치 0건 (react-native-calendars, dayjs 사용)
  * - [x] react-hook-form@^7.68.0 사용
+ * - [x] Figma 디자인과 정밀 일치
  */
 
 import { Colors } from '@/commons/constants';
@@ -27,7 +28,6 @@ import {
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Icon from 'react-native-remix-icon';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   MAX_CAPSULE_NAME_LENGTH,
   MAX_PERSONNEL,
@@ -385,32 +385,13 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
     : {};
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       {/* 로딩 오버레이 */}
       {isLoading && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 9999,
-          }}>
-          <View
-            style={{
-              backgroundColor: 'white',
-              padding: 24,
-              borderRadius: 12,
-              alignItems: 'center',
-            }}>
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.black[500]} />
-            <Text style={{ marginTop: 16, fontSize: 16, color: Colors.black[500] }}>
-              주문을 생성하는 중...
-            </Text>
+            <Text style={styles.loadingText}>주문을 생성하는 중...</Text>
           </View>
         </View>
       )}
@@ -450,7 +431,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                 <TextInput
                   style={styles.input}
                   placeholder={TEXTS.capsuleName.placeholder}
-                  placeholderTextColor={Colors.grey[500]}
+                  placeholderTextColor={Colors.grey[600]}
                   value={value}
                   onChangeText={(text) => {
                     if (text.length <= MAX_CAPSULE_NAME_LENGTH) {
@@ -504,7 +485,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
 
         {/* 최대 인원 섹션 */}
         <View style={[styles.section, styles.stepperSection]}>
-          <Text style={styles.stepperSectionPrice}>{formatPrice(personnelPrice)}</Text>
           <Controller
             control={control}
             name="personnelCount"
@@ -529,8 +509,10 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                     accessibilityLabel="인원 감소">
                     <Text style={styles.stepperButtonText}>−</Text>
                   </TouchableOpacity>
-                  <Text style={styles.stepperValue}>{value}</Text>
-                  <Text style={styles.stepperUnit}>{TEXTS.personnel.unit}</Text>
+                  <View style={styles.stepperValueContainer}>
+                    <Text style={styles.stepperValue}>{value}</Text>
+                    <Text style={styles.stepperUnit}>{TEXTS.personnel.unit}</Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.stepperButton}
                     onPress={() => handlePersonnelChange(value + 1)}
@@ -546,7 +528,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
 
         {/* 이미지 슬롯 섹션 */}
         <View style={[styles.section, styles.stepperSection]}>
-          <Text style={styles.stepperSectionPrice}>{formatPrice(storagePrice)}</Text>
           <Controller
             control={control}
             name="storageCount"
@@ -556,12 +537,17 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
             }}
             render={({ field: { value } }) => (
               <View style={styles.stepperRow}>
-                <View style={styles.stepperLabelColumn}>
-                  <View style={styles.stepperLabelRow}>
-                    <Text style={styles.stepperLabel}>이미지</Text>
-                    <Text style={styles.stepperSubLabel}>(최대 5장)</Text>
+                <View style={styles.stepperInfoRow}>
+                  <View style={styles.stepperLabelColumn}>
+                    <View style={styles.stepperLabelRow}>
+                      <Text style={styles.stepperLabel}>이미지</Text>
+                      <Text style={styles.stepperSubLabel}>(최대 5장)</Text>
+                    </View>
                   </View>
-                  <Text style={styles.stepperHint}>{TEXTS.storage.hint}</Text>
+                  <View style={styles.stepperPriceColumn}>
+                    <Text style={styles.stepperHint}>{TEXTS.storage.hint}</Text>
+                    <Text style={styles.stepperPrice}>{formatPrice(storagePrice)}</Text>
+                  </View>
                 </View>
                 <View style={styles.stepperContainer}>
                   <TouchableOpacity
@@ -571,8 +557,10 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                     accessibilityLabel="슬롯 감소">
                     <Text style={styles.stepperButtonText}>−</Text>
                   </TouchableOpacity>
-                  <Text style={styles.stepperValue}>{value}</Text>
-                  <Text style={styles.stepperUnit}>{TEXTS.storage.unit}</Text>
+                  <View style={styles.stepperValueContainer}>
+                    <Text style={styles.stepperValue}>{value}</Text>
+                    <Text style={styles.stepperUnit}>{TEXTS.storage.unit}</Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.stepperButton}
                     onPress={() => handleStorageChange(value + 1)}
@@ -612,7 +600,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                         <Icon
                           name={index === 0 ? ICONS.music : ICONS.video}
                           size={24}
-                          color={isSelected ? Colors.black[500] : Colors.grey[500]}
+                          color={isSelected ? Colors.white[500] : Colors.black[500]}
                         />
                       </View>
                       <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
@@ -679,7 +667,7 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
             },
           ]}>
           <TouchableOpacity
-            style={{ flex: 1 }}
+            style={styles.calendarBottomSheetBackdrop}
             activeOpacity={1}
             onPress={handleCalendarClosePress}
           />
@@ -729,6 +717,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
           </Animated.View>
         </Animated.View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }

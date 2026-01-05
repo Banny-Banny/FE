@@ -1,6 +1,14 @@
 /**
  * toss-payments/styles.ts
  * 메인 Container 스타일만 포함
+ *
+ * @version 2.0 - Figma Design 기반 UI 리디자인
+ * @figma-node 429:320
+ * @checklist
+ * - [x] 색상 토큰 사용 (하드코딩 0건)
+ * - [x] 인라인 스타일 0건
+ * - [x] React Native StyleSheet 사용
+ * - [x] Figma 디자인 정확히 반영
  */
 
 import { Colors, Typography } from '@/commons/constants';
@@ -12,7 +20,7 @@ export const styles = StyleSheet.create({
   // ============================================
   container: {
     flex: 1,
-    backgroundColor: Colors.white[50],
+    backgroundColor: Colors.white[500], // Figma: #fafafa
   },
 
   // ============================================
@@ -20,19 +28,21 @@ export const styles = StyleSheet.create({
   // ============================================
   header: {
     width: '100%',
-    height: 73,
+    height: 84,
   },
 
   headerContainer: {
     position: 'relative',
     width: '100%',
-    height: 73,
+    height: 84,
+    paddingHorizontal: 24,
+    paddingTop: 16,
   },
 
   headerBorder: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    bottom: 0,
     width: '100%',
     height: 73,
     borderBottomWidth: 1,
@@ -57,7 +67,7 @@ export const styles = StyleSheet.create({
 
   backButtonText: {
     ...Typography.body.body4,
-    fontSize: 26,
+    fontSize: 24,
     color: Colors.black[500],
     includeFontPadding: false,
   },
@@ -67,7 +77,10 @@ export const styles = StyleSheet.create({
     left: 80,
     top: 23,
     ...Typography.header.h1,
-    color: Colors.darkGrey[900],
+    fontSize: 24,
+    lineHeight: 26.4,
+    fontWeight: '700',
+    color: Colors.black[500], // Figma: #0a0a0a
   },
 
   // ============================================
@@ -81,5 +94,6 @@ export const styles = StyleSheet.create({
     paddingTop: 24,
     paddingHorizontal: 24,
     paddingBottom: 24,
+    gap: 24,
   },
 });

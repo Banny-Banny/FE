@@ -9,7 +9,6 @@
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import React from 'react';
 import { View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { ActivityStats } from './components/activity-stats';
 import { Header } from './components/header';
 import { LogoutButton } from './components/logout-button';
@@ -25,7 +24,7 @@ export default function MyPageFeature() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       <Header />
       <View style={styles.content}>
         <View style={styles.profileSection}>
@@ -41,6 +40,6 @@ export default function MyPageFeature() {
           <LogoutButton onPress={handleLogout} />
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }

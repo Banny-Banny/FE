@@ -26,14 +26,17 @@ export const styles = StyleSheet.create({
   },
 
   title: {
-    ...Typography.header.h5,
+    ...Typography.header.h1,
     fontSize: 24,
-    color: Colors.black.darker,
+    lineHeight: 32,
+    fontWeight: '700' as any,
+    letterSpacing: 0.0703125,
+    color: Colors.black[500],
   },
 
   subtitle: {
-    ...Typography.body.body6,
-    color: Colors.black[500],
+    ...Typography.caption.caption1,
+    color: Colors.darkGrey[500],
     marginTop: Spacing.sm,
   },
 
@@ -56,14 +59,14 @@ export const styles = StyleSheet.create({
 
   sectionTitle: {
     ...Typography.body.body1,
-    color: Colors.black.darker,
+    color: Colors.black[500],
   },
 
   // 텍스트 입력 영역
   textAreaContainer: {
-    backgroundColor: Colors.white[100],
+    backgroundColor: Colors.whiteGrey[100],
     borderWidth: 1,
-    borderColor: Colors.white[200],
+    borderColor: Colors.grey[200],
     borderRadius: 16,
     height: 120,
   },
@@ -72,74 +75,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
     ...Typography.body.body4,
-    color: Colors.black.darker,
-  },
-
-  // 추가 버튼
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    height: 60,
-    backgroundColor: Colors.white[100],
-    borderWidth: 1,
-    borderColor: Colors.white[200],
-    borderRadius: 16,
-  },
-
-  addButtonIcon: {
-    width: 20,
-    height: 20,
-  },
-
-  addButtonText: {
-    ...Typography.body.body1,
     color: Colors.black[500],
-    textAlign: 'center',
   },
 
-  // 하단 버튼 영역 (공통 컴포넌트의 footer 스타일 사용)
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-
-  cancelButton: {
-    flex: 1,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.white[100],
-    borderWidth: 1,
-    borderColor: Colors.white[200],
-    borderRadius: 16,
-  },
-
-  cancelButtonText: {
-    ...Typography.caption.button,
-    color: Colors.black.darker,
-  },
-
-  saveButton: {
-    flex: 1,
-    height: 64,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.black.darker,
-    borderWidth: 1,
-    borderColor: Colors.black.darker,
-    borderRadius: 16,
-  },
-
-  saveButtonText: {
-    ...Typography.caption.button,
-    color: Colors.white[50],
-  },
-
+  // 하단 힌트 텍스트
   hintText: {
     ...Typography.body.body3,
-    color: Colors.black[500],
+    color: Colors.grey[500],
     textAlign: 'center',
   },
 
@@ -160,10 +102,10 @@ export const styles = StyleSheet.create({
   photoPreview: {
     width: 107,
     height: 103,
-    backgroundColor: Colors.white[200],
+    backgroundColor: Colors.white[500],
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.white[200],
+    borderColor: Colors.grey[100],
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -180,7 +122,7 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 24,
-    backgroundColor: Colors.black.darker,
+    backgroundColor: Colors.black[500],
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     justifyContent: 'center',
@@ -201,7 +143,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.black.darker,
+    backgroundColor: Colors.black[500],
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
@@ -223,7 +165,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: Colors.white[500],
     borderWidth: 1,
-    borderColor: Colors.grey[200],
+    borderColor: Colors.grey[100],
     borderRadius: 16,
     padding: Spacing.md,
   },
@@ -242,7 +184,7 @@ export const styles = StyleSheet.create({
 
   mediaFileName: {
     ...Typography.body.body6,
-    color: Colors.black[500],
+    color: Colors.darkGrey[500],
     flex: 1,
   },
 
@@ -250,7 +192,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.black[500],
+    backgroundColor: Colors.darkGrey[500],
     justifyContent: 'center',
     alignItems: 'center',
   },

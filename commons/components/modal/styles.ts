@@ -86,6 +86,12 @@ export const DEFAULT_CONFIG = {
   defaultHeight: 'auto' as const,
 
   /**
+   * 기본 패딩
+   * children에서 자체적으로 패딩을 관리하도록 기본값 0
+   */
+  defaultPadding: 0,
+
+  /**
    * 뒷배경 클릭 시 닫기 기본값
    */
   closeOnBackdropPress: true,
@@ -124,12 +130,12 @@ export const styles = StyleSheet.create({
    * 모달 컨테이너 스타일
    * - 중앙 정렬
    * - 피그마 기준 디자인 적용
-   * - width/height는 props로 동적 설정
+   * - width/height/padding은 props로 동적 설정
+   * - padding은 children에서 관리하도록 기본값 제거
    */
   modalContainer: {
     backgroundColor: MODAL_STYLES.backgroundColor,
     borderRadius: MODAL_STYLES.borderRadius,
-    padding: MODAL_STYLES.padding,
     borderWidth: MODAL_STYLES.borderWidth,
     borderColor: MODAL_STYLES.borderColor,
     // Shadow styles (iOS & Android)

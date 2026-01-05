@@ -12,6 +12,7 @@
  * - [✓] 데이터 바인딩 (roomData, participants, progress)
  */
 
+import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants/color';
 import dayjs from 'dayjs';
@@ -163,36 +164,44 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
 
           {/* 참여자 정보 */}
           <View style={styles.participantDetails}>
-            <View style={styles.participantNameRow}>
-              <Text style={styles.participantName}>
-                {participant.name || '초대한 친구 기다리는 중...'}
-              </Text>
-              {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
-            </View>
-            {participant.name && (
-              <Text
-                style={[
-                  styles.participantStatus,
-                  participant.status === 'completed' && styles.statusCompleted,
-                  participant.status === 'pending' && styles.statusPending,
-                  participant.status === 'waiting' && styles.statusWaiting,
-                ]}>
-                {participant.status === 'completed' && '작성 완료'}
-                {participant.status === 'pending' && '클릭하여 작성하기'}
-                {participant.status === 'waiting' && '아직 작성하지 않았어요'}
-              </Text>
+            {participant.name ? (
+              <>
+                <View style={styles.participantNameRow}>
+                  <Text style={styles.participantName}>{participant.name}</Text>
+                  {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
+                </View>
+                <Text
+                  style={[
+                    styles.participantStatus,
+                    participant.status === 'completed' && styles.statusCompleted,
+                    participant.status === 'pending' && styles.statusPending,
+                    participant.status === 'waiting' && styles.statusWaiting,
+                  ]}>
+                  {participant.status === 'completed' && '작성 완료'}
+                  {participant.status === 'pending' && '클릭하여 작성하기'}
+                  {participant.status === 'waiting' && '아직 작성하지 않았어요'}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.emptySlotText}>친구를 초대해 남은 슬롯을 채워주세요!</Text>
             )}
           </View>
         </View>
 
-        {/* 체크박스 */}
-        {showCheckbox && (
-          <View
-            style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
-            {participant.status === 'completed' && (
-              <Icon name="checkbox-circle-fill" size={20} color={Colors.green[500]} />
-            )}
-          </View>
+        {/* 체크박스 또는 공유 아이콘 */}
+        {participant.name ? (
+          showCheckbox && (
+            <View
+              style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
+              {participant.status === 'completed' && (
+                <Icon name="checkbox-circle-fill" size={20} color={Colors.green[500]} />
+              )}
+            </View>
+          )
+        ) : (
+          <Pressable onPress={handleShare}>
+            <Icon name="share-line" size={24} color={Colors.black[500]} />
+          </Pressable>
         )}
       </Pressable>
     );
@@ -206,10 +215,12 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   if (isRoomLoading || !roomData) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color={Colors.black[500]} />
-        <Text style={{ marginTop: 16, textAlign: 'center', color: Colors.grey[500] }}>
-          캡슐대기실 정보를 불러오는 중...
-        </Text>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={Colors.black[500]} />
+          <Text style={{ marginTop: 16, textAlign: 'center', color: Colors.grey[500] }}>
+            캡슐대기실 정보를 불러오는 중...
+          </Text>
+        </View>
       </View>
     );
   }
@@ -218,9 +229,11 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   if (roomError) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
-          에러가 발생했습니다: {roomError.message}
-        </Text>
+        <View style={styles.centerContent}>
+          <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
+            에러가 발생했습니다: {roomError.message}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -230,37 +243,28 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
   // ============================================
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        {/* 역할 배지 */}
-        <View style={[styles.roleBadge, isHost ? styles.roleBadgeHost : styles.roleBadgeGuest]}>
-          {isHost && (
-            <Icon
-              name="vip-crown-2-line"
-              size={24}
-              color={Colors.black[500]}
-              style={styles.crownIcon}
-            />
-          )}
-          <Text style={styles.roleBadgeText}>{isHost ? 'HOST' : 'GUEST'}</Text>
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+        {/* 뒤로 가기 */}
+        <View style={styles.headerLeft}>
+          <Pressable style={styles.iconButton}>
+            <Icon name="arrow-left-line" size={24} color={Colors.black[500]} />
+          </Pressable>
+          <Text style={styles.title}>캡슐 대기실</Text>
         </View>
 
         {/* 헤더 아이콘 */}
         <View style={styles.headerIcons}>
-          {isHost && (
-            <Pressable style={styles.iconButton} onPress={handleShare}>
-              <Icon name="share-line" size={24} color={Colors.black[500]} />
-            </Pressable>
-          )}
-          <View style={styles.iconButton}>
+          <Pressable style={styles.iconButton}>
+            <Icon name="more-2-fill" size={24} color={Colors.black[500]} />
+          </Pressable>
+          <Pressable style={styles.iconButton}>
             <Icon name="close-line" size={24} color={Colors.black[500]} />
-          </View>
+          </Pressable>
         </View>
       </View>
-
-      {/* 타이틀 */}
-      <Text style={styles.title}>캡슐 대기실</Text>
 
       {/* 정보 카드 */}
       <View style={styles.infoCard}>
@@ -271,37 +275,39 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
 
         <View style={styles.infoCardDetails}>
           {/* 개봉일 */}
-          <View>
-            <View style={styles.infoCardDetailItem}>
-              <Icon name="calendar-line" size={16} color={Colors.grey[500]} />
-              <Text style={styles.infoCardDetailLabel}>개봉일</Text>
+          <View style={styles.infoCardDetailItem}>
+            <View style={styles.infoCardIconWrapper}>
+              <Icon name="calendar-line" size={28} color={Colors.grey[500]} />
             </View>
-            <Text style={styles.infoCardDetailValue}>{roomData.openDate}</Text>
+            <View>
+              <Text style={styles.infoCardDetailLabel}>개봉일</Text>
+              <Text style={styles.infoCardDetailValue}>{roomData.openDate}</Text>
+            </View>
           </View>
 
           {/* 참여자 */}
-          <View>
-            <View style={styles.infoCardDetailItem}>
-              <Icon name="user-3-line" size={16} color={Colors.grey[500]} />
-              <Text style={styles.infoCardDetailLabel}>참여자</Text>
+          <View style={styles.infoCardDetailItem}>
+            <View style={styles.infoCardIconWrapper}>
+              <Icon name="user-3-line" size={37} color={Colors.grey[500]} />
             </View>
-            <Text style={styles.infoCardDetailValue}>{roomData.maxParticipants}명</Text>
+            <View>
+              <Text style={styles.infoCardDetailLabel}>참여자</Text>
+              <Text style={styles.infoCardDetailValue}>{roomData.maxParticipants}명</Text>
+            </View>
           </View>
         </View>
       </View>
 
-      {/* 진행 상황 */}
-      <View style={styles.progressSection}>
-        <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>진행 상황</Text>
-          <Text style={styles.progressValue}>{`${progress.completed}/${progress.total}`}</Text>
-        </View>
-        <View style={styles.progressBarContainer}>
-          <View
-            style={[styles.progressBarFill, { width: `${progress.percentage}%` }]}
-            accessibilityLabel={`진행 상황: ${progress.total}명 중 ${progress.completed}명 완료, ${progress.percentage}퍼센트`}
-          />
-        </View>
+      {/* 친구 초대하기 버튼 */}
+      <View style={styles.inviteButtonWrapper}>
+        <Button
+          label="친구 초대하기"
+          variant="outline"
+          size="M"
+          icon="share-line"
+          iconPosition="left"
+          onPress={handleShare}
+        />
       </View>
 
       {/* 참여자 목록 */}
@@ -330,11 +336,10 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
         {/* 타임캡슐 묻기 버튼 (호스트만, 진행률 100%일 때 활성화) */}
         {isHost && (
           <View style={styles.buttonSection}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                (!isSubmitEnabled || isSubmittingCapsule) && { opacity: 0.5 }
-              ]}
+            <Button
+              label={isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
+              variant="primary"
+              size="M"
               disabled={!isSubmitEnabled || isSubmittingCapsule}
               onPress={() => {
                 console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
@@ -411,7 +416,7 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
                                     alignItems: 'center',
                                   }}
                                   onPress={closeModal}>
-                                  <Text style={{ color: Colors.white, fontWeight: 'bold' }}>확인</Text>
+                                  <Text style={{ color: Colors.white[500], fontWeight: 'bold' }}>확인</Text>
                                 </TouchableOpacity>
                               </View>
                             ),
@@ -426,30 +431,24 @@ export default function StepRoom({ role, onSubmit }: StepRoomProps) {
                   ),
                 });
               }}
-              accessibilityRole="button"
-              accessibilityLabel="타임캡슐 묻기">
-              <Text style={styles.submitButtonText}>
-                {isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
-              </Text>
-            </TouchableOpacity>
+            />
             {!isSubmitEnabled && (
-              <Text style={styles.buttonHint}>
-                모든 참여자가 작성을 완료하면 제출할 수 있어요 ({progress.completed}/{progress.total})
-              </Text>
+              <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
             )}
           </View>
         )}
       </View>
 
-      {/* 바텀시트 */}
-      {selectedParticipant && (
-        <UserBottomSheet
-          isVisible={isBottomSheetVisible}
-          onClose={() => setIsBottomSheetVisible(false)}
-          participant={selectedParticipant}
-          onSave={handleBottomSheetSave}
-        />
-      )}
-    </ScrollView>
+        {/* 바텀시트 */}
+        {selectedParticipant && (
+          <UserBottomSheet
+            isVisible={isBottomSheetVisible}
+            onClose={() => setIsBottomSheetVisible(false)}
+            participant={selectedParticipant}
+            onSave={handleBottomSheetSave}
+          />
+        )}
+      </ScrollView>
+    </View>
   );
 }

@@ -1,0 +1,55 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc 
+
+==============================================
+
+조건-환경)
+       - 프레임워크: React Native (Expo Router 사용)
+       - 언어: TypeScript
+       - 라우팅: expo-router (useSegments 사용)
+       - 작업 파일경로: commons/layout/provider/safe-area/safe-area.provider.tsx
+
+==============================================
+
+핵심요구사항 1) SafeAreaView 통합 관리 Provider 구현
+기본 설정:
+- SafeAreaProvider 컴포넌트를 구현할 것.
+- 라우터 컨텍스트 내부에서 경로를 확인하여 SafeAreaView를 조건부로 적용할 것.
+- useSegments()를 사용하여 현재 경로를 확인할 것.
+
+경로별 Edge 결정 로직:
+  지도 예외:
+    - 경로에 /map이 있으면 SafeAreaView를 적용하지 않음
+    - 대신 일반 View로 렌더링할 것.
+  
+  (auth) 경로:
+    - (auth) 경로(로그인 등 하단 탭이 없는 페이지)에서는 edges={['top', 'bottom', 'left', 'right']}를 적용할 것.
+  
+  기본 경로:
+    - 기본적으로는 edges={['top', 'left', 'right']}를 적용할 것.
+    - (탭 바나 하단 버튼이 있는 페이지가 많기 때문)
+
+핵심요구사항 2) 중복 SafeAreaView 제거
+    - 다음 파일들에서 개별적으로 사용 중인 SafeAreaView를 모두 제거하고 일반 View나 기존 컨테이너로 교체할 것:
+      - app/(auth)/_layout.tsx
+      - components/mypage/index.tsx (MyPageFeature)
+      - components/timecapsule-create/components/step-info/index.tsx (StepInfo)
+      - components/timecapsule-create/components/step-room/index.tsx (StepRoom)
+      - components/toss-payments/index.tsx (TossPayment)
+    - 불필요한 import문도 잊지 말고 삭제할 것.
+    - react-native-safe-area-context의 SafeAreaView import를 제거할 것.
+
+핵심요구사항 3) RootProvider 연결
+    - 연결 파일: commons/layout/provider/RootProvider.tsx
+    
+    구현 내용:
+      - 작성된 SafeAreaProvider를 import 할 것.
+      - SafeAreaProvider를 ModalProvider 하위에 배치하여 라우터 컨텍스트 내부에서 동작하도록 할 것.
+      - react-native-safe-area-context의 SafeAreaProvider는 최상위에 유지할 것.
+
+

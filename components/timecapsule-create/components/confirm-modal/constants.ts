@@ -33,6 +33,7 @@ export const MODAL_CONTENTS = {
     iconBackgroundColor: Colors.grey[50], // 피그마: #f5f5f5 (회색 배경)
     confirmText: '확인',
     buttonCount: 1 as const,
+    buttonSize: 'S' as const, // 피그마: 48px 버튼 높이
     closeOnBackdropPress: true,
     width: 344, // 피그마 확인: 344px
     height: 'auto' as const,
@@ -53,6 +54,7 @@ export const MODAL_CONTENTS = {
     confirmText: '묻기',
     cancelText: '취소',
     buttonCount: 2 as const,
+    buttonSize: 'S' as const, // 피그마: 48px 버튼 높이
     closeOnBackdropPress: false, // 실수 방지
     width: 344, // 피그마 확인: 344px
     height: 'auto' as const,
@@ -72,6 +74,7 @@ export const MODAL_CONTENTS = {
     iconBackgroundColor: Colors.grey[50], // 피그마: #f5f5f5
     confirmText: '확인',
     buttonCount: 1 as const,
+    buttonSize: 'S' as const, // 피그마: 48px 버튼 높이
     closeOnBackdropPress: true,
     width: 344, // 피그마 확인: 344px
     height: 'auto' as const,
@@ -97,10 +100,10 @@ export const MODAL_DESIGN = {
    * - 피그마에서 각 요소 사이 간격 측정
    */
   spacing: {
-    iconToTitle: 24, // 피그마: 아이콘과 제목 사이 간격 (대략 24px)
+    iconToTitle: 12, // 피그마 214:1721: 아이콘과 제목 사이 간격 12px
     titleToDescription: 8, // 피그마: 제목과 설명 사이 간격 (대략 8px)
     descriptionToContent: 24, // 피그마: 설명과 추가 컨텐츠 사이 간격
-    contentToButton: 24, // 피그마: 컨텐츠와 버튼 사이 간격
+    contentToButton: 32, // 피그마 214:1721: 텍스트와 버튼 사이 간격 32px
     buttonGap: 12, // 피그마: 버튼 2개일 때 버튼 사이 간격 (11.998px ≈ 12px)
   },
 
@@ -109,9 +112,9 @@ export const MODAL_DESIGN = {
    * - 피그마: 모달 내부 패딩
    */
   padding: {
-    vertical: 33, // 피그마: 상단 33px (아이콘 시작 위치 기준)
-    horizontal: 26, // 피그마: 좌우 26px (양옆 여백)
-    bottom: 24, // 피그마: 하단 패딩 (버튼 하단 기준)
+    vertical: 24, // 피그마 214:1721: 상단 패딩 24px
+    horizontal: 24, // 피그마 214:1721: 좌우 패딩 24px
+    bottom: 24, // 피그마 214:1721: 하단 패딩 24px
   },
 
   /**

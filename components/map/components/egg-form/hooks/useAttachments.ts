@@ -54,7 +54,7 @@ export const useAttachments = ({ attachments, setValue, watch }: UseAttachmentsP
       }
     } catch (error) {
       // 파일 선택 취소 또는 오류 발생 시 무시
-      console.log('파일 선택 취소 또는 오류:', error);
+      console.error('파일 선택 취소 또는 오류:', error);
     }
   };
 
