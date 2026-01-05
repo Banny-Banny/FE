@@ -36,9 +36,11 @@ export const styles = StyleSheet.create({
   },
   currentLocationWrapper: {
     position: 'absolute',
-    left: 140, // Figma 디자인 기준
+    left: 0,
+    right: 0,
     top: 56, // Figma 디자인 기준
     zIndex: 10, // 지도 위에 표시
+    alignItems: 'center', // 가로 가운데 정렬
   },
   webMapViewContainer: {
     flex: 1,
