@@ -67,8 +67,8 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
           <View style={styles.eggSlotRow}>
             {Array.from({ length: totalCount }, (_, index) => {
               // remaining slots를 기준으로 찬 알 표시
-              // 뒤에서부터 remainingCount만큼 채워진 알로 표시
-              const isFilled = index >= totalCount - remainingCount;
+              // 앞에서부터 remainingCount만큼 꽉찬 알, 그 다음부터 빈 알
+              const isFilled = index < remainingCount;
               const slotNumber = index + 1;
 
               return (
