@@ -28,7 +28,7 @@ export const useVideoThumbnail = () => {
       });
       return uri;
     } catch (error) {
-      console.log('동영상 썸네일 추출 오류:', error);
+      console.error('동영상 썸네일 추출 오류:', error);
       return null;
     }
   };

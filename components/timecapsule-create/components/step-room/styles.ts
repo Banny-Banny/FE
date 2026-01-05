@@ -123,9 +123,12 @@ export const styles = StyleSheet.create({
   },
 
   participantCardActive: {
-    borderWidth: 1,
-    borderColor: Colors.lightBlack[500],
-    borderRadius: 20,
+    borderColor: Colors.black.darker,
+    shadowColor: Colors.black.darker,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0,
+    shadowRadius: 6,
+    elevation: 4,
   },
 
   participantCardInactive: {
@@ -207,7 +210,7 @@ export const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 9999,
-    borderWidth: 1.11,
+    borderWidth: 1,
   },
 
   checkboxActive: {

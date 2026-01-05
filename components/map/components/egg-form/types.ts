@@ -3,6 +3,8 @@
  * 이스터에그 작성 폼 타입 정의
  */
 
+import { MediaType } from '@/commons/constants/media';
+
 // Props 인터페이스 정의
 export interface EggFormProps {
   isVisible: boolean;
@@ -19,7 +21,7 @@ export interface EggFormData {
 // 첨부파일 타입 정의
 export interface AttachmentFile {
   id: string;
-  type: 'IMAGE' | 'VIDEO' | 'MUSIC';
+  type: MediaType;
   name: string;
   uri?: string; // 실제 파일 URI (선택적)
   thumbnailUri?: string; // 동영상 썸네일 URI (동영상만, 선택적)
@@ -32,7 +34,7 @@ export interface CreateCapsuleRequest {
   title: string;
   content?: string;
   media_urls: string[];
-  media_types: ('IMAGE' | 'VIDEO' | 'MUSIC')[];
+  media_types: MediaType[];
   open_at?: string; // ISO-8601 string (future only)
   view_limit?: number;
   product_id?: string;
@@ -44,7 +46,7 @@ export interface CreateCapsuleResponse {
   title: string;
   content?: string;
   media_urls: string[];
-  media_types: ('IMAGE' | 'VIDEO' | 'MUSIC')[];
+  media_types: MediaType[];
   open_at?: string;
   view_limit?: number;
   product_id?: string;

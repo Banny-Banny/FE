@@ -23,7 +23,6 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[500], // Figma: #fafafa
   },
 
-
   // ============================================
   // 스크롤 영역
   // ============================================

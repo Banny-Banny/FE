@@ -8,7 +8,6 @@ import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import PaymentCompleteModal from '@/components/timecapsule-create/modals/payment-complete-modal';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { updateOrderStatus } from './api/payment';
 import { PaymentError } from './api/types/types';
 import { AgreementDetailModal } from './components/agreement-detail-modal';
@@ -270,14 +269,9 @@ export default function TossPayment({
   // 렌더링
   // ============================================
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <View style={styles.container}>
       {/* 헤더 */}
-      <TimeCapsuleHeader
-        title={TEXTS.header.title}
-        onBack={handleBackPress}
-        titleAlign="left"
-      />
-
+      <TimeCapsuleHeader title={TEXTS.header.title} onBack={handleBackPress} titleAlign="left" />
       {/* 스크롤 영역 */}
       <ScrollView
         style={styles.scrollView}
@@ -323,6 +317,6 @@ export default function TossPayment({
         onFail={handlePaymentFail}
         onClose={() => setShowPaymentWebView(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 }

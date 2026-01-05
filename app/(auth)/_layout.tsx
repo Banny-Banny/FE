@@ -1,17 +1,17 @@
 /**
  * app/(auth)/_layout.tsx
  * 인증 관련 페이지들의 레이아웃
- * SafeAreaView를 적용하여 상태바 영역을 고려합니다.
+ * SafeAreaView는 RootProvider에서 통합 관리됩니다.
  */
 
 import { Stack } from 'expo-router';
 import React from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 
 export default function AuthLayout() {
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom', 'left', 'right']}>
+    <View style={{ flex: 1 }}>
       <Stack screenOptions={{ headerShown: false }} />
-    </SafeAreaView>
+    </View>
   );
 }

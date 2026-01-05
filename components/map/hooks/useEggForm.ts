@@ -9,26 +9,22 @@
  * - 바텀시트 닫기 핸들러
  */
 
-import { useState } from 'react';
+import { useToggle } from '@/commons/hooks';
+import { useCallback } from 'react';
 
 interface UseEggFormProps {
   onEasterEggPress?: () => void;
 }
 
 export const useEggForm = ({ onEasterEggPress }: UseEggFormProps = {}) => {
-  const [isEggFormVisible, setIsEggFormVisible] = useState(false);
+  const { isOpen: isEggFormVisible, open, close: handleCloseEggForm } = useToggle({
+    onOpen: onEasterEggPress,
+  });
 
   // 이스터에그 버튼 클릭 핸들러
-  const handleEasterEggPress = () => {
-    setIsEggFormVisible(true);
-    // 외부 핸들러가 있으면 호출
-    onEasterEggPress?.();
-  };
-
-  // 바텀시트 닫기 핸들러
-  const handleCloseEggForm = () => {
-    setIsEggFormVisible(false);
-  };
+  const handleEasterEggPress = useCallback(() => {
+    open();
+  }, [open]);
 
   return {
     isEggFormVisible,

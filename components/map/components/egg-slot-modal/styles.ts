@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
     paddingTop: Spacing.lg, // 24px
     paddingBottom: Spacing.lg, // 24px
     paddingHorizontal: Spacing.lg, // 24px
-    backgroundColor: Colors.white[500], // #FAFAFA
+    // backgroundColor는 Modal 컴포넌트에서 이미 제공되므로 제거
   },
 
   // 헤더 영역

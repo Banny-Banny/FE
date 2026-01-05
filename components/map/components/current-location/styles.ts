@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0,
     shadowRadius: 6,
     elevation: 3, // Android shadow
   },
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '800', // ExtraBold (Pretendard Variable)
     color: Colors.white[50], // 흰색
-    letterSpacing: 0.6, // Figma 디자인 기준 0.6px
+    letterSpacing: 1, // Figma 디자인 기준 0.6px
   },
 
   loadingIndicator: {
