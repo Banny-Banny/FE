@@ -88,11 +88,35 @@ export function generateMapScript(): string {
 
       clearMarkers();
 
-      list.forEach(({ id, lat, lng }) => {
-        const marker = new kakao.maps.Marker({
-          position: new kakao.maps.LatLng(lat, lng),
-          map,
-        });
+      // 이스터에그 마커 SVG (base64 인코딩)
+      const easterEggMarkerSvg = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA1MCA2NCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjUiIGZpbGw9IiM2RjZGNkYiLz4KPGNpcmNsZSBjeD0iMjUiIGN5PSIyNSIgcj0iMjAiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik0yNi43MzIxIDYxQzI1Ljk2MjMgNjIuMzMzMyAyNC4wMzc3IDYyLjMzMzMgMjMuMjY3OSA2MUwxNS44ODk4IDQ4LjIyMDZDMTUuMDM5OCA0Ni43NDgzIDE2LjI5NzggNDQuOTU0MSAxNy45NzE3IDQ1LjI1MTRMMjQuNjUwMiA0Ni40Mzc5QzI0Ljg4MTYgNDYuNDc5IDI1LjExODQgNDYuNDc5IDI1LjM0OTggNDYuNDM3OUwzMi4wMjgzIDQ1LjI1MTRDMzMuNzAyMiA0NC45NTQxIDM0Ljk2MDIgNDYuNzQ4MyAzNC4xMTAyIDQ4LjIyMDZMMjYuNzMyMSA2MVoiIGZpbGw9IiM2RjZGNkYiLz4KPGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzkzNl8yNzg3KSI+CjxwYXRoIGQ9Ik0yNSAxMkMxOC43NSAxMiAxNSAxOS44MTI1IDE1IDI2LjA2MjVDMTUgMzIuMzEyNSAxOS4zNzUgMzcgMjUgMzdDMzAuNjI1IDM3IDM1IDMyLjMxMjUgMzUgMjYuMDYyNUMzNSAxOS44MTI1IDMxLjI1IDEyIDI1IDEyWiIgZmlsbD0iIzZGNkY2RiIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzkzNl8yNzg3Ij4KPHJlY3Qgd2lkdGg9IjIwIiBoZWlnaHQ9IjI1IiBmaWxsPSJ3aGl0ZSIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTUgMTIpIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==';
+
+      list.forEach(({ id, lat, lng, type }) => {
+        let marker;
+        
+        // 이스터에그일 경우 커스텀 SVG 마커 사용
+        if (type === 'EASTER_EGG') {
+          const imageSize = new kakao.maps.Size(35, 45); // 마커 이미지 크기
+          const imageOption = { offset: new kakao.maps.Point(17.5, 45) }; // 마커 이미지의 옵션 (하단 중앙 기준)
+          
+          const markerImage = new kakao.maps.MarkerImage(
+            easterEggMarkerSvg,
+            imageSize,
+            imageOption
+          );
+          
+          marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(lat, lng),
+            image: markerImage,
+            map,
+          });
+        } else {
+          // 일반 마커 (타임캡슐 또는 기본)
+          marker = new kakao.maps.Marker({
+            position: new kakao.maps.LatLng(lat, lng),
+            map,
+          });
+        }
 
         kakao.maps.event.addListener(marker, "click", () => {
           sendToRN({ type: "MARKER_CLICK", payload: { id } });

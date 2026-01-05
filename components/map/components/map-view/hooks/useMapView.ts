@@ -90,6 +90,7 @@ export function useMapView({
           id: marker.id,
           lat: marker.lat,
           lng: marker.lng,
+          type: marker.data.type,
         })),
       );
     }, WEBVIEW_MARKER_DELAY_MS);
@@ -139,6 +140,7 @@ export function useMapView({
         id: marker.id,
         lat: marker.lat,
         lng: marker.lng,
+        type: marker.data.type,
       })),
     [capsuleMarkers],
   );
