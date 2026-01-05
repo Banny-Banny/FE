@@ -1,5 +1,5 @@
 /**
- * components/map/components/egg-detail/styles.ts
+ * components/map/components/egg-detail-owner/styles.ts
  * 이스터에그 상세 정보 스타일 정의
  *
  * 체크리스트:
@@ -123,4 +123,55 @@ export const styles = StyleSheet.create({
     color: Colors.grey[700],
     textAlign: 'center',
   },
+
+  // 발견자 리스트
+  viewersList: {
+    maxHeight: 200,
+    backgroundColor: Colors.whiteGrey[100],
+    borderWidth: 1.5,
+    borderColor: Colors.whiteGrey[300],
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+  },
+  viewerItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.whiteGrey[200],
+  },
+  viewerNickname: {
+    ...Typography.body.body8,
+    color: Colors.black[500],
+  },
+  viewerDate: {
+    ...Typography.body.body9,
+    color: Colors.grey[600],
+  },
+
+  // 로딩 및 에러 상태
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  loadingText: {
+    ...Typography.body.body6,
+    color: Colors.grey[600],
+    marginTop: Spacing.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: Spacing.xl,
+  },
+  errorText: {
+    ...Typography.body.body6,
+    color: Colors.red[500],
+    textAlign: 'center',
+  },
 });
+

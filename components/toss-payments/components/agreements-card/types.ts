@@ -11,4 +11,3 @@ export interface AgreementsCardProps {
   onAgreementToggle: (key: keyof AgreementsState) => void;
   onAgreementDetailPress: (index: number) => void;
 }
-

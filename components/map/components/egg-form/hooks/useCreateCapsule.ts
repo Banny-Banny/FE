@@ -6,11 +6,11 @@
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
 import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
+import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import { apiClient, buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
 import { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Alert } from 'react-native';
-import { useMapLocation } from '../../map-view/hooks/useMapLocation';
 import {
   ApiErrorResponse,
   AttachmentFile,

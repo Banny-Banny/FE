@@ -13,14 +13,17 @@
 import React, { useState } from 'react';
 import { View } from 'react-native';
 
-import { EggDetail } from './components/egg-detail';
+import { EggDetailFind } from './components/egg-detail-find';
+import { EggDetailHint } from './components/egg-detail-hint';
+import { EggDetail } from './components/egg-detail-owner';
 import { EggForm } from './components/egg-form';
 import { EggSlotModal } from './components/egg-slot-modal';
+import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
-import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
-import ResetEggSlot from './components/reset-egg-slot';
+import { useMapLocation } from './components/map-view/hooks/useMapLocation';
 import type { CapsuleItem } from './components/map-view/types';
+import ResetEggSlot from './components/reset-egg-slot';
 import { useEggForm } from './hooks/useEggForm';
 import { useMapFeature } from './hooks/useMapFeature';
 import { styles } from './styles';
@@ -32,13 +35,24 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     onEasterEggPress,
   });
 
+  // 현재 위치 가져오기
+  const { location: currentLocation } = useMapLocation();
+
   // 캡슐 상세 바텀시트 상태 관리
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleItem | null>(null);
   const [isCapsuleDetailVisible, setIsCapsuleDetailVisible] = useState(false);
 
   const handleCapsuleClick = (capsule: CapsuleItem) => {
     setSelectedCapsule(capsule);
-    setIsCapsuleDetailVisible(true);
+    // 조건부 렌더링: is_mine === true && type === EASTER_EGG일 때만 표시
+    if (capsule.is_mine === true && capsule.type === 'EASTER_EGG') {
+      setIsCapsuleDetailVisible(true);
+    }
+    // 조건부 렌더링: is_mine === false && type === EASTER_EGG일 때만 힌트 표시
+    if (capsule.is_mine === false && capsule.type === 'EASTER_EGG') {
+      setHintCapsule(capsule);
+      setIsEggDetailHintVisible(true);
+    }
   };
 
   const handleCloseCapsuleDetail = () => {
@@ -59,6 +73,31 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setIsEggSlotModalVisible(false);
   };
 
+  // 에그 디테일 힌트 모달 상태 관리
+  const [isEggDetailHintVisible, setIsEggDetailHintVisible] = useState(false);
+  const [hintCapsule, setHintCapsule] = useState<CapsuleItem | null>(null);
+
+  const handleCloseEggDetailHint = () => {
+    setIsEggDetailHintVisible(false);
+    setHintCapsule(null);
+  };
+
+  // 에그 디테일 발견 모달 상태 관리 (내꺼가 아닌 경우, 근접해지면 모달이 뜨게 할 것 - 추후 기능단에서 구현)
+  // UI 확인용: 기본값 false로 설정
+  const [isEggDetailFindVisible, setIsEggDetailFindVisible] = useState(false);
+
+  const handleCloseEggDetailFind = () => {
+    setIsEggDetailFindVisible(false);
+  };
+
+  // TODO: 근접 감지 로직 추가 (추후 기능단에서 구현)
+  // useEffect(() => {
+  //   // 내꺼가 아닌 이스터에그에 근접하면 모달 표시
+  //   if (isNearbyEgg && !isMyEgg) {
+  //     setIsEggDetailFindVisible(true);
+  //   }
+  // }, [isNearbyEgg, isMyEgg]);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -74,6 +113,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         isVisible={isCapsuleDetailVisible}
         onClose={handleCloseCapsuleDetail}
         capsule={selectedCapsule}
+        currentLocation={currentLocation}
       />
       <EggSlotModal
         visible={isEggSlotModalVisible}
@@ -81,6 +121,13 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         usedCount={slotData?.usedSlots ?? 0}
         totalCount={slotData?.totalSlots ?? 3}
       />
+      <EggDetailHint
+        visible={isEggDetailHintVisible}
+        onClose={handleCloseEggDetailHint}
+        capsule={hintCapsule}
+        currentLocation={currentLocation}
+      />
+      <EggDetailFind visible={isEggDetailFindVisible} onClose={handleCloseEggDetailFind} />
     </View>
   );
 }

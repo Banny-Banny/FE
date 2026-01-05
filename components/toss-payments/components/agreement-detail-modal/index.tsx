@@ -50,4 +50,3 @@ export const AgreementDetailModal: React.FC<AgreementDetailModalProps> = ({
     </Modal>
   );
 };
-

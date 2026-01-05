@@ -10,7 +10,8 @@ import { API_ENDPOINTS } from '@/commons/constants/endpoints';
 import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
-import { buildApiUrl, getMediaUrls, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
+import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
+import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
@@ -18,7 +19,6 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert } from 'react-native';
-import { useMapLocation } from '../../map-view/hooks/useMapLocation';
 import {
   ApiErrorResponse,
   AttachmentFile,

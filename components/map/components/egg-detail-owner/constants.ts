@@ -1,5 +1,5 @@
 /**
- * components/map/components/egg-detail/constants.ts
+ * components/map/components/egg-detail-owner/constants.ts
  * 이스터에그 상세 컴포넌트 상수 정의
  *
  * @description
@@ -26,3 +26,4 @@ export const TEXTS = {
     close: '닫기',
   },
 } as const;
+
