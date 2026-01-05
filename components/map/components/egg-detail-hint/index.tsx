@@ -25,9 +25,19 @@ import { useEggDetailHint } from './hooks/useEggDetailHint';
 import { styles } from './styles';
 import type { EggDetailHintProps } from './types';
 
-export const EggDetailHint: React.FC<EggDetailHintProps> = ({ visible, onClose }) => {
+export const EggDetailHint: React.FC<EggDetailHintProps> = ({
+  visible,
+  onClose,
+  capsule,
+  currentLocation,
+}) => {
   // 비즈니스 로직은 Hook에서 가져옴 (애니메이션 + 데이터)
-  const { progressWidth, hintData } = useEggDetailHint({ visible, onClose });
+  const { progressBarStyle, hintData, arrowTransformStyle } = useEggDetailHint({
+    visible,
+    onClose,
+    capsule,
+    currentLocation,
+  });
 
   if (!visible) {
     return null;
@@ -35,9 +45,6 @@ export const EggDetailHint: React.FC<EggDetailHintProps> = ({ visible, onClose }
 
   // 거리 포맷팅 (예: "약 70m 거리")
   const formattedDistance = `약 ${hintData.distance}m 거리`;
-
-  // 방향 각도 계산 (북쪽이 0도, 시계방향)
-  const rotationAngle = hintData.direction || 0;
 
   return (
     <View style={styles.container}>
@@ -67,13 +74,7 @@ export const EggDetailHint: React.FC<EggDetailHintProps> = ({ visible, onClose }
 
           {/* 오른쪽: 방향 화살표 (이스터에그가 있는 방향) */}
           <View style={styles.arrowContainer}>
-            <View
-              style={[
-                styles.arrowWrapper,
-                {
-                  transform: [{ rotate: `${rotationAngle}deg` }],
-                },
-              ]}>
+            <View style={[styles.arrowWrapper, arrowTransformStyle]}>
               <Icon name="arrow-up-line" size={24} color={Colors.black[500]} />
             </View>
           </View>
@@ -81,14 +82,7 @@ export const EggDetailHint: React.FC<EggDetailHintProps> = ({ visible, onClose }
 
         {/* 진행 바 */}
         <View style={styles.progressContainer}>
-          <Animated.View
-            style={[
-              styles.progressBar,
-              {
-                width: progressWidth,
-              },
-            ]}
-          />
+          <Animated.View style={[styles.progressBar, ...progressBarStyle]} />
         </View>
       </View>
     </View>

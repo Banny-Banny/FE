@@ -13,9 +13,15 @@ export interface EggHintData {
   direction?: number;
 }
 
+import type { CapsuleItem } from '../map-view/types';
+
 export interface EggDetailHintProps {
   /** 토스트 표시 여부 */
   visible: boolean;
   /** 토스트 닫기 함수 */
   onClose: () => void;
+  /** 선택된 캡슐 데이터 */
+  capsule: CapsuleItem | null;
+  /** 현재 위치 좌표 */
+  currentLocation: { lat: number; lng: number } | null;
 }

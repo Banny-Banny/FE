@@ -7,6 +7,8 @@
  * - Mock data 및 설정값 정의
  */
 
+import { calculateDirection } from '@/utils/coordinate';
+
 import type { CapsuleItem } from '../map-view/types';
 
 // Mock data (API 적용 전 임시 데이터)
@@ -40,8 +42,6 @@ export function createHintDataFromCapsule(
 
   // 현재 위치가 있으면 방향 계산
   if (currentLocation) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { calculateDirection } = require('@/utils/coordinate');
     direction = calculateDirection(currentLocation, {
       lat: capsule.latitude,
       lng: capsule.longitude,

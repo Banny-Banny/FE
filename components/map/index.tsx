@@ -48,6 +48,11 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     if (capsule.is_mine === true && capsule.type === 'EASTER_EGG') {
       setIsCapsuleDetailVisible(true);
     }
+    // 조건부 렌더링: is_mine === false && type === EASTER_EGG일 때만 힌트 표시
+    if (capsule.is_mine === false && capsule.type === 'EASTER_EGG') {
+      setHintCapsule(capsule);
+      setIsEggDetailHintVisible(true);
+    }
   };
 
   const handleCloseCapsuleDetail = () => {
@@ -68,15 +73,13 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setIsEggSlotModalVisible(false);
   };
 
-  // 에그 디테일 힌트 모달 상태 관리 (UI 확인용: 기본값 false)
+  // 에그 디테일 힌트 모달 상태 관리
   const [isEggDetailHintVisible, setIsEggDetailHintVisible] = useState(false);
-
-  const handleEggDetailHintPress = () => {
-    setIsEggDetailHintVisible(true);
-  };
+  const [hintCapsule, setHintCapsule] = useState<CapsuleItem | null>(null);
 
   const handleCloseEggDetailHint = () => {
     setIsEggDetailHintVisible(false);
+    setHintCapsule(null);
   };
 
   // 에그 디테일 발견 모달 상태 관리 (내꺼가 아닌 경우, 근접해지면 모달이 뜨게 할 것 - 추후 기능단에서 구현)
@@ -118,7 +121,12 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         usedCount={slotData?.usedSlots ?? 0}
         totalCount={slotData?.totalSlots ?? 3}
       />
-      <EggDetailHint visible={isEggDetailHintVisible} onClose={handleCloseEggDetailHint} />
+      <EggDetailHint
+        visible={isEggDetailHintVisible}
+        onClose={handleCloseEggDetailHint}
+        capsule={hintCapsule}
+        currentLocation={currentLocation}
+      />
       <EggDetailFind visible={isEggDetailFindVisible} onClose={handleCloseEggDetailFind} />
     </View>
   );

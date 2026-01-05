@@ -1,0 +1,32 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @04-func.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/egg-detail-hint/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/egg-detail-hint/styles.ts
+조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/map/components/egg-detail-hint/hooks 하위 폴더
+
+조건-라이브러리) axios와 이미 구현되어 있는 react-query provider 사용
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것(step-by-step)
+
+1. 마커 선택 및 데이터 판별
+  1-1) 기존 데이터 활용
+    - 이미 지도 훅을 통해 받아온 capsules 목록 데이터에서 선택(클릭)된 마커의 ID의 관련 정보를 가져올 것.
+  1-2) 판별 조건
+    - is_mine === false
+    - type === EASTER_EGG
+  1-3) 동작
+    - 위 두 조건이 모두 참일 경우에만 egg-detail-hint 컴포넌트를 렌더링할 것.
+
+2. 데이터 바인딩 
+  2-1) 데이터 바인딩 (GET /api/capsules로 이미 반환 되고 있는 중)
+    - distance : distance_m, direction : (latitude, longitude)로 현재 위치 기반으로 변환 후 입력
