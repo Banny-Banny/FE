@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { fetchRoomSettings } from '@/utils/api/capsule';
+import { getOrderInfo, getRoomSettings } from '../api/capsule';
 import { mockRoomData, ROOM_STATUS } from '../constants';
-import type { Participant, Progress, RoomData, RoomSettingsResponse } from '../types';
+import type { OrderResponse, Participant, Progress, RoomData, RoomSettingsResponse } from '../types';
 
 // ============================================
 // 타입 정의
@@ -14,10 +14,10 @@ import type { Participant, Progress, RoomData, RoomSettingsResponse } from '../t
 
 /** useRoomData Hook 반환 타입 */
 interface UseRoomDataReturn {
-  /** 캡슐대기실 설정값 */
+  /** 주문 정보 (snake_case) - 1단계 API 응답 */
+  orderInfo: OrderResponse | null;
+  /** 캡슐대기실 설정값 (snake_case) - 2단계 API 응답 */
   roomSettings: RoomSettingsResponse | null;
-  /** 캡슐대기실 전체 데이터 (호환성 유지용) */
-  roomData: RoomData | null;
   /** 로딩 상태 */
   isLoading: boolean;
   /** 에러 */
@@ -36,20 +36,23 @@ interface UseRoomDataReturn {
  * 캡슐대기실 데이터 관리 Hook
  *
  * 기능:
- * 1. fetchRoomData(): 캡슐대기실 설정값 가져오기 (API 우선, 실패 시 목데이터 폴백)
+ * 1. loadRoomData(): 2단계 API 호출로 캡슐대기실 설정값 가져오기
+ *    - 1단계: getOrderInfo(orderId) → order.capsule_id 추출
+ *    - 2단계: getRoomSettings(capsule_id) → 대기실 설정 조회
+ *    - 실패 시 목데이터로 폴백
  * 2. calculateProgress(): 진행률 계산 (완료 인원 / 전체 인원)
  * 3. canSubmit(): 최종 제출 가능 여부 확인 (진행률 100%)
  *
- * @param capsuleId 캡슐 ID (옵션)
+ * @param orderId 주문 ID (UUID, 옵션)
  * @returns {UseRoomDataReturn} Hook 반환값
  */
-export function useRoomData(capsuleId?: string): UseRoomDataReturn {
+export function useRoomData(orderId?: string): UseRoomDataReturn {
   // ============================================
   // 상태 관리
   // ============================================
 
+  const [orderInfo, setOrderInfo] = useState<OrderResponse | null>(null);
   const [roomSettings, setRoomSettings] = useState<RoomSettingsResponse | null>(null);
-  const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -60,7 +63,9 @@ export function useRoomData(capsuleId?: string): UseRoomDataReturn {
   useEffect(() => {
     /**
      * 캡슐대기실 설정값 가져오기
-     * - API 호출 시도
+     * - 2단계 API 호출 전략:
+     *   1단계: getOrderInfo(orderId) → order.capsule_id 추출
+     *   2단계: getRoomSettings(capsule_id) → 대기실 설정 조회
      * - 실패 시 목데이터로 폴백
      */
     async function loadRoomData() {
@@ -68,97 +73,56 @@ export function useRoomData(capsuleId?: string): UseRoomDataReturn {
         setIsLoading(true);
         setError(null);
 
-        if (capsuleId) {
-          // API 호출 시도
-          try {
-            console.log('🔄 [useRoomData] API 호출 시작:', capsuleId);
-            const data = await fetchRoomSettings(capsuleId);
-            console.log('✅ [useRoomData] API 호출 성공:', data);
-            setRoomSettings(data);
+        // ⚠️ [임시] 백엔드 연결 끊음 - 커밋용
+        console.log('⚠️ [useRoomData] 백엔드 연결 끊음 - 목데이터만 사용');
+        await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
+        setRoomSettings(mockRoomData);
 
-            // RoomData 호환성 유지를 위한 변환 (snake_case → camelCase)
-            setRoomData({
-              capsuleId: data.room_id,
-              capsuleName: data.capsule_name,
-              openDate: data.open_date,
-              maxParticipants: data.max_participants,
-              imageSlots: data.max_images_per_person,
-              additionalOptions: {
-                hasMusicFile: data.has_music,
-                hasVideo: data.has_video,
-              },
-              hostId: 'user-001', // API에서 제공하지 않으므로 기본값 사용
-              deadline: '2025-12-30T23:59:59Z', // API에서 제공하지 않으므로 기본값 사용
-              status: ROOM_STATUS.WAITING,
-            });
-          } catch (apiError) {
-            console.warn('⚠️ [useRoomData] API 호출 실패, 목데이터 사용:', apiError);
-            setError(apiError instanceof Error ? apiError : new Error('API 호출 실패'));
+        // if (orderId) {
+        //   // ⭐ 2단계 API 호출 시작
+        //   try {
+        //     console.log('🔄 [useRoomData] 2단계 API 호출 시작 - orderId:', orderId);
 
-            // 목데이터로 폴백
-            setRoomSettings(mockRoomData);
-            setRoomData({
-              capsuleId: mockRoomData.room_id,
-              capsuleName: mockRoomData.capsule_name,
-              openDate: mockRoomData.open_date,
-              maxParticipants: mockRoomData.max_participants,
-              imageSlots: mockRoomData.max_images_per_person,
-              additionalOptions: {
-                hasMusicFile: mockRoomData.has_music,
-                hasVideo: mockRoomData.has_video,
-              },
-              hostId: 'user-001',
-              deadline: '2025-12-30T23:59:59Z',
-              status: ROOM_STATUS.WAITING,
-            });
-          }
-        } else {
-          // capsuleId가 없으면 목데이터 사용
-          console.log('ℹ️ [useRoomData] capsuleId 없음, 목데이터 사용');
-          await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
-          setRoomSettings(mockRoomData);
-          setRoomData({
-            capsuleId: mockRoomData.room_id,
-            capsuleName: mockRoomData.capsule_name,
-            openDate: mockRoomData.open_date,
-            maxParticipants: mockRoomData.max_participants,
-            imageSlots: mockRoomData.max_images_per_person,
-            additionalOptions: {
-              hasMusicFile: mockRoomData.has_music,
-              hasVideo: mockRoomData.has_video,
-            },
-            hostId: 'user-001',
-            deadline: '2025-12-30T23:59:59Z',
-            status: ROOM_STATUS.WAITING,
-          });
-        }
+        //     // ⭐ 1단계: Order 조회 → capsule_id 추출
+        //     const orderData = await getOrderInfo(orderId);
+        //     setOrderInfo(orderData);
+        //     console.log('✅ [useRoomData] 1단계 완료 - capsule_id:', orderData.order.capsule_id);
+
+        //     const capsuleId = orderData.order.capsule_id;
+
+        //     // capsule_id가 null인 경우 처리
+        //     if (!capsuleId) {
+        //       throw new Error('주문에 연결된 캡슐 ID가 없습니다.');
+        //     }
+
+        //     // ⭐ 2단계: capsule_id로 Room Settings 조회
+        //     const roomData = await getRoomSettings(capsuleId);
+        //     setRoomSettings(roomData);
+        //     console.log('✅ [useRoomData] 2단계 완료 - Room Settings 조회 성공:', roomData);
+        //   } catch (apiError) {
+        //     console.warn('⚠️ [useRoomData] API 호출 실패, 목데이터 사용:', apiError);
+        //     setError(apiError instanceof Error ? apiError : new Error('API 호출 실패'));
+        //     // 목데이터로 폴백
+        //     setRoomSettings(mockRoomData);
+        //   }
+        // } else {
+        //   // orderId가 없으면 목데이터 사용
+        //   console.log('ℹ️ [useRoomData] orderId 없음, 목데이터 사용');
+        //   await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
+        //   setRoomSettings(mockRoomData);
+        // }
       } catch (err) {
         console.error('❌ [useRoomData] 데이터 로딩 실패:', err);
         setError(err instanceof Error ? err : new Error('데이터 로딩 실패'));
-
         // 최종 폴백: 목데이터 사용
         setRoomSettings(mockRoomData);
-        setRoomData({
-          capsuleId: mockRoomData.room_id,
-          capsuleName: mockRoomData.capsule_name,
-          openDate: mockRoomData.open_date,
-          maxParticipants: mockRoomData.max_participants,
-          imageSlots: mockRoomData.max_images_per_person,
-          additionalOptions: {
-            hasMusicFile: mockRoomData.has_music,
-            hasVideo: mockRoomData.has_video,
-          },
-          hostId: 'user-001',
-          deadline: '2025-12-30T23:59:59Z',
-          status: ROOM_STATUS.WAITING,
-        });
       } finally {
         setIsLoading(false);
       }
     }
 
     loadRoomData();
-  }, [capsuleId]);
+  }, [orderId]);
 
   // ============================================
   // 진행률 계산 (useMemo로 최적화)
@@ -220,8 +184,8 @@ export function useRoomData(capsuleId?: string): UseRoomDataReturn {
   // ============================================
 
   return {
+    orderInfo,
     roomSettings,
-    roomData,
     isLoading,
     error,
     calculateProgress,

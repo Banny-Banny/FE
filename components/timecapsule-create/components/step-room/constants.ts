@@ -73,9 +73,9 @@ import type { RoomSettingsResponse } from './types';
  * ⚠️ API 호출 실패 시 폴백용으로 사용됨
  */
 export const mockRoomData: RoomSettingsResponse = {
-  room_id: 'capsule-001',
-  capsule_name: 'ㅋ',
-  open_date: '2025-06-10',
+  room_id: 'e564ef86-f16c-4661-93e7-71297284fb18', // 백엔드 제공 테스트 캡슐 ID
+  capsule_name: '강동구 물주먹들👊',
+  open_date: '2026-01-16', // YYYY-MM-DD 형식
   max_participants: 4,
   max_images_per_person: 3,
   has_music: true,

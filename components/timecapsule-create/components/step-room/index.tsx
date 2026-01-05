@@ -33,11 +33,11 @@ import type { Participant } from './types';
 // Props 인터페이스 정의
 interface StepRoomProps {
   role: 'host' | 'guest';
-  capsuleId?: string; // 캡슐 ID (옵션, 없으면 환경변수 사용)
+  orderId?: string; // 주문 ID (옵션, 없으면 하드코딩된 테스트 ID 사용)
   onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
 }
 
-export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: StepRoomProps) {
+export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: StepRoomProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -52,15 +52,15 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
   const { openModal, closeModal } = useModal();
 
   /**
-   * capsuleId 우선순위:
-   * 1. Props로 전달받은 capsuleId
-   * 2. 환경변수 (EXPO_PUBLIC_CAPSULE_ID)
-   * 3. undefined (목데이터 사용)
+   * ⭐ orderId 우선순위:
+   * 1. Props로 전달받은 orderId
+   * 2. URL 파라미터 (추후 구현 가능)
+   * 3. 백엔드 제공 테스트 ID (하드코딩)
    */
-  const capsuleId = propsCapsuleId || process.env.EXPO_PUBLIC_CAPSULE_ID;
+  const orderId = propsOrderId || '5ba3ba70-493a-48c7-b107-d49e877d2501'; // 백엔드 제공 테스트 orderId
 
-  /** 캡슐대기실 데이터 Hook */
-  const { roomSettings, roomData, isLoading: isRoomLoading, error: roomError, calculateProgress, canSubmit } = useRoomData(capsuleId);
+  /** 캡슐대기실 데이터 Hook - ⭐ 2단계 API 호출 (orderId → capsule_id → roomSettings) */
+  const { orderInfo, roomSettings, isLoading: isRoomLoading, error: roomError, calculateProgress, canSubmit } = useRoomData(orderId);
 
   /** 참여자 목록 Hook */
   const { participants, myParticipant, saveContent, canEdit } = useParticipants();
@@ -92,15 +92,14 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
 
   /** 작성 마감까지 남은 시간 계산 */
   const remainingTime = useMemo(() => {
-    if (!roomData?.deadline) return '';
-
+    // API에서 deadline을 제공하지 않으므로 임시로 24시간 후로 설정
+    const deadline = dayjs().add(24, 'hour');
     const now = dayjs();
-    const deadlineDate = dayjs(roomData.deadline);
-    const diffHours = deadlineDate.diff(now, 'hour');
-    const diffMinutes = deadlineDate.diff(now, 'minute') % 60;
+    const diffHours = deadline.diff(now, 'hour');
+    const diffMinutes = deadline.diff(now, 'minute') % 60;
 
     return `${diffHours}시간 ${diffMinutes}분 남음`;
-  }, [roomData?.deadline]);
+  }, []);
 
   // ============================================
   // 이벤트 핸들러
@@ -111,7 +110,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
     try {
       const result = await Share.share({
         title: '타임캡슐에 초대합니다',
-        message: `타임캡슐 이름: ${roomData?.capsuleName || ''}\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
+        message: `타임캡슐 이름: ${roomSettings?.capsule_name || ''}\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
       });
 
       // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
@@ -227,7 +226,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
   // ============================================
 
   /** 로딩 상태 */
-  if (isRoomLoading || !roomData) {
+  if (isRoomLoading || !roomSettings) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContent}>
@@ -288,7 +287,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
       <View style={styles.infoCard}>
         <View>
           <Text style={styles.infoCardLabel}>캡슐 이름</Text>
-          <Text style={styles.infoCardValue}>{roomData.capsuleName}</Text>
+          <Text style={styles.infoCardValue}>{roomSettings.capsule_name}</Text>
         </View>
 
         <View style={styles.infoCardDetails}>
@@ -299,7 +298,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
             </View>
             <View>
               <Text style={styles.infoCardDetailLabel}>개봉일</Text>
-              <Text style={styles.infoCardDetailValue}>{roomData.openDate}</Text>
+              <Text style={styles.infoCardDetailValue}>{roomSettings.open_date}</Text>
             </View>
           </View>
 
@@ -310,7 +309,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
             </View>
             <View>
               <Text style={styles.infoCardDetailLabel}>참여자</Text>
-              <Text style={styles.infoCardDetailValue}>{roomData.maxParticipants}명</Text>
+              <Text style={styles.infoCardDetailValue}>{roomSettings.max_participants}명</Text>
             </View>
           </View>
         </View>
@@ -371,7 +370,7 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
                   closeOnBackdropPress: false,
                   children: (
                     <SubmitConfirmModal
-                      openDate={roomData.openDate}
+                      openDate={roomSettings.open_date}
                       onConfirm={async () => {
                         console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
                         closeModal();
@@ -379,12 +378,12 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
                         try {
                           // 백엔드로 최종 제출
                           console.log('📤 [StepRoom] 백엔드로 타임캡슐 제출 시작...');
-                          await submitTimeCapsule(roomData, participants);
+                          await submitTimeCapsule(roomSettings, participants);
                           console.log('✅ [StepRoom] 백엔드 제출 완료!');
 
                           // D-Day 계산
                           const now = dayjs();
-                          const openDateObj = dayjs(roomData.openDate, 'YYYY.MM.DD');
+                          const openDateObj = dayjs(roomSettings.open_date, 'YYYY-MM-DD');
                           const dDay = openDateObj.diff(now, 'day');
 
                           // 2단계: 제출 완료!
@@ -394,8 +393,8 @@ export default function StepRoom({ role, capsuleId: propsCapsuleId, onSubmit }: 
                             closeOnBackdropPress: true,
                             children: (
                               <SubmitCompleteModal
-                                capsuleName={roomData.capsuleName}
-                                openDate={roomData.openDate}
+                                capsuleName={roomSettings.capsule_name}
+                                openDate={roomSettings.open_date}
                                 dDay={dDay}
                                 participantCount={progress.total}
                                 onConfirm={() => {

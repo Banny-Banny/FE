@@ -123,7 +123,55 @@ export interface Progress {
 // 대기실 설정 API 타입
 // ============================================
 
-/** 백엔드 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
+/** 1단계) Order 조회 API 응답 타입 (snake_case) */
+export interface OrderResponse {
+  order: {
+    /** 주문 ID (UUID) */
+    order_id: string;
+    /** 캡슐 ID (UUID) - 2단계에서 사용 */
+    capsule_id: string | null;
+    /** 초대 코드 */
+    invite_code: string | null;
+    /** 주문 상태 (PAID 등) */
+    status: string;
+    /** 총 결제 금액 */
+    total_amount: number;
+    /** 시간 옵션 (1_YEAR 등) */
+    time_option: string;
+    /** 커스텀 개봉일 */
+    custom_open_at: string | null;
+    /** 참여 인원수 */
+    headcount: number;
+    /** 총 사진 개수 */
+    photo_count: number;
+    /** 음성 추가 여부 */
+    add_music: boolean;
+    /** 동영상 추가 여부 */
+    add_video: boolean;
+    /** 생성 시간 (ISO 8601) */
+    created_at: string;
+    /** 수정 시간 (ISO 8601) */
+    updated_at: string;
+  };
+  product: {
+    /** 상품 ID (UUID) */
+    id: string;
+    /** 상품 타입 */
+    product_type: string;
+    /** 상품명 */
+    name: string;
+    /** 가격 */
+    price: number;
+    /** 활성화 여부 */
+    is_active: boolean;
+    /** 최대 미디어 개수 */
+    max_media_count: number;
+    /** 미디어 타입들 */
+    media_types: string[];
+  };
+}
+
+/** 2단계) Room Settings 조회 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
 export interface RoomSettingsResponse {
   /** 대기실 ID (UUID) */
   room_id: string;

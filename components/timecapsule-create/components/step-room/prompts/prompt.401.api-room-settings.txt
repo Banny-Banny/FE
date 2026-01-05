@@ -14,17 +14,18 @@
    - 현재값: 5cf7f256-e3c0-4c67-a99a-805d0d3508fc
    - 주의: 이것은 제품(Product) ID이며, 대기실(Capsule) ID와는 다름!
 
-3. EXPO_PUBLIC_CAPSULE_ID (❌ 아직 없음, 나중에 추가 필요)
-   - 테스트용 대기실 ID
-   - 나중에 실제 capsuleId를 받으면 .env에 추가
-   - 예: EXPO_PUBLIC_CAPSULE_ID=실제-받은-대기실-ID
-   - 주의: 프로덕션에서는 URL 파라미터나 Props로 전달받아 사용
+3. 테스트용 ORDER_ID (✅ 백엔드에서 테스트용 ID 제공받음)
+   - 테스트용 주문 ID: 5ba3ba70-493a-48c7-b107-d49e877d2501
+   - 코드에 직접 하드코딩하여 사용 (환경변수 불필요)
+   - 이 orderId로 주문 정보를 조회하여 capsule_id를 받아옴
+   - 주의: 프로덕션에서는 결제 완료 후 받은 orderId를 URL 파라미터나 Props로 전달받아 사용
 
 중요:
 - API URL은 이미 설정되어 있어 바로 구현 가능
-- capsuleId는 아직 없지만 코드 구현은 가능 (Props/URL 우선 구조)
-- 나중에 실제 대기실 ID를 받으면 .env에 EXPO_PUBLIC_CAPSULE_ID 추가하여 테스트
-- Product ID ≠ Capsule ID (다른 개념!)
+- orderId는 백엔드에서 테스트용으로 제공받음: 5ba3ba70-493a-48c7-b107-d49e877d2501
+- orderId로 Order 조회 → capsule_id 추출 → Room Settings 조회 (2단계 API 호출)
+- 코드에 직접 하드코딩하여 사용 (환경변수 설정 불필요)
+- Product ID ≠ Capsule ID ≠ Order ID (모두 다른 개념!)
 
 ==============================================
 
@@ -41,7 +42,7 @@
             - components/timecapsule-create/components/step-room/hooks/useRoomData.ts (API 연동 추가)
             - components/timecapsule-create/components/step-room/types.ts (응답 타입 추가)
 조건-파일경로) 생성할 파일:
-            - utils/api/capsule.ts (API 호출 함수)
+            - components/timecapsule-create/components/step-room/api/capsule.ts (API 호출 함수)
 
 ==============================================
 
@@ -52,26 +53,69 @@
 ==============================================
 
 조건-API명세) 백엔드 API 명세를 정확히 준수할 것
-조건-API명세) 엔드포인트: GET /api/capsules/step-rooms/:capsuleId/settings
+조건-API명세) 2단계 API 호출 필요:
+  1단계) GET /api/orders/:orderId → capsule_id 추출
+  2단계) GET /api/capsules/step-rooms/:capsuleId/settings → 대기실 설정 조회
 조건-API명세) 인증: 불필요 (공개 엔드포인트)
 조건-API명세) 응답 형식: JSON
 
 ==============================================
 
-핵심요구사항) 대기실 설정값 조회 API 연동
-핵심요구사항-1) capsuleId를 기반으로 대기실 설정값 조회
-핵심요구사항-2) 방장이 설정한 값들을 프론트엔드 UI에 반영
-핵심요구사항-3) 업로드 제한 사항을 동적으로 제어 (사진 개수, 음성/동영상 여부)
-핵심요구사항-4) 에러 처리 및 폴백 로직 구현
-핵심요구사항-5) TypeScript 타입 안정성 보장
+핵심요구사항) 2단계 API 연동 - Order 조회 → 대기실 설정값 조회
+핵심요구사항-1) orderId로 주문 정보를 조회하여 capsule_id 추출
+핵심요구사항-2) 추출한 capsule_id로 대기실 설정값 조회
+핵심요구사항-3) 방장이 설정한 값들을 프론트엔드 UI에 반영
+핵심요구사항-4) 업로드 제한 사항을 동적으로 제어 (사진 개수, 음성/동영상 여부)
+핵심요구사항-5) 에러 처리 및 폴백 로직 구현 (각 단계별 에러 처리)
+핵심요구사항-6) TypeScript 타입 안정성 보장
 
 ==============================================
 
 API응답명세) 백엔드 응답 구조
 
+1단계) Order 조회 API
+엔드포인트: GET /api/orders/:orderId
+테스트 orderId: 5ba3ba70-493a-48c7-b107-d49e877d2501
+
 성공 응답 (200 OK):
 {
-  "room_id": "123e4567-e89b-12d3-a456-426655440000",
+  "order": {
+    "order_id": "5ba3ba70-493a-48c7-b107-d49e877d2501",
+    "capsule_id": "e564ef86-f16c-4661-93e7-71297284fb18", // ⭐ 이 값을 추출하여 2단계에서 사용
+    "invite_code": null,
+    "status": "PAID",
+    "total_amount": 19000,
+    "time_option": "1_YEAR",
+    "custom_open_at": null,
+    "headcount": 2,
+    "photo_count": 3,
+    "add_music": true,
+    "add_video": true,
+    "created_at": "2026-01-05T03:35:09.602Z",
+    "updated_at": "2026-01-05T03:35:18.443Z"
+  },
+  "product": {
+    "id": "5cf7f256-e3c0-4c67-a99a-805d0d3508fc",
+    "product_type": "TIME_CAPSULE",
+    "name": "기본상품",
+    "price": 1000,
+    "is_active": true,
+    "max_media_count": 6,
+    "media_types": []
+  }
+}
+
+에러 응답:
+- 404 Not Found: 존재하지 않는 orderId
+- 500 Internal Server Error: 서버 내부 오류
+
+2단계) Room Settings 조회 API
+엔드포인트: GET /api/capsules/step-rooms/:capsuleId/settings
+capsuleId: 1단계에서 추출한 order.capsule_id 값 사용
+
+성공 응답 (200 OK):
+{
+  "room_id": "e564ef86-f16c-4661-93e7-71297284fb18",
   "capsule_name": "강동구 물주먹들👊",
   "open_date": "2026-01-16",
   "max_participants": 4,
@@ -134,7 +178,35 @@ API응답명세) 백엔드 응답 구조
 
 파일: components/timecapsule-create/components/step-room/types.ts
 
-// 백엔드 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용
+// 1단계) Order 조회 API 응답 타입 (snake_case)
+export interface OrderResponse {
+  order: {
+    order_id: string;                 // 주문 ID (UUID)
+    capsule_id: string | null;        // ⭐ 캡슐 ID (UUID) - 2단계에서 사용
+    invite_code: string | null;       // 초대 코드
+    status: string;                   // 주문 상태 (PAID 등)
+    total_amount: number;             // 총 결제 금액
+    time_option: string;              // 시간 옵션 (1_YEAR 등)
+    custom_open_at: string | null;    // 커스텀 개봉일
+    headcount: number;                // 참여 인원수
+    photo_count: number;              // 총 사진 개수
+    add_music: boolean;               // 음성 추가 여부
+    add_video: boolean;               // 동영상 추가 여부
+    created_at: string;               // 생성 시간 (ISO 8601)
+    updated_at: string;               // 수정 시간 (ISO 8601)
+  };
+  product: {
+    id: string;                       // 상품 ID (UUID)
+    product_type: string;             // 상품 타입
+    name: string;                     // 상품명
+    price: number;                    // 가격
+    is_active: boolean;               // 활성화 여부
+    max_media_count: number;          // 최대 미디어 개수
+    media_types: string[];            // 미디어 타입들
+  };
+}
+
+// 2단계) Room Settings 조회 API 응답 타입 (snake_case)
 export interface RoomSettingsResponse {
   room_id: string;                    // 대기실 ID (UUID)
   capsule_name: string;               // 캡슐 이름
@@ -149,55 +221,92 @@ export interface RoomSettingsResponse {
 
 구현가이드-1) API 호출 함수 작성
 
-파일: utils/api/capsule.ts
+파일: components/timecapsule-create/components/step-room/api/capsule.ts
 
 목적:
-- 대기실 설정값 조회 API 호출
+- 2단계 API 호출 함수 제공
+- 1단계: Order 조회 → capsule_id 추출
+- 2단계: 대기실 설정값 조회
 - 에러 처리
 - 재사용 가능한 API 함수 제공
 
 기능:
-1. fetchRoomSettings(capsuleId: string): Promise<RoomSettingsResponse>
+1. getOrderInfo(orderId: string): Promise<OrderResponse>
+   - GET /api/orders/:orderId 호출
+   - 응답을 그대로 반환 (snake_case 유지)
+   - order.capsule_id를 추출하여 2단계에서 사용
+   - 에러 처리 및 예외 던지기
+
+2. getRoomSettings(capsuleId: string): Promise<RoomSettingsResponse>
    - GET /api/capsules/step-rooms/:capsuleId/settings 호출
    - 응답을 그대로 반환 (snake_case 유지, 프로젝트 일관성)
    - 에러 처리 및 예외 던지기
 
 구현 예시:
 ```typescript
-import { RoomSettingsResponse } from '@/components/timecapsule-create/components/step-room/types';
+import axios from 'axios';
+import { OrderResponse, RoomSettingsResponse } from '../types';
 
 // .env에 이미 설정된 API URL 사용
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000';
 
 /**
- * 대기실 설정값 조회 API
- * @param capsuleId 캡슐 ID (UUID)
- * @returns 대기실 설정값 (snake_case)
- * @throws 404: 존재하지 않는 capsuleId 또는 주문 정보 없음
+ * 1단계) 주문 정보 조회 API
+ * @param orderId 주문 ID (UUID)
+ * @returns 주문 정보 (snake_case), order.capsule_id를 추출하여 2단계에서 사용
+ * @throws 404: 존재하지 않는 orderId
  * @throws 500: 서버 내부 오류
  */
-export async function fetchRoomSettings(capsuleId: string): Promise<RoomSettingsResponse> {
+export async function getOrderInfo(orderId: string): Promise<OrderResponse> {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/capsules/step-rooms/${capsuleId}/settings`,
+    const response = await axios.get<OrderResponse>(
+      `${API_BASE_URL}/api/orders/${orderId}`,
       {
-        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       }
     );
 
-    if (!response.ok) {
-      if (response.status === 404) {
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
+        throw new Error('주문 정보를 찾을 수 없습니다.');
+      }
+      throw new Error(`Order API 호출 실패: ${error.response?.status || 'Network Error'}`);
+    }
+    console.error('주문 정보 조회 실패:', error);
+    throw error;
+  }
+}
+
+/**
+ * 2단계) 대기실 설정값 조회 API
+ * @param capsuleId 캡슐 ID (UUID) - 1단계에서 추출한 order.capsule_id
+ * @returns 대기실 설정값 (snake_case)
+ * @throws 404: 존재하지 않는 capsuleId 또는 주문 정보 없음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getRoomSettings(capsuleId: string): Promise<RoomSettingsResponse> {
+  try {
+    const response = await axios.get<RoomSettingsResponse>(
+      `${API_BASE_URL}/api/capsules/step-rooms/${capsuleId}/settings`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 404) {
         throw new Error('대기실 또는 주문 정보를 찾을 수 없습니다.');
       }
-      throw new Error(`API 호출 실패: ${response.status}`);
+      throw new Error(`Room Settings API 호출 실패: ${error.response?.status || 'Network Error'}`);
     }
-
-    const data: RoomSettingsResponse = await response.json();
-    return data;
-  } catch (error) {
     console.error('대기실 설정값 조회 실패:', error);
     throw error;
   }
@@ -211,30 +320,37 @@ export async function fetchRoomSettings(capsuleId: string): Promise<RoomSettings
 파일: components/timecapsule-create/components/step-room/hooks/useRoomData.ts
 
 수정 사항:
-1. API 호출 함수 import
-2. fetchRoomData() 수정
-   - API 호출 시도
+1. API 호출 함수 import (getOrderInfo, getRoomSettings)
+2. fetchRoomData() 수정 - ⭐ 2단계 순차 호출
+   - 1단계: orderId로 Order 조회 → capsule_id 추출
+   - 2단계: capsule_id로 Room Settings 조회
    - 성공 시 API 데이터 사용 (snake_case 그대로)
    - 실패 시 목데이터로 폴백
    - RoomData 변환 시 snake_case → camelCase 변환 (내부 변환만)
 3. 로딩 및 에러 상태 관리
+4. orderId를 파라미터로 받도록 수정
 
 기능:
-1. API 우선, 목데이터 폴백 전략
+1. 2단계 API 호출 전략
+   - 1단계: getOrderInfo(orderId) → order.capsule_id 추출
+   - 2단계: getRoomSettings(capsule_id) → 대기실 설정 조회
+   - 각 단계별 에러 처리
+2. API 우선, 목데이터 폴백 전략
    - 1순위: API 데이터 (snake_case)
    - 2순위 (에러 시): 목데이터 (snake_case)
-2. RoomData 변환: snake_case → camelCase (내부 변환만, API 응답은 그대로)
-3. 에러 로깅
-4. 사용자에게 에러 표시 (선택사항)
+3. RoomData 변환: snake_case → camelCase (내부 변환만, API 응답은 그대로)
+4. 에러 로깅
+5. 사용자에게 에러 표시 (선택사항)
 
 구현 예시:
 ```typescript
 import { useState, useEffect } from 'react';
-import { fetchRoomSettings } from '@/utils/api/capsule';
-import { RoomSettingsResponse } from '../types';
+import { getOrderInfo, getRoomSettings } from '../api/capsule';
+import { OrderResponse, RoomSettingsResponse } from '../types';
 import { mockRoomData } from '../constants';
 
-export function useRoomData(capsuleId: string) {
+export function useRoomData(orderId: string) {
+  const [orderInfo, setOrderInfo] = useState<OrderResponse | null>(null);
   const [roomSettings, setRoomSettings] = useState<RoomSettingsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -245,16 +361,27 @@ export function useRoomData(capsuleId: string) {
       setError(null);
 
       try {
-        // API 호출 시도 (snake_case 그대로 반환)
-        const data = await fetchRoomSettings(capsuleId);
-        setRoomSettings(data);
+        // ⭐ 1단계: Order 조회 → capsule_id 추출
+        const orderData = await getOrderInfo(orderId);
+        setOrderInfo(orderData);
+
+        const capsuleId = orderData.order.capsule_id;
+
+        // capsule_id가 null인 경우 처리
+        if (!capsuleId) {
+          throw new Error('주문에 연결된 캡슐 ID가 없습니다.');
+        }
+
+        // ⭐ 2단계: capsule_id로 Room Settings 조회
+        const roomData = await getRoomSettings(capsuleId);
+        setRoomSettings(roomData);
 
         // RoomData 변환 (내부 변환만, snake_case → camelCase)
         setRoomData({
-          capsuleId: data.room_id,
-          capsuleName: data.capsule_name,
-          openDate: data.open_date,
-          maxParticipants: data.max_participants,
+          capsuleId: roomData.room_id,
+          capsuleName: roomData.capsule_name,
+          openDate: roomData.open_date,
+          maxParticipants: roomData.max_participants,
           // ...
         });
       } catch (err) {
@@ -268,12 +395,13 @@ export function useRoomData(capsuleId: string) {
       }
     }
 
-    if (capsuleId) {
+    if (orderId) {
       loadRoomData();
     }
-  }, [capsuleId]);
+  }, [orderId]);
 
   return {
+    orderInfo,
     roomSettings,
     isLoading,
     error,
@@ -289,11 +417,11 @@ export function useRoomData(capsuleId: string) {
 
 수정 사항:
 1. useRoomData Hook 연결
-2. capsuleId를 Props 또는 URL 파라미터에서 가져오기
-   - Props로 전달받은 capsuleId 우선 사용
+2. ⭐ orderId를 Props 또는 URL 파라미터에서 가져오기
+   - Props로 전달받은 orderId 우선 사용
    - 없으면 URL 파라미터에서 추출
-   - 둘 다 없으면 환경변수 사용 (테스트용)
-   - 예: const capsuleId = props.capsuleId || routeParams.capsuleId || process.env.EXPO_PUBLIC_CAPSULE_ID || 'capsule-001';
+   - 둘 다 없으면 테스트용 고정 ID 사용
+   - 예: const orderId = props.orderId || routeParams.orderId || '5ba3ba70-493a-48c7-b107-d49e877d2501';
 3. 로딩 상태 처리
 4. 에러 상태 처리 (선택사항)
 5. 설정값을 UI에 바인딩
@@ -314,14 +442,13 @@ export function useRoomData(capsuleId: string) {
 
 구현 예시:
 ```typescript
-// capsuleId 가져오기 (우선순위: Props > URL 파라미터 > 환경변수 > 기본값)
-const capsuleId = props.capsuleId
-  || routeParams.capsuleId
-  || process.env.EXPO_PUBLIC_CAPSULE_ID
-  || 'capsule-001'; // 최종 폴백
+// ⭐ orderId 가져오기 (우선순위: Props > URL 파라미터 > 하드코딩된 테스트 ID)
+const orderId = props.orderId
+  || routeParams.orderId
+  || '5ba3ba70-493a-48c7-b107-d49e877d2501'; // 백엔드 제공 테스트 ID (하드코딩)
 
-// Hook 사용 (roomSettings는 snake_case, roomData는 camelCase)
-const { roomSettings, roomData, isLoading, error } = useRoomData(capsuleId);
+// Hook 사용 (orderInfo, roomSettings는 snake_case, roomData는 camelCase)
+const { orderInfo, roomSettings, roomData, isLoading, error } = useRoomData(orderId);
 
 // 로딩 처리
 if (isLoading) {
@@ -364,7 +491,7 @@ if (error) {
 import { RoomSettingsResponse } from './types';
 
 export const mockRoomData: RoomSettingsResponse = {
-  room_id: 'capsule-001',
+  room_id: 'e564ef86-f16c-4661-93e7-71297284fb18',  // 백엔드 제공 테스트 ID
   capsule_name: 'ㅋ',
   open_date: '2025-06-10',  // YYYY-MM-DD 형식
   max_participants: 4,
@@ -376,17 +503,19 @@ export const mockRoomData: RoomSettingsResponse = {
 
 ==============================================
 
-활용시나리오-1) 초대 수락 후 업로드 UI 구성
+활용시나리오-1) 결제 완료 후 대기실 진입 플로우
 
-1. 사용자가 초대 링크 클릭
-   - URL에 capsuleId 포함 (예: /room/123e4567-e89b-12d3-a456-426655440000)
+1. 사용자가 결제 완료
+   - 결제 완료 후 orderId 수신 (예: 5ba3ba70-493a-48c7-b107-d49e877d2501)
+   - URL에 orderId 포함하여 대기실 페이지로 이동 (예: /room?orderId=5ba3ba70-493a-48c7-b107-d49e877d2501)
 
 2. 대기실 페이지 진입
-   - capsuleId를 URL 파라미터에서 추출
-   - useRoomData(capsuleId) 호출
+   - orderId를 URL 파라미터에서 추출
+   - useRoomData(orderId) 호출
 
-3. API 호출 및 설정값 로드
-   - GET /api/capsules/step-rooms/:capsuleId/settings 호출
+3. ⭐ 2단계 API 호출 및 설정값 로드
+   - 1단계: GET /api/orders/:orderId 호출 → order.capsule_id 추출
+   - 2단계: GET /api/capsules/step-rooms/:capsuleId/settings 호출
    - 응답 데이터 수신 (캡슐 이름, 개봉일, 참여 인원, 업로드 제한 등)
 
 4. UI 동적 구성
@@ -404,23 +533,38 @@ export const mockRoomData: RoomSettingsResponse = {
 활용시나리오-2) 에러 처리 및 폴백
 
 시나리오 A) 정상 케이스
-1. API 호출 성공
-2. 설정값 로드 완료
-3. UI에 실시간 데이터 표시
+1. 1단계 API 호출 성공: Order 조회
+2. 2단계 API 호출 성공: Room Settings 조회
+3. 설정값 로드 완료
+4. UI에 실시간 데이터 표시
 
-시나리오 B) 존재하지 않는 capsuleId
-1. API 호출: 404 에러 반환
-2. 에러 메시지: "대기실 또는 주문 정보를 찾을 수 없습니다."
+시나리오 B) 존재하지 않는 orderId
+1. 1단계 API 호출: 404 에러 반환
+2. 에러 메시지: "주문 정보를 찾을 수 없습니다."
 3. 폴백: 목데이터 사용 (개발 환경)
 4. 사용자 피드백: 에러 토스트 표시 (선택사항)
 
-시나리오 C) 서버 오류
-1. API 호출: 500 에러 반환
+시나리오 C) capsule_id가 null인 경우
+1. 1단계 API 호출 성공: Order 조회
+2. order.capsule_id === null 확인
+3. 에러 메시지: "주문에 연결된 캡슐 ID가 없습니다."
+4. 폴백: 목데이터 사용
+5. 사용자 피드백: "결제 정보를 확인 중입니다. 잠시 후 다시 시도해주세요."
+
+시나리오 D) 존재하지 않는 capsuleId
+1. 1단계 API 호출 성공: Order 조회
+2. 2단계 API 호출: 404 에러 반환
+3. 에러 메시지: "대기실 또는 주문 정보를 찾을 수 없습니다."
+4. 폴백: 목데이터 사용
+5. 사용자 피드백: 에러 토스트 표시 (선택사항)
+
+시나리오 E) 서버 오류
+1. API 호출: 500 에러 반환 (1단계 또는 2단계)
 2. 에러 메시지: "API 호출 실패: 500"
 3. 폴백: 목데이터 사용
 4. 사용자 피드백: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
 
-시나리오 D) 네트워크 오류
+시나리오 F) 네트워크 오류
 1. API 호출: 네트워크 연결 실패
 2. catch 블록에서 에러 처리
 3. 폴백: 목데이터 사용
@@ -430,27 +574,37 @@ export const mockRoomData: RoomSettingsResponse = {
 
 에러처리가이드) 에러별 대응 전략
 
-1. 404 Not Found (존재하지 않는 capsuleId)
+1. 404 Not Found (존재하지 않는 orderId) - 1단계 에러
+   - 원인: 잘못된 orderId, 삭제된 주문
+   - 대응: 목데이터 폴백 + 에러 토스트
+   - 메시지: "주문 정보를 찾을 수 없습니다."
+
+2. capsule_id === null - 1단계 성공 후
+   - 원인: 결제는 완료되었으나 캡슐 생성이 아직 안됨
+   - 대응: 목데이터 폴백 + 에러 토스트
+   - 메시지: "결제 정보를 확인 중입니다. 잠시 후 다시 시도해주세요."
+
+3. 404 Not Found (존재하지 않는 capsuleId) - 2단계 에러
    - 원인: 잘못된 초대 링크, 삭제된 캡슐
    - 대응: 목데이터 폴백 + 에러 토스트
-   - 메시지: "유효하지 않은 초대 링크입니다."
+   - 메시지: "대기실 정보를 찾을 수 없습니다."
 
-2. 404 Not Found (주문 정보 없음)
+4. 404 Not Found (주문 정보 없음) - 2단계 에러
    - 원인: 결제 미완료 캡슐, 데이터 불일치
    - 대응: 목데이터 폴백 + 에러 토스트
    - 메시지: "캡슐 정보를 불러올 수 없습니다."
 
-3. 500 Internal Server Error
+5. 500 Internal Server Error
    - 원인: 서버 장애, DB 오류
    - 대응: 목데이터 폴백 + 재시도 버튼 (선택사항)
    - 메시지: "일시적인 오류가 발생했습니다."
 
-4. Network Error
+6. Network Error
    - 원인: 인터넷 연결 끊김, 서버 다운
    - 대응: 목데이터 폴백 + 재시도 버튼
    - 메시지: "네트워크 연결을 확인해주세요."
 
-5. Timeout Error
+7. Timeout Error
    - 원인: API 응답 지연
    - 대응: 목데이터 폴백 + 재시도 버튼
    - 메시지: "요청 시간이 초과되었습니다."
@@ -466,7 +620,8 @@ export const mockRoomData: RoomSettingsResponse = {
 구현순서)
 
 1. Types 파일 수정
-   - RoomSettingsResponse 인터페이스 추가 (snake_case)
+   - ⭐ OrderResponse 인터페이스 추가 (snake_case) - 1단계 API 응답
+   - RoomSettingsResponse 인터페이스 추가 (snake_case) - 2단계 API 응답
    - RoomSettings 타입 제거 (변환 없이 그대로 사용)
 
 2. Constants 파일 수정
@@ -475,22 +630,27 @@ export const mockRoomData: RoomSettingsResponse = {
    - open_date 형식 변경 (YYYY.MM.DD → YYYY-MM-DD)
 
 3. API 함수 작성
-   - utils/api/capsule.ts 생성
-   - fetchRoomSettings() 구현
+   - components/timecapsule-create/components/step-room/api/capsule.ts 생성
+   - ⭐ getOrderInfo(orderId) 구현 - 1단계 API
+   - ⭐ getRoomSettings(capsuleId) 구현 - 2단계 API
    - API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
-   - 에러 처리 추가
+   - 각 단계별 에러 처리 추가
 
 4. useRoomData Hook 수정
-   - fetchRoomSettings() import
-   - API 호출 로직 추가
-   - roomSettings는 snake_case 그대로 사용
+   - ⭐ getOrderInfo, getRoomSettings import
+   - ⭐ 파라미터를 orderId로 변경 (capsuleId → orderId)
+   - ⭐ 2단계 순차 API 호출 로직 추가
+     1) getOrderInfo(orderId) → order.capsule_id 추출
+     2) capsule_id가 null이면 에러 처리
+     3) getRoomSettings(capsule_id) 호출
+   - orderInfo, roomSettings는 snake_case 그대로 사용
    - roomData 변환 시 snake_case → camelCase 변환 (내부 변환만)
    - 에러 시 목데이터 폴백 로직 추가
    - 로딩 상태 관리
 
 5. index.tsx 수정
-   - capsuleId를 Props 또는 URL 파라미터에서 가져오기
-   - useRoomData(capsuleId) 호출
+   - ⭐ orderId를 Props 또는 URL 파라미터에서 가져오기 (capsuleId → orderId)
+   - ⭐ useRoomData(orderId) 호출
    - 로딩 UI 추가 (선택사항)
    - 설정값을 UI에 바인딩 (roomData 사용, camelCase)
      - 정보 카드: roomData.capsuleName, roomData.openDate, roomData.maxParticipants
@@ -501,17 +661,19 @@ export const mockRoomData: RoomSettingsResponse = {
    - 음성 녹음 버튼 표시/숨김 (roomData.additionalOptions.hasMusicFile)
    - 동영상 업로드 버튼 표시/숨김 (roomData.additionalOptions.hasVideo)
 
-7. 환경변수 설정
+7. 테스트 ID 설정
    - .env 파일 확인
      - EXPO_PUBLIC_API_BASE_URL: https://be-production-8aa2.up.railway.app/ (✅ 이미 설정됨)
-     - EXPO_PUBLIC_CAPSULE_ID: 아직 없음 (❌ 나중에 추가 필요)
-   - 나중에 실제 대기실 ID를 받으면 .env에 추가:
-     - EXPO_PUBLIC_CAPSULE_ID=실제-받은-대기실-ID
-   - 코드에서는 Props/URL 파라미터 우선, 없으면 환경변수 사용하도록 구현
+   - ⭐ 테스트용 orderId는 코드에 직접 하드코딩:
+     - const TEST_ORDER_ID = '5ba3ba70-493a-48c7-b107-d49e877d2501'
+   - 코드에서는 Props/URL 파라미터 우선, 없으면 하드코딩된 테스트 ID 사용
 
 8. 테스트
-   - 정상 케이스: API 호출 성공
-   - 에러 케이스: 404, 500, 네트워크 오류
+   - 정상 케이스: 2단계 API 호출 성공
+   - 에러 케이스-1: orderId 404 (1단계 실패)
+   - 에러 케이스-2: capsule_id null (1단계 성공, capsule_id 없음)
+   - 에러 케이스-3: capsuleId 404 (2단계 실패)
+   - 에러 케이스-4: 500, 네트워크 오류
    - 폴백 케이스: 목데이터 사용
    - UI 바인딩: 설정값이 올바르게 표시되는지 확인
 
@@ -546,15 +708,14 @@ export const mockRoomData: RoomSettingsResponse = {
    - 에러 로깅 (console.error)
    - 사용자 피드백 (선택사항)
 
-6. 환경변수 관리
+6. 환경변수 및 테스트 ID 관리
    - API URL은 환경변수로 관리 (✅ 이미 설정됨)
-   - capsuleId는 환경변수로 관리 (❌ 아직 없음, 나중에 추가)
-   - .env 파일에 정의
+   - ⭐ orderId는 코드에 직접 하드코딩 (백엔드 제공 테스트 ID)
    - process.env.EXPO_PUBLIC_API_BASE_URL 사용 (이미 설정됨)
-   - process.env.EXPO_PUBLIC_CAPSULE_ID 사용 (나중에 추가)
-   - capsuleId 우선순위: Props > URL 파라미터 > 환경변수 > 기본값
+   - ⭐ 테스트용 orderId: '5ba3ba70-493a-48c7-b107-d49e877d2501' (하드코딩)
+   - ⭐ orderId 우선순위: Props > URL 파라미터 > 하드코딩된 테스트 ID
    - 프로덕션에서는 반드시 Props나 URL 파라미터로 전달
-   - 주의: EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID는 제품 ID이므로 capsuleId와 무관!
+   - 주의: EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID는 제품 ID이므로 orderId/capsuleId와 무관!
 
 7. 날짜 형식 통일
    - 백엔드: YYYY-MM-DD
@@ -571,25 +732,31 @@ export const mockRoomData: RoomSettingsResponse = {
 최종검토 체크리스트)
 
 타입 정의:
-- [ ] RoomSettingsResponse 인터페이스 추가됨 (snake_case)
+- [ ] ⭐ OrderResponse 인터페이스 추가됨 (snake_case) - 1단계 API
+- [ ] RoomSettingsResponse 인터페이스 추가됨 (snake_case) - 2단계 API
 - [ ] 모든 필드 타입이 정확히 정의됨
 
 API 함수:
-- [ ] utils/api/capsule.ts 파일 생성됨
-- [ ] fetchRoomSettings() 함수 구현됨
+- [ ] components/timecapsule-create/components/step-room/api/capsule.ts 파일 생성됨
+- [ ] ⭐ getOrderInfo(orderId) 함수 구현됨 - 1단계 API
+- [ ] getRoomSettings(capsuleId) 함수 구현됨 - 2단계 API
 - [ ] API URL이 환경변수에서 로드됨
 - [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
 - [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 각 단계별 에러 처리 구현됨 (orderId 404, capsule_id null, capsuleId 404 등)
 - [ ] 404, 500 에러별 처리 구현됨
 
 Hook 수정:
-- [ ] useRoomData Hook에 API 호출 추가됨
+- [ ] useRoomData Hook에 ⭐ 2단계 순차 API 호출 추가됨
+- [ ] ⭐ 파라미터를 orderId로 변경됨 (capsuleId → orderId)
+- [ ] ⭐ 1단계: getOrderInfo(orderId) → order.capsule_id 추출
+- [ ] ⭐ capsule_id null 체크 및 에러 처리 추가됨
+- [ ] ⭐ 2단계: getRoomSettings(capsule_id) 호출
 - [ ] API 우선, 목데이터 폴백 전략 구현됨
-- [ ] roomSettings는 snake_case 그대로 사용
+- [ ] orderInfo, roomSettings는 snake_case 그대로 사용
 - [ ] roomData 변환 시 snake_case → camelCase 변환 (내부 변환만)
 - [ ] 로딩 상태 관리됨 (isLoading)
 - [ ] 에러 상태 관리됨 (error)
-- [ ] capsuleId 파라미터 받도록 수정됨
 
 Constants 수정:
 - [ ] mockRoomData를 RoomSettingsResponse 타입으로 변경 (snake_case)
@@ -599,8 +766,8 @@ Constants 수정:
 - [ ] open_date 형식이 YYYY-MM-DD로 통일됨
 
 UI 연동:
-- [ ] capsuleId를 Props 또는 URL 파라미터에서 가져옴 (환경변수는 폴백용)
-- [ ] capsuleId 우선순위 로직 구현됨 (Props > URL > 환경변수 > 기본값)
+- [ ] ⭐ orderId를 Props 또는 URL 파라미터에서 가져옴 (하드코딩은 폴백용)
+- [ ] ⭐ orderId 우선순위 로직 구현됨 (Props > URL > 하드코딩된 테스트 ID)
 - [ ] 정보 카드에 roomData.capsuleName 바인딩됨 (camelCase)
 - [ ] 정보 카드에 roomData.openDate 바인딩됨 (camelCase)
 - [ ] 정보 카드에 roomData.maxParticipants 바인딩됨 (camelCase)
@@ -611,16 +778,17 @@ UI 연동:
 
 환경 설정:
 - [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
-- [ ] .env 파일의 EXPO_PUBLIC_CAPSULE_ID 상태 확인 (❌ 아직 없음, 나중에 추가)
+- [ ] ⭐ 테스트용 orderId가 코드에 하드코딩됨 (백엔드 제공: 5ba3ba70-493a-48c7-b107-d49e877d2501)
 - [ ] API URL이 정확히 설정됨 (https://be-production-8aa2.up.railway.app/)
-- [ ] capsuleId를 Props/URL 파라미터에서 우선적으로 가져오도록 구현됨
-- [ ] 환경변수는 테스트용 폴백으로만 사용됨
-- [ ] 나중에 실제 대기실 ID를 받으면 .env에 EXPO_PUBLIC_CAPSULE_ID 추가 예정
+- [ ] ⭐ orderId를 Props/URL 파라미터에서 우선적으로 가져오도록 구현됨
+- [ ] 하드코딩된 테스트 ID는 폴백으로만 사용됨
 - [ ] 개발/프로덕션 환경 구분됨 (선택사항)
 
 에러 처리:
-- [ ] 404 에러 처리 구현됨
-- [ ] 500 에러 처리 구현됨
+- [ ] ⭐ orderId 404 에러 처리 구현됨 (1단계)
+- [ ] ⭐ capsule_id null 에러 처리 구현됨 (1단계 성공 후)
+- [ ] ⭐ capsuleId 404 에러 처리 구현됨 (2단계)
+- [ ] 500 에러 처리 구현됨 (1단계 또는 2단계)
 - [ ] 네트워크 에러 처리 구현됨
 - [ ] 에러 로깅 추가됨 (console.error)
 - [ ] 목데이터 폴백 동작 확인됨
@@ -634,8 +802,10 @@ UI 연동:
 - [ ] 커서룰 적용 결과 확인됨
 
 테스트:
-- [ ] API 호출 성공 케이스 테스트됨
-- [ ] 404 에러 케이스 테스트됨
+- [ ] ⭐ 2단계 API 호출 성공 케이스 테스트됨
+- [ ] ⭐ orderId 404 에러 케이스 테스트됨 (1단계 실패)
+- [ ] ⭐ capsule_id null 케이스 테스트됨 (1단계 성공, capsule_id 없음)
+- [ ] ⭐ capsuleId 404 에러 케이스 테스트됨 (2단계 실패)
 - [ ] 500 에러 케이스 테스트됨
 - [ ] 네트워크 에러 케이스 테스트됨
 - [ ] 목데이터 폴백 동작 확인됨
