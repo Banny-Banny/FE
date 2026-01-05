@@ -26,7 +26,9 @@
 ==============================================
 
 조건-공통컴포넌트) 공통 컴포넌트를 최대한 활용할 것
-조건-공통컴포넌트) 컴포넌트 경로: components/
+조건-공통컴포넌트) 컴포넌트 경로: commons/components/
+조건-공통컴포넌트) 현재 commons/components에 공통 헤더 컴포넌트가 없으므로 독립적으로 구현
+조건-공통컴포넌트) notification header와 유사하나 세부 스타일이 다르므로 현재는 각각 구현, 향후 공통화 고려
 
 조건-색상토큰) globals.css에 명시된 색상 변수 토큰 활용
 조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
@@ -55,12 +57,25 @@
 ==============================================
 
 
-핵심요구사항) 아이콘은 react-native-remix-icon 라이브러리 사용 (이미 설치됨, package.json 확인)
-핵심요구사항) 알림 아이콘: ri-notification-line (size: 24, color: Colors.black[500])
-핵심요구사항) X 아이콘: ri-close-line (size: 20, color: Colors.black[500]) - 설정 아이콘이 아님
-핵심요구사항) Icon 컴포넌트는 IconName 타입으로 타입 안정성 확보 (as IconName 사용)
-핵심요구사항) 마이페이지 index.tsx에 Header 컴포넌트 import 및 렌더링 필수
-핵심요구사항) Header는 SafeAreaView 내부, content View 위에 배치
+기존히스토리-참고만) 아이콘은 react-native-remix-icon 라이브러리 사용 (이미 설치됨, package.json 확인)
+기존히스토리-참고만) 알림 아이콘: ri-notification-line (size: 24, color: Colors.black[500])
+기존히스토리-참고만) X 아이콘: ri-close-line (size: 20, color: Colors.black[500]) - 설정 아이콘이 아님
+기존히스토리-참고만) Icon 컴포넌트는 IconName 타입으로 타입 안정성 확보 (as IconName 사용)
+기존히스토리-참고만) 마이페이지 index.tsx에 Header 컴포넌트 import 및 렌더링 필수
+기존히스토리-참고만) Header는 SafeAreaView 내부, content View 위에 배치
+
+==============================================
+
+핵심요구사항) header 아이콘 배치 순서: 알림 아이콘을 왼쪽에, X 버튼을 오른쪽에 배치 (notification 컴포넌트와 동일한 순서)
+핵심요구사항) X 버튼 클릭 시 useNavigation().back()을 호출하여 이전 화면으로 돌아가기 기능 구현 필수
+
+==============================================
+
+조건-공통컴포넌트-재검토) 현재 mypage header와 notification header는 유사한 구조를 가지고 있으나, 세부 스타일과 기능이 다름
+조건-공통컴포넌트-재검토) mypage header 특징: 알림 아이콘에 배지 있음, 클릭 가능, X 버튼 32x32, height 73px, 특정 padding 없음
+조건-공통컴포넌트-재검토) notification header 특징: 알림 아이콘 비활성 상태, 배지 없음, X 버튼 40x40, 서브타이틀 있음, paddingVertical 32px
+조건-공통컴포넌트-재검토) 현재는 공통 헤더 컴포넌트가 없으므로, 각각 독립적으로 구현하되 향후 공통 컴포넌트 추출을 고려하여 구조를 유지할 것
+조건-공통컴포넌트-재검토) commons/components/timecapsule-header는 다른 구조(뒤로가기 버튼 왼쪽, 제목 중앙)이므로 재사용 불가
 
 ==============================================
 
@@ -69,6 +84,9 @@
 2. 피그마 구조 전체 분석 (레이아웃 → 섹션 → 컴포넌트 순)
 3. globals.css의 색상/타이포그래피 토큰 목록 확인
 4. 공통 컴포넌트 목록 확인 및 재사용 가능 여부 판단
+   - commons/components/timecapsule-header 확인 (구조가 다르므로 재사용 불가)
+   - notification header와 비교하여 공통화 가능 여부 검토
+   - 현재는 독립 구현, 향후 공통 컴포넌트 추출 고려
 
 ==============================================
 
@@ -90,7 +108,7 @@
 - [ ] 외부 라이브러리 설치 0건
 - [ ] 명시된 파일(index.tsx, styles.ts) 외 수정 0건
 - [ ] globals.css 수정 0건
-- [ ] 공통 컴포넌트 최대한 활용
+- [ ] 공통 컴포넌트 재검토 완료 (현재는 독립 구현, 향후 공통화 고려)
 - [ ] react-native-remix-icon 사용 (ri-notification-line, ri-close-line)
 - [ ] 마이페이지 index.tsx에 Header 컴포넌트 import 및 렌더링 확인
 

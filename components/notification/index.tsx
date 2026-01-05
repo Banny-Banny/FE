@@ -25,6 +25,7 @@
  */
 
 import { Colors } from '@/commons/constants';
+import { useNavigation } from '@/commons/hooks';
 import { DEFAULT_NEW_NOTIFICATIONS, DEFAULT_OLD_NOTIFICATIONS } from '@/egg/constants/MOCK_DATA';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -33,12 +34,26 @@ import { NotificationItem } from './components/notification-item';
 import { styles } from './styles';
 
 export default function NotificationFeature() {
+  const navigation = useNavigation();
+
   const handleMarkAllAsRead = () => {
     // TODO: 모든 알림 읽음 처리
   };
 
   const handleDelete = (id: string) => {
     // TODO: 알림 삭제 처리
+  };
+
+  const handleClose = () => {
+    if (navigation.canGoBack()) {
+      // 스택에 이전 화면이 있으면 뒤로 가기
+      // 마이페이지에서 push로 진입한 경우 마이페이지로 돌아감
+      navigation.back();
+    } else {
+      // 스택 루트인 경우 (탭바에서 직접 진입)
+      // 홈으로 이동
+      navigation.toHome();
+    }
   };
 
   return (
@@ -49,12 +64,6 @@ export default function NotificationFeature() {
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>알림</Text>
             <View style={styles.headerIcons}>
-              <Pressable
-                style={styles.iconButton}
-                accessibilityRole="button"
-                accessibilityLabel="설정">
-                <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
-              </Pressable>
               <View style={styles.iconButtonActive}>
                 <Icon
                   name={'ri-notification-line' as IconName}
@@ -62,6 +71,13 @@ export default function NotificationFeature() {
                   color={Colors.black[500]}
                 />
               </View>
+              <Pressable
+                style={styles.iconButton}
+                onPress={handleClose}
+                accessibilityRole="button"
+                accessibilityLabel="닫기">
+                <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
+              </Pressable>
             </View>
           </View>
           <View style={styles.headerSubtitle}>

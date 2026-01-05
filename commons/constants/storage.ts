@@ -5,5 +5,7 @@
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: '@auth/accessToken',
   USER_DATA: '@auth/userData',
+  FRIEND_CONSENT: '@onboarding/friendConsent',
+  LOCATION_CONSENT: '@onboarding/locationConsent',
 } as const;
 

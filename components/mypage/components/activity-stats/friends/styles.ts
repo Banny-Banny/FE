@@ -17,16 +17,16 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   // 모달 컨테이너
-  // Modal 컴포넌트가 이미 borderRadius, backgroundColor, padding을 제공하지만,
-  // 피그마 디자인에 맞는 border 스타일(borderWidth: 1.111)을 적용하기 위해
-  // border 관련 스타일만 오버라이드 (유지보수성: Modal 기본 스타일 활용 + 필요한 부분만 커스터마이징)
+  // Modal 컴포넌트가 이미 borderRadius, backgroundColor를 제공하지만,
+  // 피그마 디자인에 맞는 border 스타일과 패딩을 적용하기 위해
+  // border 관련 스타일과 패딩을 오버라이드 (유지보수성: Modal 기본 스타일 활용 + 필요한 부분만 커스터마이징)
   modalContainer: {
     flex: 1,
     height: 614,
     flexDirection: 'column',
-    // Modal의 기본 padding(20)을 상쇄하여 피그마 디자인과 정확히 일치시키기
-    marginHorizontal: -20,
-    marginVertical: -20,
+    // Modal 내부 여백 확보 (팝업창 경계를 벗어나지 않도록)
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
     // 피그마 디자인에 맞는 border 스타일 적용
     borderWidth: 1,
     borderColor: 'rgba(10, 10, 10, 0.08)',
@@ -39,9 +39,9 @@ export const styles = StyleSheet.create({
   headerSection: {
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(10, 10, 10, 0.08)',
-    paddingTop: Spacing.lg,
+    paddingTop: 0, // modalContainer의 paddingTop과 중복 방지
     paddingBottom: Spacing.md,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 0, // modalContainer의 paddingHorizontal과 중복 방지
     gap: 8,
   },
 
@@ -134,8 +134,8 @@ export const styles = StyleSheet.create({
   friendsSection: {
     flex: 1,
     paddingTop: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.lg,
+    paddingHorizontal: 0, // modalContainer의 paddingHorizontal과 중복 방지
+    paddingBottom: 0, // modalContainer의 paddingBottom과 중복 방지
     // 스크롤이 제대로 작동하도록 명시적 설정
     minHeight: 0,
   },

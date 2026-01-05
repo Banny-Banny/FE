@@ -1,0 +1,82 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @04-func.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 hooks 파일경로: FE/components/mypage/hooks/useUserInfo.ts
+조건-파일경로) 수정될 TSX 파일경로: FE/components/mypage/components/profile-section/index.tsx
+조건-파일경로) 수정될 types 파일경로: FE/components/mypage/types.ts
+
+조건-http) 설치되어 있는 'axios'를 사용할 것.
+조건-상태 관리) 프로젝트에 세팅된 `@tanstack/react-query`를 활용할 것.
+조건-API 클라이언트) `@/utils/apiClient`를 사용할 것 (JWT 토큰 자동 처리).
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것
+
+1. API 명세 (GET /api/auth/me)
+  - **Endpoint**: `{API_BASE_URL}/api/auth/me`
+  - **Method**: GET
+  - **Header**: `Authorization: Bearer <JWT>` (apiClient에서 자동 처리)
+  - **Response 200**:
+    ```json
+    {
+      "id": "<uuid>",
+      "nickname": "banny-user",
+      "provider": "KAKAO",
+      "profile_img": "https://cdn.example.com/avatar.png",
+      "is_active": true
+    }
+    ```
+  - **Error Cases**:
+    - 401: JWT 누락/만료/검증 실패 (apiClient 인터셉터에서 자동 처리)
+    - 404: 비활성 또는 삭제된 사용자
+
+2. 타입 정의 (types.ts)
+  - `UserInfoResponse` 인터페이스 정의
+    - id: string
+    - nickname: string
+    - provider: "KAKAO" | "GOOGLE" | "APPLE"
+    - profile_img: string | null
+    - is_active: boolean
+  - `UseUserInfoReturn` 인터페이스 정의
+    - data: UserInfoResponse | null
+    - isLoading: boolean
+    - error: string | null
+    - refetch: () => Promise<void>
+
+3. 구현 로직 (hooks/useUserInfo.ts)
+  - API 통신 로직은 반드시 hooks 폴더 내의 커스텀 훅으로 분리할 것 (04-func.mdc 규칙).
+  - `@tanstack/react-query`의 `useQuery`를 사용하여 데이터 페칭.
+  - `apiClient.get()`을 사용하여 통신하고, 에러 처리 로직을 포함할 것.
+  - `API_ENDPOINTS.AUTH.ME` 상수를 사용하여 엔드포인트 지정.
+  - staleTime: 5분, gcTime: 10분 설정.
+  - 404 에러 시 적절한 에러 메시지 반환.
+
+4. 컴포넌트 수정 (profile-section/index.tsx)
+  - `useUserInfo` hook을 import하여 사용.
+  - 로딩 중일 때: ActivityIndicator 표시.
+  - 에러 발생 시: 에러 메시지 표시.
+  - 데이터가 있을 때: 
+    - `userInfo.nickname`을 닉네임 영역에 표시 (기존 "토끼유저" 하드코딩 제거).
+    - `userInfo.profile_img`가 있으면 프로필 이미지 표시, 없으면 기본 이모지(🐰) 표시.
+    - `userInfo.provider`에 따라 적절한 텍스트 표시 (기존 "rabbit@example.com" 하드코딩 제거).
+
+5. 스타일 추가 (profile-section/styles.ts)
+  - 프로필 이미지용 스타일 추가 (원형 이미지).
+  - 에러 메시지용 스타일 추가 (필요시).
+
+==============================================
+
+참고사항)
+- 기존 하드코딩된 데이터("토끼유저", "rabbit@example.com")는 모두 제거하고 실제 API 데이터로 교체.
+- apiClient는 이미 JWT 토큰을 자동으로 헤더에 추가하므로 별도 처리 불필요.
+- 401 에러는 apiClient 인터셉터에서 자동으로 로그아웃 처리되므로 hook에서 별도 처리 불필요.
+- Feature Slice Architecture 패턴 준수: 비즈니스 로직은 hooks에, UI는 components에.
+

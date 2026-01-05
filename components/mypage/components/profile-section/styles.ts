@@ -109,7 +109,8 @@ export const styles = StyleSheet.create({
 
   // Text input (이메일)
   textInputContainer: {
-    width: 139,
+    width: 'auto',
+    maxWidth: '90%', // 화면 너비의 90%를 넘지 않도록
     height: 20,
     justifyContent: 'center',
     alignItems: 'flex-start',
@@ -118,5 +119,25 @@ export const styles = StyleSheet.create({
   textInputText: {
     ...Typography.body.body6,
     color: Colors.darkGrey[400],
+  },
+
+  // 프로필 이미지 스타일
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 9999,
+  },
+
+  // 로딩 인디케이터
+  loadingIndicator: {
+    color: Colors.black[500],
+  },
+
+  // 에러 메시지
+  errorText: {
+    ...Typography.body.body4,
+    color: Colors.red[500] || Colors.black[500],
+    textAlign: 'center',
+    padding: 16,
   },
 });

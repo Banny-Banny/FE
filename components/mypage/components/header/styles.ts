@@ -117,8 +117,8 @@ export const styles = StyleSheet.create({
     letterSpacing: 0,
   },
 
-  // 설정 버튼 (Button)
-  settingsButton: {
+  // 닫기 버튼 (Button)
+  closeButton: {
     width: 32,
     height: 32,
     backgroundColor: Colors.whiteGrey[500], // #e8e8e8
@@ -130,11 +130,5 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 1,
-  },
-
-  // 설정 아이콘
-  settingsIcon: {
-    width: 20,
-    height: 20,
   },
 });
