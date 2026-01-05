@@ -23,6 +23,7 @@ export type { ApiEndpointKey, ApiEndpointPath } from './endpoints';
 
 // 미디어 업로드 상수
 export { ALLOWED_EXTENSIONS, MIME_TYPE_MAP, SIZE_LIMITS } from './media';
+export type { MediaType } from './media';
 
 // 스토리지 키 상수
 export { STORAGE_KEYS } from './storage';

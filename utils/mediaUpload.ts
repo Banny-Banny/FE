@@ -11,7 +11,13 @@
  * - [x] project-structure.mdc 준수: utils/에 순수 함수로 구현
  */
 
-import { ALLOWED_EXTENSIONS, API_ENDPOINTS, MIME_TYPE_MAP, SIZE_LIMITS } from '@/commons/constants';
+import {
+  ALLOWED_EXTENSIONS,
+  API_ENDPOINTS,
+  MediaType,
+  MIME_TYPE_MAP,
+  SIZE_LIMITS,
+} from '@/commons/constants';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -19,17 +25,13 @@ import { Platform } from 'react-native';
 import { buildApiUrl, normalizeApiBaseUrl } from './api';
 import { apiClient } from './apiClient';
 
-/**
- * 파일 확장자 추출
- */
-const getFileExtension = (filename: string): string => {
-  const parts = filename.toLowerCase().split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
-};
+import { getFileExtension } from './mediaType';
 
 /**
  * MIME Type 추론 함수
  * 파일 확장자를 기반으로 정확한 Content-Type을 반환
+ * @param filename 파일명
+ * @returns MIME 타입 문자열
  */
 export const inferMimeType = (filename: string): string => {
   const extension = getFileExtension(filename);
@@ -80,7 +82,7 @@ const getFileSize = async (uri: string): Promise<{ exists: boolean; size: number
  */
 export const validateFile = async (
   uri: string,
-  type: 'IMAGE' | 'VIDEO' | 'MUSIC',
+  type: MediaType,
   filename: string,
 ): Promise<void> => {
   // 1. 확장자 검증
@@ -134,7 +136,7 @@ const compressImage = async (uri: string): Promise<ImageManipulator.ImageResult>
  * Presigned URL 발급
  */
 const getPresignedUrl = async (
-  type: 'IMAGE' | 'VIDEO' | 'MUSIC',
+  type: MediaType,
   filename: string,
   contentType: string,
   size: number,
@@ -250,18 +252,55 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
     } else {
       // 네이티브 환경에서도 fetch 사용
       console.log('📱 네이티브 환경: fetch로 S3 업로드');
-      const uploadResponse = await fetch(uploadUrl, {
+
+      const uploadOptions: RequestInit = {
         method: 'PUT',
         body: blob,
-        headers: {
+      };
+
+      // 서명된 헤더에 content-type이 포함되어 있으면 헤더 추가
+      if (needsContentType) {
+        uploadOptions.headers = {
           'Content-Type': contentType,
-        },
-      });
+        };
+        console.log('📤 Content-Type 헤더 포함하여 업로드');
+      } else {
+        console.log('📤 헤더 없이 업로드 (서명에 Content-Type 미포함)');
+      }
+
+      const uploadResponse = await fetch(uploadUrl, uploadOptions);
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
+        console.error('❌ S3 업로드 실패:', uploadResponse.status);
+        console.error('❌ 에러 응답:', errorText);
+        console.error('❌ 업로드 URL (일부):', uploadUrl.substring(0, 150));
+        console.error('❌ 서명된 헤더:', signedHeaders);
+        console.error('❌ Content-Type 헤더 사용 여부:', needsContentType);
+
+        // 403 에러이고 Content-Type 헤더를 사용하지 않았다면 재시도
+        if (uploadResponse.status === 403 && !needsContentType) {
+          console.log('⚠️ 403 발생, Content-Type 헤더 포함하여 재시도...');
+          const retryResponse = await fetch(uploadUrl, {
+            method: 'PUT',
+            body: blob,
+            headers: {
+              'Content-Type': contentType,
+            },
+          });
+
+          if (!retryResponse.ok) {
+            const retryErrorText = await retryResponse.text();
+            throw new Error(
+              `S3 업로드 실패: ${retryResponse.status} ${retryResponse.statusText}\n에러: ${retryErrorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. 파일 크기 불일치\n3. CORS 설정 문제\n4. 백엔드 presigned URL 생성 오류`,
+            );
+          }
+          console.log('✅ S3 업로드 성공 (재시도):', retryResponse.status);
+          return;
+        }
+
         throw new Error(
-          `S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}\n에러: ${errorText}`,
+          `S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}\n에러: ${errorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. Content-Type 불일치\n3. 파일 크기 불일치\n4. CORS 설정 문제`,
         );
       }
       console.log('✅ S3 업로드 성공');
@@ -306,13 +345,13 @@ const completeUpload = async (
 /**
  * 미디어 업로드 통합 함수
  * @param uri 파일 URI
- * @param type 미디어 타입 (IMAGE, VIDEO, MUSIC)
+ * @param type 미디어 타입 (IMAGE, VIDEO, AUDIO)
  * @param filename 파일명 (선택적, 없으면 URI에서 추출 시도)
  * @returns 업로드된 미디어 ID
  */
 export const uploadMedia = async (
   uri: string,
-  type: 'IMAGE' | 'VIDEO' | 'MUSIC',
+  type: MediaType,
   filename?: string,
 ): Promise<string> => {
   try {
@@ -327,7 +366,8 @@ export const uploadMedia = async (
       // blob URL인 경우 확장자 추가 시도
       if (uri.startsWith('blob:')) {
         // blob URL에서는 파일명이 없으므로 타입에 따라 기본 확장자 추가
-        const defaultExt = type === 'IMAGE' ? 'jpg' : type === 'VIDEO' ? 'mp4' : 'mp3';
+        // 화이트리스트에 맞춰 기본 확장자 설정
+        const defaultExt = type === 'IMAGE' ? 'jpg' : type === 'VIDEO' ? 'mp4' : 'mpeg';
         if (!extractedFilename.includes('.')) {
           extractedFilename = `${extractedFilename}.${defaultExt}`;
         }
@@ -363,7 +403,8 @@ export const uploadMedia = async (
     // 검증 가드 실행
     await validateFile(processedUri, type, extractedFilename);
 
-    // MIME Type 추론
+    // MIME Type 추론 (확장자 기반)
+    const extension = getFileExtension(extractedFilename);
     const contentType = inferMimeType(extractedFilename);
 
     // Step 2: Presigned URL 발급

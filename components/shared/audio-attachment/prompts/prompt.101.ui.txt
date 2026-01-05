@@ -1,0 +1,31 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @03-ui.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/shared/audio-attachment/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/shared/audio-attachment/styles.ts
+조건-파일연결경로) 연결된 TSX 파일경로: FE/components/map/components/egg-form/index.tsx
+
+조건-공통 컴포넌트) 이미 만들어져 있는 모달 공통컴포넌트를 사용할 것(위에서 아래로 내려오는 애니메이션 사용하지 말 것.)
+조건-라이브러리) 이미 설치되어 있는, react-native-remix-icon를 사용할 것
+
+조건-상수) 이미 토큰화 된 스타일(commons/constants 하위)을 불러와서 만들 것
+
+조건-Figma Desktop MCP(오디오 업로드 - 직접 녹음 탭(녹음 전 상태))) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=599-5449&t=nNawGP29vVokIQrU-4
+조건-Figma Desktop MCP(오디오 업로드 - 직접 녹음 탭(녹음상태)) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=599-5874&t=nNawGP29vVokIQrU-4
+조건-Figma Desktop MCP(오디오 업로드 - 파일로 업로드 탭)) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=599-6317&t=nNawGP29vVokIQrU-4
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것
+1. Figma Desktop MCP를 참고할 것
+2. 이미 스타일 토큰으로 정의된 것을 사용할 것
+  - 이때, 똑같이 일치하지 않다면 최대한 유사한 스타일 토큰을 가져와 사용할 것
+
+핵심요구사항) egg-form에서 음성 버튼 클릭시, 해당 모달이 뜨게 할 것
