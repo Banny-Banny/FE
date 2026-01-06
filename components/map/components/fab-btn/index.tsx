@@ -65,14 +65,12 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
             accessibilityRole="button"
             accessibilityLabel={LABELS.easterEgg}>
             <Text style={styles.subButtonLabel}>{LABELS.easterEgg}</Text>
-            <View style={styles.subButtonCircle}>
-              <Image
-                source={require('../../../../assets/icons/egg-icon.svg')}
-                style={styles.subButtonIcon}
-                contentFit="contain"
-                accessibilityLabel="이스터에그 아이콘"
-              />
-            </View>
+            <Image
+              source={require('../../../../assets/images/fab_btn_egg.svg')}
+              style={styles.fabButtonIcon}
+              contentFit="contain"
+              accessibilityLabel="이스터에그 FAB 아이콘"
+            />
           </TouchableOpacity>
 
           {/* Time Capsule Button */}
@@ -82,16 +80,12 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
             accessibilityRole="button"
             accessibilityLabel={LABELS.timeCapsule}>
             <Text style={styles.subButtonLabel}>{LABELS.timeCapsule}</Text>
-            <View style={styles.subButtonCircle}>
-              <View style={styles.capsuleIconContainer}>
-                <Image
-                  source={require('../../../../assets/icons/capsule-icon.svg')}
-                  style={styles.capsuleIcon}
-                  contentFit="contain"
-                  accessibilityLabel="타임캡슐 아이콘"
-                />
-              </View>
-            </View>
+            <Image
+              source={require('../../../../assets/images/fab_btn_cap.svg')}
+              style={styles.fabButtonIcon}
+              contentFit="contain"
+              accessibilityLabel="타임캡슐 FAB 아이콘"
+            />
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -105,21 +99,12 @@ export const FabButton: React.FC<FabButtonProps> = ({ onEasterEggPress, onTimeCa
           accessibilityLabel={isExpanded ? '닫기' : '메뉴 열기'}
           accessibilityState={{ expanded: isExpanded }}>
           <Animated.View style={[styles.mainButtonInner, animatedRotationStyle]}>
-            {isExpanded ? (
-              <Image
-                source={require('../../../../assets/icons/close-icon.svg')}
-                style={styles.mainButtonIcon}
-                contentFit="contain"
-                accessibilityLabel="닫기 아이콘"
-              />
-            ) : (
-              <Image
-                source={require('../../../../assets/icons/plus-icon.svg')}
-                style={styles.mainButtonIcon}
-                contentFit="contain"
-                accessibilityLabel="더하기 아이콘"
-              />
-            )}
+            <Image
+              source={require('../../../../assets/icons/plus-icon.svg')}
+              style={styles.mainButtonIcon}
+              contentFit="contain"
+              accessibilityLabel={isExpanded ? '닫기 아이콘' : '더하기 아이콘'}
+            />
           </Animated.View>
           <View style={styles.mainButtonShadowInset} />
         </TouchableOpacity>
