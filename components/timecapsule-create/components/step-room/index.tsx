@@ -16,6 +16,7 @@ import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { Colors } from '@/commons/constants/color';
+import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -111,6 +112,9 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
     isSubmitting: isSubmittingCapsule,
     error: submitError,
   } = useRoomSubmit();
+
+  /** 현재 위치 Hook (타임캡슐 매장 위치로 사용) */
+  const { location, isLoading: isLocationLoading, error: locationError } = useMapLocation();
 
   // ============================================
   // 상태 관리
@@ -410,10 +414,16 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
           {isHost && (
             <View style={styles.buttonSection}>
               <Button
-                label={isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
+                label={
+                  isLocationLoading
+                    ? '위치 확인 중...'
+                    : isSubmittingCapsule
+                      ? '제출 중...'
+                      : '타임캡슐 묻기'
+                }
                 variant="primary"
                 size="M"
-                disabled={!isSubmitEnabled || isSubmittingCapsule}
+                disabled={!isSubmitEnabled || isSubmittingCapsule || isLocationLoading || !location}
                 onPress={() => {
                   console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
                   console.log('📊 [StepRoom] 진행률:', progress.percentage, '%');
@@ -434,7 +444,20 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
                           try {
                             // 백엔드로 최종 제출
                             console.log('📤 [StepRoom] 백엔드로 타임캡슐 제출 시작...');
-                            await submitTimeCapsule(roomSettings, participants);
+
+                            // 현재 위치 확인
+                            if (!location) {
+                              throw new Error(
+                                locationError ||
+                                  '위치 정보를 가져올 수 없습니다. GPS를 활성화하고 위치 권한을 허용해주세요.',
+                              );
+                            }
+
+                            const latitude = location.lat;
+                            const longitude = location.lng;
+                            console.log(`📍 [StepRoom] 매장 위치: (${latitude}, ${longitude})`);
+
+                            await submitTimeCapsule(roomSettings.room_id, latitude, longitude);
                             console.log('✅ [StepRoom] 백엔드 제출 완료!');
 
                             // D-Day 계산
@@ -514,6 +537,11 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
               />
               {!isSubmitEnabled && (
                 <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
+              )}
+              {locationError && (
+                <Text style={[styles.buttonHint, { color: Colors.red[500] }]}>
+                  {locationError}
+                </Text>
               )}
             </View>
           )}

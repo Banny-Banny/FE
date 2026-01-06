@@ -50,3 +50,4 @@ export const formatTimeFromMillis = (millis: number): string => {
   const seconds = Math.floor(millis / 1000);
   return formatTime(seconds);
 };
+

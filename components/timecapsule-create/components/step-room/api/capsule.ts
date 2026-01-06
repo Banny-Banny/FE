@@ -5,6 +5,8 @@
 
 import { apiClient, publicApiClient } from '@/utils/apiClient';
 import type {
+  CapsuleSubmitRequest,
+  CapsuleSubmitResponse,
   CreateRoomRequest,
   CreateRoomResponse,
   InviteCodeQueryResponse,
@@ -219,6 +221,87 @@ export async function fetchRoomByInviteCode(inviteCode: string): Promise<InviteC
       throw error;
     }
     console.error('❌ [API] 초대 코드로 대기실 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 타임캡슐 최종 제출 API (위치 지정 및 매장)
+ * @param roomId 캡슐 ID (UUID)
+ * @param location 매장 위치 (latitude, longitude)
+ * @returns 매장 결과 정보
+ * @throws 400: INCOMPLETE_PARTICIPANTS (미완료 참여자), INVALID_LOCATION (유효하지 않은 위치), PAYMENT_NOT_COMPLETED (결제 미완료)
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 403: 방장이 아닌 사용자의 제출 시도
+ * @throws 404: 존재하지 않는 roomId
+ * @throws 409: 이미 제출된 캡슐 (중복 제출)
+ * @throws 500: 서버 내부 오류
+ */
+export async function submitCapsule(
+  roomId: string,
+  location: CapsuleSubmitRequest,
+): Promise<CapsuleSubmitResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 제출 시작 - roomId:', roomId, 'location:', location);
+
+    // 클라이언트 측 위치 검증
+    if (
+      location.latitude < -90 ||
+      location.latitude > 90 ||
+      location.longitude < -180 ||
+      location.longitude > 180
+    ) {
+      throw new Error('유효하지 않은 위도 또는 경도입니다.');
+    }
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.post<CapsuleSubmitResponse>(
+      `/api/capsules/step-rooms/${roomId}/submit`,
+      location,
+    );
+
+    console.log('✅ [API] 타임캡슐 제출 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // 400 에러 상세 처리
+    if (error.response?.status === 400) {
+      const errorCode = error.response?.data?.error;
+      if (errorCode === 'INCOMPLETE_PARTICIPANTS') {
+        console.error('❌ [API] 모든 참여자가 작성을 완료하지 않음 (400)');
+        throw new Error('모든 참여자가 저장을 완료해야 제출할 수 있습니다.');
+      }
+      if (errorCode === 'INVALID_LOCATION') {
+        console.error('❌ [API] 유효하지 않은 위치 (400)');
+        throw new Error('유효하지 않은 위도 또는 경도입니다.');
+      }
+      if (errorCode === 'PAYMENT_NOT_COMPLETED') {
+        console.error('❌ [API] 결제가 완료되지 않음 (400)');
+        throw new Error('결제를 완료해주세요.');
+      }
+      console.error('❌ [API] 잘못된 요청 (400)');
+      throw new Error('잘못된 요청입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 방장이 아닌 사용자의 제출 시도 (403)');
+      throw new Error('방장만 최종 제출할 수 있습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 roomId (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 409) {
+      console.error('❌ [API] 이미 제출된 캡슐 (409)');
+      throw new Error('이미 제출된 캡슐입니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 제출 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }

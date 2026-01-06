@@ -272,3 +272,48 @@ export interface InviteCodeQueryResponse {
   /** 참여 가능 여부 */
   is_joinable: boolean;
 }
+
+// ============================================
+// 타임캡슐 제출 API 타입
+// ============================================
+
+/** 타임캡슐 제출 요청 Body 타입 */
+export interface CapsuleSubmitRequest {
+  /** 위도 (-90 ~ 90) */
+  latitude: number;
+  /** 경도 (-180 ~ 180) */
+  longitude: number;
+}
+
+/** 매장 위치 정보 */
+export interface BuriedLocation {
+  /** 위도 */
+  latitude: number;
+  /** 경도 */
+  longitude: number;
+  /** 주소 (역지오코딩 결과) */
+  address: string;
+}
+
+/** 타임캡슐 제출 응답 타입 (snake_case) */
+export interface CapsuleSubmitResponse {
+  /** 성공 여부 */
+  success: boolean;
+  /** 응답 데이터 */
+  data: {
+    /** 캡슐 ID (UUID) */
+    capsule_id: string;
+    /** 캡슐 상태 */
+    status: 'BURIED';
+    /** 매장 위치 정보 */
+    location: BuriedLocation;
+    /** 매장 시각 (ISO 8601) */
+    buried_at: string;
+    /** 개봉 예정일 (ISO 8601) */
+    open_date: string;
+    /** 참여자 수 */
+    participants: number;
+    /** 자동 제출 여부 */
+    is_auto_submitted: boolean;
+  };
+}
