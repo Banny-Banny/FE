@@ -11,7 +11,7 @@ import { MediaType } from '@/commons/constants/media';
 import { useMediaUpload } from '@/commons/hooks';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
-import { buildApiUrl, getMediaUrls, normalizeApiBaseUrl } from '@/utils';
+import { buildApiUrl, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
@@ -236,18 +236,6 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         return;
       }
 
-      // mediaIds를 media_urls로 변환 (API는 URL을 요구함)
-      let mediaUrls: string[];
-      try {
-        mediaUrls = await getMediaUrls(mediaIds);
-      } catch (urlError) {
-        const errorMessage =
-          urlError instanceof Error ? urlError.message : '미디어 URL 변환에 실패했습니다.';
-        Alert.alert('오류', errorMessage);
-        setIsSubmitting(false);
-        return;
-      }
-
       // 현재 위치 확인
       if (!location) {
         Alert.alert('오류', '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
@@ -260,7 +248,8 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         longitude: location.lng,
         title: data.title,
         content: data.content || undefined,
-        media_urls: mediaUrls,
+        // @note 백엔드 요청에 따라 언제든 변경될 수 있음 (예: media_item_ids[] 등)
+        media_ids: mediaIds,
         media_types: mediaTypes,
       };
 

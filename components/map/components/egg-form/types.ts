@@ -33,7 +33,8 @@ export interface CreateCapsuleRequest {
   longitude: number;
   title: string;
   content?: string;
-  media_urls: string[];
+  /** @note 백엔드 요청에 따라 언제든 변경될 수 있음 (예: media_item_ids[] 등) */
+  media_ids: string[];
   media_types: MediaType[];
   open_at?: string; // ISO-8601 string (future only)
   view_limit?: number;
