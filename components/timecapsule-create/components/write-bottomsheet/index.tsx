@@ -28,6 +28,7 @@ export default function UserBottomSheet({
   onClose,
   participant,
   capsuleId,
+  inviteCode,
   onSave,
   roomSettings,
 }: UserBottomSheetProps) {
@@ -145,15 +146,16 @@ export default function UserBottomSheet({
           video: data.video,
         });
       } else {
-        // ⭐ capsuleId 전달
+        // ⭐ capsuleId 및 inviteCode 전달
         console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
         console.log('  🆔 capsuleId:', capsuleId);
+        console.log('  🔑 inviteCode:', inviteCode || '(없음)');
         console.log('  📝 제출 데이터 요약:');
         console.log('    - 텍스트:', data.textContent.trim().substring(0, 30) + '...');
         console.log('    - 이미지:', data.photos.length, '개');
         console.log('    - 음악:', data.music ? '있음' : '없음');
         console.log('    - 비디오:', data.video ? '있음' : '없음');
-        await submitContent(data, capsuleId);
+        await submitContent({ ...data, inviteCode }, capsuleId);
       }
 
       // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기

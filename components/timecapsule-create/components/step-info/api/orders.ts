@@ -25,8 +25,11 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
   if (USE_MOCK_DATA) {
     await new Promise((resolve) => setTimeout(resolve, 500)); // 로딩 시뮬레이션
 
+    console.log('🔍 [Mock] capsule_title 확인:', data.capsule_title);
+
     return {
       order_id: 'mock-order-' + Date.now(),
+      capsule_id: 'mock-capsule-' + Date.now(),
       total_amount: 10000,
       customer_key: 'mock-customer-key',
       created_at: new Date().toISOString(),
@@ -47,6 +50,16 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
 
   // 실제 API 호출 코드
   try {
+    // 🔍 요청 데이터 확인 (개발 모드)
+    if (__DEV__) {
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📤 [createOrder] 주문 생성 요청');
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('📝 캡슐 제목 (capsule_title):', data.capsule_title);
+      console.log('📦 전체 요청 데이터:', JSON.stringify(data, null, 2));
+      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    }
+
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
 
     // 🔍 응답 데이터 확인 (개발 모드)
@@ -143,6 +156,7 @@ export function mapFormToOrderRequest(formData: StepInfoFormData): CreateOrderRe
 
   return {
     product_id: productId,
+    capsule_title: formData.capsuleName,
     time_option: timeOption,
     custom_open_at: customOpenAt,
     headcount: formData.personnelCount,

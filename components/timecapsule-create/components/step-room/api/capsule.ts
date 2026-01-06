@@ -37,6 +37,13 @@ export async function createRoomAndGetSettings(orderId: string): Promise<CreateR
     );
 
     console.log('✅ [API] 대기실 생성 및 설정값 조회 성공:', response.data);
+
+    // 🔍 백엔드 변경사항 확인용 상세 로그
+    console.log('🔍 [API] capsule_title 확인:', (response.data as any).capsule_title || response.data.title);
+    console.log('🔍 [API] invite_code 확인:', response.data.invite_code);
+    console.log('🔍 [API] 딥링크 확인:', (response.data as any).deep_link || `timeegg://room/join?invite_code=${response.data.invite_code}`);
+    console.log('🔍 [API] 전체 응답 객체:', JSON.stringify(response.data, null, 2));
+
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 400) {
@@ -154,6 +161,7 @@ export async function getRoomDetail(capsuleId: string): Promise<RoomDetailRespon
     );
 
     console.log('✅ [API] 대기실 상세 조회 성공:', response.data);
+    console.log('🔍 [API] slots 상세:', JSON.stringify(response.data.slots, null, 2));
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 400) {

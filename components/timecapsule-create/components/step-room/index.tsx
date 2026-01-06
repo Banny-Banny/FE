@@ -19,7 +19,7 @@ import { Colors } from '@/commons/constants/color';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -29,6 +29,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 import Icon from 'react-native-remix-icon';
 import SubmitCompleteModal from '../../modals/submit-complete-modal';
 import SubmitConfirmModal from '../../modals/submit-confirm-modal';
@@ -42,11 +47,19 @@ import type { Participant } from './types';
 // Props 인터페이스 정의
 interface StepRoomProps {
   role: 'host' | 'guest';
-  orderId?: string; // 주문 ID (옵션, 없으면 하드코딩된 테스트 ID 사용)
+  orderId?: string; // 주문 ID (방장용 - 대기실 생성)
+  capsuleId?: string; // 캡슐 ID (게스트용 - 딥링크로 입장)
+  inviteCode?: string; // 초대 코드 (게스트용 - 콘텐츠 제출 시 필요)
   onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
 }
 
-export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: StepRoomProps) {
+export default function StepRoom({
+  role,
+  orderId: propsOrderId,
+  capsuleId: propsCapsuleId,
+  inviteCode: propsInviteCode,
+  onSubmit
+}: StepRoomProps) {
   // ============================================
   // Hooks
   // ============================================
@@ -61,15 +74,15 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   const { openModal, closeModal } = useModal();
 
   /**
-   * ⭐ orderId 우선순위:
+   * ⭐ orderId 우선순위 (방장용):
    * 1. Props로 전달받은 orderId
    * 2. URL 파라미터 (추후 구현 가능)
    * 3. 백엔드 제공 테스트 ID (하드코딩)
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
-  const orderId = propsOrderId || TEST_ORDER_ID;
+  const orderId = isHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
 
-  /** 캡슐대기실 데이터 Hook - ⭐ 1단계 API 호출 (orderId → roomSettings) */
+  /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
     roomSettings,
     createRoomResponse,
@@ -78,7 +91,7 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
     error: roomError,
     calculateProgress,
     canSubmit,
-  } = useRoomData(orderId);
+  } = useRoomData(orderId, propsCapsuleId);
 
   /** 참여자 목록 Hook */
   // ⭐ 수정: roomSettings가 로드된 후에만 올바른 maxParticipants 전달
@@ -138,6 +151,29 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
     return canSubmit(participants);
   }, [canSubmit, participants]);
 
+  // ============================================
+  // 프로그레스바 애니메이션
+  // ============================================
+
+  /** 프로그레스바 width 애니메이션 값 */
+  const progressWidth = useSharedValue(0);
+
+  /** progress 변경 시 애니메이션 트리거 */
+  useEffect(() => {
+    // Width 애니메이션 (Spring으로 부드럽게)
+    progressWidth.value = withSpring(progress.percentage, {
+      damping: 15,
+      stiffness: 100,
+    });
+  }, [progress.percentage]);
+
+  /** 프로그레스바 Fill 애니메이션 스타일 */
+  const progressBarAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progressWidth.value}%`,
+    };
+  });
+
   /** 작성 마감까지 남은 시간 계산 */
   const remainingTime = useMemo(() => {
     if (!createRoomResponse?.deadline) {
@@ -174,10 +210,8 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
       const inviteCode = createRoomResponse?.invite_code || '';
       const capsuleName = createRoomResponse?.title || roomSettings?.capsule_name || '타임캡슐';
 
-      // 전체 API URL 생성
-      const apiBaseUrl =
-        process.env.EXPO_PUBLIC_API_BASE_URL || 'https://be-production-8aa2.up.railway.app/';
-      const inviteUrl = `${apiBaseUrl}api/capsules/step-rooms?invite_code=${inviteCode}`;
+      // 딥링크 URL 생성
+      const inviteUrl = `timeegg://room-join?invite_code=${inviteCode}`;
 
       const result = await Share.share({
         title: '타임캡슐에 초대합니다',
@@ -389,6 +423,19 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
           />
         </View>
 
+        {/* 프로그래스바 */}
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarHeader}>
+            <Text style={styles.progressBarLabel}>진행 상황</Text>
+            <Text style={styles.progressBarText}>
+              {progress.completed}/{progress.total}
+            </Text>
+          </View>
+          <View style={styles.progressBarWrapper}>
+            <Animated.View style={[styles.progressBarFill, progressBarAnimatedStyle]} />
+          </View>
+        </View>
+
         {/* 참여자 목록 */}
         <View style={styles.participantSection}>
           <Text style={styles.participantLabel}>참여자 목록</Text>
@@ -418,8 +465,8 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
                   isLocationLoading
                     ? '위치 확인 중...'
                     : isSubmittingCapsule
-                      ? '제출 중...'
-                      : '타임캡슐 묻기'
+                    ? '제출 중...'
+                    : '타임캡슐 묻기'
                 }
                 variant="primary"
                 size="M"
@@ -539,9 +586,7 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
                 <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
               )}
               {locationError && (
-                <Text style={[styles.buttonHint, { color: Colors.red[500] }]}>
-                  {locationError}
-                </Text>
+                <Text style={[styles.buttonHint, { color: Colors.red[500] }]}>{locationError}</Text>
               )}
             </View>
           )}
@@ -554,6 +599,7 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
             onClose={() => setIsBottomSheetVisible(false)}
             participant={selectedParticipant}
             capsuleId={capsuleId}
+            inviteCode={propsInviteCode} // 게스트용 (처음 참여 시 필요)
             onSave={handleBottomSheetSave}
             roomSettings={roomSettings}
           />

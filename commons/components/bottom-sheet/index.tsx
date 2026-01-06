@@ -46,15 +46,15 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 }) => {
   // 애니메이션 값 초기화
   const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
-  const sheetHeight = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT * 0.6)).current; // 초기 높이 60%
-  const [isExpanded, setIsExpanded] = useState(false);
+  const sheetHeight = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current; // 초기 높이 100%
+  const [isExpanded, setIsExpanded] = useState(true);
 
   // isVisible 변경 시 애니메이션 실행
   useEffect(() => {
     if (isVisible) {
-      setIsExpanded(false);
-      // 높이를 60%로 리셋
-      sheetHeight.setValue(BOTTOM_SHEET_HEIGHT * 0.6);
+      setIsExpanded(true);
+      // 높이를 100%로 리셋
+      sheetHeight.setValue(BOTTOM_SHEET_HEIGHT);
       // 먼저 화면 밖으로 위치 리셋 (애니메이션 없이)
       translateY.setValue(BOTTOM_SHEET_HEIGHT);
       // 그 다음 슬라이드 업 애니메이션 (화면 하단으로)

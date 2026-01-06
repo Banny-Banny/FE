@@ -215,8 +215,12 @@ export interface CreateRoomResponse {
   open_date: string;
   /** 대기실 상태 */
   status: 'WAITING' | 'COMPLETED' | 'EXPIRED';
-  /** 캡슐 이름 */
+  /** 캡슐 이름 (기존 필드명) */
   title: string;
+  /** 캡슐 제목 (orders.capsule_title에서 가져온 값, 백엔드 신규 추가) */
+  capsule_title?: string;
+  /** 딥링크 URL (백엔드 신규 추가 가능성) */
+  deep_link?: string;
 }
 
 /** 슬롯 정보 타입 (GET /api/capsules/step-rooms/:capsuleId 응답의 slots[]) */
