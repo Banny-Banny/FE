@@ -12,7 +12,7 @@
  */
 
 import { Colors } from '@/commons/constants';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   // Pressable wrapper 스타일 (absolute positioning)
@@ -51,7 +51,16 @@ export const styles = StyleSheet.create({
   eggSlotIcon: {
     width: 20,
     height: 24,
-    tintColor: Colors.white[50], // 채워진 알은 하양색
+    ...Platform.select({
+      default: {
+        tintColor: Colors.white[50], // 채워진 알은 하양색 (네이티브용)
+      },
+      web: {
+        // 웹 환경에서 하양색으로 표시하기 위한 CSS filter
+        // @ts-ignore - 웹 전용 CSS 속성
+        filter: 'brightness(0) saturate(100%) invert(1)',
+      },
+    }),
   },
   eggSlotIconEmpty: {
     width: 20,
