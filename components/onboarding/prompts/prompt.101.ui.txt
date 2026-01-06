@@ -1,0 +1,18 @@
+# 온보딩 UI 제작 프롬프트
+
+## 대상 화면
+- 로그인 페이지: https://www.figma.com/design/ChrSWhvkq3f0bWwOzWHKJN/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8--%EB%B3%B5%EC%82%AC-?node-id=856-3333&t=RsgCHG5UVvDmlF3u-4
+- 친구 연동 페이지: https://www.figma.com/design/ChrSWhvkq3f0bWwOzWHKJN/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8--%EB%B3%B5%EC%82%AC-?node-id=856-3375&t=RsgCHG5UVvDmlF3u-4
+- 위치 동의 페이지: https://www.figma.com/design/ChrSWhvkq3f0bWwOzWHKJN/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8--%EB%B3%B5%EC%82%AC-?node-id=856-3424&t=RsgCHG5UVvDmlF3u-4
+
+## 요청 가이드
+- 피그마 Dev Mode로 디자인 토큰/간격/타이포를 추출해 반올림된 정수값으로만 사용.
+- 색상·간격·타이포 등은 반드시 tailwind.config.js의 토큰을 통해 적용하고, 하드코딩 금지.
+- 레이아웃/스타일 분리: index.tsx에는 구조만, styles.ts에만 스타일 선언(NativeWind/StyleSheet).
+- 이미지/아이콘은 기존 자산 또는 react-native-remix-icon만 사용; 신규 패키지 금지.
+- 시맨틱 구조와 접근성 고려: 명확한 역할, 포커스 가능한 버튼, 최소 44px 탭 타겟.
+- 온보딩 단계(로그인 → 친구 연동 → 위치 동의)를 사용자 여정 순서대로 구성.
+
+## 산출물
+- 각 화면별 index.tsx, styles.ts 완성본. 추가 파일 생성 금지.
+
