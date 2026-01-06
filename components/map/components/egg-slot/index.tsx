@@ -13,6 +13,8 @@
  * - [x] 접근성: 시맨틱/포커스/명도 대비/탭타겟 통과
  */
 
+import FilledEggIcon from '@/assets/images/filled_egg.svg';
+import UnfilledEggIcon from '@/assets/images/unfilled_egg.svg';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, View } from 'react-native';
@@ -46,25 +48,21 @@ export const EggSlot: React.FC<EggSlotProps> = ({ onPress }) => {
 
         return (
           <View key={slotNumber} style={styles.eggSlotItem}>
-            <View style={styles.eggSlotIconWrapper}>
-              {isFilled ? (
-                <Image
-                  source={require('../../../../assets/icons/egg-icon.svg')}
-                  style={styles.eggSlotIcon}
-                  contentFit="contain"
-                  accessibilityLabel={`에그 슬롯 ${slotNumber} - 사용됨`}
-                />
-              ) : (
-                <View style={styles.eggSlotIconEmpty}>
-                  <Image
-                    source={require('../../../../assets/icons/egg-icon.svg')}
-                    style={styles.eggSlotIconOutline}
-                    contentFit="contain"
-                    accessibilityLabel={`에그 슬롯 ${slotNumber} - 비어있음`}
-                  />
-                </View>
-              )}
-            </View>
+            {isFilled ? (
+              <Image
+                source={FilledEggIcon}
+                style={styles.eggSlotIcon}
+                contentFit="contain"
+                accessibilityLabel={`에그 슬롯 ${slotNumber} - 사용됨`}
+              />
+            ) : (
+              <Image
+                source={UnfilledEggIcon}
+                style={styles.eggSlotIconEmpty}
+                contentFit="contain"
+                accessibilityLabel={`에그 슬롯 ${slotNumber} - 비어있음`}
+              />
+            )}
           </View>
         );
       })}

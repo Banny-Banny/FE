@@ -15,6 +15,8 @@
  * - [x] react-native-remix-icon 사용
  */
 
+import FilledEggIcon from '@/assets/images/filled_egg.svg';
+import UnfilledEggIcon from '@/assets/images/unfilled_egg1.svg';
 import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
@@ -75,14 +77,14 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
                 <View key={slotNumber} style={styles.eggSlotItem}>
                   {isFilled ? (
                     <Image
-                      source={require('../../../../assets/icons/egg-icon.svg')}
+                      source={FilledEggIcon}
                       style={styles.eggIcon}
                       contentFit="contain"
                       accessibilityLabel={`에그 슬롯 ${slotNumber} - 사용됨`}
                     />
                   ) : (
                     <Image
-                      source={require('../../../../assets/icons/egg-icon.svg')}
+                      source={UnfilledEggIcon}
                       style={styles.eggIconEmpty}
                       contentFit="contain"
                       accessibilityLabel={`에그 슬롯 ${slotNumber} - 비어있음`}

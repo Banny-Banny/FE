@@ -48,12 +48,6 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  eggSlotIconWrapper: {
-    width: 20,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   eggSlotIcon: {
     width: 20,
     height: 24,
@@ -62,13 +56,5 @@ export const styles = StyleSheet.create({
   eggSlotIconEmpty: {
     width: 20,
     height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  eggSlotIconOutline: {
-    width: 20,
-    height: 24,
-    opacity: 0.3, // 빈 슬롯은 투명도 적용하여 구분 (Figma 디자인 참고)
-    tintColor: Colors.white[50], // 빈 슬롯도 흰색으로 표시
   },
 });
