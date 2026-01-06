@@ -99,6 +99,8 @@ export interface UserContentFormData {
   music: string | null;
   /** 동영상 파일 URI (선택사항) */
   video: string | null;
+  /** 초대 코드 (처음 참여 시만, 선택사항) */
+  inviteCode?: string;
 }
 
 /**
@@ -122,6 +124,8 @@ export interface UserBottomSheetProps {
   participant: Participant;
   /** ⭐ 캡슐 ID (대기실 생성 시 받은 capsule_id) */
   capsuleId: string;
+  /** 초대 코드 (게스트용, 처음 참여 시 필요) */
+  inviteCode?: string;
   onSave?: (content: any) => Promise<void>;
   /** 대기실 설정값 (옵션, 없으면 기본값 사용) */
   roomSettings?: RoomSettingsResponse | null;

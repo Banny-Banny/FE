@@ -38,16 +38,18 @@ interface UseRoomDataReturn {
  * 캡슐대기실 데이터 관리 Hook
  *
  * 기능:
- * 1. loadRoomData(): 1단계 API 호출로 캡슐대기실 생성 및 설정값 가져오기
- *    - createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+ * 1. loadRoomData(): 대기실 데이터 가져오기
+ *    - 방장 모드: createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+ *    - 게스트 모드: getRoomSettings(capsuleId) → 대기실 설정값만 조회
  *    - 실패 시 목데이터로 폴백
  * 2. calculateProgress(): 진행률 계산 (완료 인원 / 전체 인원)
  * 3. canSubmit(): 최종 제출 가능 여부 확인 (진행률 100%)
  *
- * @param orderId 주문 ID (UUID, 옵션)
+ * @param orderId 주문 ID (UUID, 방장용)
+ * @param guestCapsuleId 캡슐 ID (UUID, 게스트용 - 딥링크로 입장 시)
  * @returns {UseRoomDataReturn} Hook 반환값
  */
-export function useRoomData(orderId?: string): UseRoomDataReturn {
+export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomDataReturn {
   // ============================================
   // 상태 관리
   // ============================================
@@ -65,8 +67,8 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
   useEffect(() => {
     /**
      * 캡슐대기실 설정값 가져오기
-     * - 1단계 API 호출 전략:
-     *   createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+     * - 방장 모드: createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+     * - 게스트 모드: getRoomSettings(capsuleId) → 대기실 설정값만 조회
      * - 실패 시 목데이터로 폴백
      */
     async function loadRoomData() {
@@ -74,9 +76,9 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
       setError(null);
 
       try {
+        // ⭐ 방장 모드: orderId로 대기실 생성
         if (orderId) {
-          // ⭐ 1단계: 대기실 생성
-          console.log('🔄 [useRoomData] 대기실 생성 시작 - orderId:', orderId);
+          console.log('🔄 [useRoomData] 방장 모드 - 대기실 생성 시작, orderId:', orderId);
           const roomData = await createRoomAndGetSettings(orderId);
 
           // 실제 API 응답 저장
@@ -85,6 +87,12 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
           setCapsuleId(extractedCapsuleId);
 
           console.log('✅ [useRoomData] 대기실 생성 성공, capsuleId:', extractedCapsuleId);
+
+          // 🔍 백엔드 변경사항 확인용 상세 로그
+          console.log('🔍 [useRoomData] capsule_title 확인:', (roomData as any).capsule_title || roomData.title);
+          console.log('🔍 [useRoomData] invite_code 확인:', roomData.invite_code);
+          console.log('🔍 [useRoomData] 딥링크 확인:', (roomData as any).deep_link || `timeegg://room/join?invite_code=${roomData.invite_code}`);
+          console.log('🔍 [useRoomData] 전체 응답 데이터:', JSON.stringify(roomData, null, 2));
 
           // ⭐ 2단계: 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
           try {
@@ -132,9 +140,20 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
             };
             setRoomSettings(fallbackSettings);
           }
-        } else {
-          // orderId가 없으면 목데이터 사용
-          console.log('ℹ️ [useRoomData] orderId 없음, 목데이터 사용');
+        }
+        // ⭐ 게스트 모드: capsuleId로 대기실 설정값만 조회
+        else if (guestCapsuleId) {
+          console.log('🔄 [useRoomData] 게스트 모드 - 대기실 조회 시작, capsuleId:', guestCapsuleId);
+          setCapsuleId(guestCapsuleId);
+
+          // 대기실 설정값만 조회
+          const settingsData = await getRoomSettings(guestCapsuleId);
+          console.log('✅ [useRoomData] 게스트 모드 - 대기실 조회 성공:', settingsData);
+          setRoomSettings(settingsData);
+        }
+        // orderId도 capsuleId도 없으면 목데이터 사용
+        else {
+          console.log('ℹ️ [useRoomData] orderId/capsuleId 없음, 목데이터 사용');
           await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
           setRoomSettings(mockRoomData);
           setCapsuleId(mockRoomData.room_id);
@@ -151,7 +170,7 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
     }
 
     loadRoomData();
-  }, [orderId]);
+  }, [orderId, guestCapsuleId]);
 
   // ============================================
   // 진행률 계산 (useMemo로 최적화)
@@ -162,7 +181,7 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
    *
    * 계산 로직:
    * - 완료 인원: status === 'completed'인 참여자 수
-   * - 전체 인원: name이 빈 문자열이 아닌 참여자 수 (실제 입장한 사람만)
+   * - 전체 인원: max_participants (정원)
    * - 진행률: (완료 인원 / 전체 인원) × 100
    *
    * @param {Participant[]} participants 참여자 목록
@@ -173,8 +192,8 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
       // 완료한 참여자 수
       const completed = participants.filter((p) => p.status === 'completed').length;
 
-      // 전체 참여자 수 (실제 입장한 사람만, name이 빈 문자열이 아닌 경우)
-      const total = participants.filter((p) => p.name !== '').length;
+      // 전체 참여자 수 (max_participants 기준)
+      const total = roomSettings?.max_participants || 0;
 
       // 진행률 계산 (0-100)
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -185,7 +204,7 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
         percentage,
       };
     };
-  }, []);
+  }, [roomSettings]);
 
   // ============================================
   // 최종 제출 가능 여부 확인

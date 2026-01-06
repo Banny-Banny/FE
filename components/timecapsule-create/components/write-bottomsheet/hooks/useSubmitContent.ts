@@ -121,6 +121,12 @@ export function useSubmitContent(): UseSubmitContentReturn {
       // 텍스트 메시지 추가 (필수)
       formData.append('text_message', data.textContent.trim());
 
+      // 초대 코드 추가 (처음 참여 시만)
+      if (data.inviteCode) {
+        formData.append('invite_code', data.inviteCode.trim());
+        console.log('📤 [useSubmitContent] 초대 코드 FormData에 추가:', data.inviteCode);
+      }
+
       // 이미지 파일 추가 (배열로 여러 개 추가)
       if (data.photos.length > 0) {
         console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 FormData에 추가 중...`);

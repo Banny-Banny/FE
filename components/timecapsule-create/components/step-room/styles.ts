@@ -49,14 +49,14 @@ export const styles = StyleSheet.create({
     padding: 25,
     backgroundColor: Colors.white[100],
     borderWidth: 1,
-    borderColor: Colors.grey[200],
+    borderColor: Colors.grey[500], // Figma: #B2B2B2
     borderRadius: 16,
-    gap: Spacing.md,
+    gap: 40, // Figma: gap-[40px] - Spacing 토큰에 40px 없음
   },
 
   infoCardLabel: {
-    ...Typography.body.body3,
-    color: Colors.grey[500],
+    ...Typography.body.body10, // Figma: 12px, lineHeight: 18px
+    color: Colors.darkGrey[500], // Figma: #666666
   },
 
   infoCardValue: {
@@ -70,13 +70,13 @@ export const styles = StyleSheet.create({
 
   infoCardDetails: {
     flexDirection: 'row',
-    gap: Spacing.lg,
+    gap: 40, // Figma: gap-[40px] - Spacing 토큰에 40px 없음
   },
 
   infoCardDetailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.sm,
+    gap: 10, // Figma: gap-[10px] - Spacing 토큰에 10px 없음
   },
 
   infoCardIconWrapper: {
@@ -88,17 +88,60 @@ export const styles = StyleSheet.create({
 
   infoCardDetailLabel: {
     ...Typography.body.body3,
-    color: Colors.grey[500],
+    lineHeight: 12, // Figma: leading-[12px]로 오버라이드
+    color: Colors.darkGrey[500], // Figma: #666666
   },
 
   infoCardDetailValue: {
     ...Typography.caption.caption1,
+    lineHeight: 21, // Figma: leading-[21px]로 오버라이드
     color: Colors.black[500],
   },
 
   // 친구 초대하기 버튼 래퍼
   inviteButtonWrapper: {
     marginVertical: 20,
+  },
+
+  // 프로그래스바
+  progressBarContainer: {
+    marginTop: Spacing.md,
+    gap: Spacing.sm, // Figma: gap-[8px]
+  },
+
+  progressBarHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+
+  progressBarLabel: {
+    ...Typography.caption.caption1, // Figma: 14px, lineHeight: 21px
+    color: Colors.black[500],
+  },
+
+  progressBarText: {
+    ...Typography.caption.caption1, // Figma: 14px, lineHeight: 21px
+    color: Colors.black[500],
+  },
+
+  progressBarWrapper: {
+    width: '100%',
+    height: 8, // Figma: h-[8px]
+    backgroundColor: Colors.whiteGrey[500], // Figma: #e5e5e5
+    borderWidth: 1,
+    borderColor: Colors.black[500], // Figma: #0a0a0a
+    borderRadius: 9999, // Figma: rounded-full
+    overflow: 'hidden',
+    padding: 1, // 내부 padding으로 fill의 높이 조정
+  },
+
+  progressBarFill: {
+    height: 6, // Figma: h-[6px] (8px - padding 1px * 2)
+    backgroundColor: Colors.black[500], // Figma: #0a0a0a
+    borderRadius: 9999,
+    minWidth: 0, // 최소 너비 0으로 설정하여 작은 값도 표시 가능
   },
 
   // 참여자 목록

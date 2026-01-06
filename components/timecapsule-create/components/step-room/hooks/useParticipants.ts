@@ -34,8 +34,8 @@ export type TestScenario = 'solo' | 'partial' | 'full' | 'ready';
  */
 
 // 테스트용 ⬇️
-// const CURRENT_TEST_SCENARIO: TestScenario = 'solo';  // 'solo' | 'partial' | 'full' | 'ready'
-const CURRENT_TEST_SCENARIO: TestScenario = 'ready';
+const CURRENT_TEST_SCENARIO: TestScenario = 'solo'; // 'solo' | 'partial' | 'full' | 'ready'
+// const CURRENT_TEST_SCENARIO: TestScenario = 'ready';
 
 // ============================================
 // 목데이터 생성 함수 (테스트용)

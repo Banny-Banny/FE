@@ -25,6 +25,8 @@ export type TimeOption = '1_WEEK' | '1_MONTH' | '1_YEAR' | 'CUSTOM';
 export interface CreateOrderRequest {
   /** 상품 ID (UUID) */
   product_id: string;
+  /** 캡슐 제목 (백엔드 신규 추가) */
+  capsule_title: string;
   /** 개봉 시간 옵션 */
   time_option: TimeOption;
   /** 직접 선택한 개봉일 (ISO 8601 형식) */
