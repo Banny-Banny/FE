@@ -9,6 +9,7 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { buildEndpointWithQuery } from '@/utils/api';
 import { apiClient } from '@/utils/apiClient';
 import { useCallback, useEffect, useState } from 'react';
@@ -37,8 +38,17 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
   const [capsules, setCapsules] = useState<CapsuleItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { accessToken, isLoading: authLoading } = useAuth();
 
   const fetchCapsules = useCallback(async () => {
+    // 인증 토큰이 없으면 API 호출하지 않음
+    if (!accessToken) {
+      if (__DEV__) {
+        console.warn('[useCapsules] 토큰이 없어 API 호출을 건너뜁니다.');
+      }
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -65,6 +75,7 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
       setIsLoading(false);
     }
   }, [
+    accessToken,
     params.lat,
     params.lng,
     params.radius_m,
@@ -74,10 +85,15 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
   ]);
 
   useEffect(() => {
+    // 인증 로딩 중이거나 토큰이 없으면 API 호출하지 않음
+    if (authLoading || !accessToken) {
+      return;
+    }
+
     if (params.lat && params.lng) {
       fetchCapsules();
     }
-  }, [params.lat, params.lng, fetchCapsules]);
+  }, [authLoading, accessToken, params.lat, params.lng, fetchCapsules]);
 
   return {
     capsules,

@@ -74,6 +74,14 @@ apiClient.interceptors.request.use(
     const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+      
+      if (__DEV__) {
+        // 토큰이 제대로 전달되는지 확인 (처음 20자만 로깅)
+        const tokenPreview = token.length > 20 ? `${token.substring(0, 20)}...` : token;
+        console.log(`[API] 🔑 토큰 전달: ${tokenPreview}`);
+      }
+    } else if (__DEV__) {
+      console.warn('[API] ⚠️ 토큰이 없습니다. 인증이 필요한 API 호출입니다.');
     }
 
     // ⭐ FormData를 보낼 때는 Content-Type 헤더 제거 (axios가 자동으로 boundary 포함하여 설정)
@@ -107,16 +115,46 @@ apiClient.interceptors.response.use(
   },
   async (error) => {
     if (__DEV__) {
+      const statusCode = error.response?.status || 'Network';
+      const url = error.config?.url || 'Unknown';
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || error.message || '알 수 없는 오류';
+      
       console.error(
-        `[API] ❌ ${error.response?.status || 'Network'} ${error.config?.url}`,
-        error.response?.data || error.message,
+        `[API] ❌ ${statusCode} ${url}`,
+        {
+          statusCode: errorData?.statusCode || statusCode,
+          message: errorMessage,
+          data: errorData,
+        },
       );
     }
 
     if (error.response?.status === 401) {
       // 토큰 만료 또는 유효하지 않음
+      const errorMessage = error.response?.data?.message || '사용자를 찾을 수 없습니다.';
+      
+      if (__DEV__) {
+        // 401 에러 발생 시 상세 정보 로깅
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const tokenInfo = token
+          ? {
+              exists: true,
+              length: token.length,
+              preview: token.length > 20 ? `${token.substring(0, 20)}...` : token,
+            }
+          : { exists: false };
+        
+        console.error(`[API] 401 인증 실패: ${errorMessage}`, {
+          url: error.config?.url,
+          method: error.config?.method,
+          tokenInfo,
+          responseData: error.response?.data,
+        });
+      }
+      
       await AsyncStorage.multiRemove([STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.USER_DATA]);
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/onboarding');
     }
     return Promise.reject(error);
   },
