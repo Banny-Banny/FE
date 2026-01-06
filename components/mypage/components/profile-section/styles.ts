@@ -1,16 +1,6 @@
 /**
  * components/mypage/components/profile-section/styles.ts
  * 프로필 섹션 스타일 정의
- *
- * 체크리스트:
- * - [✓] StyleSheet.create() 사용
- * - [✓] 색상 토큰만 사용 (하드코딩 0건)
- * - [✓] 인라인 스타일 0건
- * - [✓] 피그마 디자인 1:1 대응
- * - [✓] Typography 토큰 활용
- *
- * Figma 노드 ID: 161:24077
- * 생성 시각: 2025-01-XX
  */
 
 import { Colors, Typography } from '@/commons/constants';
@@ -109,7 +99,8 @@ export const styles = StyleSheet.create({
 
   // Text input (이메일)
   textInputContainer: {
-    width: 139,
+    width: 'auto',
+    maxWidth: '90%', // 화면 너비의 90%를 넘지 않도록
     height: 20,
     justifyContent: 'center',
     alignItems: 'flex-start',
@@ -118,5 +109,25 @@ export const styles = StyleSheet.create({
   textInputText: {
     ...Typography.body.body6,
     color: Colors.darkGrey[400],
+  },
+
+  // 프로필 이미지 스타일
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 9999,
+  },
+
+  // 로딩 인디케이터
+  loadingIndicator: {
+    color: Colors.black[500],
+  },
+
+  // 에러 메시지
+  errorText: {
+    ...Typography.body.body4,
+    color: Colors.red[500],
+    textAlign: 'center',
+    padding: 16,
   },
 });

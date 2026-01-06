@@ -33,6 +33,10 @@ export function Header() {
     navigation.push(ROUTES.ALARM);
   };
 
+  const handleClosePress = () => {
+    navigation.toHome();
+  };
+
   return (
     <View style={styles.outerContainer}>
       <View style={styles.container}>
@@ -57,9 +61,13 @@ export function Header() {
           </Pressable>
 
           {/* X 아이콘 */}
-          <View style={styles.settingsButton}>
+          <Pressable
+            style={styles.closeButton}
+            onPress={handleClosePress}
+            accessibilityRole="button"
+            accessibilityLabel="닫기">
             <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
-          </View>
+          </Pressable>
         </View>
       </View>
       {/* border-bottom line (화면 양끝까지 확장) */}

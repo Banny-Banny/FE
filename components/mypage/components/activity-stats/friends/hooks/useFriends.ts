@@ -81,7 +81,6 @@ export function useFriends(): UseFriendsReturn {
         err.message ||
         '친구 목록을 불러오는 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useFriends] 친구 동기화 실패:', err);
     } finally {
       setIsRefreshing(false);
     }

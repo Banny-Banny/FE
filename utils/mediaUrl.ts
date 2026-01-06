@@ -34,3 +34,20 @@ export const getMediaUrls = async (mediaIds: string[]): Promise<string[]> => {
   const urls = await Promise.all(mediaIds.map((id) => getMediaUrl(id)));
   return urls;
 };
+
+/**
+ * 프로필 이미지 URL 유효성 검사
+ * @param url 검사할 URL (string | null | undefined)
+ * @returns 유효한 URL인지 여부
+ */
+export const isValidImageUrl = (
+  url: string | null | undefined,
+): url is string => {
+  return (
+    url !== undefined &&
+    url !== null &&
+    typeof url === 'string' &&
+    url.trim() !== '' &&
+    url !== 'null'
+  );
+};

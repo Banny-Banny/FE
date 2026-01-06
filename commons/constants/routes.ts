@@ -20,6 +20,13 @@ export const ROUTES = {
   AUTH_LOGIN: '/(auth)/login',
   AUTH_SIGNUP: '/(auth)/signup',
   AUTH_CALLBACK: '/auth/callback', // OAuth 콜백 (웹 전용) - Expo Router에서 (auth) 그룹은 URL에 포함되지 않음
+
+  // 온보딩
+  AUTH_FRIEND_CONSENT: '/(auth)/friend-consent',
+  AUTH_LOCATION_CONSENT: '/(auth)/location-consent',
+
+  // 프로필
+  PROFILE_EDIT: '/profile/edit',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
