@@ -55,6 +55,11 @@ export const styles = StyleSheet.create({
     height: 128,
   },
 
+  eggImage: {
+    width: 128,
+    height: 128,
+  },
+
   // 제목 (이스터에그 발견!)
   // Figma: fontSize 24, lineHeight 32, fontWeight Black, letterSpacing 0.0703
   // 가장 유사: header.h1 (fontSize 24, lineHeight 24, fontWeight bold)

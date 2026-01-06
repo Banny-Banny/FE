@@ -166,7 +166,12 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({
           {/* 상단 알 아이콘 */}
           <View style={styles.eggIconContainer}>
             <View style={styles.eggIconWrapper}>
-              <Icon name="gift-fill" size={128} color={Colors.black[500]} />
+              <Image
+                source={require('@/assets/images/modal_egg.png')}
+                style={styles.eggImage}
+                contentFit="contain"
+                accessibilityLabel="이스터에그"
+              />
             </View>
           </View>
 
