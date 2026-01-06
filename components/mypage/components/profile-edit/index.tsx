@@ -10,7 +10,8 @@
  */
 
 import { DualButton } from '@/commons/components/dual-button';
-import { Colors, Typography } from '@/commons/constants';
+import { Colors } from '@/commons/constants';
+import { isValidImageUrl } from '@/utils';
 import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
@@ -27,16 +28,10 @@ export function ProfileEdit({ onClose }: ProfileEditProps) {
 
   // 프로필 이미지 URL 유효성 검사
   const profileImageUrl = userInfo?.profileImg;
-  const hasValidProfileImage =
-    profileImageUrl !== undefined &&
-    profileImageUrl !== null &&
-    typeof profileImageUrl === 'string' &&
-    profileImageUrl.trim() !== '' &&
-    profileImageUrl !== 'null';
+  const hasValidProfileImage = isValidImageUrl(profileImageUrl);
 
   const handleSave = () => {
     // TODO: API 호출로 프로필 수정
-    console.log('프로필 저장:', { nickname });
     onClose();
   };
 
@@ -95,4 +90,3 @@ export function ProfileEdit({ onClose }: ProfileEditProps) {
     </View>
   );
 }
-

@@ -1,15 +1,10 @@
 /**
  * components/mypage/components/profile-section/index.tsx
  * 프로필 섹션 컴포넌트
- *
- * 체크리스트:
- * - [✓] JSX 구조만 작성 (View, Text 등 기본 컴포넌트 사용)
- * - [✓] 인라인 스타일 0건
- * - [✓] 모든 스타일은 styles.ts에서 import하여 사용
- * - [✓] 피그마 디자인 1:1 대응
  */
 
 import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { isValidImageUrl } from '@/utils';
 import { Image } from 'expo-image';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
@@ -60,20 +55,7 @@ export function ProfileSection() {
 
   // 프로필 이미지 URL 유효성 검사
   const profileImageUrl = userInfo.profileImg;
-  const hasValidProfileImage =
-    profileImageUrl !== undefined &&
-    profileImageUrl !== null &&
-    typeof profileImageUrl === 'string' &&
-    profileImageUrl.trim() !== '' &&
-    profileImageUrl !== 'null' &&
-    !imageError;
-
-  // 디버깅용 로그 (개발 환경에서만)
-  if (__DEV__ && userInfo) {
-    console.log('[ProfileSection] profileImg 값:', userInfo.profileImg);
-    console.log('[ProfileSection] profileImg 타입:', typeof userInfo.profileImg);
-    console.log('[ProfileSection] hasValidProfileImage:', hasValidProfileImage);
-  }
+  const hasValidProfileImage = isValidImageUrl(profileImageUrl) && !imageError;
 
   return (
     <View style={styles.container}>
@@ -88,9 +70,6 @@ export function ProfileSection() {
                 contentFit="cover"
                 accessibilityLabel="프로필 이미지"
                 onError={() => {
-                  if (__DEV__) {
-                    console.log('[ProfileSection] 이미지 로딩 실패:', profileImageUrl);
-                  }
                   setImageError(true);
                 }}
               />

@@ -1,16 +1,6 @@
 /**
  * components/mypage/components/profile-section/styles.ts
  * 프로필 섹션 스타일 정의
- *
- * 체크리스트:
- * - [✓] StyleSheet.create() 사용
- * - [✓] 색상 토큰만 사용 (하드코딩 0건)
- * - [✓] 인라인 스타일 0건
- * - [✓] 피그마 디자인 1:1 대응
- * - [✓] Typography 토큰 활용
- *
- * Figma 노드 ID: 161:24077
- * 생성 시각: 2025-01-XX
  */
 
 import { Colors, Typography } from '@/commons/constants';
@@ -136,7 +126,7 @@ export const styles = StyleSheet.create({
   // 에러 메시지
   errorText: {
     ...Typography.body.body4,
-    color: Colors.red[500] || Colors.black[500],
+    color: Colors.red[500],
     textAlign: 'center',
     padding: 16,
   },

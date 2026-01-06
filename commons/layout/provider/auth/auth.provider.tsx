@@ -61,13 +61,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (token && userData) {
           setAccessToken(token);
           setUser(JSON.parse(userData));
-          if (__DEV__)
-            console.log('[Auth] 인증 정보 복구 완료:', {
-              token: token.substring(0, 20) + '...',
-              user: JSON.parse(userData),
-            });
-        } else {
-          if (__DEV__) console.log('[Auth] 저장된 인증 정보 없음');
         }
 
         // 온보딩 상태 복구
@@ -76,7 +69,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           isLocationConsentDone: locationConsent === 'true',
         });
       } catch (error) {
-        if (__DEV__) console.error('[Auth] 초기화 오류:', error);
+        // 초기화 오류 처리
       } finally {
         setIsLoading(false);
       }
@@ -98,23 +91,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (!onboardingStatus.isFriendConsentDone) {
         // 친구 연동 동의 미완료
         if (currentRoute !== 'friend-consent') {
-          if (__DEV__) console.log('[Auth] 친구 연동 동의 페이지로 이동');
           router.replace(ROUTES.AUTH_FRIEND_CONSENT);
         }
       } else if (!onboardingStatus.isLocationConsentDone) {
         // 위치 연동 동의 미완료
         if (currentRoute !== 'location-consent') {
-          if (__DEV__) console.log('[Auth] 위치 연동 동의 페이지로 이동');
           router.replace(ROUTES.AUTH_LOCATION_CONSENT);
         }
       } else if (isAuthPage && currentRoute !== 'login') {
         // 온보딩 완료 + 인증 페이지 (로그인 제외) → 메인으로
-        if (__DEV__) console.log('[Auth] 메인 페이지로 이동');
         router.replace(ROUTES.MAIN);
       }
     } else if (!isAuthPage) {
       // 미인증 + 메인 페이지 → 로그인으로
-      if (__DEV__) console.log('[Auth] 로그인 페이지로 이동');
       router.replace(ROUTES.AUTH_LOGIN);
     }
   }, [isLoading, accessToken, onboardingStatus, segments, router]);
@@ -123,8 +112,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 로그인: 토큰과 유저 정보 저장 및 메인으로 이동
    */
   const login = async (token: string, userData: User): Promise<void> => {
-    if (__DEV__) console.log('[Auth] 로그인:', userData.displayName);
-
     await Promise.all([
       AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token),
       AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData)),
@@ -140,8 +127,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 로그아웃: 토큰과 유저 정보 삭제 및 로그인으로 이동
    */
   const logout = async (): Promise<void> => {
-    if (__DEV__) console.log('[Auth] 로그아웃');
-
     await Promise.all([
       AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN),
       AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA),
@@ -163,8 +148,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 친구 연동 동의 완료
    */
   const completeFriendConsent = async (): Promise<void> => {
-    if (__DEV__) console.log('[Auth] 친구 연동 동의 완료');
-
     await AsyncStorage.setItem(STORAGE_KEYS.FRIEND_CONSENT, 'true');
     setOnboardingStatus((prev) => ({
       ...prev,
@@ -178,8 +161,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
    * 위치 연동 동의 완료
    */
   const completeLocationConsent = async (): Promise<void> => {
-    if (__DEV__) console.log('[Auth] 위치 연동 동의 완료');
-
     await AsyncStorage.setItem(STORAGE_KEYS.LOCATION_CONSENT, 'true');
     setOnboardingStatus((prev) => ({
       ...prev,

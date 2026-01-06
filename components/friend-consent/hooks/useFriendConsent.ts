@@ -23,7 +23,7 @@ export function useFriendConsent() {
       await completeFriendConsent();
       // 자동 리다이렉트는 AuthProvider에서 처리
     } catch (error) {
-      if (__DEV__) console.error('[FriendConsent] 동의 처리 오류:', error);
+      // 동의 처리 오류 처리
     } finally {
       setIsLoading(false);
     }

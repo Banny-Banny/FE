@@ -26,14 +26,13 @@ export function useLocationConsent() {
       const { status } = await Location.requestForegroundPermissionsAsync();
       
       if (status !== 'granted') {
-        if (__DEV__) console.warn('[LocationConsent] 위치 권한이 거부됨');
         // 권한이 거부되어도 동의 완료로 처리 (사용자가 나중에 설정에서 변경 가능)
       }
 
       await completeLocationConsent();
       // 자동 리다이렉트는 AuthProvider에서 처리
     } catch (error) {
-      if (__DEV__) console.error('[LocationConsent] 동의 처리 오류:', error);
+      // 동의 처리 오류 처리
     } finally {
       setIsLoading(false);
     }

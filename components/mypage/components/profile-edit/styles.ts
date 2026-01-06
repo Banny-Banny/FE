@@ -17,18 +17,13 @@ import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
-  // 메인 컨테이너
+  // 메인 컨테이너 (Modal 공통 컴포넌트가 컨테이너 스타일을 제공하므로 내부 컨텐츠만 스타일링)
   container: {
-    width: 340,
     paddingVertical: 24,
     paddingHorizontal: 24,
     flexDirection: 'column',
     gap: 24,
     alignItems: 'flex-start',
-    backgroundColor: Colors.white[500],
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.black[100],
   },
 
   // 제목 컨테이너
