@@ -20,7 +20,7 @@ export function ProfileSection() {
   // userInfo가 변경되면 이미지 에러 상태 리셋
   useEffect(() => {
     setImageError(false);
-  }, [userInfo?.profileImg]);
+  }, [userInfo?.profileImageUrl]);
 
   // 로딩 중
   if (isLoading) {
@@ -40,12 +40,8 @@ export function ProfileSection() {
     );
   }
 
-  // 프로바이더 텍스트 변환 (phoneNumber에서 추출 또는 email 사용)
+  // 프로바이더 텍스트 변환 (email 사용)
   const getProviderText = () => {
-    // phoneNumber가 "kakao_"로 시작하면 카카오 로그인
-    if (userInfo.phoneNumber?.startsWith('kakao_')) {
-      return '카카오 로그인';
-    }
     // email이 있으면 이메일 표시
     if (userInfo.email) {
       return userInfo.email;
@@ -54,7 +50,7 @@ export function ProfileSection() {
   };
 
   // 프로필 이미지 URL 유효성 검사
-  const profileImageUrl = userInfo.profileImg;
+  const profileImageUrl = userInfo.profileImageUrl;
   const hasValidProfileImage = isValidImageUrl(profileImageUrl) && !imageError;
 
   return (

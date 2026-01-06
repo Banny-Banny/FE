@@ -1,5 +1,5 @@
 /**
- * Login Feature 타입 정의
+ * Onboarding Feature 타입 정의
  */
 
 export interface LoginResult {

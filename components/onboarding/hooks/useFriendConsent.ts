@@ -1,5 +1,5 @@
 /**
- * components/friend-consent/hooks/useFriendConsent.ts
+ * components/onboarding/hooks/useFriendConsent.ts
  * 친구 연동 동의 비즈니스 로직 Hook
  */
 

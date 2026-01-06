@@ -2,7 +2,7 @@ import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
- * ConsentForm 스타일
+ * LocationConsentStep 스타일
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *

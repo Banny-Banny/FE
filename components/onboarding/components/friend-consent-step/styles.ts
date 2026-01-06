@@ -2,12 +2,12 @@ import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
- * LoginView 스타일
+ * FriendConsentStep 스타일
  * ✅ Tailwind 색상 토큰 100% 사용
  * ✅ 하드코딩 색상값 0건
  *
  * 토큰 소스: commons/constants/color.ts
- * 생성 시각: 2025-12-16
+ * 생성 시각: 2025-01-XX
  * 버전: 1.0.0
  */
 
@@ -18,14 +18,22 @@ export const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingTop: 48,
   },
   title: {
     ...Typography.header.h1,
     color: Colors.darkGrey[900],
-    marginBottom: 8,
+    marginBottom: 16,
+  },
+  description: {
+    ...Typography.body.body4,
+    color: Colors.darkGrey[600],
+    marginBottom: 48,
+  },
+  buttonContainer: {
+    marginTop: 'auto',
+    marginBottom: 32,
   },
 });
 

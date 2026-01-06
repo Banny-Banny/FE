@@ -17,13 +17,15 @@ export const ROUTES = {
   TIMECAPSULE_DETAIL: '/timecapsule/detail',
 
   // 인증
-  AUTH_LOGIN: '/(auth)/login',
   AUTH_SIGNUP: '/(auth)/signup',
   AUTH_CALLBACK: '/auth/callback', // OAuth 콜백 (웹 전용) - Expo Router에서 (auth) 그룹은 URL에 포함되지 않음
 
-  // 온보딩
-  AUTH_FRIEND_CONSENT: '/(auth)/friend-consent',
-  AUTH_LOCATION_CONSENT: '/(auth)/location-consent',
+  // 온보딩 (로그인 → 친구 연동 → 위치 동의 통합)
+  AUTH_ONBOARDING: '/(auth)/onboarding',
+  // 하위 호환성을 위한 별칭 (deprecated)
+  AUTH_LOGIN: '/(auth)/onboarding',
+  AUTH_FRIEND_CONSENT: '/(auth)/onboarding',
+  AUTH_LOCATION_CONSENT: '/(auth)/onboarding',
 
   // 프로필
   PROFILE_EDIT: '/profile/edit',

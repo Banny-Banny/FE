@@ -4,23 +4,28 @@
  */
 
 // API 응답 타입
-export interface UserInfoResponse {
-  id: string;
+export interface UserInfoSummary {
+  capsuleCount: number;
+  easterEggCount: number;
+  friendCount: number;
+}
+
+export interface UserInfoData {
   nickname: string;
   email: string;
-  profileImg: string; // camelCase
-  phoneNumber: string;
-  isMarketingAgreed: boolean;
-  isPushAgreed: boolean;
-  isLocationTermAgreed: boolean;
-  createdAt: string;
+  profileImageUrl: string;
+  summary: UserInfoSummary;
+}
+
+export interface UserInfoResponse {
+  success: boolean;
+  data: UserInfoData;
 }
 
 // Hook 반환 타입
 export interface UseUserInfoReturn {
-  data: UserInfoResponse | null;
+  data: UserInfoData | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
 }
-

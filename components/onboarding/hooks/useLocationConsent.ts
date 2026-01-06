@@ -1,5 +1,5 @@
 /**
- * components/location-consent/hooks/useLocationConsent.ts
+ * components/onboarding/hooks/useLocationConsent.ts
  * 위치 연동 동의 비즈니스 로직 Hook
  */
 

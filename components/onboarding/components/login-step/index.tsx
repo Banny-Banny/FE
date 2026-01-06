@@ -1,20 +1,20 @@
 /**
- * components/login/components/login-form/index.tsx
- * 로그인 UI 컴포넌트 (순수 프레젠테이션)
+ * components/onboarding/components/login-step/index.tsx
+ * 로그인 단계 UI 컴포넌트 (순수 프레젠테이션)
  */
 
 import { Pressable, Text, View } from 'react-native';
 import { styles } from './styles';
 
-interface LoginFormProps {
+interface LoginStepProps {
   isLoading: boolean;
   onKakaoLogin: () => void;
 }
 
 /**
- * 로그인 폼 (UI만 담당)
+ * 로그인 단계 (UI만 담당)
  */
-export function LoginForm({ isLoading, onKakaoLogin }: LoginFormProps) {
+export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -26,4 +26,3 @@ export function LoginForm({ isLoading, onKakaoLogin }: LoginFormProps) {
     </View>
   );
 }
-

@@ -84,27 +84,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const isAuthPage = segments[0] === '(auth)';
     const isAuthenticated = !!accessToken;
-    const currentRoute = segments[1]; // (auth) 그룹 내의 실제 라우트 (예: 'login', 'friend-consent', 'location-consent')
+    const currentRoute = segments[1]; // (auth) 그룹 내의 실제 라우트
 
     if (isAuthenticated) {
       // 온보딩 단계 확인 및 리다이렉트
-      if (!onboardingStatus.isFriendConsentDone) {
-        // 친구 연동 동의 미완료
-        if (currentRoute !== 'friend-consent') {
-          router.replace(ROUTES.AUTH_FRIEND_CONSENT);
+      if (!onboardingStatus.isFriendConsentDone || !onboardingStatus.isLocationConsentDone) {
+        // 온보딩 미완료 → onboarding 페이지로
+        if (currentRoute !== 'onboarding') {
+          router.replace(ROUTES.AUTH_ONBOARDING);
         }
-      } else if (!onboardingStatus.isLocationConsentDone) {
-        // 위치 연동 동의 미완료
-        if (currentRoute !== 'location-consent') {
-          router.replace(ROUTES.AUTH_LOCATION_CONSENT);
-        }
-      } else if (isAuthPage && currentRoute !== 'login') {
-        // 온보딩 완료 + 인증 페이지 (로그인 제외) → 메인으로
+      } else if (isAuthPage && currentRoute === 'onboarding') {
+        // 온보딩 완료 + onboarding 페이지 → 메인으로
         router.replace(ROUTES.MAIN);
       }
     } else if (!isAuthPage) {
-      // 미인증 + 메인 페이지 → 로그인으로
-      router.replace(ROUTES.AUTH_LOGIN);
+      // 미인증 + 메인 페이지 → 온보딩으로
+      router.replace(ROUTES.AUTH_ONBOARDING);
     }
   }, [isLoading, accessToken, onboardingStatus, segments, router]);
 

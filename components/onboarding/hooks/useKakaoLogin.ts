@@ -1,5 +1,5 @@
 /**
- * components/login/hooks/useKakaoLogin.ts
+ * components/onboarding/hooks/useKakaoLogin.ts
  * 카카오 OAuth 로그인 처리만 담당
  */
 
