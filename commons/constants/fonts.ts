@@ -91,3 +91,4 @@ export const TailwindFontSize = {
   '5xl': ['48px', { lineHeight: '1' }],
 } as const;
 
+

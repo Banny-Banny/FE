@@ -26,3 +26,4 @@ export interface MapFeatureProps {
   onEasterEggPress?: () => void;
   onTimeCapsulePress?: () => void;
 }
+

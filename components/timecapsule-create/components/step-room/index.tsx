@@ -13,9 +13,10 @@
  */
 
 import { Button } from '@/commons/components/button';
-import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { Colors } from '@/commons/constants/color';
+import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
@@ -29,8 +30,8 @@ import {
   View,
 } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import SubmitConfirmModal from '../../modals/submit-confirm-modal';
 import SubmitCompleteModal from '../../modals/submit-complete-modal';
+import SubmitConfirmModal from '../../modals/submit-confirm-modal';
 import UserBottomSheet from '../write-bottomsheet';
 import { useParticipants } from './hooks/useParticipants';
 import { useRoomData } from './hooks/useRoomData';
@@ -65,12 +66,14 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
    * 2. URL 파라미터 (추후 구현 가능)
    * 3. 백엔드 제공 테스트 ID (하드코딩)
    */
-  const orderId = propsOrderId || '5ba3ba70-493a-48c7-b107-d49e877d2501'; // 백엔드 제공 테스트 orderId
+  const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
+  const orderId = propsOrderId || TEST_ORDER_ID;
 
-  /** 캡슐대기실 데이터 Hook - ⭐ 2단계 API 호출 (orderId → capsule_id → roomSettings) */
+  /** 캡슐대기실 데이터 Hook - ⭐ 1단계 API 호출 (orderId → roomSettings) */
   const {
-    orderInfo,
     roomSettings,
+    createRoomResponse,
+    capsuleId,
     isLoading: isRoomLoading,
     error: roomError,
     calculateProgress,
@@ -78,7 +81,30 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   } = useRoomData(orderId);
 
   /** 참여자 목록 Hook */
-  const { participants, myParticipant, saveContent, canEdit } = useParticipants();
+  // ⭐ 수정: roomSettings가 로드된 후에만 올바른 maxParticipants 전달
+  // roomSettings가 null이면 capsuleId도 없으므로 useParticipants가 실행되지 않음
+  const {
+    participants,
+    myParticipant,
+    isLoading: isParticipantsLoading,
+    error: participantsError,
+    saveContent,
+    canEdit,
+  } = useParticipants({
+    capsuleId,
+    maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
+  });
+
+  // ⭐ 디버깅: maxParticipants 값 확인
+  React.useEffect(() => {
+    if (roomSettings) {
+      console.log(
+        '🔍 [StepRoom] maxParticipants 확인:',
+        `roomSettings.max_participants=${roomSettings.max_participants}`,
+        `useParticipants에 전달된 값=${roomSettings?.max_participants || 4}`,
+      );
+    }
+  }, [roomSettings]);
 
   /** 타임캡슐 최종 제출 Hook */
   const {
@@ -86,6 +112,9 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
     isSubmitting: isSubmittingCapsule,
     error: submitError,
   } = useRoomSubmit();
+
+  /** 현재 위치 Hook (타임캡슐 매장 위치로 사용) */
+  const { location, isLoading: isLocationLoading, error: locationError } = useMapLocation();
 
   // ============================================
   // 상태 관리
@@ -111,14 +140,29 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
 
   /** 작성 마감까지 남은 시간 계산 */
   const remainingTime = useMemo(() => {
-    // API에서 deadline을 제공하지 않으므로 임시로 24시간 후로 설정
-    const deadline = dayjs().add(24, 'hour');
+    if (!createRoomResponse?.deadline) {
+      return '계산 중...';
+    }
+
+    const deadline = dayjs(createRoomResponse.deadline);
     const now = dayjs();
-    const diffHours = deadline.diff(now, 'hour');
+
+    if (deadline.isBefore(now)) {
+      return '마감됨';
+    }
+
+    const diffDays = deadline.diff(now, 'day');
+    const diffHours = deadline.diff(now, 'hour') % 24;
     const diffMinutes = deadline.diff(now, 'minute') % 60;
 
-    return `${diffHours}시간 ${diffMinutes}분 남음`;
-  }, []);
+    if (diffDays > 0) {
+      return `${diffDays}일 ${diffHours}시간 남음`;
+    } else if (diffHours > 0) {
+      return `${diffHours}시간 ${diffMinutes}분 남음`;
+    } else {
+      return `${diffMinutes}분 남음`;
+    }
+  }, [createRoomResponse?.deadline]);
 
   // ============================================
   // 이벤트 핸들러
@@ -127,11 +171,17 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   /** 공유 기능 */
   const handleShare = async () => {
     try {
+      const inviteCode = createRoomResponse?.invite_code || '';
+      const capsuleName = createRoomResponse?.title || roomSettings?.capsule_name || '타임캡슐';
+
+      // 전체 API URL 생성
+      const apiBaseUrl =
+        process.env.EXPO_PUBLIC_API_BASE_URL || 'https://be-production-8aa2.up.railway.app/';
+      const inviteUrl = `${apiBaseUrl}api/capsules/step-rooms?invite_code=${inviteCode}`;
+
       const result = await Share.share({
         title: '타임캡슐에 초대합니다',
-        message: `타임캡슐 이름: ${
-          roomSettings?.capsule_name || ''
-        }\n\n함께 추억을 남겨보세요!\n\n초대 링크: [추후 API 연동]`,
+        message: `타임캡슐 이름: ${capsuleName}\n\n함께 추억을 남겨보세요!\n\n초대 링크: ${inviteUrl}`,
       });
 
       // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
@@ -247,7 +297,7 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   // ============================================
 
   /** 로딩 상태 */
-  if (isRoomLoading || !roomSettings) {
+  if (isRoomLoading || isParticipantsLoading || !roomSettings) {
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
@@ -261,12 +311,13 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   }
 
   /** 에러 상태 */
-  if (roomError) {
+  if (roomError || participantsError) {
+    const errorMessage = roomError?.message || participantsError?.message || '알 수 없는 오류';
     return (
       <View style={styles.container}>
         <View style={styles.centerContent}>
           <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
-            에러가 발생했습니다: {roomError.message}
+            에러가 발생했습니다: {errorMessage}
           </Text>
         </View>
       </View>
@@ -279,7 +330,13 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      {/* 헤더 */}
+      <TimeCapsuleHeader title="캡슐 대기실" onBack={() => router.back()} titleAlign="left" />
+
+      <ScrollView
+        style={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}>
         {/* 정보 카드 */}
         <View style={styles.infoCard}>
           <View>
@@ -295,7 +352,11 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
               </View>
               <View>
                 <Text style={styles.infoCardDetailLabel}>개봉일</Text>
-                <Text style={styles.infoCardDetailValue}>{roomSettings.open_date}</Text>
+                <Text style={styles.infoCardDetailValue}>
+                  {createRoomResponse?.open_date
+                    ? dayjs(createRoomResponse.open_date).format('YYYY-MM-DD')
+                    : roomSettings.open_date}
+                </Text>
               </View>
             </View>
 
@@ -306,7 +367,11 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
               </View>
               <View>
                 <Text style={styles.infoCardDetailLabel}>참여자</Text>
-                <Text style={styles.infoCardDetailValue}>{roomSettings.max_participants}명</Text>
+                <Text style={styles.infoCardDetailValue}>
+                  {createRoomResponse?.current_participants !== undefined
+                    ? `${createRoomResponse.current_participants}/${roomSettings.max_participants}명`
+                    : `${roomSettings.max_participants}명`}
+                </Text>
               </View>
             </View>
           </View>
@@ -349,10 +414,16 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
           {isHost && (
             <View style={styles.buttonSection}>
               <Button
-                label={isSubmittingCapsule ? '제출 중...' : '타임캡슐 묻기'}
+                label={
+                  isLocationLoading
+                    ? '위치 확인 중...'
+                    : isSubmittingCapsule
+                      ? '제출 중...'
+                      : '타임캡슐 묻기'
+                }
                 variant="primary"
                 size="M"
-                disabled={!isSubmitEnabled || isSubmittingCapsule}
+                disabled={!isSubmitEnabled || isSubmittingCapsule || isLocationLoading || !location}
                 onPress={() => {
                   console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
                   console.log('📊 [StepRoom] 진행률:', progress.percentage, '%');
@@ -373,7 +444,20 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
                           try {
                             // 백엔드로 최종 제출
                             console.log('📤 [StepRoom] 백엔드로 타임캡슐 제출 시작...');
-                            await submitTimeCapsule(roomSettings, participants);
+
+                            // 현재 위치 확인
+                            if (!location) {
+                              throw new Error(
+                                locationError ||
+                                  '위치 정보를 가져올 수 없습니다. GPS를 활성화하고 위치 권한을 허용해주세요.',
+                              );
+                            }
+
+                            const latitude = location.lat;
+                            const longitude = location.lng;
+                            console.log(`📍 [StepRoom] 매장 위치: (${latitude}, ${longitude})`);
+
+                            await submitTimeCapsule(roomSettings.room_id, latitude, longitude);
                             console.log('✅ [StepRoom] 백엔드 제출 완료!');
 
                             // D-Day 계산
@@ -454,17 +538,24 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
               {!isSubmitEnabled && (
                 <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
               )}
+              {locationError && (
+                <Text style={[styles.buttonHint, { color: Colors.red[500] }]}>
+                  {locationError}
+                </Text>
+              )}
             </View>
           )}
         </View>
 
         {/* 바텀시트 */}
-        {selectedParticipant && (
+        {selectedParticipant && capsuleId && (
           <UserBottomSheet
             isVisible={isBottomSheetVisible}
             onClose={() => setIsBottomSheetVisible(false)}
             participant={selectedParticipant}
+            capsuleId={capsuleId}
             onSave={handleBottomSheetSave}
+            roomSettings={roomSettings}
           />
         )}
       </ScrollView>

@@ -4,53 +4,28 @@
  *
  * 체크리스트:
  * - [✓] submitTimeCapsule 함수 구현
- * - [✓] 모든 참여자 콘텐츠 수집 로직
- * - [✓] 캡슐 메타데이터 포함
- * - [✓] FormData 생성 로직
- * - [✓] Mock API 호출 (백엔드 연동 전)
+ * - [✓] 위치 정보로 캡슐 매장 API 호출
+ * - [✓] submitCapsule API 연동
  * - [✓] 로딩 상태 관리
  * - [✓] 에러 상태 관리
  */
 
 import { useState } from 'react';
-import type { Participant, RoomSettingsResponse } from '../types';
+import { submitCapsule } from '../api/capsule';
+import type { CapsuleSubmitResponse, Participant, RoomSettingsResponse } from '../types';
 
 // ============================================
 // 타입 정의
 // ============================================
 
-/** 타임캡슐 제출 데이터 */
-export interface TimeCapsuleSubmitData {
-  /** 캡슐 메타데이터 */
-  capsuleId: string;
-  capsuleName: string;
-  openDate: string;
-  maxParticipants: number;
-  imageSlots: number;
-  additionalOptions: {
-    hasMusicFile: boolean;
-    hasVideo: boolean;
-  };
-  /** 참여자 데이터 (완료된 참여자만) */
-  participants: Array<{
-    participantId: string;
-    participantName: string;
-    emoji: string;
-    isHost: boolean;
-    content: {
-      text?: string;
-      images?: string[];
-      voiceRecording?: string;
-    };
-  }>;
-  /** 제출 시간 */
-  submittedAt: string;
-}
-
 /** useRoomSubmit Hook 반환 타입 */
 interface UseRoomSubmitReturn {
-  /** 타임캡슐 최종 제출 */
-  submitTimeCapsule: (roomSettings: RoomSettingsResponse, participants: Participant[]) => Promise<void>;
+  /** 타임캡슐 최종 제출 (위치 지정 및 매장) */
+  submitTimeCapsule: (
+    roomId: string,
+    latitude: number,
+    longitude: number,
+  ) => Promise<CapsuleSubmitResponse>;
   /** 제출 중 여부 */
   isSubmitting: boolean;
   /** 에러 */
@@ -65,9 +40,9 @@ interface UseRoomSubmitReturn {
  * 타임캡슐 최종 제출 Hook
  *
  * 기능:
- * 1. 모든 참여자의 콘텐츠 데이터 수집
- * 2. 캡슐 메타데이터와 함께 제출 데이터 구성
- * 3. 백엔드 API로 전송 (현재는 Mock)
+ * 1. 위치 정보(latitude, longitude)를 받아서 캡슐 매장
+ * 2. POST /api/capsules/step-rooms/:roomId/submit 호출
+ * 3. 매장 결과 반환
  *
  * @returns {UseRoomSubmitReturn} Hook 반환값
  */
@@ -76,98 +51,42 @@ export function useRoomSubmit(): UseRoomSubmitReturn {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * 타임캡슐 최종 제출 함수
+   * 타임캡슐 최종 제출 함수 (위치 지정 및 매장)
    *
-   * @param {RoomSettingsResponse} roomSettings 캡슐대기실 설정값 (snake_case)
-   * @param {Participant[]} participants 참여자 목록
+   * @param {string} roomId 캡슐 ID (UUID)
+   * @param {number} latitude 위도 (-90 ~ 90)
+   * @param {number} longitude 경도 (-180 ~ 180)
+   * @returns {Promise<CapsuleSubmitResponse>} 매장 결과
+   * @throws 400: INCOMPLETE_PARTICIPANTS, INVALID_LOCATION, PAYMENT_NOT_COMPLETED
+   * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+   * @throws 403: 방장이 아닌 사용자의 제출 시도
+   * @throws 404: 존재하지 않는 roomId
+   * @throws 409: 이미 제출된 캡슐 (중복 제출)
+   * @throws 500: 서버 내부 오류
    */
-  const submitTimeCapsule = async (roomSettings: RoomSettingsResponse, participants: Participant[]): Promise<void> => {
+  const submitTimeCapsule = async (
+    roomId: string,
+    latitude: number,
+    longitude: number,
+  ): Promise<CapsuleSubmitResponse> => {
     try {
       setIsSubmitting(true);
       setError(null);
 
       console.log('=== 타임캡슐 최종 제출 시작 ===');
+      console.log('캡슐 ID:', roomId);
+      console.log('위치:', { latitude, longitude });
 
-      // 1. 완료된 참여자만 필터링 (name이 있고 status가 completed인 참여자)
-      const completedParticipants = participants.filter(
-        (p) => p.name !== '' && p.status === 'completed',
-      );
-
-      console.log(`✅ 완료된 참여자: ${completedParticipants.length}명`);
-
-      if (completedParticipants.length === 0) {
-        throw new Error('완료된 참여자가 없습니다.');
-      }
-
-      // 2. 제출 데이터 구성
-      const submitData: TimeCapsuleSubmitData = {
-        // 캡슐 메타데이터 (snake_case → camelCase 변환)
-        capsuleId: roomSettings.room_id,
-        capsuleName: roomSettings.capsule_name,
-        openDate: roomSettings.open_date,
-        maxParticipants: roomSettings.max_participants,
-        imageSlots: roomSettings.max_images_per_person,
-        additionalOptions: {
-          hasMusicFile: roomSettings.has_music,
-          hasVideo: roomSettings.has_video,
-        },
-
-        // 참여자 데이터
-        participants: completedParticipants.map((p) => ({
-          participantId: p.id,
-          participantName: p.name,
-          emoji: p.emoji,
-          isHost: p.isHost || false,
-          content: {
-            text: p.content?.text || '',
-            images: p.content?.images || [],
-            voiceRecording: p.content?.voiceRecording || undefined,
-          },
-        })),
-
-        // 제출 시간
-        submittedAt: new Date().toISOString(),
-      };
-
-      console.log('=== 제출 데이터 ===');
-      console.log('캡슐 이름:', submitData.capsuleName);
-      console.log('개봉일:', submitData.openDate);
-      console.log('참여자 수:', submitData.participants.length);
-
-      // 참여자별 콘텐츠 로그
-      submitData.participants.forEach((p, index) => {
-        console.log(`\n--- 참여자 ${index + 1}: ${p.participantName} ${p.emoji} ---`);
-        console.log('  방장 여부:', p.isHost);
-        console.log('  텍스트:', p.content.text || '(없음)');
-        console.log('  이미지 개수:', p.content.images?.length || 0);
-        console.log('  음성 녹음:', p.content.voiceRecording ? '있음' : '없음');
-      });
-
-      // 3. Mock API 호출 시뮬레이션 (네트워크 지연 2초)
-      console.log('\n=== Mock API 전송 중... ===');
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // TODO: 실제 백엔드 API 엔드포인트 호출
-      // const response = await fetch('/api/timecapsule/submit', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify(submitData),
-      // });
-      //
-      // if (!response.ok) {
-      //   const errorData = await response.json();
-      //   throw new Error(errorData.message || '타임캡슐 제출에 실패했습니다');
-      // }
-      //
-      // const result = await response.json();
-      // console.log('✅ 백엔드 응답:', result);
+      // submitCapsule API 호출 (POST /api/capsules/step-rooms/:roomId/submit)
+      const result = await submitCapsule(roomId, { latitude, longitude });
 
       console.log('=== 타임캡슐 최종 제출 완료! ===');
-      console.log('📦 제출된 데이터:', JSON.stringify(submitData, null, 2));
+      console.log('매장 위치:', result.data.location.address);
+      console.log('매장 시각:', result.data.buried_at);
+      console.log('개봉 예정일:', result.data.open_date);
+      console.log('참여자 수:', result.data.participants);
 
-      // 4. 제출 성공
+      return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다';
       console.error('❌ 타임캡슐 제출 실패:', errorMessage);

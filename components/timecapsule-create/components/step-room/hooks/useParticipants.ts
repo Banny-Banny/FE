@@ -3,7 +3,14 @@
  * 참여자 목록 관리,상태 관리, 작성 내용 저장 Hook
  */
 
+import { STORAGE_KEYS } from '@/commons/constants/storage';
+import { getUserFromToken } from '@/utils/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform } from 'react-native';
+import { submitMyContent } from '../../write-bottomsheet/api/content';
+import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
 
@@ -218,12 +225,60 @@ interface UseParticipantsReturn {
   participants: Participant[];
   /** 본인 참여자 정보 */
   myParticipant: Participant | undefined;
+  /** 로딩 상태 */
+  isLoading: boolean;
+  /** 에러 */
+  error: Error | null;
   /** 참여자 상태 업데이트 (pending → completed) */
   updateStatus: (participantId: string, status: ParticipantStatus) => void;
   /** 참여자 작성 내용 저장 (본인만) */
   saveContent: (participantId: string, content: ParticipantContent) => Promise<void>;
   /** 편집 가능 여부 확인 (본인만) */
   canEdit: (participantId: string) => boolean;
+}
+
+/** useParticipants Hook 파라미터 */
+interface UseParticipantsParams {
+  /** 캡슐 ID (UUID) - 참여자 슬롯 정보 조회용 */
+  capsuleId: string | null;
+  /** 최대 참여 인원수 - 빈 슬롯 생성용 */
+  maxParticipants: number;
+}
+
+/**
+ * HEIC/HEIF 파일을 JPEG로 변환
+ * 서버가 HEIC를 지원하지 않으므로 JPEG로 변환 필요
+ */
+async function convertHeicToJpeg(uri: string): Promise<string> {
+  // 웹 환경에서는 변환 불가 (원본 반환)
+  if (Platform.OS === 'web') {
+    return uri;
+  }
+
+  try {
+    // expo-image-manipulator를 사용하여 HEIC를 JPEG로 변환
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [], // 변환만 수행 (리사이즈 없음)
+      {
+        compress: 0.9, // 높은 품질 유지
+        format: ImageManipulator.SaveFormat.JPEG,
+      },
+    );
+    return result.uri;
+  } catch (error) {
+    console.error('HEIC 변환 실패:', error);
+    // 변환 실패 시 원본 반환 (에러 발생 가능하지만 시도)
+    return uri;
+  }
+}
+
+/**
+ * 이미지 URI가 HEIC/HEIF 형식인지 확인
+ */
+function isHeicFormat(uri: string): boolean {
+  const extension = uri.split('.').pop()?.toLowerCase() || '';
+  return extension === 'heic' || extension === 'heif';
 }
 
 // ============================================
@@ -234,19 +289,25 @@ interface UseParticipantsReturn {
  * 참여자 목록 관리 Hook
  *
  * 기능:
- * 1. fetchParticipants(): 참여자 목록 가져오기 (목데이터)
+ * 1. fetchParticipants(): 참여자 목록 가져오기 (API 또는 목데이터)
  * 2. updateParticipantStatus(): 참여자 상태 업데이트 (pending → completed)
  * 3. saveParticipantContent(): 참여자 작성 내용 저장 (본인만)
  * 4. canEditParticipant(): 편집 가능 여부 확인 (본인만)
  *
+ * @param {UseParticipantsParams} params Hook 파라미터
  * @returns {UseParticipantsReturn} Hook 반환값
  */
-export function useParticipants(): UseParticipantsReturn {
+export function useParticipants({
+  capsuleId,
+  maxParticipants,
+}: UseParticipantsParams): UseParticipantsReturn {
   // ============================================
   // 상태 관리
   // ============================================
 
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
 
   // ============================================
   // 데이터 가져오기 (목데이터)
@@ -255,25 +316,84 @@ export function useParticipants(): UseParticipantsReturn {
   useEffect(() => {
     /**
      * 참여자 목록 가져오기
-     * ⚠️ 추후 백엔드 API로 교체될 예정
+     * - capsuleId가 있으면 API 호출
+     * - 없으면 대기 (로딩 상태 유지, 목데이터 사용 안 함)
      */
     async function fetchParticipants() {
-      try {
-        // TODO: API 연동
-        // const response = await fetch(`/api/room/${capsuleId}/participants`);
-        // const data = await response.json();
-        // setParticipants(data);
+      // capsuleId가 없으면 아무것도 하지 않음 (로딩 상태 유지)
+      if (!capsuleId) {
+        // capsuleId가 설정될 때까지 대기 (다음 useEffect 실행에서 처리됨)
+        return;
+      }
 
-        // 목데이터 반환
-        await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
-        setParticipants(mockParticipants);
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // ⭐ API 호출: 대기실 상세 조회
+        console.log('🔄 [useParticipants] 참여자 슬롯 정보 조회 시작 - capsuleId:', capsuleId);
+        const roomDetail = await getRoomDetail(capsuleId);
+
+        // 현재 사용자 ID 가져오기 (본인 여부 판단용)
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const currentUser = token ? getUserFromToken(token) : null;
+        const currentUserId = currentUser?.id || null;
+
+        // slots[] 배열을 Participant[] 형식으로 변환
+        // ⭐ 수정: roomDetail.slots에는 이미 모든 슬롯(빈 슬롯 포함)이 있으므로 그대로 사용
+        const participantsList: Participant[] = [];
+
+        // 모든 슬롯 변환 (배정된 슬롯 + 빈 슬롯 모두 포함)
+        for (const slot of roomDetail.slots) {
+          if (slot.user_id && slot.nickname) {
+            // 배정된 슬롯
+            const isMe = slot.user_id === currentUserId;
+            participantsList.push({
+              id: slot.user_id,
+              name: slot.nickname,
+              emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
+              status:
+                slot.status === 'ACCEPTED'
+                  ? PARTICIPANT_STATUS.PENDING
+                  : PARTICIPANT_STATUS.WAITING,
+              isHost: slot.is_host,
+              isMe,
+              // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
+              // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+            });
+          } else {
+            // 빈 슬롯 (user_id가 null인 경우)
+            participantsList.push({
+              id: `slot-${slot.slot_number}`,
+              name: '',
+              emoji: EMPTY_SLOT_EMOJI,
+              status: PARTICIPANT_STATUS.WAITING,
+            });
+          }
+        }
+
+        // ⭐ 디버깅: 슬롯 계산 확인
+        console.log(
+          '🔍 [useParticipants] 슬롯 계산:',
+          `roomDetail.slots.length=${roomDetail.slots.length}`,
+          `participantsList.length=${participantsList.length}`,
+          `maxParticipants=${maxParticipants}`,
+        );
+
+        setParticipants(participantsList);
+        console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
       } catch (err) {
-        console.error('❌ [useParticipants] 참여자 목록 로딩 실패:', err);
+        console.warn('⚠️ [useParticipants] API 호출 실패, 목데이터 사용:', err);
+        setError(err instanceof Error ? err : new Error('API 호출 실패'));
+        // 목데이터로 폴백
+        setParticipants(mockParticipants);
+      } finally {
+        setIsLoading(false);
       }
     }
 
     fetchParticipants();
-  }, []);
+  }, [capsuleId, maxParticipants]);
 
   // ============================================
   // 본인 참여자 정보
@@ -311,11 +431,57 @@ export function useParticipants(): UseParticipantsReturn {
   // ============================================
 
   /**
+   * URI에서 파일 확장자를 추출하여 MIME 타입 반환
+   */
+  const getMimeType = (uri: string, mediaType: 'image' | 'audio' | 'video'): string => {
+    const extension = uri.split('.').pop()?.toLowerCase() || '';
+
+    if (mediaType === 'image') {
+      if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+      if (extension === 'png') return 'image/png';
+      if (extension === 'gif') return 'image/gif';
+      return 'image/jpeg'; // 기본값
+    }
+
+    if (mediaType === 'audio') {
+      if (extension === 'mp3') return 'audio/mpeg';
+      if (extension === 'm4a') return 'audio/mp4';
+      if (extension === 'wav') return 'audio/wav';
+      return 'audio/mpeg'; // 기본값
+    }
+
+    if (mediaType === 'video') {
+      if (extension === 'mp4') return 'video/mp4';
+      if (extension === 'mov') return 'video/quicktime';
+      if (extension === 'avi') return 'video/x-msvideo';
+      return 'video/mp4'; // 기본값
+    }
+
+    return 'application/octet-stream';
+  };
+
+  /**
+   * URI에서 파일명 추출
+   */
+  const getFileName = (uri: string, defaultName: string): string => {
+    const fileName = uri.split('/').pop() || defaultName;
+    // 파일명에 확장자가 없으면 기본 확장자 추가
+    if (!fileName.includes('.')) {
+      return defaultName;
+    }
+    return fileName;
+  };
+
+  /**
    * 참여자 작성 내용 저장 (본인만)
    *
    * 프라이버시 보호:
    * - 본인 것만 저장 가능
    * - 저장 성공 시 상태를 'completed'로 업데이트
+   *
+   * ⭐ FormData 방식 사용:
+   * - multipart/form-data 형식으로 파일을 직접 전송
+   * - 백엔드 API 명세에 맞게 구현
    *
    * @param {string} participantId 참여자 ID
    * @param {ParticipantContent} content 작성 내용
@@ -329,18 +495,104 @@ export function useParticipants(): UseParticipantsReturn {
           throw new Error('본인의 작성 내용만 저장할 수 있습니다.');
         }
 
+        // capsuleId가 없으면 에러
+        if (!capsuleId) {
+          throw new Error('캡슐 ID가 없습니다.');
+        }
+
+        // text_message 필수 검증
+        if (!content.text || content.text.trim().length === 0) {
+          throw new Error('텍스트 메시지는 필수입니다.');
+        }
+
         console.log('💾 [useParticipants] 작성 내용 저장 시작:', participantId);
+        console.log('  📝 텍스트:', content.text?.substring(0, 30) + '...');
+        console.log('  🖼️  이미지:', content.images?.length || 0, '개');
+        console.log('  🎵 음악:', content.voiceRecording ? '있음' : '없음');
+        console.log('  🎬 비디오:', content.video ? '있음' : '없음');
+        console.log('  🆔 capsuleId:', capsuleId);
 
-        // TODO: API 연동
-        // await fetch(`/api/room/${capsuleId}/participants/${participantId}/content`, {
-        //   method: 'POST',
-        //   body: JSON.stringify(content),
-        // });
+        console.log('📤 [useParticipants] FormData 생성 시작');
 
-        // 목데이터 업데이트
-        await new Promise((resolve) => setTimeout(resolve, 500)); // 저장 시뮬레이션
+        // 1. ⭐ FormData 생성 및 파일 추가
+        const formData = new FormData();
 
-        // 작성 내용 저장 및 상태를 'completed'로 업데이트 (한 번에 처리)
+        // 텍스트 메시지 추가 (필수)
+        formData.append('text_message', content.text.trim());
+
+        // 이미지 파일 추가 (배열로 여러 개 추가)
+        if (content.images && content.images.length > 0) {
+          console.log(
+            `📤 [useParticipants] 이미지 ${content.images.length}개 FormData에 추가 중...`,
+          );
+          for (let i = 0; i < content.images.length; i++) {
+            let imageUri = content.images[i];
+
+            // HEIC 파일이면 JPEG로 변환
+            if (isHeicFormat(imageUri)) {
+              console.log(`  🔄 이미지 ${i + 1}: HEIC → JPEG 변환 중...`);
+              imageUri = await convertHeicToJpeg(imageUri);
+              console.log(`  ✅ 변환 완료`);
+            }
+
+            const fileName = getFileName(imageUri, `photo_${Date.now()}_${i}.jpg`);
+            const mimeType = getMimeType(imageUri, 'image');
+
+            formData.append('images', {
+              uri: imageUri,
+              type: mimeType,
+              name: fileName,
+            } as any);
+
+            console.log(
+              `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} FormData에 추가 완료`,
+            );
+          }
+        }
+
+        // 음악 파일 추가
+        if (content.voiceRecording) {
+          console.log('📤 [useParticipants] 음악 파일 FormData에 추가 중...');
+          const fileName = getFileName(content.voiceRecording, `music_${Date.now()}.mp3`);
+          const mimeType = getMimeType(content.voiceRecording, 'audio');
+
+          formData.append('music', {
+            uri: content.voiceRecording,
+            type: mimeType,
+            name: fileName,
+          } as any);
+
+          console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+        }
+
+        // 비디오 파일 추가
+        if (content.video) {
+          console.log('📤 [useParticipants] 비디오 파일 FormData에 추가 중...');
+          const fileName = getFileName(content.video, `video_${Date.now()}.mp4`);
+          const mimeType = getMimeType(content.video, 'video');
+
+          formData.append('video', {
+            uri: content.video,
+            type: mimeType,
+            name: fileName,
+          } as any);
+
+          console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+        }
+
+        console.log('📤 [useParticipants] API 제출 시작 (multipart/form-data)');
+
+        // 2. API 호출 (⭐ multipart/form-data 전송)
+        const result = await submitMyContent(capsuleId, formData);
+
+        console.log('✅ [useParticipants] API 호출 성공!');
+        console.log('  📊 응답 데이터:', JSON.stringify(result, null, 2));
+        console.log('  🎯 상태:', result.data.status);
+        console.log('  🖼️  이미지:', result.data.uploaded_images, '개');
+        console.log('  🎵 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
+        console.log('  🎬 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
+
+        // 4. 로컬 상태 업데이트 (작성 내용 저장 및 상태를 'completed'로 업데이트)
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
@@ -353,7 +605,7 @@ export function useParticipants(): UseParticipantsReturn {
         throw err;
       }
     },
-    [participants],
+    [participants, capsuleId],
   );
 
   // ============================================
@@ -385,6 +637,8 @@ export function useParticipants(): UseParticipantsReturn {
   return {
     participants,
     myParticipant,
+    isLoading,
+    error,
     updateStatus,
     saveContent,
     canEdit,

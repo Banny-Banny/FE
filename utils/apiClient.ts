@@ -12,8 +12,7 @@ import { Alert } from 'react-native';
 
 // API Base URL 가져오기 (app.config.js 또는 .env)
 const getBaseUrl = (): string | null => {
-  const url =
-    Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || '';
+  const url = Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
   if (!url || url === 'your_api_url' || url.includes('your_api')) {
     if (__DEV__) {
@@ -75,6 +74,18 @@ apiClient.interceptors.request.use(
     const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // ⭐ FormData를 보낼 때는 Content-Type 헤더 제거 (axios가 자동으로 boundary 포함하여 설정)
+    // React Native FormData를 보낼 때는 Content-Type을 제거해야 함
+    // axios가 자동으로 'multipart/form-data; boundary=...' 형식으로 설정함
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+      }
+      if (__DEV__) {
+        console.log('[API] FormData 감지: Content-Type 헤더 제거됨 (axios가 자동 설정)');
+      }
     }
 
     if (__DEV__) {

@@ -1,0 +1,454 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수
+- ⭐ capsuleId는 1단계 API (POST /api/capsules/step-rooms/create)에서 추출한 값 사용
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (기존 API 함수)
+            - components/timecapsule-create/components/step-room/types.ts (기존 타입 정의)
+            - components/timecapsule-create/components/step-room/hooks/useRoomData.ts (Hook)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (API 함수 추가)
+            - components/timecapsule-create/components/step-room/types.ts (응답 타입 확인)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 목데이터 로직은 유지하되, API 연동 로직 추가
+조건-기능유지) 에러 발생 시 목데이터로 폴백 처리
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 대기실 설정값 조회 API:
+  GET /api/capsules/step-rooms/:capsuleId/settings
+  - Path Parameter: capsuleId (UUID)
+  - 대기실 설정값 반환 (max_images_per_person, has_music, has_video 포함)
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수
+조건-API명세) 응답 형식: JSON (snake_case)
+
+==============================================
+
+핵심요구사항) 대기실 설정값 조회 API 연동
+핵심요구사항-1) capsuleId로 GET 요청하여 대기실 설정값 조회
+핵심요구사항-2) max_images_per_person, has_music, has_video 정보 활용
+핵심요구사항-3) capsule_name은 orders에서 설정한 정확한 제목이므로 우선 사용
+핵심요구사항-4) 에러 처리 및 폴백 로직 구현
+핵심요구사항-5) TypeScript 타입 안정성 보장
+핵심요구사항-6) ⭐ JWT 토큰 인증 처리 (Bearer 헤더)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+대기실 설정값 조회 API
+엔드포인트: GET /api/capsules/step-rooms/:capsuleId/settings
+인증: Bearer {JWT_TOKEN} (필수)
+Content-Type: application/json
+
+Path Parameter:
+- capsuleId: 캡슐 ID (UUID) - 1단계 API에서 추출한 capsule_id
+
+성공 응답 (200 OK):
+{
+  "room_id": "3dc6c7ee-f26f-41b7-aee3-1daaac34a46e",
+  "capsule_name": "나의 타임캡슐",
+  "open_date": "2026-01-12",
+  "max_participants": 2,
+  "max_images_per_person": 3,
+  "has_music": true,
+  "has_video": false
+}
+
+에러 응답:
+- 400 Bad Request: 잘못된 UUID 형식
+- 401 Unauthorized: JWT 토큰 없음 또는 유효하지 않음
+- 404 Not Found: 존재하지 않는 capsuleId 또는 주문 정보 없음
+- 500 Internal Server Error: 서버 내부 오류
+
+주의:
+- 응답 구조는 RoomSettingsResponse 타입 (snake_case)
+- capsule_name은 orders에서 설정한 정확한 제목
+- max_images_per_person은 주문의 총 사진 개수(photoCount) ÷ 인원수(headcount)로 계산됨
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. room_id (string, UUID)
+   - 대기실 고유 ID
+   - capsuleId와 동일한 값
+
+2. capsule_name (string)
+   - 방장이 설정한 캡슐 이름 (orders에서 설정한 제목)
+   - ⭐ CreateRoomResponse의 title보다 정확함
+   - UI 정보 카드에 표시
+   - 예: "나의 타임캡슐", "강동구 물주먹들👊"
+
+3. open_date (string, YYYY-MM-DD)
+   - 캡슐 개봉 날짜
+   - UI 정보 카드에 표시
+   - 예: "2026-01-12"
+
+4. max_participants (number)
+   - 총 참여 가능 인원 수
+   - UI 정보 카드에 표시
+   - 예: 2
+
+5. max_images_per_person (number)
+   - 1인당 최대 업로드 가능 사진 개수
+   - 업로드 UI에서 사진 입력 필드 개수 제한
+   - 계산식: 주문의 총 사진 개수(photoCount) ÷ 인원수(headcount)
+   - 예: 3 (1인당 최대 3장)
+
+6. has_music (boolean)
+   - 음성 녹음 기능 활성화 여부
+   - true: 음성 녹음 버튼 표시
+   - false: 음성 녹음 버튼 숨김
+   - 예: true
+
+7. has_video (boolean)
+   - 동영상 업로드 기능 활성화 여부
+   - true: 동영상 업로드 버튼 표시
+   - false: 동영상 업로드 버튼 숨김
+   - 예: false
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+// 대기실 설정값 조회 API 응답 타입 (snake_case)
+export interface RoomSettingsResponse {
+  room_id: string;                    // 대기실 ID (UUID)
+  capsule_name: string;               // 캡슐 이름 (orders에서 설정한 제목)
+  open_date: string;                  // 개봉 날짜 (YYYY-MM-DD)
+  max_participants: number;           // 총 인원수
+  max_images_per_person: number;      // 1인당 최대 사진 개수
+  has_music: boolean;                 // 음성 추가 여부
+  has_video: boolean;                 // 동영상 추가 여부
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/timecapsule-create/components/step-room/api/capsule.ts
+
+목적:
+- 대기실 설정값 조회 API 호출 함수 제공
+- GET /api/capsules/step-rooms/:capsuleId/settings 호출
+- 에러 처리
+- 재사용 가능한 API 함수 제공
+- ⭐ JWT 토큰 인증 처리
+
+기능:
+1. getRoomSettings(capsuleId: string): Promise<RoomSettingsResponse>
+   - GET /api/capsules/step-rooms/:capsuleId/settings 호출
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - 응답을 그대로 반환 (snake_case 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { RoomSettingsResponse } from '../types';
+
+/**
+ * 대기실 설정값 조회 API
+ * @param capsuleId 캡슐 ID (UUID) - 1단계에서 추출한 capsule_id
+ * @returns 대기실 설정값 (snake_case)
+ * @throws 400: 잘못된 UUID 형식
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 404: 존재하지 않는 capsuleId 또는 주문 정보 없음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getRoomSettings(capsuleId: string): Promise<RoomSettingsResponse> {
+  try {
+    console.log('🔄 [API] 대기실 설정값 조회 시작 - capsuleId:', capsuleId);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.get<RoomSettingsResponse>(
+      `/api/capsules/step-rooms/${capsuleId}/settings`
+    );
+
+    console.log('✅ [API] 대기실 설정값 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      console.error('❌ [API] 잘못된 UUID 형식 (400)');
+      throw new Error('잘못된 캡슐 ID 형식입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
+      throw new Error('대기실 또는 주문 정보를 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 대기실 설정값 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) useRoomData Hook 수정
+
+파일: components/timecapsule-create/components/step-room/hooks/useRoomData.ts
+
+수정 사항:
+1. API 호출 함수 import (getRoomSettings)
+2. loadRoomData() 수정 - ⭐ 2단계: 대기실 설정값 조회
+   - 1단계에서 추출한 capsuleId로 GET 요청하여 설정값 조회
+   - 성공 시 RoomSettingsResponse 저장
+   - CreateRoomResponse와 병합 (capsule_name은 getRoomSettings 우선 사용)
+   - 실패 시 CreateRoomResponse만으로 fallback 구성
+
+기능:
+1. 2단계 API 호출 전략
+   - 1단계: createRoomAndGetSettings(orderId) → 대기실 생성 및 capsule_id 추출
+   - 2단계: getRoomSettings(capsuleId) → 설정값 조회 (max_images_per_person 등)
+2. 데이터 병합 전략
+   - getRoomSettings의 capsule_name 우선 사용 (orders에서 설정한 정확한 제목)
+   - CreateRoomResponse의 추가 정보(deadline, invite_code 등)는 createRoomResponse에 저장
+3. 에러 처리
+   - 설정값 조회 실패 시 CreateRoomResponse만으로 fallback 구성
+   - 기본값 사용 (max_images_per_person: 3, has_music: false, has_video: false)
+
+구현 예시:
+```typescript
+// 1단계에서 capsuleId 추출 후
+const extractedCapsuleId = roomData.capsule_id;
+setCapsuleId(extractedCapsuleId);
+
+// ⭐ 2단계: 대기실 설정값 조회
+try {
+  console.log('🔄 [useRoomData] 대기실 설정값 조회 시작 - capsuleId:', extractedCapsuleId);
+  const settingsData = await getRoomSettings(extractedCapsuleId);
+
+  // CreateRoomResponse의 추가 정보와 병합
+  // getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목이므로 우선 사용
+  const mergedSettings: RoomSettingsResponse = {
+    ...settingsData,
+    room_id: roomData.capsule_id,
+    // capsule_name은 getRoomSettings에서 가져온 값 사용 (orders에서 설정한 제목)
+    open_date: roomData.open_date.split('T')[0], // ISO 8601에서 YYYY-MM-DD 추출
+    max_participants: roomData.max_participants,
+  };
+  setRoomSettings(mergedSettings);
+
+  console.log('✅ [useRoomData] 대기실 설정값 조회 성공:', mergedSettings);
+} catch (settingsError) {
+  console.warn('⚠️ [useRoomData] 설정값 조회 실패, 기본값 사용:', settingsError);
+  // 설정값 조회 실패 시 CreateRoomResponse만으로 구성
+  const fallbackSettings: RoomSettingsResponse = {
+    room_id: roomData.capsule_id,
+    capsule_name: roomData.title, // fallback: CreateRoomResponse의 title 사용
+    open_date: roomData.open_date.split('T')[0],
+    max_participants: roomData.max_participants,
+    max_images_per_person: 3, // 기본값
+    has_music: false, // 기본값
+    has_video: false, // 기본값
+  };
+  setRoomSettings(fallbackSettings);
+}
+```
+
+==============================================
+
+활용시나리오) 대기실 설정값 조회 플로우
+
+1. 1단계: 대기실 생성 완료
+   - POST /api/capsules/step-rooms/create 호출 성공
+   - capsule_id 추출 (예: "3dc6c7ee-f26f-41b7-aee3-1daaac34a46e")
+
+2. ⭐ 2단계: 대기실 설정값 조회
+   - GET /api/capsules/step-rooms/:capsuleId/settings 호출
+   - Path Parameter: capsuleId (1단계에서 추출한 값)
+   - Authorization: Bearer {JWT_TOKEN} 헤더 포함
+   - 응답 데이터 수신 (capsule_name, max_images_per_person, has_music, has_video 등)
+
+3. 데이터 병합
+   - getRoomSettings의 capsule_name 우선 사용 (orders에서 설정한 정확한 제목)
+   - CreateRoomResponse의 추가 정보는 createRoomResponse에 저장
+
+4. UI 동적 구성
+   - 정보 카드: capsule_name 표시 (orders에서 설정한 제목)
+   - 사진 업로드 필드: max_images_per_person=3 → 최대 3개 입력 필드 표시
+   - 음성 녹음 버튼: has_music=true → 버튼 표시
+   - 동영상 업로드 버튼: has_video=false → 버튼 숨김
+
+5. 클라이언트 검증
+   - 사용자가 사진 4장 업로드 시도 → 제한 초과 경고
+   - 음성 녹음 불가능한 캡슐에서 녹음 시도 → 버튼 미표시로 차단
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 400 Bad Request (잘못된 UUID 형식)
+   - 원인: 잘못된 capsuleId 형식
+   - 대응: CreateRoomResponse만으로 fallback 구성
+   - 메시지: "잘못된 캡슐 ID 형식입니다."
+
+2. 401 Unauthorized (JWT 토큰 없음 또는 유효하지 않음)
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: CreateRoomResponse만으로 fallback 구성
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+
+3. 404 Not Found (존재하지 않는 capsuleId 또는 주문 정보 없음)
+   - 원인: 잘못된 capsuleId, 삭제된 대기실
+   - 대응: CreateRoomResponse만으로 fallback 구성
+   - 메시지: "대기실 또는 주문 정보를 찾을 수 없습니다."
+
+4. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: CreateRoomResponse만으로 fallback 구성
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+5. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: CreateRoomResponse만으로 fallback 구성
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. CreateRoomResponse만으로 fallback 구성 (기본값 사용)
+2. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+3. 사용자 피드백 제공 (토스트, 모달 등) (선택사항)
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 snake_case로 응답
+   - 프론트엔드는 snake_case를 그대로 사용 (프로젝트 일관성)
+   - 타입 불일치 방지
+
+2. ⭐ capsule_name 우선순위
+   - getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목
+   - CreateRoomResponse의 title보다 정확함
+   - UI에 표시할 때는 getRoomSettings의 capsule_name 사용
+
+3. Fallback 전략
+   - 설정값 조회 실패 시 CreateRoomResponse만으로 구성
+   - 기본값 사용 (max_images_per_person: 3, has_music: false, has_video: false)
+   - 앱이 멈추지 않도록
+
+4. TypeScript 타입 안정성
+   - API 응답 타입 명시 (RoomSettingsResponse, snake_case)
+   - any 사용 금지
+
+5. 에러 처리
+   - try-catch 블록 필수
+   - 에러 로깅 (console.warn)
+   - 사용자 피드백 (선택사항)
+
+6. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트 고려
+
+7. ⭐ 2단계 API 호출
+   - 1단계: 대기실 생성 (createRoomAndGetSettings) - prompt.401 참고
+   - 2단계: 설정값 조회 (getRoomSettings) - 현재 프롬프트
+   - capsule_id를 1단계에서 추출하여 2단계에 사용
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] RoomSettingsResponse 인터페이스 확인됨 (snake_case)
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+API 함수:
+- [ ] components/timecapsule-create/components/step-room/api/capsule.ts 파일 수정됨
+- [ ] ⭐ getRoomSettings(capsuleId) 함수 구현됨
+- [ ] ⭐ GET /api/capsules/step-rooms/:capsuleId/settings 호출 구현됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (400, 401, 404, 500)
+- [ ] 각 에러별 적절한 메시지 반환
+
+Hook 수정:
+- [ ] useRoomData Hook에 ⭐ 2단계 API 호출 추가됨
+- [ ] ⭐ getRoomSettings(capsuleId) 호출
+- [ ] ⭐ capsule_name 우선순위 로직 구현됨 (getRoomSettings 우선)
+- [ ] ⭐ 데이터 병합 로직 구현됨
+- [ ] ⭐ Fallback 로직 구현됨 (설정값 조회 실패 시)
+- [ ] 에러 로깅 추가됨 (console.warn)
+
+UI 연동:
+- [ ] 정보 카드에 roomSettings.capsule_name 바인딩됨 (orders에서 설정한 제목)
+- [ ] 사진 업로드 필드가 roomSettings.max_images_per_person에 따라 제한됨
+- [ ] 음성 녹음 버튼이 roomSettings.has_music에 따라 표시/숨김됨
+- [ ] 동영상 업로드 버튼이 roomSettings.has_video에 따라 표시/숨김됨
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+
+에러 처리:
+- [ ] ⭐ capsuleId 400 에러 처리 구현됨 (잘못된 형식)
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] ⭐ capsuleId 404 에러 처리 구현됨
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.warn)
+- [ ] ⭐ Fallback 동작 확인됨 (CreateRoomResponse만으로 구성)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ 2단계 API 호출 성공 케이스 테스트됨
+- [ ] ⭐ capsuleId 400 에러 케이스 테스트됨
+- [ ] ⭐ 401 에러 케이스 테스트됨
+- [ ] ⭐ capsuleId 404 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] ⭐ Fallback 동작 확인됨
+- [ ] UI에 설정값이 올바르게 표시됨
+- [ ] 업로드 제한이 정확히 적용됨
+- [ ] 사진 개수 제한 동작 확인됨
+- [ ] 음성/동영상 버튼 표시/숨김 동작 확인됨
+- [ ] ⭐ capsule_name이 orders에서 설정한 제목과 일치하는지 확인됨
+
+==============================================
+
+

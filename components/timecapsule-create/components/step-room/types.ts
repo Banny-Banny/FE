@@ -29,6 +29,8 @@ export interface ParticipantContent {
   images?: string[];
   /** 음성 녹음 URL */
   voiceRecording?: string;
+  /** 비디오 URL */
+  video?: string;
 }
 
 // ============================================
@@ -171,7 +173,13 @@ export interface OrderResponse {
   };
 }
 
-/** 2단계) Room Settings 조회 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
+/** 대기실 생성 API 요청 타입 */
+export interface CreateRoomRequest {
+  /** 주문 ID (UUID) */
+  order_id: string;
+}
+
+/** 대기실 생성 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
 export interface RoomSettingsResponse {
   /** 대기실 ID (UUID) */
   room_id: string;
@@ -187,4 +195,125 @@ export interface RoomSettingsResponse {
   has_music: boolean;
   /** 동영상 추가 여부 */
   has_video: boolean;
+}
+
+/** 대기실 생성 API 실제 응답 타입 (POST /api/capsules/step-rooms/create) */
+export interface CreateRoomResponse {
+  /** 캡슐 ID (UUID) */
+  capsule_id: string;
+  /** 생성 시간 (ISO 8601) */
+  created_at: string;
+  /** 현재 참여 인원수 */
+  current_participants: number;
+  /** 작성 마감 시한 (ISO 8601) */
+  deadline: string;
+  /** 초대 코드 (6자리 영숫자) */
+  invite_code: string;
+  /** 최대 참여 인원수 */
+  max_participants: number;
+  /** 개봉 날짜 (ISO 8601) */
+  open_date: string;
+  /** 대기실 상태 */
+  status: 'WAITING' | 'COMPLETED' | 'EXPIRED';
+  /** 캡슐 이름 */
+  title: string;
+}
+
+/** 슬롯 정보 타입 (GET /api/capsules/step-rooms/:capsuleId 응답의 slots[]) */
+export interface Slot {
+  /** 슬롯 번호 (1부터 시작) */
+  slot_number: number;
+  /** 사용자 ID (UUID, null이면 아직 배정되지 않음) */
+  user_id: string | null;
+  /** 방장 여부 */
+  is_host: boolean;
+  /** 슬롯 상태 */
+  status: 'ACCEPTED' | 'PENDING';
+  /** 참여자 닉네임 (null이면 아직 배정되지 않음) */
+  nickname: string | null;
+}
+
+/** 대기실 상세 조회 API 응답 타입 (GET /api/capsules/step-rooms/:capsuleId) */
+export interface RoomDetailResponse {
+  /** 대기실 ID (UUID) */
+  room_id: string;
+  /** 캡슐 이름 */
+  capsule_name: string;
+  /** 개봉 날짜 (ISO 8601) */
+  open_date: string;
+  /** 작성 마감 시한 (ISO 8601) */
+  deadline: string;
+  /** 대기실 상태 */
+  status: 'WAITING' | 'COMPLETED' | 'EXPIRED';
+  /** 참여자 슬롯 목록 */
+  slots: Slot[];
+}
+
+// ============================================
+// 초대 코드 조회 API 타입
+// ============================================
+
+/** 초대 코드로 대기실 조회 API 응답 타입 (snake_case) - 프로젝트 일관성을 위해 변환 없이 그대로 사용 */
+export interface InviteCodeQueryResponse {
+  /** 대기실 ID (UUID) */
+  room_id: string;
+  /** 캡슐 이름 */
+  capsule_name: string;
+  /** 개봉 날짜 (ISO 8601) */
+  open_date: string;
+  /** 작성 마감 시한 (ISO 8601) */
+  deadline: string;
+  /** 총 참여 가능 인원수 */
+  participant_count: number;
+  /** 현재 참여 중인 인원수 */
+  current_participants: number;
+  /** 대기실 상태 */
+  status: 'WAITING' | 'COMPLETED' | 'EXPIRED';
+  /** 참여 가능 여부 */
+  is_joinable: boolean;
+}
+
+// ============================================
+// 타임캡슐 제출 API 타입
+// ============================================
+
+/** 타임캡슐 제출 요청 Body 타입 */
+export interface CapsuleSubmitRequest {
+  /** 위도 (-90 ~ 90) */
+  latitude: number;
+  /** 경도 (-180 ~ 180) */
+  longitude: number;
+}
+
+/** 매장 위치 정보 */
+export interface BuriedLocation {
+  /** 위도 */
+  latitude: number;
+  /** 경도 */
+  longitude: number;
+  /** 주소 (역지오코딩 결과) */
+  address: string;
+}
+
+/** 타임캡슐 제출 응답 타입 (snake_case) */
+export interface CapsuleSubmitResponse {
+  /** 성공 여부 */
+  success: boolean;
+  /** 응답 데이터 */
+  data: {
+    /** 캡슐 ID (UUID) */
+    capsule_id: string;
+    /** 캡슐 상태 */
+    status: 'BURIED';
+    /** 매장 위치 정보 */
+    location: BuriedLocation;
+    /** 매장 시각 (ISO 8601) */
+    buried_at: string;
+    /** 개봉 예정일 (ISO 8601) */
+    open_date: string;
+    /** 참여자 수 */
+    participants: number;
+    /** 자동 제출 여부 */
+    is_auto_submitted: boolean;
+  };
 }
