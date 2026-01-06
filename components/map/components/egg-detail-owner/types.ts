@@ -29,6 +29,8 @@ export interface CapsuleDetailResponse {
   viewers: ViewerItem[];
   view_count: number;
   view_limit: number;
+  media_urls?: string[];
+  media_types?: string[];
 }
 
 export interface ViewerItem {

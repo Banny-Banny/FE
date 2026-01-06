@@ -57,7 +57,7 @@ export function useEggDetailHint({
 
   useEffect(() => {
     if (visible) {
-      // 프로그레스 바 애니메이션 시작 (10초 동안 100% -> 0%)
+      // 프로그레스 바 애니메이션 시작 (5초 동안 100% -> 0%)
       progressAnim.setValue(1);
       Animated.timing(progressAnim, {
         toValue: 0,

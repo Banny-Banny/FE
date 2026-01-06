@@ -89,6 +89,12 @@ export const styles = StyleSheet.create({
     elevation: 8,
   },
 
+  /* === FAB Button Icon (fab_btn_egg, fab_btn_cap) === */
+  fabButtonIcon: {
+    width: 40,
+    height: 40,
+  },
+
   /* === Sub Button Icon === */
   subButtonIcon: {
     width: 24,

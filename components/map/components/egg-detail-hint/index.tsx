@@ -14,6 +14,7 @@
  * - [x] react-native-remix-icon 사용
  */
 
+import QuestionEggIcon from '@/assets/images/question_egg.svg';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Animated, Text, View } from 'react-native';
@@ -53,14 +54,12 @@ export const EggDetailHint: React.FC<EggDetailHintProps> = ({
         <View style={styles.contentContainer}>
           {/* 왼쪽: 알 아이콘 */}
           <View style={styles.iconContainer}>
-            <View style={styles.iconWrapper}>
-              <Image
-                source={require('../../../../assets/icons/egg-icon.svg')}
-                style={styles.eggIcon}
-                contentFit="contain"
-                accessibilityLabel="이스터에그 아이콘"
-              />
-            </View>
+            <Image
+              source={QuestionEggIcon}
+              style={styles.eggIcon}
+              contentFit="contain"
+              accessibilityLabel="이스터에그 아이콘"
+            />
           </View>
 
           {/* 중앙: 텍스트 영역 */}

@@ -56,12 +56,11 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
               <View style={styles.iconContainer}>
                 <View style={styles.iconWrapper}>
                   <Image
-                    source={require('../../../../assets/icons/egg-icon.svg')}
+                    source={require('../../../../assets/images/question_egg.svg')}
                     style={styles.eggIcon}
                     contentFit="contain"
                     accessibilityLabel="이스터에그 아이콘"
                   />
-                  <Text style={styles.iconText}>?</Text>
                 </View>
               </View>
 

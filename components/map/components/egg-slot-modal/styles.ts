@@ -103,7 +103,6 @@ export const styles = StyleSheet.create({
   eggIconEmpty: {
     width: 44,
     height: 55,
-    opacity: 0.3,
   },
 
   // 개수 표시 영역

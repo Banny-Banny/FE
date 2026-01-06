@@ -28,25 +28,11 @@ export const validateFileExtension = (filename: string, type: MediaType): boolea
 };
 
 /**
- * 미디어 타입 정의
- */
-export type MediaType = 'IMAGE' | 'VIDEO' | 'AUDIO';
-
-/**
- * 파일 타입에 따른 MIME 타입 반환
+ * 파일 타입에 따른 MIME 타입 배열 반환 (DocumentPicker용)
  * @param fileType 파일 타입 (IMAGE, VIDEO, AUDIO)
- * @returns MIME 타입 문자열
+ * @returns MIME 타입 문자열 배열
  */
-export const getMimeType = (fileType: MediaType): string => {
-  switch (fileType) {
-    case 'IMAGE':
-      return 'image/jpeg';
-    case 'AUDIO':
-      return 'audio/mpeg';
-    case 'VIDEO':
-      mimeTypes.push('video/*');
-      break;
-  }
-
-  return mimeTypes;
+export const getMimeTypes = (fileType: MediaType): string[] => {
+  const allowedExtensions = ALLOWED_EXTENSIONS[fileType] as readonly string[];
+  return allowedExtensions.map((ext) => MIME_TYPE_MAP[ext]).filter(Boolean);
 };

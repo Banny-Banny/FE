@@ -27,6 +27,8 @@ export interface MapConfig {
 
 /**
  * 지도 초기 설정 생성
+ * 우선순위: userLocation > center > DEFAULT_MAP_CENTER
+ * 사용자 위치가 있으면 우선적으로 사용하여 현재 위치를 중심으로 렌더링
  */
 export function createMapConfig(
   center?: { lat: number; lng: number },
@@ -34,7 +36,7 @@ export function createMapConfig(
   userLocation?: { lat: number; lng: number } | null,
 ): MapConfig {
   return {
-    center: center || userLocation || DEFAULT_MAP_CENTER,
+    center: userLocation || center || DEFAULT_MAP_CENTER,
     level: level ?? DEFAULT_MAP_LEVEL,
   };
 }
@@ -102,4 +104,3 @@ export function createMessageHandler(
     }
   };
 }
-

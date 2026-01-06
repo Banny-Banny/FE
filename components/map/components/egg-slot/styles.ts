@@ -12,7 +12,7 @@
  */
 
 import { Colors } from '@/commons/constants';
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   // Pressable wrapper 스타일 (absolute positioning)
@@ -48,27 +48,22 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  eggSlotIconWrapper: {
-    width: 20,
-    height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   eggSlotIcon: {
     width: 20,
     height: 24,
-    tintColor: Colors.white[50], // 채워진 알은 하양색
+    ...Platform.select({
+      default: {
+        tintColor: Colors.white[50], // 채워진 알은 하양색 (네이티브용)
+      },
+      web: {
+        // 웹 환경에서 하양색으로 표시하기 위한 CSS filter
+        // @ts-ignore - 웹 전용 CSS 속성
+        filter: 'brightness(0) saturate(100%) invert(1)',
+      },
+    }),
   },
   eggSlotIconEmpty: {
     width: 20,
     height: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  eggSlotIconOutline: {
-    width: 20,
-    height: 24,
-    opacity: 1, // 빈 슬롯은 투명도 적용 (Figma 디자인 참고)
-    tintColor: Colors.white[50], // 빈 슬롯도 흰색으로 표시
   },
 });

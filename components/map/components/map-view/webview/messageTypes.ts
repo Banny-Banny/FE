@@ -14,7 +14,7 @@ export interface InitMapMessage {
 
 export interface SetMarkersMessage {
   type: 'SET_MARKERS';
-  payload: Array<{ id: string; lat: number; lng: number }>;
+  payload: Array<{ id: string; lat: number; lng: number; type?: 'EASTER_EGG' | 'TIME_CAPSULE' }>;
 }
 
 export interface MoveCameraMessage {

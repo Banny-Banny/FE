@@ -15,6 +15,8 @@
  * - [x] react-native-remix-icon 사용
  */
 
+import FilledEggIcon from '@/assets/images/filled_egg.svg';
+import UnfilledEggIcon from '@/assets/images/unfilled_egg1.svg';
 import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
@@ -67,22 +69,22 @@ export const EggSlotModal: React.FC<EggSlotModalProps> = ({
           <View style={styles.eggSlotRow}>
             {Array.from({ length: totalCount }, (_, index) => {
               // remaining slots를 기준으로 찬 알 표시
-              // 뒤에서부터 remainingCount만큼 채워진 알로 표시
-              const isFilled = index >= totalCount - remainingCount;
+              // 앞에서부터 remainingCount만큼 꽉찬 알, 그 다음부터 빈 알
+              const isFilled = index < remainingCount;
               const slotNumber = index + 1;
 
               return (
                 <View key={slotNumber} style={styles.eggSlotItem}>
                   {isFilled ? (
                     <Image
-                      source={require('../../../../assets/icons/egg-icon.svg')}
+                      source={FilledEggIcon}
                       style={styles.eggIcon}
                       contentFit="contain"
                       accessibilityLabel={`에그 슬롯 ${slotNumber} - 사용됨`}
                     />
                   ) : (
                     <Image
-                      source={require('../../../../assets/icons/egg-icon.svg')}
+                      source={UnfilledEggIcon}
                       style={styles.eggIconEmpty}
                       contentFit="contain"
                       accessibilityLabel={`에그 슬롯 ${slotNumber} - 비어있음`}

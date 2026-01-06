@@ -56,7 +56,7 @@ export function createHintDataFromCapsule(
 }
 
 // 토스트 표시 시간 (밀리초)
-export const DURATION_MS = 10000; // 10초
+export const DURATION_MS = 5000; // 5초
 
 // 프로그레스 바 너비 계산용
-export const PROGRESS_CONTAINER_WIDTH = 234; // 전체 너비 260px - 패딩 26px
+export const PROGRESS_CONTAINER_WIDTH = 234; // 전체 너비 260px - 패딩 26px (13px * 2)

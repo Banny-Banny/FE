@@ -10,10 +10,12 @@
  * - useMapFeature: 비즈니스 로직
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { EggDetailFind } from './components/egg-detail-find';
+import { useCapsuleViewer } from './components/egg-detail-find/hooks/useCapsuleViewer';
+import { useEggDiscovery } from './components/egg-detail-find/hooks/useEggDiscovery';
 import { EggDetailHint } from './components/egg-detail-hint';
 import { EggDetail } from './components/egg-detail-owner';
 import { EggForm } from './components/egg-form';
@@ -21,6 +23,7 @@ import { EggSlotModal } from './components/egg-slot-modal';
 import type { EggSlotDataResponse } from './components/egg-slot/hooks/useEggSlotData';
 import FabButton from './components/fab-btn';
 import MapView from './components/map-view';
+import { useCapsules } from './components/map-view/hooks/useCapsules';
 import { useMapLocation } from './components/map-view/hooks/useMapLocation';
 import type { CapsuleItem } from './components/map-view/types';
 import ResetEggSlot from './components/reset-egg-slot';
@@ -37,6 +40,14 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
 
   // 현재 위치 가져오기
   const { location: currentLocation } = useMapLocation();
+
+  // 캡슐 리스트 가져오기 (진입 감지용) - 실제 사용자 위치 사용
+  const { capsules } = useCapsules({
+    lat: currentLocation?.lat || mapConfig.center.lat,
+    lng: currentLocation?.lng || mapConfig.center.lng,
+    radius_m: 300, // 기본값
+    limit: 50, // 기본값
+  });
 
   // 캡슐 상세 바텀시트 상태 관리
   const [selectedCapsule, setSelectedCapsule] = useState<CapsuleItem | null>(null);
@@ -82,26 +93,66 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     setHintCapsule(null);
   };
 
-  // 에그 디테일 발견 모달 상태 관리 (내꺼가 아닌 경우, 근접해지면 모달이 뜨게 할 것 - 추후 기능단에서 구현)
-  // UI 확인용: 기본값 false로 설정
+  // 에그 디테일 발견 모달 상태 관리
   const [isEggDetailFindVisible, setIsEggDetailFindVisible] = useState(false);
+  const [discoveredCapsuleId, setDiscoveredCapsuleId] = useState<string | null>(null);
+  const [processedCapsuleIds, setProcessedCapsuleIds] = useState<Set<string>>(new Set());
+
+  // POST /api/capsules/:id/viewers API 호출
+  const { postViewer, isLoading: isViewerLoading } = useCapsuleViewer();
+
+  // 진입 감지 로직
+  const { discoveredCapsuleId: detectedCapsuleId, discoveredCapsule } = useEggDiscovery({
+    capsules,
+    currentLocation,
+    isModalVisible: isEggDetailFindVisible,
+    isApiLoading: isViewerLoading,
+  });
+
+  // 발견된 캡슐이 있으면 POST /viewers API 호출
+  useEffect(() => {
+    if (!detectedCapsuleId || !currentLocation) return;
+    if (isEggDetailFindVisible) return; // 이미 모달이 열려있으면 무시
+    if (isViewerLoading) return; // API 요청 중이면 무시
+    if (processedCapsuleIds.has(detectedCapsuleId)) return; // 이미 처리한 캡슐이면 무시
+
+    const handleDiscovery = async () => {
+      try {
+        const result = await postViewer(detectedCapsuleId, currentLocation);
+        if (result) {
+          // 처리 완료 표시
+          setProcessedCapsuleIds((prev) => new Set(prev).add(detectedCapsuleId));
+          // API 성공 시 모달 표시
+          setDiscoveredCapsuleId(detectedCapsuleId);
+          setIsEggDetailFindVisible(true);
+        }
+      } catch (error) {
+        console.error('[MapFeature] Discovery API error:', error);
+      }
+    };
+
+    handleDiscovery();
+  }, [
+    detectedCapsuleId,
+    currentLocation,
+    isEggDetailFindVisible,
+    isViewerLoading,
+    processedCapsuleIds,
+    postViewer,
+  ]);
 
   const handleCloseEggDetailFind = () => {
     setIsEggDetailFindVisible(false);
+    setDiscoveredCapsuleId(null);
   };
 
-  // TODO: 근접 감지 로직 추가 (추후 기능단에서 구현)
-  // useEffect(() => {
-  //   // 내꺼가 아닌 이스터에그에 근접하면 모달 표시
-  //   if (isNearbyEgg && !isMyEgg) {
-  //     setIsEggDetailFindVisible(true);
-  //   }
-  // }, [isNearbyEgg, isMyEgg]);
+  // 현재 위치가 있으면 그것을 중심으로, 없으면 기본 설정 사용
+  const mapCenter = currentLocation || mapConfig.center;
 
   return (
     <View style={styles.container}>
       <MapView
-        center={mapConfig.center}
+        center={mapCenter}
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
         onEggSlotPress={handleEggSlotPress}
@@ -127,7 +178,12 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         capsule={hintCapsule}
         currentLocation={currentLocation}
       />
-      <EggDetailFind visible={isEggDetailFindVisible} onClose={handleCloseEggDetailFind} />
+      <EggDetailFind
+        visible={isEggDetailFindVisible}
+        onClose={handleCloseEggDetailFind}
+        capsuleId={discoveredCapsuleId}
+        currentLocation={currentLocation}
+      />
     </View>
   );
 }
