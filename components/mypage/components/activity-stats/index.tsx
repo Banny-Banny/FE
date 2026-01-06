@@ -14,12 +14,23 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useToggle } from '@/commons/hooks';
+import { useUserInfo } from '../../hooks/useUserInfo';
 import { FriendsModal } from './friends';
 import { useFriends } from './friends/hooks/useFriends';
 import { styles } from './styles';
 
 export function ActivityStats() {
   const { isOpen: isFriendsModalVisible, open: handleFriendsPress, close: handleCloseFriendsModal } = useToggle();
+
+  // ============================================
+  // 사용자 통계 정보 (summary만 사용)
+  // ============================================
+  const { data: userInfo } = useUserInfo();
+  const summary = userInfo?.summary || {
+    capsuleCount: 0,
+    easterEggCount: 0,
+    friendCount: 0,
+  };
 
   // ============================================
   // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)
@@ -32,7 +43,7 @@ export function ActivityStats() {
         {/* 캡슐 통계 */}
         <View style={styles.statItem}>
           <View style={styles.statValueContainer}>
-            <Text style={styles.statValue}>3</Text>
+            <Text style={styles.statValue}>{summary.capsuleCount}</Text>
           </View>
           <View style={styles.statLabelContainer}>
             <Text style={styles.statLabel}>캡슐</Text>
@@ -45,7 +56,7 @@ export function ActivityStats() {
         {/* 이스터에그 통계 */}
         <View style={styles.statItem}>
           <View style={styles.statValueContainer}>
-            <Text style={styles.statValue}>12</Text>
+            <Text style={styles.statValue}>{summary.easterEggCount}</Text>
           </View>
           <View style={styles.statLabelContainer}>
             <Text style={styles.statLabel}>이스터에그</Text>
@@ -58,7 +69,7 @@ export function ActivityStats() {
         {/* 친구 통계 */}
         <Pressable style={styles.statItem} onPress={handleFriendsPress}>
           <View style={styles.statValueContainer}>
-            <Text style={styles.statValue}>8</Text>
+            <Text style={styles.statValue}>{summary.friendCount}</Text>
           </View>
           <View style={styles.statLabelContainer}>
             <Text style={styles.statLabel}>친구</Text>

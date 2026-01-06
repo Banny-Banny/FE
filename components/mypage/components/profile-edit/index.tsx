@@ -27,7 +27,7 @@ export function ProfileEdit({ onClose }: ProfileEditProps) {
   const [nickname, setNickname] = useState(userInfo?.nickname || '');
 
   // 프로필 이미지 URL 유효성 검사
-  const profileImageUrl = userInfo?.profileImg;
+  const profileImageUrl = userInfo?.profileImageUrl;
   const hasValidProfileImage = isValidImageUrl(profileImageUrl);
 
   const handleSave = () => {
