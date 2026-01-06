@@ -85,6 +85,7 @@ export default function UserBottomSheet({
     isSubmitting,
     error: submitError,
     validateContent,
+    uploadProgress, // ⭐ 추가
   } = useSubmitContent();
 
   // 사진 삭제 핸들러
@@ -197,7 +198,11 @@ export default function UserBottomSheet({
     <>
       <DualButton
         cancelLabel="취소"
-        confirmLabel={isSubmitting ? '저장 중...' : '저장'}
+        confirmLabel={
+          isSubmitting
+            ? (uploadProgress || '저장 중...') // ⭐ 업로드 진행 상태 표시
+            : '저장'
+        }
         size="M"
         cancelVariant="outline"
         confirmVariant="primary"

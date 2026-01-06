@@ -4,8 +4,11 @@
  *
  * 체크리스트:
  * - [✓] validateContent 함수 구현
- * - [✓] uriToFile 헬퍼 함수 구현
- * - [✓] createFormData 함수 구현
+ * - [✓] ⭐ FormData로 파일 직접 전송 (multipart/form-data)
+ * - [✓] ⭐ 이미지 파일 FormData에 추가
+ * - [✓] ⭐ 음악 파일 FormData에 추가
+ * - [✓] ⭐ 비디오 파일 FormData에 추가
+ * - [✓] ⭐ uploadProgress 상태 추가
  * - [✓] 실제 API 연동 submitContent 함수 구현
  * - [✓] 로딩 상태 관리 (isSubmitting)
  * - [✓] 에러 상태 관리 (error)
@@ -15,60 +18,57 @@
 
 import { useState } from 'react';
 import { submitMyContent } from '../api/content';
-import type {
-  UserContentFormData,
-  ValidationResult,
-  UseSubmitContentReturn,
-} from '../types';
-
-/**
- * URI를 Blob으로 변환하는 헬퍼 함수
- */
-async function uriToBlob(uri: string): Promise<Blob> {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  return blob;
-}
-
-/**
- * URI를 File 객체로 변환하는 헬퍼 함수
- * React Native 환경에서 URI를 File/Blob 객체로 변환
- *
- * @param uri - 파일 URI
- * @param name - 파일명
- * @param type - MIME 타입
- * @returns File 객체
- */
-async function uriToFile(uri: string, name: string, type: string): Promise<File> {
-  try {
-    const blob = await uriToBlob(uri);
-    return new File([blob], name, { type });
-  } catch (error) {
-    console.error('URI to File 변환 실패:', error);
-    throw new Error('파일 변환에 실패했습니다');
-  }
-}
-
-/**
- * 파일명 생성 헬퍼 함수
- */
-function generateFileName(uri: string, prefix: string, extension: string): string {
-  const timestamp = Date.now();
-  const originalName = uri.split('/').pop();
-
-  if (originalName && originalName.includes('.')) {
-    return originalName;
-  }
-
-  return `${prefix}_${timestamp}.${extension}`;
-}
+import type { UserContentFormData, UseSubmitContentReturn, ValidationResult } from '../types';
 
 /**
  * 타임캡슐 콘텐츠 제출 Hook
  */
+/**
+ * URI에서 파일 확장자를 추출하여 MIME 타입 반환
+ */
+const getMimeType = (uri: string, mediaType: 'image' | 'audio' | 'video'): string => {
+  const extension = uri.split('.').pop()?.toLowerCase() || '';
+
+  if (mediaType === 'image') {
+    if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+    if (extension === 'png') return 'image/png';
+    if (extension === 'gif') return 'image/gif';
+    return 'image/jpeg'; // 기본값
+  }
+
+  if (mediaType === 'audio') {
+    if (extension === 'mp3') return 'audio/mpeg';
+    if (extension === 'm4a') return 'audio/mp4';
+    if (extension === 'wav') return 'audio/wav';
+    return 'audio/mpeg'; // 기본값
+  }
+
+  if (mediaType === 'video') {
+    if (extension === 'mp4') return 'video/mp4';
+    if (extension === 'mov') return 'video/quicktime';
+    if (extension === 'avi') return 'video/x-msvideo';
+    return 'video/mp4'; // 기본값
+  }
+
+  return 'application/octet-stream';
+};
+
+/**
+ * URI에서 파일명 추출
+ */
+const getFileName = (uri: string, defaultName: string): string => {
+  const fileName = uri.split('/').pop() || defaultName;
+  // 파일명에 확장자가 없으면 기본 확장자 추가
+  if (!fileName.includes('.')) {
+    return defaultName;
+  }
+  return fileName;
+};
+
 export function useSubmitContent(): UseSubmitContentReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   /**
    * 콘텐츠 검증 함수
@@ -96,7 +96,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
     };
   };
 
-
   /**
    * 콘텐츠 제출 함수
    * @param data 폼 데이터
@@ -106,6 +105,7 @@ export function useSubmitContent(): UseSubmitContentReturn {
     try {
       setIsSubmitting(true);
       setError(null);
+      setUploadProgress('');
 
       // 1. 검증 실행
       const validation = validateContent(data);
@@ -114,68 +114,79 @@ export function useSubmitContent(): UseSubmitContentReturn {
       }
 
       console.log('📤 [useSubmitContent] FormData 생성 시작');
-      console.log('  📝 텍스트 내용:', data.textContent.trim().substring(0, 50) + '...');
-      console.log('  🖼️  이미지 개수:', data.photos.length);
-      console.log('  🎵 음악:', data.music ? '있음' : '없음');
-      console.log('  🎬 비디오:', data.video ? '있음' : '없음');
 
-      // 2. FormData 생성
+      // 2. ⭐ FormData 생성 및 파일 추가 (React Native 내장 FormData 사용)
       const formData = new FormData();
 
-      // text_message 추가 (필수!)
-      const textMessage = data.textContent.trim();
-      formData.append('text_message', textMessage);
-      console.log('  ✅ text_message 추가 완료 (길이:', textMessage.length, '자)');
+      // 텍스트 메시지 추가 (필수)
+      formData.append('text_message', data.textContent.trim());
 
-      // 이미지 파일 추가
+      // 이미지 파일 추가 (배열로 여러 개 추가)
       if (data.photos.length > 0) {
-        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 변환 중...`);
+        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 FormData에 추가 중...`);
         for (let i = 0; i < data.photos.length; i++) {
+          setUploadProgress(`파일 준비 중... ${i + 1}/${data.photos.length}`);
           const photoUri = data.photos[i];
-          const fileName = generateFileName(photoUri, 'photo', 'jpg');
-          const photoFile = await uriToFile(photoUri, fileName, 'image/jpeg');
-          formData.append('images', photoFile);
+          const fileName = getFileName(photoUri, `photo_${Date.now()}_${i}.jpg`);
+          const mimeType = getMimeType(photoUri, 'image');
+
+          formData.append('images', {
+            uri: photoUri,
+            type: mimeType,
+            name: fileName,
+          } as any);
+
           console.log(
-            `✅ [useSubmitContent] 이미지 ${i + 1}/${data.photos.length} 변환 완료: ${fileName}`,
+            `✅ [useSubmitContent] 이미지 ${i + 1}/${data.photos.length} FormData에 추가 완료`,
           );
         }
       }
 
       // 음악 파일 추가
       if (data.music) {
-        console.log('📤 [useSubmitContent] 음악 파일 변환 중...');
-        const fileName = generateFileName(data.music, 'music', 'mp3');
-        const musicFile = await uriToFile(data.music, fileName, 'audio/mpeg');
-        formData.append('music', musicFile);
-        console.log(`✅ [useSubmitContent] 음악 파일 변환 완료: ${fileName}`);
+        setUploadProgress('파일 준비 중...');
+        console.log('📤 [useSubmitContent] 음악 파일 FormData에 추가 중...');
+        const fileName = getFileName(data.music, `music_${Date.now()}.mp3`);
+        const mimeType = getMimeType(data.music, 'audio');
+
+        formData.append('music', {
+          uri: data.music,
+          type: mimeType,
+          name: fileName,
+        } as any);
+
+        console.log('✅ [useSubmitContent] 음악 파일 FormData에 추가 완료');
       }
 
       // 비디오 파일 추가
       if (data.video) {
-        console.log('📤 [useSubmitContent] 비디오 파일 변환 중...');
-        const fileName = generateFileName(data.video, 'video', 'mp4');
-        const videoFile = await uriToFile(data.video, fileName, 'video/mp4');
-        formData.append('video', videoFile);
-        console.log(`✅ [useSubmitContent] 비디오 파일 변환 완료: ${fileName}`);
+        setUploadProgress('파일 준비 중...');
+        console.log('📤 [useSubmitContent] 비디오 파일 FormData에 추가 중...');
+        const fileName = getFileName(data.video, `video_${Date.now()}.mp4`);
+        const mimeType = getMimeType(data.video, 'video');
+
+        formData.append('video', {
+          uri: data.video,
+          type: mimeType,
+          name: fileName,
+        } as any);
+
+        console.log('✅ [useSubmitContent] 비디오 파일 FormData에 추가 완료');
       }
 
-      console.log('📤 [useSubmitContent] API 제출 시작');
-      console.log('  🆔 capsuleId:', capsuleId);
+      console.log('📤 [useSubmitContent] API 제출 시작 (multipart/form-data)');
+      setUploadProgress('저장 중...');
 
-      // 3. API 호출
+      // 3. API 호출 (⭐ multipart/form-data 전송)
       const result = await submitMyContent(capsuleId, formData);
 
-      console.log('✅ [useSubmitContent] 제출 완료');
-      console.log('  📊 결과 요약:');
-      console.log('    - 슬롯 ID:', result.data.slot_id);
-      console.log('    - 상태:', result.data.status);
-      console.log('    - 이미지:', result.data.uploaded_images, '개');
-      console.log('    - 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
-      console.log('    - 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
+      console.log('✅ [useSubmitContent] 제출 완료:', result);
+      setUploadProgress('');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '제출에 실패했습니다.';
       console.error('❌ [useSubmitContent] 제출 실패:', errorMessage);
       setError(errorMessage);
+      setUploadProgress('');
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -184,8 +195,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
 
   return {
     submitContent,
-    isSubmitting,
-    error,
+    isSubmitting, // ⭐ 제출 중 상태
+    error, // ⭐ 에러 메시지
     validateContent,
+    uploadProgress, // ⭐ 업로드 진행 상태
   };
 }

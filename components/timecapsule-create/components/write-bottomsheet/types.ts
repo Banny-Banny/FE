@@ -83,6 +83,8 @@ export interface UseSubmitContentReturn {
   error: string | null;
   /** 콘텐츠 검증 함수 */
   validateContent: (data: UserContentFormData) => ValidationResult;
+  /** ⭐ 업로드 진행 상태 메시지 */
+  uploadProgress: string;
 }
 
 /**
@@ -133,7 +135,17 @@ export interface UserBottomSheetProps {
 
 /**
  * 타임캡슐 콘텐츠 제출 API 요청 타입 (FormData)
- * 주의: FormData로 전송하므로 인터페이스는 참고용
+ * ⭐ 백엔드 API 명세에 따라 multipart/form-data 형식으로 파일을 직접 전송
+ * 
+ * 실제 구현에서는 React Native의 FormData를 직접 사용하며,
+ * 다음 필드들을 포함합니다:
+ * - text_message: string (필수)
+ * - invite_code?: string (선택)
+ * - images: File[] (선택, 최대 5개) - FormData.append('images', {...})로 여러 번 추가
+ * - music: File (선택, add_music: true인 경우만)
+ * - video: File (선택, add_video: true인 경우만)
+ * 
+ * 참고: React Native에서는 File 객체 대신 { uri, type, name } 형태의 객체를 사용합니다.
  */
 export interface ContentSubmitFormData {
   /** ✅ 필수! 빈 문자열 불가 */
@@ -146,6 +158,25 @@ export interface ContentSubmitFormData {
   music?: File;
   /** 비디오 파일 (선택, add_video: true인 경우만) */
   video?: File;
+}
+
+/**
+ * ⚠️ 사용 중단: 이 타입은 더 이상 사용되지 않습니다.
+ * 백엔드 API가 multipart/form-data 형식으로 파일을 직접 받도록 변경되었습니다.
+ * 
+ * @deprecated ContentSubmitFormData 또는 FormData를 직접 사용하세요.
+ */
+export interface ContentSubmitRequest {
+  /** ✅ 필수! 빈 문자열 불가 */
+  text_message: string;
+  /** 초대 코드 (선택) */
+  invite_code?: string;
+  /** ⭐ 이미지 mediaId 배열 (선택) - 더 이상 사용하지 않음 */
+  image_ids?: string[];
+  /** ⭐ 음악 mediaId (선택) - 더 이상 사용하지 않음 */
+  music_id?: string;
+  /** ⭐ 비디오 mediaId (선택) - 더 이상 사용하지 않음 */
+  video_id?: string;
 }
 
 /**

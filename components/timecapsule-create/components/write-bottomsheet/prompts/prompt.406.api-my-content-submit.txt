@@ -1107,3 +1107,497 @@ UI 연동:
 - [ ] 실패 시 에러 메시지 표시 확인됨
 
 ==============================================
+
+==============================================
+🔄 수정 프롬프트 (useMediaUpload 훅 사용)
+==============================================
+
+중요공지) 위 프롬프트의 미디어 업로드 방식은 잘못되었습니다!
+⭐ useMediaUpload 훅을 사용하여 먼저 S3에 업로드 후 mediaId를 API에 전송하는 방식으로 변경합니다.
+
+==============================================
+
+수정요구사항) useMediaUpload 훅을 사용한 미디어 업로드
+
+1. ⭐ 기존 방식 (잘못됨):
+   - FormData로 파일을 직접 API에 업로드
+   - URI를 File 객체로 변환하여 multipart/form-data로 전송
+   - ❌ 이 방식은 사용하지 않음!
+
+2. ⭐ 올바른 방식 (useMediaUpload 훅 사용):
+   - Step 1: useMediaUpload 훅을 사용하여 미디어를 먼저 S3에 업로드
+   - Step 2: S3 업로드 후 mediaId를 받음
+   - Step 3: mediaId를 API에 전송 (JSON 형식)
+   - Step 4: API는 mediaId를 사용하여 미디어를 참조
+
+==============================================
+
+미디어업로드흐름) 올바른 업로드 플로우
+
+1. 사용자가 미디어 선택 (useMediaPicker로 로컬 URI 획득)
+
+2. 저장 버튼 클릭 시:
+   a. ⭐ useMediaUpload 훅 사용하여 각 미디어를 S3에 업로드
+      - 이미지들: upload(uri, 'IMAGE') → mediaId[]
+      - 음악: upload(uri, 'AUDIO') → mediaId
+      - 비디오: upload(uri, 'VIDEO') → mediaId
+   b. 업로드 진행 상태 표시 ("이미지 업로드 중... 1/3")
+   c. 모든 mediaId를 수집
+
+3. ⭐ API 호출: 타임캡슐 콘텐츠 제출
+   - POST /api/capsules/step-rooms/:capsuleId/my-content
+   - Content-Type: application/json (⭐ multipart/form-data가 아님!)
+   - Body (JSON):
+     {
+       "text_message": "추억의 순간들...",
+       "image_ids": ["mediaId1", "mediaId2"],      // ⭐ mediaId 배열
+       "music_id": "mediaId3",                     // ⭐ mediaId
+       "video_id": "mediaId4"                      // ⭐ mediaId
+     }
+   - Authorization: Bearer {JWT_TOKEN}
+
+4. 성공 응답 처리
+   - 제출 결과 정보 수신
+   - 성공 메시지 표시
+   - 바텀시트 닫기
+
+==============================================
+
+수정-데이터구조) 변경된 요청 타입 정의
+
+파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+
+// ⭐ 타임캡슐 콘텐츠 제출 API 요청 타입 (JSON)
+export interface ContentSubmitRequest {
+  text_message: string;                   // ✅ 필수! 빈 문자열 불가
+  invite_code?: string;                   // 초대 코드 (선택)
+  image_ids?: string[];                   // ⭐ 이미지 mediaId 배열 (선택)
+  music_id?: string;                      // ⭐ 음악 mediaId (선택)
+  video_id?: string;                      // ⭐ 비디오 mediaId (선택)
+}
+
+==============================================
+
+수정-구현가이드-1) useSubmitContent Hook 수정
+
+파일: components/timecapsule-create/components/write-bottomsheet/hooks/useSubmitContent.ts
+
+목적:
+- useMediaUpload 훅을 사용하여 미디어를 먼저 S3에 업로드
+- 업로드된 mediaId를 수집하여 API에 전송
+- 업로드 진행 상태 표시
+
+기능:
+1. submitContent(data: UserContentFormData, capsuleId: string): Promise<void>
+   - Step 1: 검증 실행 (text_message 필수!)
+   - Step 2: ⭐ useMediaUpload를 사용하여 미디어 업로드
+     - 이미지들을 순차적으로 업로드하여 mediaId[] 생성
+     - 음악 업로드하여 mediaId 생성
+     - 비디오 업로드하여 mediaId 생성
+   - Step 3: ⭐ JSON 요청 Body 생성 (ContentSubmitRequest)
+   - Step 4: API 호출 (submitMyContent)
+   - Step 5: 성공 처리
+
+구현 예시:
+```typescript
+import { useMediaUpload } from '@/commons/hooks/useMediaUpload';
+import { MediaType } from '@/commons/constants/media';
+import { submitMyContent } from '../api/content';
+import type { UserContentFormData, ContentSubmitRequest } from '../types';
+
+export function useSubmitContent() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
+
+  // ⭐ useMediaUpload 훅 사용
+  const { upload, isUploading, error: uploadError } = useMediaUpload();
+
+  /**
+   * 콘텐츠 검증 함수
+   * ⭐ text_message는 필수!
+   */
+  const validateContent = (data: UserContentFormData): ValidationResult => {
+    // ⭐ 텍스트 필수 검증
+    if (!data.textContent || data.textContent.trim().length === 0) {
+      return {
+        isValid: false,
+        message: '텍스트 메시지는 필수입니다.',
+      };
+    }
+
+    // 텍스트 길이 검증 (최대 500자)
+    if (data.textContent.length > 500) {
+      return {
+        isValid: false,
+        message: '텍스트는 최대 500자까지 입력 가능합니다',
+      };
+    }
+
+    return {
+      isValid: true,
+    };
+  };
+
+  const submitContent = async (data: UserContentFormData, capsuleId: string): Promise<void> => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      setUploadProgress('');
+
+      // 1. 검증 실행
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        throw new Error(validation.message);
+      }
+
+      console.log('📤 [useSubmitContent] 미디어 업로드 시작');
+
+      // 2. ⭐ useMediaUpload를 사용하여 미디어 업로드
+      const imageIds: string[] = [];
+      let musicId: string | undefined;
+      let videoId: string | undefined;
+
+      // 이미지 업로드
+      if (data.photos.length > 0) {
+        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 업로드 중...`);
+        for (let i = 0; i < data.photos.length; i++) {
+          setUploadProgress(`이미지 업로드 중... ${i + 1}/${data.photos.length}`);
+          const photoUri = data.photos[i];
+          const fileName = `photo_${Date.now()}_${i}.jpg`;
+
+          // ⭐ useMediaUpload 훅 사용
+          const mediaId = await upload(photoUri, 'IMAGE', fileName);
+
+          if (!mediaId) {
+            throw new Error(`이미지 ${i + 1} 업로드에 실패했습니다.`);
+          }
+
+          imageIds.push(mediaId);
+          console.log(`✅ [useSubmitContent] 이미지 ${i + 1}/${data.photos.length} 업로드 완료: ${mediaId}`);
+        }
+      }
+
+      // 음악 업로드
+      if (data.music) {
+        setUploadProgress('음악 업로드 중...');
+        console.log('📤 [useSubmitContent] 음악 파일 업로드 중...');
+        const fileName = `music_${Date.now()}.mp3`;
+
+        // ⭐ useMediaUpload 훅 사용
+        musicId = await upload(data.music, 'AUDIO', fileName);
+
+        if (!musicId) {
+          throw new Error('음악 파일 업로드에 실패했습니다.');
+        }
+
+        console.log(`✅ [useSubmitContent] 음악 파일 업로드 완료: ${musicId}`);
+      }
+
+      // 비디오 업로드
+      if (data.video) {
+        setUploadProgress('비디오 업로드 중...');
+        console.log('📤 [useSubmitContent] 비디오 파일 업로드 중...');
+        const fileName = `video_${Date.now()}.mp4`;
+
+        // ⭐ useMediaUpload 훅 사용
+        videoId = await upload(data.video, 'VIDEO', fileName);
+
+        if (!videoId) {
+          throw new Error('비디오 파일 업로드에 실패했습니다.');
+        }
+
+        console.log(`✅ [useSubmitContent] 비디오 파일 업로드 완료: ${videoId}`);
+      }
+
+      // 3. ⭐ JSON 요청 Body 생성
+      const requestBody: ContentSubmitRequest = {
+        text_message: data.textContent.trim(),
+        ...(imageIds.length > 0 && { image_ids: imageIds }),
+        ...(musicId && { music_id: musicId }),
+        ...(videoId && { video_id: videoId }),
+      };
+
+      console.log('📤 [useSubmitContent] API 제출 시작:', requestBody);
+      setUploadProgress('저장 중...');
+
+      // 4. API 호출 (⭐ JSON 전송)
+      const result = await submitMyContent(capsuleId, requestBody);
+
+      console.log('✅ [useSubmitContent] 제출 완료:', result);
+      setUploadProgress('');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '제출에 실패했습니다.';
+      console.error('❌ [useSubmitContent] 제출 실패:', errorMessage);
+      setError(errorMessage);
+      setUploadProgress('');
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return {
+    submitContent,
+    isSubmitting: isSubmitting || isUploading,  // ⭐ 업로드 중 상태 포함
+    error: error || uploadError,                 // ⭐ 업로드 에러 포함
+    validateContent,
+    uploadProgress,                              // ⭐ 업로드 진행 상태
+  };
+}
+```
+
+주의사항:
+- ⭐ useMediaUpload 훅을 사용하여 미디어를 먼저 S3에 업로드
+- ⭐ 업로드된 mediaId를 수집하여 API에 전송
+- ⭐ 업로드 진행 상태를 사용자에게 표시 (uploadProgress)
+- ⭐ FormData가 아닌 JSON 형식으로 전송
+- ⭐ isUploading 상태를 isSubmitting에 포함시켜 전체 프로세스 진행 중임을 표시
+
+==============================================
+
+수정-구현가이드-2) API 함수 수정
+
+파일: components/timecapsule-create/components/write-bottomsheet/api/content.ts
+
+목적:
+- ⭐ JSON 형식으로 요청 Body 전송 (multipart/form-data가 아님!)
+- mediaId를 사용하여 콘텐츠 제출
+
+기능:
+1. submitMyContent(capsuleId: string, requestBody: ContentSubmitRequest): Promise<ContentSubmitResponse>
+   - POST /api/capsules/step-rooms/:capsuleId/my-content 호출
+   - Content-Type: application/json (⭐ 변경!)
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - 응답을 그대로 반환 (snake_case 유지)
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { ContentSubmitRequest, ContentSubmitResponse } from '../types';
+
+/**
+ * 타임캡슐 콘텐츠 제출 API
+ * @param capsuleId 캡슐 ID (UUID)
+ * @param requestBody 요청 Body (JSON) - mediaId 포함
+ * @returns 제출 결과 정보
+ */
+export async function submitMyContent(
+  capsuleId: string,
+  requestBody: ContentSubmitRequest
+): Promise<ContentSubmitResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 콘텐츠 제출 시작 - capsuleId:', capsuleId);
+    console.log('🔄 [API] 요청 Body:', requestBody);
+
+    // ⭐ apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    // ⭐ JSON 형식으로 전송
+    const response = await apiClient.post<ContentSubmitResponse>(
+      `/api/capsules/step-rooms/${capsuleId}/my-content`,
+      requestBody,
+      {
+        headers: {
+          'Content-Type': 'application/json',  // ⭐ JSON으로 변경
+        },
+      }
+    );
+
+    console.log('✅ [API] 타임캡슐 콘텐츠 제출 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // 에러 처리 (동일)
+    if (error.response?.status === 400) {
+      const errorMessage = error.response?.data?.message || '유효하지 않은 요청입니다.';
+      console.error('❌ [API] 유효하지 않은 요청 (400):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || '권한이 없습니다.';
+      console.error('❌ [API] 권한 없음 (403):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 콘텐츠 제출 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+수정-구현가이드-3) UI에서 업로드 진행 상태 표시
+
+파일: components/timecapsule-create/components/write-bottomsheet/index.tsx
+
+변경사항:
+1. useSubmitContent Hook에서 uploadProgress 가져오기
+2. 저장 버튼에 업로드 진행 상태 표시
+
+구현 예시:
+```typescript
+export default function UserBottomSheet({
+  isVisible,
+  onClose,
+  participant,
+  capsuleId,
+  onSave,
+  roomSettings,
+}: UserBottomSheetProps) {
+  // ...
+
+  // useSubmitContent Hook 사용
+  const {
+    submitContent,
+    isSubmitting,
+    error: submitError,
+    validateContent,
+    uploadProgress,              // ⭐ 추가
+  } = useSubmitContent();
+
+  // 폼 제출 핸들러
+  const onFormSubmit = async (data: UserContentFormData) => {
+    try {
+      // ⭐ text_message 필수 검증
+      if (!data.textContent || data.textContent.trim().length === 0) {
+        Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        return;
+      }
+
+      // 제출 전 검증
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        Alert.alert('검증 실패', validation.message);
+        return;
+      }
+
+      // 부모 컴포넌트의 onSave가 있으면 호출 (우선순위 높음)
+      if (onSave) {
+        console.log('💾 [UserBottomSheet] 부모 컴포넌트 저장 호출');
+        await onSave({
+          text: data.textContent,
+          images: data.photos,
+          voiceRecording: data.music,
+          video: data.video,
+        });
+      } else {
+        // ⭐ capsuleId 전달
+        console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
+        await submitContent(data, capsuleId);
+      }
+
+      // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose();
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error('제출 중 오류:', err);
+      Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
+    }
+  };
+
+  // 하단 고정 버튼 영역
+  const renderFooter = () => (
+    <>
+      <DualButton
+        cancelLabel="취소"
+        confirmLabel={
+          isSubmitting
+            ? (uploadProgress || '저장 중...')  // ⭐ 업로드 진행 상태 표시
+            : '저장'
+        }
+        size="M"
+        cancelVariant="outline"
+        confirmVariant="primary"
+        confirmDisabled={isSubmitting}
+        onCancelPress={handleCancel}
+        onConfirmPress={handleSave}
+      />
+      <Text style={styles.hintText}>나중에도 수정할 수 있어요</Text>
+    </>
+  );
+
+  // ...
+}
+```
+
+==============================================
+
+수정-최종검토 체크리스트)
+
+useMediaUpload 훅 사용:
+- [ ] ⭐ useMediaUpload 훅 import 추가됨
+- [ ] ⭐ 이미지 업로드 시 upload(uri, 'IMAGE', filename) 사용
+- [ ] ⭐ 음악 업로드 시 upload(uri, 'AUDIO', filename) 사용
+- [ ] ⭐ 비디오 업로드 시 upload(uri, 'VIDEO', filename) 사용
+- [ ] ⭐ 업로드 성공 시 mediaId 수집
+- [ ] ⭐ 업로드 실패 시 에러 처리
+
+타입 정의 수정:
+- [ ] ⭐ ContentSubmitRequest 인터페이스 추가됨 (JSON 요청 타입)
+- [ ] ⭐ image_ids: string[] 필드 추가됨
+- [ ] ⭐ music_id: string 필드 추가됨
+- [ ] ⭐ video_id: string 필드 추가됨
+
+API 함수 수정:
+- [ ] ⭐ submitMyContent 함수 시그니처 변경됨 (FormData → ContentSubmitRequest)
+- [ ] ⭐ Content-Type: application/json으로 변경됨
+- [ ] ⭐ JSON 형식으로 요청 Body 전송
+
+useSubmitContent Hook 수정:
+- [ ] ⭐ useMediaUpload 훅 사용하여 미디어 업로드
+- [ ] ⭐ 이미지 순차 업로드 및 mediaId[] 생성
+- [ ] ⭐ 음악 업로드 및 mediaId 생성
+- [ ] ⭐ 비디오 업로드 및 mediaId 생성
+- [ ] ⭐ JSON 요청 Body 생성 (ContentSubmitRequest)
+- [ ] ⭐ uploadProgress 상태 추가
+- [ ] ⭐ isUploading 상태를 isSubmitting에 포함
+- [ ] ⭐ uploadError를 error에 포함
+
+UI 연동 수정:
+- [ ] ⭐ uploadProgress를 버튼 라벨에 표시
+- [ ] ⭐ "이미지 업로드 중... 1/3" 형식으로 진행 상태 표시
+- [ ] ⭐ "음악 업로드 중...", "비디오 업로드 중...", "저장 중..." 표시
+
+테스트:
+- [ ] ⭐ useMediaUpload를 사용한 이미지 업로드 테스트
+- [ ] ⭐ useMediaUpload를 사용한 음악 업로드 테스트
+- [ ] ⭐ useMediaUpload를 사용한 비디오 업로드 테스트
+- [ ] ⭐ mediaId 수집 테스트
+- [ ] ⭐ JSON 형식 API 호출 테스트
+- [ ] ⭐ 업로드 진행 상태 표시 테스트
+- [ ] ⭐ 업로드 실패 시 에러 처리 테스트
+
+==============================================
+
+핵심차이점 요약)
+
+기존 방식 (잘못됨):
+- FormData로 파일을 직접 API에 업로드
+- multipart/form-data 전송
+- URI → File 객체 변환
+- Content-Type: multipart/form-data
+
+올바른 방식 (useMediaUpload 훅 사용):
+- useMediaUpload로 먼저 S3에 업로드
+- mediaId를 수집하여 API에 전송
+- JSON 형식 요청 Body
+- Content-Type: application/json
+- 업로드 진행 상태 표시 가능
+
+==============================================

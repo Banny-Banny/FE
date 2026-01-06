@@ -24,7 +24,7 @@ export const SIZE_LIMITS = {
 export const MIME_TYPE_MAP: Record<string, string> = {
   // IMAGE
   jpeg: 'image/jpeg',
-  jpg: 'image/jpg',
+  jpg: 'image/jpeg',
   png: 'image/png',
   webp: 'image/webp',
   // VIDEO
