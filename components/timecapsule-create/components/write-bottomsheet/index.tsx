@@ -21,34 +21,16 @@ import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
+import type { UserBottomSheetProps, UserContentFormData } from './types';
 
-// Participant 타입 정의
-interface Participant {
-  id: string;
-  name: string;
-  emoji: string;
-  status: 'completed' | 'pending' | 'waiting';
-  isHost?: boolean;
-  isMe?: boolean;
-}
-
-// Props 인터페이스 정의
-interface UserBottomSheetProps {
-  isVisible: boolean;
-  onClose: () => void;
-  participant: Participant;
-  onSave?: (content: any) => Promise<void>; // 부모 컴포넌트의 저장 핸들러 (선택사항)
-}
-
-// 폼 데이터 타입 정의
-interface UserContentFormData {
-  textContent: string;
-  photos: string[];
-  music: string | null;
-  video: string | null;
-}
-
-export default function UserBottomSheet({ isVisible, onClose, participant, onSave }: UserBottomSheetProps) {
+export default function UserBottomSheet({
+  isVisible,
+  onClose,
+  participant,
+  capsuleId,
+  onSave,
+  roomSettings,
+}: UserBottomSheetProps) {
   // react-hook-form 설정
   const {
     control,
@@ -71,6 +53,11 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
   const currentVideo = watch('video');
   const currentMusic = watch('music');
 
+  // ⭐ 기본값 설정 (roomSettings가 null이면 기본값 사용)
+  const maxImagesPerPerson = roomSettings?.max_images_per_person ?? 3;
+  const hasMusic = roomSettings?.has_music ?? false;
+  const hasVideo = roomSettings?.has_video ?? false;
+
   // useMediaPicker Hook 사용
   const { pickImage, pickVideo, pickAudio, isPickingImage, isPickingVideo, isPickingAudio, error } =
     useMediaPicker(
@@ -89,6 +76,7 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
       currentPhotos.length,
       !!currentVideo,
       !!currentMusic,
+      maxImagesPerPerson, // ⭐ 추가
     );
 
   // useSubmitContent Hook 사용
@@ -97,7 +85,7 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
     isSubmitting,
     error: submitError,
     validateContent,
-  } = useSubmitContent(participant.id);
+  } = useSubmitContent();
 
   // 사진 삭제 핸들러
   const handleDeletePhoto = (index: number) => {
@@ -133,6 +121,12 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
   // 폼 제출 핸들러
   const onFormSubmit = async (data: UserContentFormData) => {
     try {
+      // ⭐ text_message 필수 검증
+      if (!data.textContent || data.textContent.trim().length === 0) {
+        Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        return;
+      }
+
       // 제출 전 검증
       const validation = validateContent(data);
       if (!validation.isValid) {
@@ -147,14 +141,22 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
           text: data.textContent,
           images: data.photos,
           voiceRecording: data.music, // music을 voiceRecording으로 매핑
+          video: data.video,
         });
       } else {
-        // 기존 submitContent Hook 호출 (하위 호환성)
+        // ⭐ capsuleId 전달
         console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
-        await submitContent(data);
+        console.log('  🆔 capsuleId:', capsuleId);
+        console.log('  📝 제출 데이터 요약:');
+        console.log('    - 텍스트:', data.textContent.trim().substring(0, 30) + '...');
+        console.log('    - 이미지:', data.photos.length, '개');
+        console.log('    - 음악:', data.music ? '있음' : '없음');
+        console.log('    - 비디오:', data.video ? '있음' : '없음');
+        await submitContent(data, capsuleId);
       }
 
       // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      console.log('🎉 [UserBottomSheet] 저장 성공!');
       Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
         {
           text: '확인',
@@ -165,7 +167,12 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
       ]);
     } catch (err) {
       // 에러 처리
-      console.error('제출 중 오류:', err);
+      console.error('❌ [UserBottomSheet] 제출 중 오류 발생');
+      console.error('  에러 타입:', err instanceof Error ? err.constructor.name : typeof err);
+      console.error('  에러 메시지:', err instanceof Error ? err.message : String(err));
+      if (err instanceof Error && err.stack) {
+        console.error('  스택 트레이스:', err.stack);
+      }
       Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
     }
   };
@@ -249,14 +256,16 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
               source={{ uri: 'http://localhost:3845/assets/image-icon.svg' }}
               style={styles.sectionIcon}
             />
-            <Text style={styles.sectionTitle}>사진 ({watch('photos').length}/5)</Text>
+            <Text style={styles.sectionTitle}>
+              사진 ({watch('photos').length}/{maxImagesPerPerson})
+            </Text>
           </View>
           <Button
             label={isPickingImage ? '선택 중...' : '사진 추가'}
             variant="outline"
             size="M"
             icon="ri-add-line"
-            disabled={isPickingImage || currentPhotos.length >= 5}
+            disabled={isPickingImage || currentPhotos.length >= maxImagesPerPerson}
             onPress={handleAddPhoto}
           />
 
@@ -265,7 +274,9 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
             control={control}
             name="photos"
             rules={{
-              validate: (value) => value.length <= 5 || '최대 5개까지 추가 가능합니다',
+              validate: (value) =>
+                value.length <= maxImagesPerPerson ||
+                `최대 ${maxImagesPerPerson}개까지 추가 가능합니다`,
             }}
             render={({ field: { value } }) => (
               <>
@@ -300,83 +311,87 @@ export default function UserBottomSheet({ isVisible, onClose, participant, onSav
           />
         </View>
 
-        {/* 음악 섹션 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
-              style={styles.sectionIcon}
-            />
-            <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
-          </View>
-          <Button
-            label={isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
-            variant="outline"
-            size="M"
-            icon="ri-add-line"
-            disabled={isPickingAudio}
-            onPress={handleAddMusic}
-          />
-
-          {/* 선택된 음악 표시 */}
-          {currentMusic && (
-            <View style={styles.mediaFileContainer}>
-              <View style={styles.mediaFileInfo}>
-                <Image
-                  source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
-                  style={styles.mediaFileIcon}
-                />
-                <Text style={styles.mediaFileName} numberOfLines={1}>
-                  {currentMusic.split('/').pop() || '음악 파일'}
-                </Text>
-              </View>
-              <Pressable
-                style={styles.mediaDeleteButton}
-                onPress={() => setValue('music', null, { shouldDirty: true })}>
-                <Text style={styles.deleteButtonText}>×</Text>
-              </Pressable>
+        {/* 음악 섹션 - hasMusic이 true일 때만 표시 */}
+        {hasMusic && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Image
+                source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
+                style={styles.sectionIcon}
+              />
+              <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
             </View>
-          )}
-        </View>
-
-        {/* 동영상 섹션 */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Image
-              source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
-              style={styles.sectionIcon}
+            <Button
+              label={isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isPickingAudio}
+              onPress={handleAddMusic}
             />
-            <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
-          </View>
-          <Button
-            label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
-            variant="outline"
-            size="M"
-            icon="ri-add-line"
-            disabled={isPickingVideo}
-            onPress={handleAddVideo}
-          />
 
-          {/* 선택된 동영상 표시 */}
-          {currentVideo && (
-            <View style={styles.mediaFileContainer}>
-              <View style={styles.mediaFileInfo}>
-                <Image
-                  source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
-                  style={styles.mediaFileIcon}
-                />
-                <Text style={styles.mediaFileName} numberOfLines={1}>
-                  {currentVideo.split('/').pop() || '동영상 파일'}
-                </Text>
+            {/* 선택된 음악 표시 */}
+            {currentMusic && (
+              <View style={styles.mediaFileContainer}>
+                <View style={styles.mediaFileInfo}>
+                  <Image
+                    source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
+                    style={styles.mediaFileIcon}
+                  />
+                  <Text style={styles.mediaFileName} numberOfLines={1}>
+                    {currentMusic.split('/').pop() || '음악 파일'}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('music', null, { shouldDirty: true })}>
+                  <Text style={styles.deleteButtonText}>×</Text>
+                </Pressable>
               </View>
-              <Pressable
-                style={styles.mediaDeleteButton}
-                onPress={() => setValue('video', null, { shouldDirty: true })}>
-                <Text style={styles.deleteButtonText}>×</Text>
-              </Pressable>
+            )}
+          </View>
+        )}
+
+        {/* 동영상 섹션 - hasVideo가 true일 때만 표시 */}
+        {hasVideo && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Image
+                source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
+                style={styles.sectionIcon}
+              />
+              <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
             </View>
-          )}
-        </View>
+            <Button
+              label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isPickingVideo}
+              onPress={handleAddVideo}
+            />
+
+            {/* 선택된 동영상 표시 */}
+            {currentVideo && (
+              <View style={styles.mediaFileContainer}>
+                <View style={styles.mediaFileInfo}>
+                  <Image
+                    source={{ uri: 'http://localhost:3845/assets/video-icon.svg' }}
+                    style={styles.mediaFileIcon}
+                  />
+                  <Text style={styles.mediaFileName} numberOfLines={1}>
+                    {currentVideo.split('/').pop() || '동영상 파일'}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('video', null, { shouldDirty: true })}>
+                  <Text style={styles.deleteButtonText}>×</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
       </View>
     </BottomSheet>
   );

@@ -4,12 +4,15 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { Platform } from 'react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
 import { getUserFromToken } from '@/utils/auth';
 import { STORAGE_KEYS } from '@/commons/constants/storage';
+import { submitMyContent } from '../../write-bottomsheet/api/content';
 
 // ============================================
 // 테스트 모드 설정
@@ -242,6 +245,146 @@ interface UseParticipantsParams {
   maxParticipants: number;
 }
 
+/**
+ * 파일 확장자에서 MIME 타입 추론
+ */
+function getMimeTypeFromUri(uri: string): string {
+  const extension = uri.split('.').pop()?.toLowerCase() || '';
+  const mimeMap: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    gif: 'image/gif',
+    webp: 'image/webp',
+    heic: 'image/jpeg', // HEIC는 JPEG로 변환되므로 JPEG MIME 타입 사용
+    heif: 'image/jpeg', // HEIF도 JPEG로 변환되므로 JPEG MIME 타입 사용
+    mp3: 'audio/mpeg',
+    m4a: 'audio/mp4',
+    aac: 'audio/aac',
+    wav: 'audio/wav',
+    mp4: 'video/mp4',
+    mov: 'video/quicktime',
+    m4v: 'video/mp4',
+  };
+  return mimeMap[extension] || 'application/octet-stream';
+}
+
+/**
+ * HEIC/HEIF 파일을 JPEG로 변환
+ * 서버가 HEIC를 지원하지 않으므로 JPEG로 변환 필요
+ */
+async function convertHeicToJpeg(uri: string): Promise<string> {
+  // 웹 환경에서는 변환 불가 (원본 반환)
+  if (Platform.OS === 'web') {
+    return uri;
+  }
+
+  try {
+    // expo-image-manipulator를 사용하여 HEIC를 JPEG로 변환
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [], // 변환만 수행 (리사이즈 없음)
+      {
+        compress: 0.9, // 높은 품질 유지
+        format: ImageManipulator.SaveFormat.JPEG,
+      },
+    );
+    return result.uri;
+  } catch (error) {
+    console.error('HEIC 변환 실패:', error);
+    // 변환 실패 시 원본 반환 (에러 발생 가능하지만 시도)
+    return uri;
+  }
+}
+
+/**
+ * 이미지 URI가 HEIC/HEIF 형식인지 확인
+ */
+function isHeicFormat(uri: string): boolean {
+  const extension = uri.split('.').pop()?.toLowerCase() || '';
+  return extension === 'heic' || extension === 'heif';
+}
+
+/**
+ * ParticipantContent를 FormData로 변환하는 헬퍼 함수
+ * React Native에서는 File 생성자를 사용할 수 없으므로 { uri, type, name } 형식 사용
+ */
+async function contentToFormData(content: ParticipantContent): Promise<FormData> {
+  const formData = new FormData();
+
+  // text_message 추가 (필수!)
+  formData.append('text_message', content.text || '');
+
+  // 이미지 파일 추가
+  if (content.images && content.images.length > 0) {
+    for (const imageUri of content.images) {
+      try {
+        let finalUri = imageUri;
+        let fileName = imageUri.split('/').pop() || `photo_${Date.now()}.jpg`;
+        
+        // HEIC/HEIF 파일인 경우 JPEG로 변환
+        if (isHeicFormat(imageUri)) {
+          console.log('  🔄 HEIC 파일 감지, JPEG로 변환 중...');
+          finalUri = await convertHeicToJpeg(imageUri);
+          // 파일명 확장자 변경
+          fileName = fileName.replace(/\.(heic|heif)$/i, '.jpg');
+          console.log('  ✅ HEIC → JPEG 변환 완료:', fileName);
+        }
+        
+        const mimeType = getMimeTypeFromUri(finalUri);
+        
+        // React Native FormData 형식: { uri, type, name }
+        formData.append('images', {
+          uri: finalUri,
+          type: mimeType,
+          name: fileName,
+        } as any);
+        console.log('  ✅ 이미지 추가:', fileName, `(${mimeType})`);
+      } catch (error) {
+        console.error('  ❌ 이미지 추가 실패:', imageUri, error);
+      }
+    }
+  }
+
+  // 음악 파일 추가
+  if (content.voiceRecording) {
+    try {
+      const fileName = content.voiceRecording.split('/').pop() || `music_${Date.now()}.mp3`;
+      const mimeType = getMimeTypeFromUri(content.voiceRecording);
+      
+      // React Native FormData 형식: { uri, type, name }
+      formData.append('music', {
+        uri: content.voiceRecording,
+        type: mimeType,
+        name: fileName,
+      } as any);
+      console.log('  ✅ 음악 추가:', fileName, `(${mimeType})`);
+    } catch (error) {
+      console.error('  ❌ 음악 추가 실패:', content.voiceRecording, error);
+    }
+  }
+
+  // 비디오 파일 추가
+  if (content.video) {
+    try {
+      const fileName = content.video.split('/').pop() || `video_${Date.now()}.mp4`;
+      const mimeType = getMimeTypeFromUri(content.video);
+      
+      // React Native FormData 형식: { uri, type, name }
+      formData.append('video', {
+        uri: content.video,
+        type: mimeType,
+        name: fileName,
+      } as any);
+      console.log('  ✅ 비디오 추가:', fileName, `(${mimeType})`);
+    } catch (error) {
+      console.error('  ❌ 비디오 추가 실패:', content.video, error);
+    }
+  }
+
+  return formData;
+}
+
 // ============================================
 // Hook
 // ============================================
@@ -302,9 +445,10 @@ export function useParticipants({
           const currentUserId = currentUser?.id || null;
 
           // slots[] 배열을 Participant[] 형식으로 변환
+          // ⭐ 수정: roomDetail.slots에는 이미 모든 슬롯(빈 슬롯 포함)이 있으므로 그대로 사용
           const participantsList: Participant[] = [];
 
-          // 실제 슬롯 정보 변환
+          // 모든 슬롯 변환 (배정된 슬롯 + 빈 슬롯 모두 포함)
           for (const slot of roomDetail.slots) {
             if (slot.user_id && slot.nickname) {
               // 배정된 슬롯
@@ -322,19 +466,24 @@ export function useParticipants({
                 // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
                 // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
               });
+            } else {
+              // 빈 슬롯 (user_id가 null인 경우)
+              participantsList.push({
+                id: `slot-${slot.slot_number}`,
+                name: '',
+                emoji: EMPTY_SLOT_EMOJI,
+                status: PARTICIPANT_STATUS.WAITING,
+              });
             }
           }
 
-          // 빈 슬롯 추가 (maxParticipants까지)
-          const filledSlots = roomDetail.slots.length;
-          for (let i = filledSlots; i < maxParticipants; i++) {
-            participantsList.push({
-              id: `slot-${i + 1}`,
-              name: '',
-              emoji: EMPTY_SLOT_EMOJI,
-              status: PARTICIPANT_STATUS.WAITING,
-            });
-          }
+          // ⭐ 디버깅: 슬롯 계산 확인
+          console.log(
+            '🔍 [useParticipants] 슬롯 계산:',
+            `roomDetail.slots.length=${roomDetail.slots.length}`,
+            `participantsList.length=${participantsList.length}`,
+            `maxParticipants=${maxParticipants}`,
+          );
 
         setParticipants(participantsList);
         console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
@@ -405,18 +554,34 @@ export function useParticipants({
           throw new Error('본인의 작성 내용만 저장할 수 있습니다.');
         }
 
+        // capsuleId가 없으면 에러
+        if (!capsuleId) {
+          throw new Error('캡슐 ID가 없습니다.');
+        }
+
         console.log('💾 [useParticipants] 작성 내용 저장 시작:', participantId);
+        console.log('  📝 텍스트:', content.text?.substring(0, 30) + '...');
+        console.log('  🖼️  이미지:', content.images?.length || 0, '개');
+        console.log('  🎵 음악:', content.voiceRecording ? '있음' : '없음');
+        console.log('  🎬 비디오:', content.video ? '있음' : '없음');
+        console.log('  🆔 capsuleId:', capsuleId);
 
-        // TODO: API 연동
-        // await fetch(`/api/room/${capsuleId}/participants/${participantId}/content`, {
-        //   method: 'POST',
-        //   body: JSON.stringify(content),
-        // });
+        // 1. FormData 생성
+        console.log('📦 [useParticipants] FormData 생성 시작...');
+        const formData = await contentToFormData(content);
+        console.log('✅ [useParticipants] FormData 생성 완료');
 
-        // 목데이터 업데이트
-        await new Promise((resolve) => setTimeout(resolve, 500)); // 저장 시뮬레이션
+        // 2. 실제 API 호출
+        console.log('📤 [useParticipants] API 호출 시작...');
+        const result = await submitMyContent(capsuleId, formData);
+        console.log('✅ [useParticipants] API 호출 성공!');
+        console.log('  📊 응답 데이터:', JSON.stringify(result, null, 2));
+        console.log('  🎯 상태:', result.data.status);
+        console.log('  🖼️  이미지:', result.data.uploaded_images, '개');
+        console.log('  🎵 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
+        console.log('  🎬 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
 
-        // 작성 내용 저장 및 상태를 'completed'로 업데이트 (한 번에 처리)
+        // 3. 로컬 상태 업데이트 (작성 내용 저장 및 상태를 'completed'로 업데이트)
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
@@ -429,7 +594,7 @@ export function useParticipants({
         throw err;
       }
     },
-    [participants],
+    [participants, capsuleId],
   );
 
   // ============================================

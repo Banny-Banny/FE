@@ -1,0 +1,1109 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+2. ⭐ capsuleId 출처
+   - 실제 사용: 대기실 생성 후 받은 capsule_id 사용
+     - createRoomAndGetSettings 응답에서 capsule_id 전달
+     - useRoomData Hook에서 capsuleId 상태로 관리
+   - 컴포넌트에서 props로 전달받아 사용
+## **기능이름**
+
+내 콘텐츠 저장 API내 콘텐츠 저장 API
+(POST /api/capsules/step-rooms/:capsuleId/my-content)
+
+## **⚙️ 어떻게 동작하나**
+
+1. 클라이언트가 POST /api/capsules/step-rooms/:capsuleId/my-content 요청을 보냅니다 (multipart/form-data).
+2. 서버는 JWT 토큰으로 사용자를 인증하고, 해당 캡슐의 결제 상태를 확인합니다.
+3. 사용자가 해당 캡슐의 참여자인지, 슬롯이 배정되었는지 확인합니다.
+4. 주문 옵션(add_music, add_video)에 따라 업로드 가능한 미디어 타입을 검증합니다.
+5. 텍스트 메시지와 파일들을 저장하고, 슬롯의 상태를 COMPLETED로 업데이트합니다.
+6. 저장된 콘텐츠 정보(업로드 개수, 상태 등)를 반환합니다.
+
+## **📌 어떻게 관리하나**
+
+- **인증 가드**: JwtAuthGuard (필수)
+- **검증**:
+    - capsuleId: UUID 형식
+    - text_message: 필수 (빈 문자열 불가)
+    - 결제 완료 상태 확인 (order.status === 'PAID')
+    - 참여자 권한 확인 (슬롯에 user_id 배정되어 있어야 함)
+    - 미디어 타입 허용 여부 확인 (주문 옵션에 따라)
+- **업로드 제한**:
+    - 이미지: 최대 5개 (주문 시 photo_count에 따라 제한)
+    - 음악: 최대 1개 (add_music: true인 경우만)
+    - 비디오: 최대 1개 (add_video: true인 경우만)
+- **반환 정보**:
+    - slot_id: 슬롯 고유 ID
+    - user_id: 작성자 ID
+    - status: 작성 상태 (PENDING → COMPLETED)
+    - uploaded_images: 업로드된 이미지 개수
+    - uploaded_music: 음악 업로드 여부
+    - uploaded_video: 비디오 업로드 여부
+- **재저장 가능**: 이미 저장된 콘텐츠를 다시 저장(업데이트)할 수 있습니다.
+
+## **📑 데이터 구조 정리**
+
+| Key | 타입 | 필수 | 설명 | 예시 |
+| --- | --- | --- | --- | --- |
+| Path Param: capsuleId | string (UUID) | ✅ | 캡슐(대기실) ID | 550e8400-e29b-41d4-a716-446655440000 |
+| Body: text_message | string | ✅ | 텍스트 메시지 | "안녕하세요! 오늘 정말 행복한 하루였어요." |
+| Body: invite_code | string | ❌ | 초대 코드 (옵션) | "ABC123" |
+| Body: images | File[] | ❌ | 이미지 파일 (최대 5개) | [image1.jpg, image2.jpg] |
+| Body: music | File | ❌ | 음악 파일 | music.mp3 |
+| Body: video | File | ❌ | 비디오 파일 | video.mp4 |
+| Response 200/201 | object | - | 저장 결과 | { success, data } |
+
+## **Q&A**
+
+- **Q. 결제하지 않은 캡슐에 저장할 수 있나?**
+    - A. 아니요. 403/404 에러가 발생합니다. (결제 완료 상태여야 함)
+- **Q. 참여자가 아닌 사용자가 저장할 수 있나?**
+    - A. 아니요. 403 Forbidden 에러가 발생합니다.
+- **Q. 이미 저장한 콘텐츠를 다시 저장할 수 있나?**
+    - A. 네, 재저장(업데이트)이 가능합니다. 기존 콘텐츠를 덮어씁니다.
+- **Q. add_music: false로 주문했는데 음악을 업로드하면?**
+    - A. 400 Bad Request 에러가 발생합니다. (주문 옵션 위반)
+- **Q. 이미지를 주문한 개수보다 많이 업로드하면?**
+    - A. 400 Bad Request 에러가 발생합니다.
+- **Q. 텍스트 메시지 없이 파일만 업로드할 수 있나?**
+    - A. 아니요. text_message는 필수 입력 항목입니다.
+- **Q. status가 COMPLETED가 되면 어떻게 되나?**
+    - A. 슬롯의 작성 상태가 완료로 표시되며, 모든 참여자가 완료하면 캡슐이 잠깁니다.
+- **Q. deadline이 지나면 저장할 수 없나?**
+    - A. 구현에 따라 다를 수 있습니다. 일반적으로 마감 이후에는 저장이 제한됩니다.
+
+## **/api/capsules/step-rooms/:capsuleId/my-content 사용법**
+
+**요청 예시(텍스트만)**
+
+<aside>
+
+```json
+curl -X POST "http://localhost:3000/api/capsules/step-rooms/550e8400-e29b-41d4-a716-446655440000/my-content" \
+  -H "Authorization: Bearer {your-jwt-token}" \
+  -H "Content-Type: multipart/form-data" \
+  -F "text_message=안녕하세요! 오늘 정말 행복한 하루였어요."
+```
+
+</aside>
+
+**요청 예시(텍스트 + 이미지)**
+
+```json
+curl -X POST "http://localhost:3000/api/capsules/step-rooms/550e8400-e29b-41d4-a716-446655440000/my-content" \
+  -H "Authorization: Bearer {your-jwt-token}" \
+  -F "text_message=즐거운 추억을 담았어요!" \
+  -F "images=@photo1.jpg" \
+  -F "images=@photo2.jpg"
+```
+
+**요청 예시(텍스트 + 이미지)**
+
+```json
+curl -X POST "http://localhost:3000/api/capsules/step-rooms/550e8400-e29b-41d4-a716-446655440000/my-content" \
+  -H "Authorization: Bearer {your-jwt-token}" \
+  -F "text_message=완벽한 하루였어요!" \
+  -F "images=@photo1.jpg" \
+  -F "images=@photo2.jpg" \
+  -F "music=@voice-memo.mp3" \
+  -F "video=@happy-moment.mp4"
+```
+
+**응답 예시 (200)**
+
+<aside>
+
+```json
+{
+  "success": true,
+  "data": {
+    "slot_id": "660e8400-e29b-41d4-a716-446655440111",
+    "user_id": "770e8400-e29b-41d4-a716-446655440222",
+    "status": "COMPLETED",
+    "uploaded_images": 2,
+    "uploaded_music": true,
+    "uploaded_video": true
+  }
+}
+```
+
+</aside>
+
+**에러 케이스**
+
+- **400 Bad Request**:
+    - text_message 누락
+    - 허용되지 않은 미디어 업로드 (예: add_music: false인데 음악 파일 업로드)
+    - 이미지 개수 초과
+    - 잘못된 파일 형식
+- **403 Forbidden**:
+    - 결제 미완료 캡슐
+    - 참여자가 아닌 사용자의 접근
+    - 슬롯이 배정되지 않은 사용자
+- **404 Not Found**:
+    - 존재하지 않는 capsuleId
+    - 삭제된 캡슐
+- **500 Internal Server Error**:
+    - S3 업로드 실패
+    - 서버 내부 오류
+
+**활용 시나리오**
+
+1. **콘텐츠 최초 저장**:
+    - 사용자가 스텝룸에서 텍스트 메시지와 미디어를 작성
+    - 저장 버튼 클릭 → API 호출
+    - 성공 시 status가 COMPLETED로 변경
+2. **콘텐츠 수정**:
+    - 이미 저장된 콘텐츠를 다시 편집
+    - 동일한 API를 다시 호출하여 업데이트
+    - 기존 파일은 새 파일로 교체됨
+3. **단계별 저장**:
+    - 첫 번째 호출: 텍스트만 저장
+    - 두 번째 호출: 텍스트 + 이미지 추가
+    - 세 번째 호출: 모든 미디어 포함 (최종)
+
+**응답 필드 설명**
+
+| 필드 | 타입 | 설명 |
+| --- | --- | --- |
+| success | boolean | API 호출 성공 여부 |
+| data.slot_id | string (UUID) | 저장된 슬롯의 고유 ID |
+| data.user_id | string (UUID) | 작성자(사용자) ID |
+| data.status | string | 작성 상태 (PENDING → COMPLETED) |
+| data.uploaded_images | number | 업로드된 이미지 개수 (0-5) |
+| data.uploaded_music | boolean | 음악 파일 업로드 여부 |
+| data.uploaded_video | boolean | 비디오 파일 업로드 여부 |
+
+**미디어 타입 제한**
+
+| 미디어 타입 | 허용 형식 | 최대 개수 | 주문 조건 |
+| --- | --- | --- | --- |
+| 이미지 | jpg, jpeg, png, gif | photo_count (최대 5) | 항상 가능 |
+| 음악 | mp3, m4a, wav | 1 | add_music: true |
+| 비디오 | mp4, mov, avi | 1 | add_video: true |
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ capsuleId는 대기실 생성 후 받은 실제 capsule_id를 사용
+- POST /api/capsules/step-rooms/:capsuleId/my-content로 콘텐츠 제출
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수 (apiClient가 자동 처리)
+- ⭐ multipart/form-data 형식으로 파일을 직접 API에 업로드 (mediaId 사용 안 함)
+- ⭐ useMediaUpload는 선택적으로 파일 검증/압축에 활용 가능하지만, 최종 제출은 FormData로 직접 전송
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - commons/hooks/useMediaUpload.ts (선택적: 파일 검증/압축에 활용 가능, 최종 제출은 FormData로 직접 전송)
+            - components/timecapsule-create/components/write-bottomsheet/index.tsx (기존 바텀시트)
+            - components/timecapsule-create/components/write-bottomsheet/types.ts (기존 타입 정의)
+            - components/timecapsule-create/components/write-bottomsheet/hooks/useMediaPicker.ts (미디어 선택 Hook)
+            - components/timecapsule-create/components/step-room/api/capsule.ts (API 함수 참고)
+            - utils/mediaUpload.ts (선택적: 파일 검증 로직 참고)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/write-bottomsheet/api/content.ts (API 함수 - 신규 생성)
+            - components/timecapsule-create/components/write-bottomsheet/types.ts (응답 타입 추가)
+            - components/timecapsule-create/components/write-bottomsheet/hooks/useSubmitContent.ts (Hook 수정)
+            - components/timecapsule-create/components/write-bottomsheet/index.tsx (UI 연동)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 에러 발생 시 사용자에게 적절한 메시지 표시
+조건-기능유지) 성공 시 성공 메시지 표시 후 바텀시트 닫기
+조건-기능유지) 업로드 중 로딩 상태 표시 (버튼 비활성화 및 "업로드 중..." 표시)
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 나의 타임캡슐 콘텐츠 제출 API:
+  POST /api/capsules/step-rooms/:capsuleId/my-content
+  - Path Parameter: capsuleId (UUID) - 대기실 생성 시 받은 capsule_id
+  - Content-Type: multipart/form-data (⭐ JSON이 아님!)
+  - Body (FormData):
+      - text_message: string (✅ 필수! 빈 문자열 불가)
+      - invite_code: string (선택)
+      - images: File[] (선택, 최대 photo_count개)
+      - music: File (선택, add_music: true인 경우만)
+      - video: File (선택, add_video: true인 경우만)
+  - 참여자가 자신의 콘텐츠를 제출
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수 (apiClient가 자동 처리)
+조건-API명세) 응답 형식: JSON (snake_case)
+
+중요: ⭐ 미디어 업로드 흐름
+1. 사용자가 미디어 선택 (useMediaPicker로 로컬 URI 획득)
+2. 저장 버튼 클릭 시:
+   a. FormData 객체 생성
+   b. text_message 추가 (필수!)
+   c. URI를 File 객체로 변환하여 FormData에 추가
+   d. multipart/form-data로 POST /api/capsules/step-rooms/:capsuleId/my-content 호출
+
+==============================================
+
+핵심요구사항) 타임캡슐 콘텐츠 제출 API 연동 (미디어 업로드 포함)
+핵심요구사항-1) ⭐ multipart/form-data 형식으로 파일을 직접 API에 업로드 (FormData 사용)
+핵심요구사항-2) ⭐ URI를 File 객체로 변환하여 FormData에 포함
+핵심요구사항-3) ⭐ capsuleId와 콘텐츠 정보(text_message, images, music, video)로 POST 요청
+핵심요구사항-4) ⭐ 업로드 중 로딩 상태 관리 (버튼 비활성화 및 "저장 중..." 표시)
+핵심요구사항-5) ⭐ 에러 처리 및 사용자 피드백 구현
+핵심요구사항-6) ⭐ TypeScript 타입 안정성 보장
+핵심요구사항-7) ⭐ JWT 토큰 인증 처리 (Bearer 헤더, apiClient 자동 처리)
+핵심요구사항-8) ⭐ useMediaUpload는 선택적으로 파일 검증/압축에 활용 가능 (최종 제출은 FormData로 직접 전송)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조 (실제 API 독스 기준)
+
+나의 타임캡슐 콘텐츠 제출 API
+엔드포인트: POST /api/capsules/step-rooms/:capsuleId/my-content
+인증: Bearer {JWT_TOKEN} (필수, apiClient 자동 처리)
+Content-Type: multipart/form-data
+
+Path Parameter:
+- capsuleId: 캡슐 ID (UUID) - 대기실 생성 시 받은 capsule_id
+
+요청 Body (FormData):
+- text_message: "추억의 순간들..."     // ✅ 필수! 빈 문자열 불가
+- invite_code: "ABC123"               // 선택 (초대 코드)
+- images: [File, File]                // 선택 (최대 photo_count개, 기본 5개)
+- music: File                         // 선택 (add_music: true인 경우만)
+- video: File                         // 선택 (add_video: true인 경우만)
+
+요청 예시 (curl):
+```bash
+curl -X POST "http://localhost:3000/api/capsules/step-rooms/550e8400-e29b-41d4-a716-446655440000/my-content" \
+  -H "Authorization: Bearer {your-jwt-token}" \
+  -F "text_message=완벽한 하루였어요!" \
+  -F "images=@photo1.jpg" \
+  -F "images=@photo2.jpg" \
+  -F "music=@voice-memo.mp3" \
+  -F "video=@happy-moment.mp4"
+```
+
+성공 응답 (200 OK):
+{
+  "success": true,
+  "data": {
+    "slot_id": "660e8400-e29b-41d4-a716-446655440111",
+    "user_id": "770e8400-e29b-41d4-a716-446655440222",
+    "status": "COMPLETED",
+    "uploaded_images": 2,
+    "uploaded_music": true,
+    "uploaded_video": true
+  }
+}
+
+에러 응답:
+- 400 Bad Request:
+  - text_message 누락 (필수!)
+  - 허용되지 않은 미디어 업로드 (예: add_music: false인데 음악 파일 업로드)
+  - 이미지 개수 초과 (photo_count 초과)
+  - 잘못된 파일 형식
+  {
+    "success": false,
+    "error": "VALIDATION_ERROR",
+    "message": "텍스트 메시지는 필수입니다"
+  }
+
+- 403 Forbidden:
+  - 결제 미완료 캡슐
+  - 참여자가 아닌 사용자의 접근
+  - 슬롯이 배정되지 않은 사용자
+  {
+    "success": false,
+    "error": "FORBIDDEN",
+    "message": "결제가 완료되지 않은 캡슐입니다"
+  }
+
+- 404 Not Found:
+  - 존재하지 않는 capsuleId
+  - 삭제된 캡슐
+  {
+    "success": false,
+    "error": "NOT_FOUND",
+    "message": "캡슐을 찾을 수 없습니다"
+  }
+
+- 500 Internal Server Error:
+  - S3 업로드 실패
+  - 서버 내부 오류
+
+주의:
+- 응답 구조는 ContentSubmitResponse 타입 (snake_case)
+- ⭐ text_message는 필수 입력! (빈 문자열 불가)
+- 제출 후에도 콘텐츠 수정 가능 (동일 API를 다시 호출하면 업데이트됨)
+- multipart/form-data 형식으로 파일 직접 업로드
+- 주문 옵션(add_music, add_video, photo_count)에 따라 업로드 가능 여부 결정
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. success (boolean)
+   - 요청 성공 여부
+   - true: 성공, false: 실패
+
+2. data.slot_id (string, UUID)
+   - 저장된 슬롯의 고유 ID
+   - 참여자의 슬롯 식별자
+
+3. data.user_id (string, UUID)
+   - 작성자(사용자) ID
+   - 현재 로그인한 사용자의 ID
+
+4. data.status (string)
+   - 작성 상태
+   - PENDING → COMPLETED로 변경됨
+   - 모든 참여자가 COMPLETED가 되면 캡슐이 잠김
+
+5. data.uploaded_images (number)
+   - 업로드된 이미지 개수
+   - 0 ~ photo_count (기본 0 ~ 5)
+
+6. data.uploaded_music (boolean)
+   - 음악 파일 업로드 여부
+   - add_music: true인 경우만 true 가능
+
+7. data.uploaded_video (boolean)
+   - 비디오 파일 업로드 여부
+   - add_video: true인 경우만 true 가능
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+
+// 타임캡슐 콘텐츠 제출 API 요청 타입 (FormData)
+// 주의: FormData로 전송하므로 인터페이스는 참고용
+export interface ContentSubmitFormData {
+  text_message: string;                   // ✅ 필수! 빈 문자열 불가
+  invite_code?: string;                   // 초대 코드 (선택)
+  images?: File[];                        // 이미지 파일 배열 (선택, 최대 photo_count개)
+  music?: File;                           // 음악 파일 (선택, add_music: true인 경우만)
+  video?: File;                           // 비디오 파일 (선택, add_video: true인 경우만)
+}
+
+// 타임캡슐 콘텐츠 제출 API 응답 데이터 타입
+export interface ContentSubmitResponseData {
+  slot_id: string;                        // 슬롯 ID (UUID)
+  user_id: string;                        // 사용자 ID (UUID)
+  status: 'PENDING' | 'COMPLETED';        // 작성 상태
+  uploaded_images: number;                // 업로드된 이미지 개수 (0-5)
+  uploaded_music: boolean;                // 음악 파일 업로드 여부
+  uploaded_video: boolean;                // 비디오 파일 업로드 여부
+}
+
+// 타임캡슐 콘텐츠 제출 API 응답 타입 (snake_case)
+export interface ContentSubmitResponse {
+  success: boolean;                       // 요청 성공 여부
+  data: ContentSubmitResponseData;        // 제출 결과 데이터
+}
+
+// 타임캡슐 콘텐츠 제출 API 에러 응답 타입
+export interface ContentSubmitErrorResponse {
+  success: false;
+  error: string;                          // 에러 코드
+  message: string;                        // 에러 메시지
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/timecapsule-create/components/write-bottomsheet/api/content.ts (신규 생성)
+
+목적:
+- 타임캡슐 콘텐츠 제출 API 호출 함수 제공
+- POST /api/capsules/step-rooms/:capsuleId/my-content 호출
+- multipart/form-data 형식으로 파일 직접 업로드
+- 에러 처리 및 사용자 피드백
+- 재사용 가능한 API 함수 제공
+- ⭐ JWT 토큰 인증 처리 (apiClient가 자동 처리)
+
+기능:
+1. submitMyContent(capsuleId: string, formData: FormData): Promise<ContentSubmitResponse>
+   - POST /api/capsules/step-rooms/:capsuleId/my-content 호출
+   - Content-Type: multipart/form-data
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - 응답을 그대로 반환 (snake_case 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { ContentSubmitResponse } from '../types';
+
+/**
+ * 타임캡슐 콘텐츠 제출 API
+ * @param capsuleId 캡슐 ID (UUID)
+ * @param formData FormData 객체 (text_message, images, music, video)
+ * @returns 제출 결과 정보
+ * @throws 400: text_message 누락, 허용되지 않은 미디어, 이미지 개수 초과
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 403: 결제 미완료, 참여자가 아님, 슬롯 미배정
+ * @throws 404: 존재하지 않는 capsuleId
+ * @throws 500: S3 업로드 실패, 서버 내부 오류
+ */
+export async function submitMyContent(
+  capsuleId: string,
+  formData: FormData
+): Promise<ContentSubmitResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 콘텐츠 제출 시작 - capsuleId:', capsuleId);
+
+    // FormData 내용 로깅
+    for (const [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}:`, value.name, `(${value.size} bytes)`);
+      } else {
+        console.log(`  ${key}:`, value);
+      }
+    }
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    // FormData를 보낼 때는 Content-Type을 설정하지 않음 (브라우저가 자동 설정)
+    const response = await apiClient.post<ContentSubmitResponse>(
+      `/api/capsules/step-rooms/${capsuleId}/my-content`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    console.log('✅ [API] 타임캡슐 콘텐츠 제출 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      const errorMessage = error.response?.data?.message || '유효하지 않은 요청입니다.';
+      console.error('❌ [API] 유효하지 않은 요청 (400):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || '권한이 없습니다.';
+      console.error('❌ [API] 권한 없음 (403):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 콘텐츠 제출 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) useSubmitContent Hook 수정
+
+파일: components/timecapsule-create/components/write-bottomsheet/hooks/useSubmitContent.ts
+
+목적:
+- 기존 Mock 구현을 실제 API 연동으로 변경
+- FormData 생성 및 파일 변환
+- multipart/form-data 형식으로 제출
+- text_message 필수 검증
+
+기능:
+1. submitContent(data: UserContentFormData, capsuleId: string): Promise<void>
+   - Step 1: 검증 실행 (text_message 필수!)
+   - Step 2: FormData 생성
+     - text_message 추가 (필수)
+     - URI를 File 객체로 변환하여 추가
+   - Step 3: API 호출 (submitMyContent)
+   - Step 4: 성공 처리
+
+구현 예시:
+```typescript
+import { submitMyContent } from '../api/content';
+import type { UserContentFormData } from '../types';
+
+/**
+ * URI를 Blob으로 변환하는 헬퍼 함수
+ */
+async function uriToBlob(uri: string): Promise<Blob> {
+  const response = await fetch(uri);
+  const blob = await response.blob();
+  return blob;
+}
+
+/**
+ * URI를 File 객체로 변환하는 헬퍼 함수
+ */
+async function uriToFile(uri: string, name: string, type: string): Promise<File> {
+  try {
+    const blob = await uriToBlob(uri);
+    return new File([blob], name, { type });
+  } catch (error) {
+    console.error('URI to File 변환 실패:', error);
+    throw new Error('파일 변환에 실패했습니다');
+  }
+}
+
+/**
+ * 파일명 생성 헬퍼 함수
+ */
+function generateFileName(uri: string, prefix: string, extension: string): string {
+  const timestamp = Date.now();
+  const originalName = uri.split('/').pop();
+
+  if (originalName && originalName.includes('.')) {
+    return originalName;
+  }
+
+  return `${prefix}_${timestamp}.${extension}`;
+}
+
+export function useSubmitContent() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * 콘텐츠 검증 함수
+   * ⭐ text_message는 필수!
+   */
+  const validateContent = (data: UserContentFormData): ValidationResult => {
+    // ⭐ 텍스트 필수 검증
+    if (!data.textContent || data.textContent.trim().length === 0) {
+      return {
+        isValid: false,
+        message: '텍스트 메시지는 필수입니다.',
+      };
+    }
+
+    // 텍스트 길이 검증 (최대 500자)
+    if (data.textContent.length > 500) {
+      return {
+        isValid: false,
+        message: '텍스트는 최대 500자까지 입력 가능합니다',
+      };
+    }
+
+    return {
+      isValid: true,
+    };
+  };
+
+  const submitContent = async (data: UserContentFormData, capsuleId: string): Promise<void> => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // 1. 검증 실행
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        throw new Error(validation.message);
+      }
+
+      console.log('📤 [useSubmitContent] FormData 생성 시작');
+
+      // 2. FormData 생성
+      const formData = new FormData();
+
+      // text_message 추가 (필수!)
+      formData.append('text_message', data.textContent.trim());
+
+      // 이미지 파일 추가
+      if (data.photos.length > 0) {
+        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 변환 중...`);
+        for (let i = 0; i < data.photos.length; i++) {
+          const photoUri = data.photos[i];
+          const fileName = generateFileName(photoUri, 'photo', 'jpg');
+          const photoFile = await uriToFile(photoUri, fileName, 'image/jpeg');
+          formData.append('images', photoFile);
+          console.log(`✅ [useSubmitContent] 이미지 ${i + 1}/${data.photos.length} 변환 완료: ${fileName}`);
+        }
+      }
+
+      // 음악 파일 추가
+      if (data.music) {
+        console.log('📤 [useSubmitContent] 음악 파일 변환 중...');
+        const fileName = generateFileName(data.music, 'music', 'mp3');
+        const musicFile = await uriToFile(data.music, fileName, 'audio/mpeg');
+        formData.append('music', musicFile);
+        console.log(`✅ [useSubmitContent] 음악 파일 변환 완료: ${fileName}`);
+      }
+
+      // 비디오 파일 추가
+      if (data.video) {
+        console.log('📤 [useSubmitContent] 비디오 파일 변환 중...');
+        const fileName = generateFileName(data.video, 'video', 'mp4');
+        const videoFile = await uriToFile(data.video, fileName, 'video/mp4');
+        formData.append('video', videoFile);
+        console.log(`✅ [useSubmitContent] 비디오 파일 변환 완료: ${fileName}`);
+      }
+
+      console.log('📤 [useSubmitContent] API 제출 시작');
+
+      // 3. API 호출
+      const result = await submitMyContent(capsuleId, formData);
+
+      console.log('✅ [useSubmitContent] 제출 완료:', result);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '제출에 실패했습니다.';
+      console.error('❌ [useSubmitContent] 제출 실패:', errorMessage);
+      setError(errorMessage);
+      throw err;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return {
+    submitContent,
+    isSubmitting,
+    error,
+    validateContent,
+  };
+}
+```
+
+주의사항:
+- ⭐ text_message는 필수! (빈 문자열 불가)
+- URI를 File 객체로 변환하는 헬퍼 함수 사용
+- FormData에 파일 추가 시 'images', 'music', 'video' 키 사용
+- 파일 변환 실패 시 에러 처리
+- ⭐ useMediaUpload는 선택적으로 파일 검증/압축에 활용 가능
+  - 예: utils/mediaUpload.ts의 validateFile 함수로 파일 형식/크기 검증
+  - 예: utils/mediaUpload.ts의 compressImage 함수로 이미지 압축 (선택적)
+  - 하지만 최종 제출은 FormData로 직접 전송 (mediaId 사용 안 함)
+
+선택적 활용 예시 (파일 검증):
+```typescript
+import { validateFile } from '@/utils/mediaUpload';
+import { MediaType } from '@/commons/constants/media';
+
+// 파일 검증 (선택적)
+if (data.photos.length > 0) {
+  for (const photoUri of data.photos) {
+    const fileName = generateFileName(photoUri, 'photo', 'jpg');
+    // 선택적: 파일 검증 (validateFile은 async 함수)
+    await validateFile(photoUri, 'IMAGE', fileName);
+    const photoFile = await uriToFile(photoUri, fileName, 'image/jpeg');
+    formData.append('images', photoFile);
+  }
+}
+```
+
+==============================================
+
+구현가이드-3) UI에서 API 호출
+
+파일: components/timecapsule-create/components/write-bottomsheet/index.tsx
+
+목적:
+- useSubmitContent Hook에 capsuleId 전달
+- 저장 버튼 클릭 시 submitContent(data, capsuleId) 호출
+- 업로드 중 로딩 상태 표시
+- 성공/실패 피드백 제공
+- ⭐ text_message 필수 검증 강화
+
+변경사항:
+1. capsuleId를 props로 추가 (UserBottomSheetProps에 추가)
+2. useSubmitContent Hook 사용
+3. onFormSubmit에서 submitContent(data, capsuleId) 호출
+4. 저장 버튼에 업로드 중 상태 표시
+5. text_message 필수 검증
+
+구현 예시:
+```typescript
+export interface UserBottomSheetProps {
+  isVisible: boolean;
+  onClose: () => void;
+  participant: Participant;
+  capsuleId: string;                         // ⭐ 추가
+  onSave?: (content: any) => Promise<void>;
+  roomSettings?: RoomSettingsResponse | null;
+}
+
+export default function UserBottomSheet({
+  isVisible,
+  onClose,
+  participant,
+  capsuleId,                                 // ⭐ 추가
+  onSave,
+  roomSettings,
+}: UserBottomSheetProps) {
+  // ...
+
+  // useSubmitContent Hook 사용
+  const {
+    submitContent,
+    isSubmitting,
+    error: submitError,
+    validateContent,
+  } = useSubmitContent();
+
+  // 폼 제출 핸들러
+  const onFormSubmit = async (data: UserContentFormData) => {
+    try {
+      // ⭐ text_message 필수 검증
+      if (!data.textContent || data.textContent.trim().length === 0) {
+        Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        return;
+      }
+
+      // 제출 전 검증
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        Alert.alert('검증 실패', validation.message);
+        return;
+      }
+
+      // 부모 컴포넌트의 onSave가 있으면 호출 (우선순위 높음)
+      if (onSave) {
+        console.log('💾 [UserBottomSheet] 부모 컴포넌트 저장 호출');
+        await onSave({
+          text: data.textContent,
+          images: data.photos,
+          voiceRecording: data.music,
+          video: data.video,
+        });
+      } else {
+        // ⭐ capsuleId 전달
+        console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
+        await submitContent(data, capsuleId);
+      }
+
+      // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
+        {
+          text: '확인',
+          onPress: () => {
+            onClose();
+          },
+        },
+      ]);
+    } catch (err) {
+      console.error('제출 중 오류:', err);
+      Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
+    }
+  };
+
+  // 하단 고정 버튼 영역
+  const renderFooter = () => (
+    <>
+      <DualButton
+        cancelLabel="취소"
+        confirmLabel={isSubmitting ? '저장 중...' : '저장'}  // ⭐ 변경
+        size="M"
+        cancelVariant="outline"
+        confirmVariant="primary"
+        confirmDisabled={isSubmitting}
+        onCancelPress={handleCancel}
+        onConfirmPress={handleSave}
+      />
+      <Text style={styles.hintText}>나중에도 수정할 수 있어요</Text>
+    </>
+  );
+
+  // ...
+}
+```
+
+주의사항:
+- ⭐ text_message는 필수이므로 빈 문자열 검증 추가
+- 저장 버튼 텍스트: "저장 중..." (업로드 중)
+- video도 onSave에 포함
+
+==============================================
+
+활용시나리오) 타임캡슐 콘텐츠 제출 플로우
+
+1. 사용자가 write-bottomsheet에서 콘텐츠 작성
+   - ⭐ 텍스트 입력 (필수!)
+   - 사진 선택 (useMediaPicker) - 선택
+   - 음악 선택 (useMediaPicker) - 선택
+   - 비디오 선택 (useMediaPicker) - 선택
+
+2. 사용자가 "저장" 버튼 클릭
+   - ⭐ 검증: text_message 필수 (빈 문자열 불가)
+   - FormData 생성 시작
+
+3. ⭐ FormData 생성 단계
+   - text_message 추가 (필수)
+   - URI를 File 객체로 변환
+     - 이미지들: fetch → Blob → File
+     - 음악: fetch → Blob → File
+     - 비디오: fetch → Blob → File
+   - FormData에 파일 추가
+   - 로딩 표시: "저장 중..." (버튼 비활성화)
+
+4. ⭐ API 호출: 타임캡슐 콘텐츠 제출
+   - POST /api/capsules/step-rooms/:capsuleId/my-content
+   - Content-Type: multipart/form-data
+   - Body (FormData): text_message, images, music, video
+   - Authorization: Bearer {JWT_TOKEN}
+
+5. 성공 응답 처리
+   - 제출 결과 정보 수신
+     - slot_id, user_id, status (COMPLETED)
+     - uploaded_images, uploaded_music, uploaded_video
+   - 성공 메시지 표시: "타임캡슐 내용이 저장되었습니다!"
+   - 바텀시트 닫기
+
+6. 에러 응답 처리
+   - 400: "텍스트 메시지는 필수입니다." / "허용되지 않은 미디어입니다."
+   - 401: "인증이 필요합니다."
+   - 403: "결제가 완료되지 않은 캡슐입니다." / "권한이 없습니다."
+   - 404: "캡슐을 찾을 수 없습니다."
+   - 500: "일시적인 오류가 발생했습니다."
+   - 기타: 일반 에러 메시지
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 400 Bad Request (text_message 누락)
+   - 원인: 텍스트 메시지 필수 필드 누락
+   - 대응: 검증 로직 강화, 에러 메시지 표시
+   - 메시지: "텍스트 메시지는 필수입니다."
+
+2. 400 Bad Request (허용되지 않은 미디어)
+   - 원인: add_music: false인데 음악 업로드, add_video: false인데 비디오 업로드
+   - 대응: 주문 옵션 확인, 에러 메시지 표시
+   - 메시지: "이 옵션은 허용되지 않습니다. 주문 내역을 확인해주세요."
+
+3. 400 Bad Request (이미지 개수 초과)
+   - 원인: photo_count보다 많은 이미지 업로드
+   - 대응: 클라이언트에서 사전 검증, 에러 메시지 표시
+   - 메시지: "이미지는 최대 {photo_count}개까지 업로드할 수 있습니다."
+
+4. 400 Bad Request (잘못된 파일 형식)
+   - 원인: 지원하지 않는 파일 형식
+   - 대응: 파일 확장자 검증, 에러 메시지 표시
+   - 메시지: "지원하지 않는 파일 형식입니다."
+
+5. 401 Unauthorized (JWT 토큰 없음 또는 유효하지 않음)
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: 로그인 페이지로 리다이렉트
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+
+6. 403 Forbidden (결제 미완료)
+   - 원인: 결제가 완료되지 않은 캡슐
+   - 대응: 결제 페이지로 리다이렉트
+   - 메시지: "결제가 완료되지 않은 캡슐입니다."
+
+7. 403 Forbidden (참여자 아님)
+   - 원인: 참여자가 아닌 사용자의 접근
+   - 대응: 에러 메시지 표시, 이전 화면으로 이동
+   - 메시지: "이 캡슐에 접근할 권한이 없습니다."
+
+8. 403 Forbidden (슬롯 미배정)
+   - 원인: 슬롯이 배정되지 않은 사용자
+   - 대응: 에러 메시지 표시
+   - 메시지: "슬롯이 배정되지 않았습니다."
+
+9. 404 Not Found (존재하지 않는 capsuleId)
+   - 원인: 잘못된 capsuleId, 삭제된 캡슐
+   - 대응: 에러 메시지 표시, 이전 화면으로 이동
+   - 메시지: "캡슐을 찾을 수 없습니다."
+
+10. 500 Internal Server Error (S3 업로드 실패)
+    - 원인: S3 업로드 오류
+    - 대응: 에러 메시지 표시, 재시도 버튼 제공
+    - 메시지: "파일 업로드에 실패했습니다. 다시 시도해주세요."
+
+11. 500 Internal Server Error (서버 내부 오류)
+    - 원인: 서버 장애, DB 오류
+    - 대응: 에러 메시지 표시, 재시도 버튼 제공
+    - 메시지: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+
+12. Network Error
+    - 원인: 인터넷 연결 끊김, 서버 다운
+    - 대응: 에러 메시지 표시, 재시도 버튼 제공
+    - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. 사용자에게 명확한 에러 메시지 표시
+2. 적절한 다음 행동 제시 (재시도, 로그인, 결제, 이전 화면으로 이동 등)
+3. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+4. 필요 시 에러 로깅 서비스에 전송 (Sentry 등)
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 snake_case로 응답
+   - 프론트엔드는 snake_case를 그대로 사용 (프로젝트 일관성)
+   - 타입 불일치 방지
+
+2. ⭐ multipart/form-data 형식 (필수)
+   - Content-Type: multipart/form-data
+   - FormData 객체 사용
+   - 파일을 직접 업로드 (mediaId 사용 안 함)
+   - useMediaUpload로 S3에 먼저 업로드하는 방식이 아님!
+   - URI를 File 객체로 변환하여 FormData에 직접 포함
+
+3. ⭐ text_message 필수
+   - text_message는 필수 필드!
+   - 빈 문자열 불가
+   - 검증 로직 강화
+
+4. ⭐ capsuleId 전달
+   - props로 capsuleId 추가
+   - 대기실 생성 시 받은 capsule_id 사용
+
+5. ⭐ URI를 File 객체로 변환
+   - fetch → Blob → File 순서
+   - 파일명 생성 헬퍼 함수 사용
+   - 타입 지정 (image/jpeg, audio/mpeg, video/mp4)
+
+6. 사용자 피드백
+   - 업로드 중 "저장 중..." 표시
+   - 성공 시 "저장 완료" 메시지
+   - 실패 시 명확한 에러 메시지 표시
+
+7. TypeScript 타입 안정성
+   - API 응답 타입 명시 (ContentSubmitResponse, snake_case)
+   - any 사용 금지
+
+8. 에러 처리
+   - try-catch 블록 필수
+   - 에러 로깅 (console.error)
+   - 사용자 피드백 (Alert, Toast 등)
+
+9. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트
+
+10. 제출 후 처리
+    - 제출 성공 시 status가 COMPLETED로 변경
+    - 제출 후에도 콘텐츠 수정 가능 (동일 API를 다시 호출하면 업데이트됨)
+    - 바텀시트 닫기
+
+11. ⭐ 주문 옵션 검증
+    - add_music: true인 경우만 음악 업로드 가능
+    - add_video: true인 경우만 비디오 업로드 가능
+    - photo_count에 따라 이미지 개수 제한
+
+12. video 필드 지원
+    - ⭐ API에서 video 필드 지원함
+    - add_video: true인 경우 비디오 업로드 가능
+    - FormData에 'video' 키로 추가
+
+13. ⭐ useMediaUpload 활용 (선택적)
+    - useMediaUpload는 파일 검증/압축에 활용 가능
+    - 예: uploadMedia 함수의 validateFile, compressImage 로직 참고
+    - 하지만 최종 제출은 FormData로 직접 전송 (mediaId 사용 안 함)
+    - 파일 검증은 클라이언트에서 사전에 수행 가능 (선택적)
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] ⭐ ContentSubmitFormData 인터페이스 추가됨 (FormData 참고용 타입)
+- [ ] ⭐ ContentSubmitResponseData 인터페이스 추가됨 (응답 데이터 타입)
+- [ ] ⭐ ContentSubmitResponse 인터페이스 추가됨 (응답 타입, snake_case)
+- [ ] ⭐ ContentSubmitErrorResponse 인터페이스 추가됨 (에러 응답 타입)
+- [ ] 모든 필드 타입이 정확히 정의됨
+- [ ] text_message 필수 필드 명시됨
+
+API 함수:
+- [ ] components/timecapsule-create/components/write-bottomsheet/api/content.ts 파일 생성됨
+- [ ] ⭐ submitMyContent(capsuleId, formData) 함수 구현됨
+- [ ] ⭐ POST /api/capsules/step-rooms/:capsuleId/my-content 호출 구현됨
+- [ ] ⭐ Content-Type: multipart/form-data 설정됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (400, 401, 403, 404, 500)
+- [ ] 각 에러별 적절한 메시지 반환
+
+useSubmitContent Hook 수정:
+- [ ] ⭐ submitContent(data, capsuleId) 함수 시그니처 수정
+- [ ] ⭐ text_message 필수 검증 구현
+- [ ] ⭐ FormData 생성 로직 구현
+- [ ] ⭐ uriToFile 헬퍼 함수 구현
+- [ ] ⭐ 이미지 URI를 File 객체로 변환
+- [ ] ⭐ 음악 URI를 File 객체로 변환
+- [ ] ⭐ 비디오 URI를 File 객체로 변환
+- [ ] ⭐ submitMyContent API 호출 구현
+- [ ] ⭐ 파일 변환 실패 시 에러 처리
+- [ ] isSubmitting 상태 관리
+
+UI 연동:
+- [ ] ⭐ UserBottomSheetProps에 capsuleId 추가됨
+- [ ] ⭐ text_message 필수 검증 추가됨
+- [ ] ⭐ onFormSubmit에서 submitContent(data, capsuleId) 호출
+- [ ] ⭐ 저장 버튼에 "저장 중..." 표시
+- [ ] 업로드 중 버튼 비활성화
+- [ ] 성공 시 성공 메시지 표시 후 바텀시트 닫기
+- [ ] 실패 시 에러 메시지 표시
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ capsuleId는 대기실 생성 후 받은 실제 capsule_id 사용
+- [ ] API URL이 정확히 설정됨
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+
+에러 처리:
+- [ ] ⭐ text_message 누락 에러 처리 구현됨 (400)
+- [ ] ⭐ 허용되지 않은 미디어 에러 처리 구현됨 (400)
+- [ ] ⭐ 이미지 개수 초과 에러 처리 구현됨 (400)
+- [ ] ⭐ 잘못된 파일 형식 에러 처리 구현됨 (400)
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] ⭐ 403 에러 처리 구현됨 (결제 미완료, 참여자 아님, 슬롯 미배정)
+- [ ] ⭐ 404 에러 처리 구현됨 (존재하지 않는 capsuleId)
+- [ ] ⭐ 500 에러 처리 구현됨 (S3 업로드 실패, 서버 내부 오류)
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.error)
+- [ ] 사용자 피드백 제공됨 (Alert)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ text_message 필수 검증 테스트됨
+- [ ] ⭐ FormData 생성 테스트됨
+- [ ] ⭐ URI를 File 객체로 변환 테스트됨
+- [ ] ⭐ 이미지 업로드 테스트됨 (multipart/form-data)
+- [ ] ⭐ 음악 업로드 테스트됨 (multipart/form-data)
+- [ ] ⭐ 비디오 업로드 테스트됨 (multipart/form-data)
+- [ ] ⭐ API 호출 성공 케이스 테스트됨
+- [ ] ⭐ text_message 누락 에러 케이스 테스트됨 (400)
+- [ ] ⭐ 허용되지 않은 미디어 에러 케이스 테스트됨 (400)
+- [ ] ⭐ 401 에러 케이스 테스트됨
+- [ ] ⭐ 403 에러 케이스 테스트됨
+- [ ] ⭐ 404 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] 성공 시 status COMPLETED 확인됨
+- [ ] 성공 시 성공 메시지 표시 확인됨
+- [ ] 실패 시 에러 메시지 표시 확인됨
+
+==============================================

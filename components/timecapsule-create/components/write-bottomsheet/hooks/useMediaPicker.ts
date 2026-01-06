@@ -26,6 +26,7 @@ import { UseMediaPickerReturn } from '../types';
  * @param currentPhotosCount - 현재 선택된 사진 개수 (최대 개수 체크용)
  * @param hasVideo - 이미 비디오가 선택되어 있는지 여부
  * @param hasMusic - 이미 음악이 선택되어 있는지 여부
+ * @param maxImagesPerPerson - 1인당 최대 사진 개수 (기본값: 5, 하위 호환성)
  */
 export function useMediaPicker(
   onImagesPicked: (uris: string[]) => void,
@@ -34,6 +35,7 @@ export function useMediaPicker(
   currentPhotosCount: number = 0,
   hasVideo: boolean = false,
   hasMusic: boolean = false,
+  maxImagesPerPerson: number = 5, // ⭐ 추가 (기본값 5로 하위 호환성 유지)
 ): UseMediaPickerReturn {
   const [isPickingImage, setIsPickingImage] = useState(false);
   const [isPickingVideo, setIsPickingVideo] = useState(false);
@@ -45,7 +47,7 @@ export function useMediaPicker(
 
   /**
    * 이미지 선택 함수
-   * - 다중 선택 가능 (최대 5개)
+   * - 다중 선택 가능 (최대 maxImagesPerPerson개)
    * - 갤러리에서 선택
    */
   const pickImage = async () => {
@@ -54,8 +56,8 @@ export function useMediaPicker(
       setError(null);
 
       // 최대 개수 체크
-      if (currentPhotosCount >= 5) {
-        Alert.alert('알림', '사진은 최대 5개까지 추가할 수 있습니다.');
+      if (currentPhotosCount >= maxImagesPerPerson) {
+        Alert.alert('알림', `사진은 최대 ${maxImagesPerPerson}개까지 추가할 수 있습니다.`);
         return;
       }
 
@@ -72,7 +74,7 @@ export function useMediaPicker(
       }
 
       // 선택 가능한 최대 개수 계산
-      const maxSelectable = 5 - currentPhotosCount;
+      const maxSelectable = maxImagesPerPerson - currentPhotosCount;
 
       // 이미지 피커 실행
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -88,10 +90,10 @@ export function useMediaPicker(
         const selectedUris = result.assets.map((asset) => asset.uri);
 
         // 최대 개수 재확인
-        if (currentPhotosCount + selectedUris.length > 5) {
+        if (currentPhotosCount + selectedUris.length > maxImagesPerPerson) {
           Alert.alert(
             '알림',
-            `사진은 최대 5개까지 추가할 수 있습니다.\n현재 ${currentPhotosCount}개 선택됨`,
+            `사진은 최대 ${maxImagesPerPerson}개까지 추가할 수 있습니다.\n현재 ${currentPhotosCount}개 선택됨`,
           );
           return;
         }

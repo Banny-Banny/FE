@@ -22,9 +22,7 @@ import type {
  * @throws 404: 존재하지 않는 order_id
  * @throws 500: 서버 내부 오류
  */
-export async function createRoomAndGetSettings(
-  orderId: string,
-): Promise<CreateRoomResponse> {
+export async function createRoomAndGetSettings(orderId: string): Promise<CreateRoomResponse> {
   try {
     console.log('🔄 [API] 대기실 생성 및 설정값 조회 시작 - orderId:', orderId);
 
@@ -72,9 +70,7 @@ export async function getOrderInfo(orderId: string): Promise<OrderResponse> {
   try {
     console.log('🔄 [API] 1단계: Order 조회 시작 - orderId:', orderId);
 
-    const response = await apiClient.get<OrderResponse>(
-      `/api/orders/${orderId}`,
-    );
+    const response = await apiClient.get<OrderResponse>(`/api/orders/${orderId}`);
 
     console.log('✅ [API] 1단계: Order 조회 성공 - capsule_id:', response.data.order.capsule_id);
     return response.data;
@@ -190,9 +186,7 @@ export async function getRoomDetail(capsuleId: string): Promise<RoomDetailRespon
  * @throws 404: 존재하지 않는 초대 코드
  * @throws 500: 서버 내부 오류
  */
-export async function fetchRoomByInviteCode(
-  inviteCode: string,
-): Promise<InviteCodeQueryResponse> {
+export async function fetchRoomByInviteCode(inviteCode: string): Promise<InviteCodeQueryResponse> {
   try {
     // 초대 코드 검증 (6자리 영숫자)
     if (!inviteCode || !/^[A-Za-z0-9]{6}$/.test(inviteCode)) {
@@ -225,8 +219,6 @@ export async function fetchRoomByInviteCode(
       throw error;
     }
     console.error('❌ [API] 초대 코드로 대기실 조회 실패:', error.message);
-    throw new Error(
-      `API 호출 실패: ${error.response?.status || 'Network Error'}`,
-    );
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }

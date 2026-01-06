@@ -94,6 +94,13 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
             );
             const settingsData = await getRoomSettings(extractedCapsuleId);
 
+            // ⭐ 디버깅: 백엔드가 반환한 설정값 확인
+            console.log('🔍 [useRoomData] 백엔드 반환 설정값:', settingsData);
+            console.log(
+              '🔍 [useRoomData] max_images_per_person 확인:',
+              settingsData.max_images_per_person,
+            );
+
             // CreateRoomResponse의 추가 정보와 병합
             // getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목이므로 우선 사용
             const mergedSettings: RoomSettingsResponse = {
@@ -107,6 +114,9 @@ export function useRoomData(orderId?: string): UseRoomDataReturn {
             setRoomSettings(mergedSettings);
 
             console.log('✅ [useRoomData] 대기실 설정값 조회 성공:', mergedSettings);
+            console.log(
+              '⚠️ [useRoomData] 주의: max_images_per_person이 orders의 photo_count와 일치하는지 확인 필요',
+            );
           } catch (settingsError) {
             console.warn('⚠️ [useRoomData] 설정값 조회 실패, 기본값 사용:', settingsError);
             // 설정값 조회 실패 시 CreateRoomResponse만으로 구성

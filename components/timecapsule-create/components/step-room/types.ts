@@ -29,6 +29,8 @@ export interface ParticipantContent {
   images?: string[];
   /** 음성 녹음 URL */
   voiceRecording?: string;
+  /** 비디오 URL */
+  video?: string;
 }
 
 // ============================================

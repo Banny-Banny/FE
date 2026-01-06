@@ -80,6 +80,8 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
   } = useRoomData(orderId);
 
   /** 참여자 목록 Hook */
+  // ⭐ 수정: roomSettings가 로드된 후에만 올바른 maxParticipants 전달
+  // roomSettings가 null이면 capsuleId도 없으므로 useParticipants가 실행되지 않음
   const {
     participants,
     myParticipant,
@@ -89,8 +91,19 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
     canEdit,
   } = useParticipants({
     capsuleId,
-    maxParticipants: roomSettings?.max_participants || 4,
+    maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
   });
+
+  // ⭐ 디버깅: maxParticipants 값 확인
+  React.useEffect(() => {
+    if (roomSettings) {
+      console.log(
+        '🔍 [StepRoom] maxParticipants 확인:',
+        `roomSettings.max_participants=${roomSettings.max_participants}`,
+        `useParticipants에 전달된 값=${roomSettings?.max_participants || 4}`,
+      );
+    }
+  }, [roomSettings]);
 
   /** 타임캡슐 최종 제출 Hook */
   const {
@@ -157,9 +170,14 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
       const inviteCode = createRoomResponse?.invite_code || '';
       const capsuleName = createRoomResponse?.title || roomSettings?.capsule_name || '타임캡슐';
 
+      // 전체 API URL 생성
+      const apiBaseUrl =
+        process.env.EXPO_PUBLIC_API_BASE_URL || 'https://be-production-8aa2.up.railway.app/';
+      const inviteUrl = `${apiBaseUrl}api/capsules/step-rooms?invite_code=${inviteCode}`;
+
       const result = await Share.share({
         title: '타임캡슐에 초대합니다',
-        message: `타임캡슐 이름: ${capsuleName}\n\n함께 추억을 남겨보세요!\n\n초대 코드: ${inviteCode}`,
+        message: `타임캡슐 이름: ${capsuleName}\n\n함께 추억을 남겨보세요!\n\n초대 링크: ${inviteUrl}`,
       });
 
       // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
@@ -502,12 +520,14 @@ export default function StepRoom({ role, orderId: propsOrderId, onSubmit }: Step
         </View>
 
         {/* 바텀시트 */}
-        {selectedParticipant && (
+        {selectedParticipant && capsuleId && (
           <UserBottomSheet
             isVisible={isBottomSheetVisible}
             onClose={() => setIsBottomSheetVisible(false)}
             participant={selectedParticipant}
+            capsuleId={capsuleId}
             onSave={handleBottomSheetSave}
+            roomSettings={roomSettings}
           />
         )}
       </ScrollView>
