@@ -114,6 +114,7 @@ export function useMapView({
   const { scale, setScale, handleZoomIn, handleZoomOut, resetZoom } = useMapGestures();
 
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
+  const [isWebViewReady, setIsWebViewReady] = useState(false);
 
   const kakaoMapApiKey = useMemo(() => getKakaoMapApiKey(), []);
 
@@ -152,6 +153,9 @@ export function useMapView({
 
   useEffect(() => {
     if (!kakaoMapApiKey) return;
+
+    // WebView 초기화 시 ready 상태 리셋
+    setIsWebViewReady(false);
 
     const timer = setTimeout(() => {
       sendInitMessage(webViewRef, {
@@ -224,6 +228,9 @@ export function useMapView({
             const newScale = levelToScale(level);
             setScale(newScale);
           },
+          onReady: () => {
+            setIsWebViewReady(true);
+          },
         },
         messageHandlerState,
       ),
@@ -264,6 +271,7 @@ export function useMapView({
     markersForWeb,
     handleMessage,
     handleMessageCommon,
+    isWebViewReady,
     // 줌 제어
     scale,
     zoomLevel,

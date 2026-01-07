@@ -36,6 +36,10 @@ export interface CurrentLocationMarkerProps {
    * 로딩 상태
    */
   isLoading?: boolean;
+  /**
+   * WebView가 준비되었는지 여부
+   */
+  isWebViewReady?: boolean;
 }
 
 /**
@@ -55,6 +59,7 @@ export function CurrentLocationMarker({
   location,
   style = DEFAULT_MARKER_CONFIG,
   isLoading = false,
+  isWebViewReady = false,
 }: CurrentLocationMarkerProps) {
   // 현재 위치 마커 표시
   useEffect(() => {
@@ -64,21 +69,51 @@ export function CurrentLocationMarker({
       return;
     }
 
-    // 지도가 로드될 시간을 고려한 짧은 딜레이
-    const timer = setTimeout(() => {
+    // WebView가 준비되지 않았으면 대기
+    if (!isWebViewReady) {
+      if (__DEV__) {
+        console.log('[CurrentLocationMarker] Waiting for WebView to be ready...');
+      }
+      return;
+    }
+
+    // WebView가 준비되었는지 확인하고 마커 표시
+    const sendMarker = () => {
+      if (!webViewRef.current) {
+        if (__DEV__) {
+          console.warn('[CurrentLocationMarker] WebView ref is not available');
+        }
+        return false;
+      }
+
       const mergedStyle = {
         ...DEFAULT_MARKER_CONFIG,
         ...style,
       };
 
-      sendSetCurrentLocationMessage(webViewRef, {
+      const success = sendSetCurrentLocationMessage(webViewRef, {
         location,
         style: mergedStyle,
       });
-    }, 500); // 딜레이를 2초에서 0.5초로 단축
+
+      if (__DEV__) {
+        if (success) {
+          console.log('[CurrentLocationMarker] Location marker sent:', location);
+        } else {
+          console.warn('[CurrentLocationMarker] Failed to send location marker');
+        }
+      }
+
+      return success;
+    };
+
+    // 지도가 완전히 로드될 시간을 고려한 짧은 딜레이
+    const timer = setTimeout(() => {
+      sendMarker();
+    }, 300);
 
     return () => clearTimeout(timer);
-  }, [location, isLoading, style, webViewRef]);
+  }, [location, isLoading, style, webViewRef, isWebViewReady]);
 
   // 컴포넌트 언마운트 시 마커 제거
   useEffect(() => {

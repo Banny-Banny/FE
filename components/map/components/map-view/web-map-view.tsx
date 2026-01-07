@@ -374,7 +374,10 @@ export function WebMapView({
         currentLocationCircleRef.current.setMap(mapRef.current);
       }
     } catch (error) {
-      // 현재 위치 마커 업데이트 실패 시 조용히 처리
+      // 현재 위치 마커 업데이트 실패 시 에러 로깅
+      if (__DEV__) {
+        console.error('[WebMapView] Failed to update current location marker:', error);
+      }
     }
   }, [clearCurrentLocationMarker]);
 

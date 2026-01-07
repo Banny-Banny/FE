@@ -34,6 +34,7 @@ export default function MapView(props: MapViewProps = {}) {
     markersForWeb,
     handleMessage,
     handleMessageCommon,
+    isWebViewReady,
     scale,
     zoomLevel,
     handleZoomIn,
@@ -83,6 +84,7 @@ export default function MapView(props: MapViewProps = {}) {
             webViewRef={webViewRef}
             location={location}
             isLoading={locationLoading}
+            isWebViewReady={isWebViewReady}
           />
         </>
       )}

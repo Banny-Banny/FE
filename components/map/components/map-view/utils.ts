@@ -50,6 +50,7 @@ export interface MessageHandlerCallbacks {
   onCapsuleClick?: (capsule: any) => void;
   onCenterChanged?: (coord: { lat: number; lng: number }) => void;
   onZoomChanged?: (level: number) => void;
+  onReady?: () => void;
 }
 
 /**
@@ -71,6 +72,7 @@ export function createMessageHandler(
   return (message: WebViewToRNMessage) => {
     switch (message.type) {
       case 'READY':
+        callbacks.onReady?.();
         break;
 
       case 'CENTER_CHANGED':
