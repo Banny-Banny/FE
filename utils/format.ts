@@ -51,3 +51,45 @@ export const formatTimeFromMillis = (millis: number): string => {
   return formatTime(seconds);
 };
 
+/**
+ * ISO 8601 날짜 문자열을 상대 시간으로 변환
+ * @param dateString ISO 8601 형식의 날짜 문자열 (예: "2024-01-01T00:00:00.000Z")
+ * @returns 상대 시간 문자열 (예: "방금 전", "10분 전", "1시간 전", "3일 전")
+ */
+export const formatRelativeTime = (dateString: string): string => {
+  const now = new Date();
+  const date = new Date(dateString);
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  // 음수인 경우 (미래 시간) 또는 0초 이하인 경우
+  if (diffInSeconds <= 0) {
+    return '방금 전';
+  }
+
+  if (diffInSeconds < 60) {
+    return '방금 전';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}분 전`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours}시간 전`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `${diffInDays}일 전`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths}개월 전`;
+  }
+
+  const diffInYears = Math.floor(diffInMonths / 12);
+  return `${diffInYears}년 전`;
+};

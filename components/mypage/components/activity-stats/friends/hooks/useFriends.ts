@@ -101,6 +101,7 @@ export function useFriends(): UseFriendsReturn {
    */
   useEffect(() => {
     refreshFriends();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**
