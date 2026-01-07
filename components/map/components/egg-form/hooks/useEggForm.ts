@@ -11,13 +11,14 @@
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
-import { MediaType, MIME_TYPE_MAP } from '@/commons/constants/media';
+import { MediaType } from '@/commons/constants/media';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
-import { buildApiUrl, getFileExtension, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
+import { buildApiUrl, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -69,9 +70,44 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           quality: 1,
         });
         if (!result.canceled && result.assets?.[0]) {
+          const asset = result.assets[0];
+          let imageUri = asset.uri;
+
+          // iOS 시뮬레이터의 기본 사진은 HEIC 형식일 가능성이 높음
+          const needsConversion =
+            isHeicFormat(imageUri) ||
+            !imageUri.includes('.') ||
+            imageUri.startsWith('ph://') ||
+            imageUri.startsWith('assets-library://') ||
+            (asset.fileName &&
+              (asset.fileName.toLowerCase().endsWith('.heic') ||
+                asset.fileName.toLowerCase().endsWith('.heif')));
+
+          if (needsConversion) {
+            try {
+              imageUri = await convertHeicToJpeg(imageUri);
+            } catch {
+              // 변환 실패해도 계속 진행
+            }
+          }
+
+          // 파일명 추출 및 확장자 보정
+          let fileName = asset.fileName || getFileName(imageUri, `photo_${Date.now()}.jpg`);
+          if (needsConversion) {
+            fileName = fileName.replace(/\.[^.]+$/, '') || `photo_${Date.now()}`;
+            fileName = `${fileName}.jpg`;
+          } else if (!fileName.includes('.')) {
+            fileName = `${fileName}.jpg`;
+          } else {
+            const extension = fileName.split('.').pop()?.toLowerCase() || '';
+            if (extension && !['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+              fileName = fileName.replace(/\.[^.]+$/, '.jpg');
+            }
+          }
+
           file = {
-            name: result.assets[0].fileName || `image_${Date.now()}.jpg`,
-            uri: result.assets[0].uri,
+            name: fileName,
+            uri: imageUri, // 변환된 URI 사용
           };
         }
       } else {
@@ -81,9 +117,14 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
           copyToCacheDirectory: true,
         });
         if (!result.canceled && result.assets?.[0]) {
+          const asset = result.assets[0];
+          // URI에서 파일명 추출하여 기본값과 비교
+          const defaultFileName =
+            type === 'VIDEO' ? `video_${Date.now()}.mp4` : `music_${Date.now()}.mp3`;
+          const fileName = getFileName(asset.uri, defaultFileName);
           file = {
-            name: result.assets[0].name,
-            uri: result.assets[0].uri,
+            name: asset.name || fileName,
+            uri: asset.uri,
           };
         }
       }
@@ -104,20 +145,15 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
             if (thumbnailUri) {
               newAttachment.thumbnailUri = thumbnailUri;
             }
-          } catch (error) {
-            if (__DEV__) {
-              console.error('비디오 썸네일 생성 오류:', error);
-            }
+          } catch {
             // 썸네일 생성 실패해도 파일은 추가
           }
         }
 
         setValue('attachments', [...otherAttachments, newAttachment]);
       }
-    } catch (error) {
-      if (__DEV__) {
-        console.error('파일 선택 오류:', error);
-      }
+    } catch {
+      // 파일 선택 오류는 무시
     }
   };
 
@@ -129,22 +165,81 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     );
   };
 
-  // MIME 타입 추론 함수 (파일명의 확장자 기반)
-  const getMimeTypeFromFilename = (filename: string, type: MediaType): string => {
-    const extension = getFileExtension(filename);
-    const mimeType = MIME_TYPE_MAP[extension];
+  // 이미지 URI가 HEIC/HEIF 형식인지 확인
+  const isHeicFormat = (uri: string): boolean => {
+    // URI에서 확장자 추출
+    const extension = uri.split('.').pop()?.toLowerCase() || '';
+    // HEIC/HEIF 확장자 확인
+    if (extension === 'heic' || extension === 'heif') {
+      return true;
+    }
+    // iOS 시뮬레이터의 특수 URI 형식도 HEIC일 가능성이 높음
+    if (uri.startsWith('ph://') || uri.startsWith('assets-library://')) {
+      return true;
+    }
+    return false;
+  };
 
-    if (mimeType) {
-      return mimeType;
+  // HEIC를 JPEG로 변환 (iOS 시뮬레이터 기본 사진 처리)
+  const convertHeicToJpeg = async (uri: string): Promise<string> => {
+    // 웹 환경에서는 변환 불가 (원본 반환)
+    if (Platform.OS === 'web') {
+      return uri;
     }
 
-    // 확장자가 없거나 매핑되지 않은 경우 기본값 사용
-    const defaultMimeTypes: Record<MediaType, string> = {
-      IMAGE: 'image/jpeg',
-      VIDEO: 'video/mp4',
-      AUDIO: 'audio/mpeg',
-    };
-    return defaultMimeTypes[type] || 'application/octet-stream';
+    try {
+      // expo-image-manipulator를 사용하여 HEIC를 JPEG로 변환
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [], // 변환만 수행 (리사이즈 없음)
+        {
+          compress: 0.9, // 높은 품질 유지
+          format: ImageManipulator.SaveFormat.JPEG,
+        },
+      );
+      return result.uri;
+    } catch {
+      // 변환 실패 시 원본 반환
+      return uri;
+    }
+  };
+
+  // URI에서 파일명 추출 (타임캡슐 제출 로직과 동일)
+  const getFileName = (uri: string, defaultName: string): string => {
+    const fileName = uri.split('/').pop() || defaultName;
+    // 파일명에 확장자가 없으면 기본 확장자 추가
+    if (!fileName.includes('.')) {
+      return defaultName;
+    }
+    return fileName;
+  };
+
+  // URI에서 파일 확장자를 추출하여 MIME 타입 반환 (타임캡슐 제출 로직과 동일)
+  const getMimeType = (uri: string, mediaType: MediaType): string => {
+    const extension = uri.split('.').pop()?.toLowerCase() || '';
+
+    if (mediaType === 'IMAGE') {
+      if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
+      if (extension === 'png') return 'image/png';
+      if (extension === 'gif') return 'image/gif';
+      return 'image/jpeg'; // 기본값
+    }
+
+    if (mediaType === 'AUDIO') {
+      if (extension === 'mp3') return 'audio/mpeg';
+      if (extension === 'm4a') return 'audio/mp4';
+      if (extension === 'wav') return 'audio/wav';
+      return 'audio/mpeg'; // 기본값
+    }
+
+    if (mediaType === 'VIDEO') {
+      if (extension === 'mp4') return 'video/mp4';
+      if (extension === 'mov') return 'video/quicktime';
+      if (extension === 'avi') return 'video/x-msvideo';
+      return 'video/mp4'; // 기본값
+    }
+
+    return 'application/octet-stream';
   };
 
   // 폼 제출 핸들러 (multipart/form-data 방식)
@@ -196,38 +291,41 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
 
       // 파일 추가
       for (const attachment of attachments) {
-        if (!attachment.uri) {
-          if (__DEV__) {
-            console.warn(`파일 URI가 없습니다: ${attachment.name}`);
-          }
-          continue;
+        if (!attachment.uri) continue;
+
+        let fileUri = attachment.uri;
+
+        // HEIC 파일이면 JPEG로 변환
+        if (attachment.type === 'IMAGE' && isHeicFormat(fileUri)) {
+          fileUri = await convertHeicToJpeg(fileUri);
         }
 
-        // React Native FormData 형식: { uri, type, name }
-        const fileData: any = {
-          uri: attachment.uri,
-          type: getMimeTypeFromFilename(attachment.name, attachment.type),
-          name: attachment.name,
-        };
+        // 파일명 및 MIME 타입 추출
+        const defaultFileName =
+          attachment.type === 'IMAGE'
+            ? `photo_${Date.now()}.jpg`
+            : attachment.type === 'VIDEO'
+            ? `video_${Date.now()}.mp4`
+            : `music_${Date.now()}.mp3`;
+        const fileName = getFileName(fileUri, defaultFileName);
+        const mimeType = getMimeType(fileUri, attachment.type);
 
-        // 웹 환경에서는 File 객체로 변환 필요
+        // FormData에 추가
         if (Platform.OS === 'web') {
           try {
-            const response = await fetch(attachment.uri);
+            const response = await fetch(fileUri);
             const blob = await response.blob();
-            const file = new File([blob], attachment.name, {
-              type: getMimeTypeFromFilename(attachment.name, attachment.type),
-            });
+            const file = new File([blob], fileName, { type: mimeType });
             formData.append('media_files', file);
-          } catch (error) {
-            if (__DEV__) {
-              console.error(`파일 변환 실패: ${attachment.name}`, error);
-            }
+          } catch {
             continue;
           }
         } else {
-          // 네이티브 환경에서는 FormData에 직접 추가
-          formData.append('media_files', fileData as any);
+          formData.append('media_files', {
+            uri: fileUri,
+            type: mimeType,
+            name: fileName,
+          } as any);
         }
       }
 
