@@ -23,7 +23,11 @@ import {
 } from '../utils';
 import { generateKakaoMapHtml } from '../webview/generateHtml';
 import type { WebViewToRNMessage } from '../webview/messageTypes';
-import { sendInitMessage, sendSetMarkersMessage, sendSetZoomLevelMessage } from '../webview/sendMessage';
+import {
+  sendInitMessage,
+  sendSetMarkersMessage,
+  sendSetZoomLevelMessage,
+} from '../webview/sendMessage';
 import { useCapsules } from './useCapsules';
 import { useMapLocation } from './useMapLocation';
 
@@ -35,7 +39,7 @@ import { useMapLocation } from './useMapLocation';
  * scale 2.0 -> level 2 (한 단계 확대)
  * scale 2.5 -> level 1 (한 단계 확대)
  * scale 3.0 -> level 1 (최대 확대)
- * 
+ *
  * scale이 0.5씩 증가할 때마다 level이 1씩 감소
  */
 function scaleToLevel(scale: number): number {
@@ -43,7 +47,7 @@ function scaleToLevel(scale: number): number {
   // level 범위: 1 ~ 14 (낮을수록 확대)
   const minLevel = 1;
   const maxLevel = 14;
-  
+
   // scale 1.0 → level 4를 기준으로
   // scale이 0.5씩 증가할 때마다 level이 1씩 감소
   // scale 1.0 → level 4
@@ -51,7 +55,7 @@ function scaleToLevel(scale: number): number {
   // scale 2.0 → level 2
   // scale 2.5 → level 1
   // scale 3.0 → level 1 (최대 확대)
-  
+
   if (scale <= 1.0) {
     // scale 0.5 → level 14, scale 1.0 → level 4
     const ratio = (scale - 0.5) / (1.0 - 0.5); // 0 ~ 1
@@ -80,7 +84,7 @@ function scaleToLevel(scale: number): number {
 function levelToScale(level: number): number {
   const minScale = 0.5;
   const maxScale = 3.0;
-  
+
   if (level >= 4) {
     // level 14 → scale 0.5, level 4 → scale 1.0
     const ratio = (level - 4) / (14 - 4); // 0 ~ 1
@@ -129,9 +133,10 @@ export function useMapView({
 
   const mapCenter = mapCenterCoord || initialMapConfig.center;
 
+  // 현재 위치 기준으로 캡슐 조회 (지도 중심점이 아닌 실제 사용자 위치 사용)
   const { capsules, isLoading: capsulesLoading } = useCapsules({
-    lat: mapCenter.lat,
-    lng: mapCenter.lng,
+    lat: location?.lat || initialMapConfig.center.lat,
+    lng: location?.lng || initialMapConfig.center.lng,
     radius_m: CAPSULE_SEARCH_RADIUS_M,
     limit: CAPSULE_SEARCH_LIMIT,
   });
