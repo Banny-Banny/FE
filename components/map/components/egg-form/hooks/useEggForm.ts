@@ -105,7 +105,9 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
               newAttachment.thumbnailUri = thumbnailUri;
             }
           } catch (error) {
-            console.error('비디오 썸네일 생성 오류:', error);
+            if (__DEV__) {
+              console.error('비디오 썸네일 생성 오류:', error);
+            }
             // 썸네일 생성 실패해도 파일은 추가
           }
         }
@@ -113,7 +115,9 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         setValue('attachments', [...otherAttachments, newAttachment]);
       }
     } catch (error) {
-      console.error('파일 선택 오류:', error);
+      if (__DEV__) {
+        console.error('파일 선택 오류:', error);
+      }
     }
   };
 
@@ -193,7 +197,9 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
       // 파일 추가
       for (const attachment of attachments) {
         if (!attachment.uri) {
-          console.warn(`파일 URI가 없습니다: ${attachment.name}`);
+          if (__DEV__) {
+            console.warn(`파일 URI가 없습니다: ${attachment.name}`);
+          }
           continue;
         }
 
@@ -214,7 +220,9 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
             });
             formData.append('media_files', file);
           } catch (error) {
-            console.error(`파일 변환 실패: ${attachment.name}`, error);
+            if (__DEV__) {
+              console.error(`파일 변환 실패: ${attachment.name}`, error);
+            }
             continue;
           }
         } else {

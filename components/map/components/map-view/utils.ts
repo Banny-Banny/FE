@@ -49,6 +49,7 @@ export interface MessageHandlerCallbacks {
   onMarkerClick?: (id: string) => void;
   onCapsuleClick?: (capsule: any) => void;
   onCenterChanged?: (coord: { lat: number; lng: number }) => void;
+  onZoomChanged?: (level: number) => void;
 }
 
 /**
@@ -93,6 +94,10 @@ export function createMessageHandler(
         callbacks.onMarkerClick?.(message.payload.id);
         break;
       }
+
+      case 'ZOOM_CHANGED':
+        callbacks.onZoomChanged?.(message.payload.level);
+        break;
 
       case 'WEB_ERROR':
       case 'WEB_WARN':

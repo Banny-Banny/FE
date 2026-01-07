@@ -127,7 +127,9 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
           setIsEggDetailFindVisible(true);
         }
       } catch (error) {
-        console.error('[MapFeature] Discovery API error:', error);
+        if (__DEV__) {
+          console.error('[MapFeature] Discovery API error:', error);
+        }
       }
     };
 

@@ -75,7 +75,9 @@ export function useCapsuleViewer(): UseCapsuleViewerReturn {
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '뷰어 등록 중 오류가 발생했습니다.';
-      console.error('[useCapsuleViewer] Error:', errorMessage);
+      if (__DEV__) {
+        console.error('[useCapsuleViewer] Error:', errorMessage);
+      }
       return null;
     }
   };

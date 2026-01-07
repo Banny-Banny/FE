@@ -11,6 +11,7 @@ import type {
   RemoveCurrentLocationMessage,
   SetCurrentLocationMessage,
   SetMarkersMessage,
+  SetZoomLevelMessage,
 } from './messageTypes';
 
 /**
@@ -114,6 +115,20 @@ export function sendMoveCameraMessage(
 ) {
   const message: MoveCameraMessage = {
     type: 'MOVE_CAMERA',
+    payload,
+  };
+  return sendMessage(webViewRef, JSON.stringify(message));
+}
+
+/**
+ * 줌 레벨 변경 메시지 전송
+ */
+export function sendSetZoomLevelMessage(
+  webViewRef: React.RefObject<WebView | null>,
+  payload: SetZoomLevelMessage['payload'],
+) {
+  const message: SetZoomLevelMessage = {
+    type: 'SET_ZOOM_LEVEL',
     payload,
   };
   return sendMessage(webViewRef, JSON.stringify(message));
