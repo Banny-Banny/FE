@@ -1,31 +1,28 @@
 /**
  * components/map/components/egg-form/hooks/useEggForm.ts
- * 이스터에그 폼 관리 통합 Hook (간소화 버전)
+ * 이스터에그 폼 관리 통합 Hook
  *
- * 생성 시각: 2025-01-XX
- * 통신 테스트를 위해 간소화된 버전
+ * multipart/form-data 방식으로 파일을 직접 업로드합니다.
+ * - title: 캡슐 제목
+ * - content: 캡슐 내용 (선택)
+ * - latitude: 위도
+ * - longitude: 경도
+ * - media_files: 첨부 파일들 (이미지, 비디오, 오디오)
  */
 
 import { API_ENDPOINTS } from '@/commons/constants/endpoints';
-import { MediaType } from '@/commons/constants/media';
-import { useMediaUpload } from '@/commons/hooks';
+import { MediaType, MIME_TYPE_MAP } from '@/commons/constants/media';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
-import { buildApiUrl, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
+import { buildApiUrl, getFileExtension, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
 import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert } from 'react-native';
-import {
-  ApiErrorResponse,
-  AttachmentFile,
-  CreateCapsuleRequest,
-  CreateCapsuleResponse,
-  EggFormData,
-} from '../types';
+import { Alert, Platform } from 'react-native';
+import { ApiErrorResponse, AttachmentFile, CreateCapsuleResponse, EggFormData } from '../types';
 import { useVideoThumbnail } from './useVideoThumbnail';
 
 interface UseEggFormProps {
@@ -37,7 +34,6 @@ interface UseEggFormProps {
  */
 export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const { accessToken } = useAuth();
-  const { upload: uploadMedia, isUploading: isMediaUploading } = useMediaUpload();
   const { location } = useMapLocation();
   const { generateThumbnail } = useVideoThumbnail();
   const { control, handleSubmit, watch, setValue } = useForm<EggFormData>({
@@ -54,8 +50,7 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 폼 유효성 검사
-  const isFormValid =
-    title.trim().length > 0 && content.trim().length > 0 && !isSubmitting && !isMediaUploading;
+  const isFormValid = title.trim().length > 0 && content.trim().length > 0 && !isSubmitting;
 
   // 파일 선택 핸들러 (간소화)
   const handleAddAttachment = async (type: MediaType) => {
@@ -130,7 +125,25 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     );
   };
 
-  // 폼 제출 핸들러 (간소화 - 파일 업로드 없이 URI만 전송)
+  // MIME 타입 추론 함수 (파일명의 확장자 기반)
+  const getMimeTypeFromFilename = (filename: string, type: MediaType): string => {
+    const extension = getFileExtension(filename);
+    const mimeType = MIME_TYPE_MAP[extension];
+
+    if (mimeType) {
+      return mimeType;
+    }
+
+    // 확장자가 없거나 매핑되지 않은 경우 기본값 사용
+    const defaultMimeTypes: Record<MediaType, string> = {
+      IMAGE: 'image/jpeg',
+      VIDEO: 'video/mp4',
+      AUDIO: 'audio/mpeg',
+    };
+    return defaultMimeTypes[type] || 'application/octet-stream';
+  };
+
+  // 폼 제출 핸들러 (multipart/form-data 방식)
   const onSubmit = async (data: EggFormData) => {
     if (isSubmitting) {
       return;
@@ -159,83 +172,6 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         return;
       }
 
-      // 파일 업로드 및 미디어 ID 수집 (Promise.all로 병렬 업로드, 원본 순서 보장)
-      // 모든 파일을 병렬로 업로드 시도 (각 파일은 독립적으로 처리)
-      const uploadPromises = attachments.map(async (attachment, index) => {
-        if (!attachment.uri) {
-          return {
-            index,
-            name: attachment.name,
-            type: attachment.type,
-            success: false,
-            error: '파일 URI가 없습니다.',
-          };
-        }
-
-        try {
-          const mediaId = await uploadMedia(attachment.uri, attachment.type, attachment.name);
-
-          if (mediaId) {
-            return {
-              index,
-              name: attachment.name,
-              type: attachment.type,
-              success: true,
-              mediaId,
-            };
-          } else {
-            return {
-              index,
-              name: attachment.name,
-              type: attachment.type,
-              success: false,
-              error: '업로드 결과를 받을 수 없습니다.',
-            };
-          }
-        } catch (uploadError) {
-          const errorMessage =
-            uploadError instanceof Error
-              ? uploadError.message
-              : '파일 업로드 중 오류가 발생했습니다.';
-          return {
-            index,
-            name: attachment.name,
-            type: attachment.type,
-            success: false,
-            error: errorMessage,
-          };
-        }
-      });
-
-      // 모든 업로드를 병렬로 실행하고 결과 수집 (Promise.all은 원본 순서를 보장함)
-      const uploadResults = await Promise.all(uploadPromises);
-
-      // 성공한 파일들만 추출 (원본 순서 유지 - Promise.all이 이미 순서를 보장하므로 정렬 불필요)
-      const successfulUploads = uploadResults.filter((r) => r.success);
-      const mediaIds = successfulUploads.map((r) => r.mediaId!);
-      const mediaTypes = successfulUploads.map((r) => r.type);
-
-      // 업로드 결과 요약
-      const successCount = uploadResults.filter((r) => r.success).length;
-      const failCount = uploadResults.filter((r) => !r.success).length;
-
-      // 실패한 파일이 있으면 사용자에게 알림
-      if (failCount > 0) {
-        const failedFiles = uploadResults.filter((r) => !r.success);
-        const failedFileNames = failedFiles.map((f) => f.name).join(', ');
-        Alert.alert(
-          '일부 파일 업로드 실패',
-          `다음 파일 업로드에 실패했습니다:\n${failedFileNames}\n\n성공한 파일(${successCount}개)은 계속 진행됩니다.`,
-        );
-      }
-
-      // 최소한 하나의 파일이라도 성공했거나, 파일이 없어도 제목과 내용만으로 생성 가능한 경우 계속 진행
-      if (mediaIds.length === 0 && attachments.length > 0) {
-        Alert.alert('업로드 실패', '모든 파일 업로드에 실패했습니다. 다시 시도해주세요.');
-        setIsSubmitting(false);
-        return;
-      }
-
       // 현재 위치 확인
       if (!location) {
         Alert.alert('오류', '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
@@ -243,22 +179,58 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
         return;
       }
 
-      const requestData: CreateCapsuleRequest = {
-        latitude: location.lat,
-        longitude: location.lng,
-        title: data.title,
-        content: data.content || undefined,
-        // @note 백엔드 요청에 따라 언제든 변경될 수 있음 (예: media_item_ids[] 등)
-        media_ids: mediaIds,
-        media_types: mediaTypes,
-      };
+      // FormData 생성
+      const formData = new FormData();
 
+      // 기본 필드 추가
+      formData.append('title', data.title);
+      if (data.content) {
+        formData.append('content', data.content);
+      }
+      formData.append('latitude', location.lat.toString());
+      formData.append('longitude', location.lng.toString());
+
+      // 파일 추가
+      for (const attachment of attachments) {
+        if (!attachment.uri) {
+          console.warn(`파일 URI가 없습니다: ${attachment.name}`);
+          continue;
+        }
+
+        // React Native FormData 형식: { uri, type, name }
+        const fileData: any = {
+          uri: attachment.uri,
+          type: getMimeTypeFromFilename(attachment.name, attachment.type),
+          name: attachment.name,
+        };
+
+        // 웹 환경에서는 File 객체로 변환 필요
+        if (Platform.OS === 'web') {
+          try {
+            const response = await fetch(attachment.uri);
+            const blob = await response.blob();
+            const file = new File([blob], attachment.name, {
+              type: getMimeTypeFromFilename(attachment.name, attachment.type),
+            });
+            formData.append('media_files', file);
+          } catch (error) {
+            console.error(`파일 변환 실패: ${attachment.name}`, error);
+            continue;
+          }
+        } else {
+          // 네이티브 환경에서는 FormData에 직접 추가
+          formData.append('media_files', fileData as any);
+        }
+      }
+
+      // axios는 FormData를 자동으로 감지하여 Content-Type을 설정하지만,
+      // 명시적으로 설정해도 문제없음 (boundary는 자동으로 추가됨)
       const response = await axios.post<CreateCapsuleResponse>(
         buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
-        requestData,
+        formData,
         {
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'multipart/form-data',
             Authorization: `Bearer ${accessToken}`,
           },
         },
