@@ -50,7 +50,6 @@ ehthumbs.db
 
 # generated native folders (Expo Prebuild)
 /ios
-/android
 
 # others
 coverage/
