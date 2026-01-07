@@ -29,6 +29,9 @@ export const ROUTES = {
 
   // 프로필
   PROFILE_EDIT: '/profile/edit',
+
+  // 내 알 목록
+  MY_EGG_LIST: '/(tabs)/myegglist',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
