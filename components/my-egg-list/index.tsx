@@ -13,6 +13,7 @@
  * 생성 시각: 2025-01-XX
  */
 
+import { useNavigation } from '@/commons/hooks';
 import React, { useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Filter } from './components/filter';
@@ -41,6 +42,7 @@ export default function MyEggList({
   onItemPress,
   onHeaderButtonPress,
 }: MyEggListProps) {
+  const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabType>('discovered');
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
@@ -74,10 +76,21 @@ export default function MyEggList({
     setSelectedFilter(option);
   };
 
+  // 헤더 X 버튼 클릭 시 마이페이지로 이동
+  // 탭 네비게이션에서는 back()이 제대로 동작하지 않을 수 있으므로 명시적으로 마이페이지로 이동
+  const handleHeaderButtonPress = () => {
+    if (onHeaderButtonPress) {
+      onHeaderButtonPress();
+    } else {
+      // 마이페이지 탭으로 이동
+      navigation.push('/(tabs)/mypage');
+    }
+  };
+
   return (
     <View style={styles.container}>
       <Header
-        onButtonPress={onHeaderButtonPress}
+        onButtonPress={handleHeaderButtonPress}
         discoveredCount={discoveredCount}
         plantedCount={plantedCount}
         activeCount={activeCount}
