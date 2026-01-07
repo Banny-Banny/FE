@@ -15,7 +15,8 @@
  */
 
 import React from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { Colors } from '@/commons/constants';
 import { styles } from './styles';
@@ -29,6 +30,8 @@ export interface ItemProps {
   eggIcon?: string | number; // Image source
   hasImage?: boolean;
   hasAudio?: boolean;
+  viewCount?: number; // 조회수 (심은 알에서 사용)
+  showViewCount?: boolean; // 조회수 표시 여부 (심은 알에서 true)
   onPress?: () => void;
 }
 
@@ -40,6 +43,8 @@ export function Item({
   eggIcon,
   hasImage,
   hasAudio,
+  viewCount,
+  showViewCount = false, // 기본값은 false
   onPress,
 }: ItemProps) {
   return (
@@ -55,6 +60,8 @@ export function Item({
               <Image
                 source={typeof eggIcon === 'string' ? { uri: eggIcon } : eggIcon}
                 style={styles.icon}
+                contentFit="contain"
+                transition={200}
               />
             </View>
           )}
@@ -63,18 +70,12 @@ export function Item({
               <Text style={styles.titleText} numberOfLines={1}>
                 {title}
               </Text>
-              <View style={styles.mediaIconsContainer}>
-                {hasImage && (
-                  <View style={styles.mediaIconWrapper}>
-                    <Icon name={'ri-image-line' as IconName} size={14} color={Colors.grey[500]} />
-                  </View>
-                )}
-                {hasAudio && (
-                  <View style={styles.mediaIconWrapper}>
-                    <Icon name={'ri-mic-line' as IconName} size={14} color={Colors.grey[500]} />
-                  </View>
-                )}
-              </View>
+              {showViewCount && viewCount !== undefined && (
+                <View style={styles.viewCountContainer}>
+                  <Icon name={'ri-eye-line' as IconName} size={14} color={Colors.grey[500]} />
+                  <Text style={styles.viewCountText}>{viewCount}</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.descriptionText} numberOfLines={2}>
               {description}

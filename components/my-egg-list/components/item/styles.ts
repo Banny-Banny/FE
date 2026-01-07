@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.white[500], // Figma: #fafafa
     borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08)
+    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     borderRadius: 16, // Figma: 16px
     overflow: 'hidden',
     padding: 1, // Figma: 1px
@@ -59,7 +59,7 @@ export const styles = StyleSheet.create({
   icon: {
     width: 52,
     height: 52,
-    resizeMode: 'contain',
+    // resizeMode는 expo-image의 contentFit prop으로 처리됨
   },
   textContainer: {
     flex: 1,
@@ -93,6 +93,18 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  viewCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewCountText: {
+    fontFamily: Typography.body.body8.fontFamily,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: Typography.body.body8.fontWeight, // SemiBold (600)
+    color: Colors.grey[500], // Figma: #888
+  },
   descriptionText: {
     fontFamily: Typography.body.body6.fontFamily,
     fontSize: 14, // Figma: 14px
@@ -112,7 +124,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     paddingTop: 9, // Figma: 9.111px → 9px
     borderTopWidth: 1, // Figma: 1.111px → 1px
-    borderTopColor: 'rgba(10, 10, 10, 0.06)', // Figma: rgba(10,10,10,0.06)
+    borderTopColor: Colors.border.lighter, // Figma: rgba(10,10,10,0.06)
   },
   metaContainer: {
     flexDirection: 'row',

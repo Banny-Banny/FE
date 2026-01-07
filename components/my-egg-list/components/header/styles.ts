@@ -26,7 +26,7 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
     paddingTop: 32, // Figma: 31.997px → 32px
     paddingHorizontal: 24, // Figma: 23.993px → 24px
-    paddingBottom: 0,
+    paddingBottom: 24, // 위아래 패딩 추가
     gap: 8, // Figma: 7.986px → 8px
   },
 
@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
     height: 40,
     backgroundColor: Colors.whiteGrey[500], // Figma: #e8e8e8
     borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08) - 투명도 필요
+    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     borderRadius: 28, // Figma: 28px
     justifyContent: 'center',
     alignItems: 'center',

@@ -37,32 +37,28 @@ export function Tab({
         onPress={() => onTabChange('discovered')}
         accessibilityRole="button"
         accessibilityLabel="발견한 알">
-        <View style={styles.tabContent}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'discovered' && styles.tabTextActive,
-            ]}>
-            발견한 알 ({discoveredCount})
-          </Text>
-          {activeTab === 'discovered' && <View style={styles.underline} />}
-        </View>
+        <Text
+          style={[
+            styles.tabText,
+            activeTab === 'discovered' && styles.tabTextActive,
+          ]}>
+          발견한 알 ({discoveredCount})
+        </Text>
+        {activeTab === 'discovered' && <View style={styles.underline} />}
       </Pressable>
       <Pressable
         style={styles.tabButton}
         onPress={() => onTabChange('planted')}
         accessibilityRole="button"
         accessibilityLabel="심은 알">
-        <View style={styles.tabContent}>
-          <Text
-            style={[
-              styles.tabText,
-              activeTab === 'planted' && styles.tabTextActive,
-            ]}>
-            심은 알 ({plantedCount})
-          </Text>
-          {activeTab === 'planted' && <View style={styles.underline} />}
-        </View>
+        <Text
+          style={[
+            styles.tabText,
+            activeTab === 'planted' && styles.tabTextActive,
+          ]}>
+          심은 알 ({plantedCount})
+        </Text>
+        {activeTab === 'planted' && <View style={styles.underline} />}
       </Pressable>
     </View>
   );

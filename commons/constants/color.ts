@@ -144,4 +144,9 @@ export const Colors = {
     950: '#0E2863', // Dark Active
     darker: '#0B1F4D', // Darker
   },
+  // Border colors with opacity (Figma 디자인 시스템)
+  border: {
+    light: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08) - 일반 테두리
+    lighter: 'rgba(10, 10, 10, 0.06)', // Figma: rgba(10,10,10,0.06) - 더 연한 테두리
+  },
 } as const;

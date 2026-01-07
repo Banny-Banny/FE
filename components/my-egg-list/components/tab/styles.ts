@@ -25,10 +25,11 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     borderBottomWidth: 1, // Figma: 1.111px → 1px
-    borderBottomColor: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08) - 투명도 필요
+    borderBottomColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     paddingHorizontal: 24, // Figma: 23.993px → 24px
     paddingBottom: 1, // Figma: 1.111px → 1px
     height: 36, // Figma: 36.007px → 36px
+    gap: Spacing.xl, // 탭들 사이 간격 추가
   },
 
   // ============================================
@@ -37,18 +38,11 @@ export const styles = StyleSheet.create({
   tabButton: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingTop: 2, // Figma: 2.222px → 2px
-    width: 86, // Figma: 85.625px → 86px
-  },
-
-  // ============================================
-  // Tab Content
-  // ============================================
-  tabContent: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 13, // Figma: 12.899px → 13px
-    width: '100%',
+    justifyContent: 'flex-start',
+    paddingTop: 0,
+    paddingBottom: 0,
+    height: '100%',
+    // 탭 너비는 내용에 맞게 자동 조정
   },
 
   // ============================================
@@ -61,10 +55,10 @@ export const styles = StyleSheet.create({
     fontWeight: Typography.header.h4.fontWeight, // SemiBold (600)
     color: Colors.grey[500], // Figma: #888 (비활성)
     letterSpacing: 0, // Figma: -0.3125px → 0 (반올림)
-    textAlign: 'center',
   },
   tabTextActive: {
     color: Colors.black[500], // Figma: #0a0a0a (활성)
+    fontWeight: Typography.header.h4.fontWeight, // SemiBold (600) - 활성 탭도 동일한 굵기
   },
 
   // ============================================
@@ -74,6 +68,8 @@ export const styles = StyleSheet.create({
     height: 2, // Figma: 1.997px → 2px
     width: '100%',
     backgroundColor: Colors.black[500], // Figma: #0a0a0a
+    marginTop: 13, // Figma: 12.899px → 13px (텍스트와 밑줄 사이 간격)
+    alignSelf: 'flex-start',
   },
 });
 

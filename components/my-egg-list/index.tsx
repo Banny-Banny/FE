@@ -56,6 +56,7 @@ export default function MyEggList({
       eggIcon: item.eggIcon,
       hasImage: item.hasImage,
       hasAudio: item.hasAudio,
+      viewCount: item.viewCount,
     }));
   };
 

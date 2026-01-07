@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     width: 96, // Figma: 96.059px → 96px
     backgroundColor: Colors.white[500], // Figma: #fafafa
     borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08)
+    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     borderRadius: 20, // Figma: 20px
     paddingLeft: 16,
     paddingRight: 12,
@@ -76,7 +76,7 @@ export const styles = StyleSheet.create({
     width: 96,
     backgroundColor: Colors.white[500], // Figma: #fafafa
     borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08)
+    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     borderRadius: 20, // Figma: 20px
     padding: 1, // Figma: 1.111px → 1px
     shadowColor: Colors.black[500],

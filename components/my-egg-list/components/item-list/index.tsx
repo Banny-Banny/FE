@@ -46,6 +46,7 @@ export function ItemList({
         <Item
           key={item.id || `${item.title}-${index}`}
           {...item}
+          showViewCount={tabType === 'planted'} // 심은 알에서만 조회수 표시
           onPress={() => onItemPress?.(item, index)}
         />
       ))}

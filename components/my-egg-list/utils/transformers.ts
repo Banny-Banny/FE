@@ -45,11 +45,10 @@ export function transformPlantedEggToItem(item: PlantedEggItem, index: number): 
     description: item.content,
     location: formatLocation(item.location),
     date: formatDate(item.createdDate),
-    eggIcon: item.hasImage
-      ? require('@/assets/images/filled_egg.svg')
-      : require('@/assets/images/unfilled_egg.svg'),
+    eggIcon: require('@/assets/images/filled_egg.svg'),
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,
+    viewCount: item.viewCount,
   };
 }
 
@@ -63,9 +62,7 @@ export function transformFoundEggToItem(item: FoundEggItem, index: number): East
     description: item.content,
     location: formatLocation(item.location),
     date: formatDate(item.foundDate), // 발견 날짜 사용
-    eggIcon: item.hasImage
-      ? require('@/assets/images/filled_egg.svg')
-      : require('@/assets/images/unfilled_egg.svg'),
+    eggIcon: require('@/assets/images/filled_egg.svg'),
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,
   };
