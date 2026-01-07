@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
   container: {
     position: 'absolute',
     left: 16,
-    bottom: 16,
+    bottom: 24,
     zIndex: 10,
   },
 
@@ -29,17 +29,17 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.white[50],
+    backgroundColor: Colors.grey[50], // #F7F7F7
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.black[50],
+    shadowColor: 'rgba(4, 4, 4, 1)',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
 
   /* === Button Disabled State === */
