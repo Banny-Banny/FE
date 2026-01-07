@@ -14,6 +14,7 @@ export const API_ENDPOINTS = {
     KAKAO: 'api/auth/kakao',
     ME: 'api/auth/me', // 내 정보 조회 (GET)
     VERIFY: 'api/auth/verify', // 토큰 유효성 검증 (GET)
+    FRIENDS: 'api/me/friends', // 친구 목록 조회 (GET) - 페이지네이션 파라미터: limit, offset
   },
 
   // 캡슐 (Capsules)

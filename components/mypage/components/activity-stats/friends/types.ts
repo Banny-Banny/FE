@@ -7,7 +7,24 @@ export interface Friend {
   id: string;
   name: string;
   emoji: string;
+  profileImg: string | null; // 프로필 이미지 URL
   isBlocked: boolean;
+}
+
+// API 응답 타입
+export interface FriendItemResponse {
+  id: string;
+  status: string; // "CONNECTED" 등
+  friend: {
+    id: string;
+    nickname: string;
+    profileImg: string | null;
+  };
+  createdAt: string;
+}
+
+export interface FriendsListResponse {
+  items: FriendItemResponse[];
 }
 
 export interface FriendsModalProps {

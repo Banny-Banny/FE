@@ -191,6 +191,13 @@ export const styles = StyleSheet.create({
     lineHeight: 32,
   },
 
+  // 아바타 이미지
+  avatarImage: {
+    width: 46,
+    height: 46,
+    borderRadius: BorderRadius.full,
+  },
+
   // 차단된 아바타 컨테이너
   avatarContainerBlocked: {
     backgroundColor: Colors.grey[300],

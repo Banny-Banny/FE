@@ -15,7 +15,9 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
+import { isValidImageUrl } from '@/utils';
 import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
+import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -113,29 +115,46 @@ export function FriendsModal({
         <View style={styles.friendsSectionWrapper}>
           <FlatList
             data={friends}
-            renderItem={({ item: friend }) => (
-              <View
-                style={[styles.friendItem, friend.isBlocked && styles.friendItemBlocked]}
-                pointerEvents="box-none">
-                {/* 친구 정보 */}
-                <View style={styles.friendInfo} pointerEvents="box-none">
-                  {/* 아바타 */}
-                  <View
-                    style={[
-                      styles.avatarContainer,
-                      friend.isBlocked && styles.avatarContainerBlocked,
-                    ]}>
+            renderItem={({ item: friend }) => {
+              // 프로필 이미지 유효성 검사
+              const hasValidProfileImage = isValidImageUrl(friend.profileImg);
+
+              return (
+                <View
+                  style={[styles.friendItem, friend.isBlocked && styles.friendItemBlocked]}
+                  pointerEvents="box-none">
+                  {/* 친구 정보 */}
+                  <View style={styles.friendInfo} pointerEvents="box-none">
+                    {/* 아바타 */}
+                    <View
+                      style={[
+                        styles.avatarContainer,
+                        friend.isBlocked && styles.avatarContainerBlocked,
+                      ]}>
+                      {hasValidProfileImage && friend.profileImg ? (
+                        <Image
+                          source={{ uri: friend.profileImg }}
+                          style={styles.avatarImage}
+                          contentFit="cover"
+                          accessibilityLabel={`${friend.name} 프로필 이미지`}
+                        />
+                      ) : (
+                        <Text
+                          style={[
+                            styles.avatarEmoji,
+                            friend.isBlocked && styles.avatarEmojiBlocked,
+                          ]}>
+                          {friend.emoji}
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* 이름 */}
                     <Text
-                      style={[styles.avatarEmoji, friend.isBlocked && styles.avatarEmojiBlocked]}>
-                      {friend.emoji}
+                      style={[styles.friendName, friend.isBlocked && styles.friendNameBlocked]}>
+                      {friend.name}
                     </Text>
                   </View>
-
-                  {/* 이름 */}
-                  <Text style={[styles.friendName, friend.isBlocked && styles.friendNameBlocked]}>
-                    {friend.name}
-                  </Text>
-                </View>
 
                 {/* 차단/해제 버튼 */}
                 <Pressable
@@ -156,7 +175,8 @@ export function FriendsModal({
                   </Text>
                 </Pressable>
               </View>
-            )}
+              );
+            }}
             keyExtractor={(friend) => friend.id}
             style={styles.friendsSection}
             contentContainerStyle={styles.friendsList}
