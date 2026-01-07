@@ -63,8 +63,13 @@ export default function NotificationFeature() {
   const handleClose = () => {
     // 쿼리 파라미터로 어디서 왔는지 확인
     if (params.from === 'mypage') {
-      // 마이페이지에서 진입한 경우 마이페이지로 이동
-      navigation.replace(ROUTES.MY_PAGE);
+      // 마이페이지에서 push로 진입한 경우 뒤로 가기
+      if (navigation.canGoBack()) {
+        navigation.back();
+      } else {
+        // 뒤로 갈 수 없는 경우 마이페이지로 이동
+        navigation.replace('/(tabs)/mypage');
+      }
     } else {
       // 지도(홈)에서 탭바를 통해 진입한 경우 지도로 이동
       navigation.replace(ROUTES.HOME);
