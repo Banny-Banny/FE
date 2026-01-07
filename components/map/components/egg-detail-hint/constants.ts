@@ -7,7 +7,7 @@
  * - Mock data 및 설정값 정의
  */
 
-import { calculateDirection } from '@/utils/coordinate';
+import { calculateDirection, calculateDistance } from '@/utils/coordinate';
 
 import type { CapsuleItem } from '../map-view/types';
 
@@ -26,7 +26,7 @@ export const MOCK_HINT_DATA: {
 /**
  * CapsuleItem에서 힌트 데이터 생성 (API 연동 시 사용)
  * @param capsule 캡슐 정보
- * @param currentLocation 현재 위치
+ * @param currentLocation 현재 위치 (필수: 거리 계산은 항상 현재 위치 기반)
  * @returns 힌트 데이터
  */
 export function createHintDataFromCapsule(
@@ -37,19 +37,30 @@ export function createHintDataFromCapsule(
   distance: number;
   direction?: number;
 } {
-  const distance = capsule.distance_m ?? 0;
+  let distance: number;
   let direction: number | undefined;
 
-  // 현재 위치가 있으면 방향 계산
+  // 현재 위치가 있으면 무조건 현재 위치 기반으로 거리와 방향 계산
   if (currentLocation) {
+    const rawDistance = calculateDistance(currentLocation, {
+      lat: capsule.latitude,
+      lng: capsule.longitude,
+    });
+    // 소수점 한 자리까지만 표시 (반올림)
+    distance = Math.round(rawDistance * 10) / 10;
     direction = calculateDirection(currentLocation, {
       lat: capsule.latitude,
       lng: capsule.longitude,
     });
+  } else {
+    // 현재 위치가 없을 경우에만 API에서 받은 distance_m 사용 (fallback)
+    const rawDistance = capsule.distance_m ?? 0;
+    // 소수점 한 자리까지만 표시 (반올림)
+    distance = Math.round(rawDistance * 10) / 10;
   }
 
   return {
-    title: capsule.title || '근처에 이스터에그가 있어요!',
+    title: '근처에 이스터에그가 있어요!',
     distance,
     direction,
   };
