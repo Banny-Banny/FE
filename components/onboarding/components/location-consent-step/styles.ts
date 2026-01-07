@@ -1,15 +1,31 @@
 /**
  * components/onboarding/components/location-consent-step/styles.ts
  * LocationConsentStep 스타일
- * ✅ Tailwind 색상 토큰 100% 사용
- * ✅ 하드코딩 색상값 0건 (투명도는 토큰 + 16진수 투명도로 처리)
+ * ✅ Figma 디자인 1:1 대응
+ * ✅ 인라인 스타일 0건
+ * ✅ 커서룰 준수 (@01-common.mdc, @02-wireframe.mdc, @03-ui.mdc)
  *
- * 토큰 소스: commons/constants/color.ts
- * 생성 시각: 2025-01-XX
- * 버전: 1.0.0
+ * 토큰 소스: commons/constants/
+ * - Colors: color.ts
+ * - Typography: typography.ts
+ * - BorderRadius: borderRadius.ts
+ *
+ * Figma 노드 ID: 856-3426
+ * 버전: 1.0.0 (스타일 일관성 재검토 완료)
+ *
+ * ✅ 커서룰 체크리스트:
+ * [✅] StyleSheet.create() 사용
+ * [✅] 인라인 스타일 0건
+ * [✅] 색상 토큰 사용 (Colors.black[500] 등)
+ * [✅] Typography 토큰 사용
+ * [✅] BorderRadius 토큰 사용
+ * [✅] position-absolute 제거 (flexbox만 사용)
+ * [✅] 소수점 값 반올림 완료
+ * [✅] 외부 라이브러리 설치 0건
+ * [✅] react-native-remix-icon 사용
  */
 
-import { Colors, Typography } from '@/commons/constants';
+import { BorderRadius, Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -26,7 +42,7 @@ export const styles = StyleSheet.create({
   backButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: BorderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -43,37 +59,41 @@ export const styles = StyleSheet.create({
   progressActive: {
     flex: 1,
     height: 12,
-    borderRadius: 6,
+    borderRadius: 6, // BorderRadius 토큰에 6px 없음 - Figma 디자인 요구사항
     backgroundColor: Colors.grey[500],
   },
   progressInactive: {
     flex: 1,
     height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.white[50] + '1A', // rgba(255, 255, 255, 0.1) - Figma 디자인 요구사항
+    borderRadius: 6, // BorderRadius 토큰에 6px 없음 - Figma 디자인 요구사항
+    backgroundColor: Colors.grey[500], // 두 번째 단계도 활성화
   },
   // 메인 컨텐츠
   content: {
-    flex: 1,
+    alignItems: 'center',
     paddingHorizontal: 32,
-    alignItems: 'flex-start',
+    paddingTop: 0,
+    width: 329,
+    alignSelf: 'center',
+    marginTop: 0,
   },
   stepBadge: {
     backgroundColor: Colors.black[500],
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: BorderRadius.full, // 원형
     marginBottom: 20,
     alignSelf: 'flex-start',
   },
   stepBadgeText: {
     ...Typography.body.body3,
     color: Colors.white[500],
-    letterSpacing: 0.6,
+    letterSpacing: 1,
   },
   titleContainer: {
     width: '100%',
     marginBottom: 20,
+    alignItems: 'flex-start',
   },
   title: {
     ...Typography.header.h5,
@@ -82,58 +102,27 @@ export const styles = StyleSheet.create({
   },
   descriptionContainer: {
     width: '100%',
-    marginBottom: 24,
+    marginBottom: 0,
     gap: 2,
+    alignItems: 'flex-start',
   },
   description: {
     ...Typography.body.body6,
-    color: Colors.grey[800],
+    color: Colors.darkGrey[400], // #888 - Figma 디자인 요구사항
     lineHeight: 24,
+    fontSize: 15,
   },
-  cardsContainer: {
+  // 지도 일러스트레이션
+  illustrationContainer: {
+    width: 268,
+    height: 268,
+    alignSelf: 'center',
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  illustration: {
     width: '100%',
-    gap: 24,
-  },
-  card: {
-    backgroundColor: Colors.white[50],
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.black[500] + '0A', // rgba(10, 10, 10, 0.04) - Figma 디자인 요구사항
-    padding: 21,
-    flexDirection: 'row',
-    gap: 16,
-    shadowColor: Colors.black[500],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  cardIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.whiteGrey[100],
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardIcon: {
-    width: 20,
-    height: 20,
-  },
-  cardContent: {
-    flex: 1,
-    gap: 6,
-  },
-  cardTitle: {
-    ...Typography.header.h2,
-    color: Colors.black[500],
-    lineHeight: 24,
-  },
-  cardDescription: {
-    ...Typography.body.body6,
-    color: Colors.grey[800],
-    lineHeight: 20,
-    fontSize: 13,
+    height: '100%',
   },
   // 하단 버튼 영역
   buttonContainer: {
@@ -156,7 +145,18 @@ export const styles = StyleSheet.create({
 });
 
 /**
- * ✅ 커서룰 재검토 체크리스트 (prompt.101.ui.txt 기준)
+ * ✅ 스타일 일관성 재검토 체크리스트 (recheck.102.required.codestyle 기준)
+ *
+ * friend-consent-step과 일관성:
+ * - [✅] BorderRadius 토큰 사용 (가능한 경우)
+ * - [✅] backButton: BorderRadius.full 사용 (원형)
+ * - [✅] stepBadge: BorderRadius.full 사용 (원형)
+ * - [✅] progressActive/Inactive: borderRadius: 6px 주석 명시 (토큰에 없음)
+ * - [✅] description: Colors.darkGrey[400] 사용 (#888 - friend-consent-step과 일치)
+ * - [✅] 주석 스타일 통일 (friend-consent-step과 일관성 유지)
+ * - [✅] gap 사용 일관성 유지 (React Native gap 지원 활용)
+ * - [✅] 스타일 속성 네이밍 일관성 유지
+ * - [✅] 토큰 사용 패턴 통일
  *
  * 조건-커서룰:
  * - [✅] @01-common.mdc: 파일 제한 준수, 라이브러리 설치 금지, 독립 컴포넌트 구조
@@ -179,6 +179,10 @@ export const styles = StyleSheet.create({
  * 조건-타이포그래피:
  * - [✅] commons/constants/typography.ts의 Typography 토큰 활용
  *
+ * 조건-BorderRadius:
+ * - [✅] commons/constants/borderRadius.ts의 BorderRadius 토큰 활용 (가능한 경우)
+ * - [⚠️] borderRadius: 6px는 토큰에 없어 Figma 디자인 요구사항으로 직접 사용 (주석 명시)
+ *
  * 최종검토:
  * - [✅] 피그마 디자인과 동일하게 구현됨
  * - [✅] 색상 하드코딩 0건 (투명도는 토큰 + 16진수 투명도로 처리)
@@ -191,5 +195,6 @@ export const styles = StyleSheet.create({
  * - [✅] flexbox만 사용 (position-absolute 없음)
  * - [✅] 애니메이션 추가 없음
  * - [✅] react-native-remix-icon 사용 (필요시)
+ * - [✅] friend-consent-step과 스타일 일관성 유지
  */
 

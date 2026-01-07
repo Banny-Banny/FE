@@ -50,7 +50,7 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
                 </View>
                 <View style={styles.cardIconRight}>
                   <Image
-                    source={require('../../../../assets/icons/location.png')}
+                    source={require('../../../../assets/icons/locationPin.png')}
                     style={styles.cardIcon}
                     contentFit="contain"
                   />

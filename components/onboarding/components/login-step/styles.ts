@@ -301,7 +301,7 @@ export function createResponsiveStyles(screenWidth: number) {
  * - [⚠️] DungGeunMo 폰트: Typography에 없어 직접 지정 (주석 명시)
  *
  * 조건-아이콘/이미지:
- * - [✅] assets/icons/location.png 사용
+ * - [✅] assets/icons/locationPin.png 사용
  * - [✅] assets/icons/friend.png 사용
  * - [✅] react-native-remix-icon 사용
  *

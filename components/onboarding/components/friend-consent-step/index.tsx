@@ -8,11 +8,6 @@ import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 import { styles } from './styles';
 
-// Figma MCP에서 제공한 이미지 URL
-const imgIcon = 'http://localhost:3845/assets/63a9c3fe0631b4c9b76397f9a662f3d345afa745.svg';
-const imgIcon1 = 'http://localhost:3845/assets/86032ef9a65e3223bc6101110b3ca0081ebe5cb4.svg';
-const imgIcon2 = 'http://localhost:3845/assets/485eea67f7f02559a2b44a86af07a8cba6296bd3.svg';
-
 interface FriendConsentStepProps {
   isLoading: boolean;
   onConsent: () => void;
@@ -27,7 +22,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
       {/* 헤더 영역 */}
       <View style={styles.header}>
         <Pressable style={styles.backButton}>
-          <Image source={{ uri: imgIcon2 }} style={styles.backIcon} />
+          <Image source={require('@/assets/icons/<.png')} style={styles.backIcon} />
         </Pressable>
         <View style={styles.progressContainer}>
           <View style={styles.progressActive} />
@@ -59,7 +54,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
           {/* 카드 1: 내 친구 자동 매칭 */}
           <View style={styles.card}>
             <View style={styles.cardIconContainer}>
-              <Image source={{ uri: imgIcon }} style={styles.cardIcon} />
+              <Image source={require('@/assets/icons/friend.png')} style={styles.cardIcon} />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>내 친구 자동 매칭</Text>
@@ -73,7 +68,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
           {/* 카드 2: 안전한 개인정보 */}
           <View style={styles.card}>
             <View style={styles.cardIconContainer}>
-              <Image source={{ uri: imgIcon1 }} style={styles.cardIcon} />
+              <Image source={require('@/assets/icons/shield.png')} style={styles.cardIcon} />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>안전한 개인정보</Text>
@@ -88,13 +83,16 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
 
       {/* 하단 버튼 영역 */}
       <View style={styles.buttonContainer}>
-        <Button
-          label="친구 연동 허용"
-          variant="primary"
-          size="L"
-          disabled={isLoading}
-          onPress={onConsent}
-        />
+        <View style={styles.primaryButtonWrapper}>
+          <Button
+            label="친구 연동 허용 >"
+            variant="primary"
+            size="L"
+            disabled={isLoading}
+            onPress={onConsent}
+            fullWidth={true}
+          />
+        </View>
         <Pressable style={styles.skipButton}>
           <Text style={styles.skipButtonText}>건너뛰기</Text>
         </Pressable>
