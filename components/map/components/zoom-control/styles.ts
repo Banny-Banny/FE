@@ -22,16 +22,16 @@ export const styles = StyleSheet.create({
     right: 16,
     top: '50%',
     transform: [{ translateY: -60 }],
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.grey[50], // #F7F7F7
     borderRadius: 8,
-    shadowColor: Colors.black[500],
+    shadowColor: 'rgba(4, 4, 4, 1)',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 6,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
     overflow: 'hidden',
   },
 
@@ -41,7 +41,7 @@ export const styles = StyleSheet.create({
     height: 44,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.white[500],
+    backgroundColor: Colors.grey[50], // #F7F7F7
   },
   buttonDisabled: {
     backgroundColor: Colors.whiteGrey[300],
