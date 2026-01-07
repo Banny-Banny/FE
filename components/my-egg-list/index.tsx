@@ -57,6 +57,7 @@ export default function MyEggList({
       hasImage: item.hasImage,
       hasAudio: item.hasAudio,
       viewCount: item.viewCount,
+      status: item.status, // 활성/소멸 상태 포함
     }));
   };
 
@@ -87,14 +88,16 @@ export default function MyEggList({
         discoveredCount={discoveredCount}
         plantedCount={plantedCount}
       />
-      <View style={styles.filterContainer}>
-        <Filter
-          isOpen={filterOpen}
-          selectedOption={selectedFilter}
-          onPress={handleFilterPress}
-          onOptionSelect={handleFilterOptionSelect}
-        />
-      </View>
+      {activeTab === 'discovered' && (
+        <View style={styles.filterContainer}>
+          <Filter
+            isOpen={filterOpen}
+            selectedOption={selectedFilter}
+            onPress={handleFilterPress}
+            onOptionSelect={handleFilterOptionSelect}
+          />
+        </View>
+      )}
       <ItemList
         items={currentItems.length > 0 ? currentItems : undefined}
         tabType={activeTab}

@@ -73,6 +73,7 @@ export const MOCK_DISCOVERED_ITEMS: ItemProps[] = [
 
 /**
  * Mock 데이터: 심은 알 목록
+ * - 활성 알과 소멸된 알을 구분하여 표시
  */
 export const MOCK_PLANTED_ITEMS: ItemProps[] = [
   {
@@ -86,6 +87,7 @@ export const MOCK_PLANTED_ITEMS: ItemProps[] = [
     hasImage: true,
     hasAudio: false,
     viewCount: 12,
+    status: 'ACTIVE',
   },
   {
     id: '7',
@@ -98,6 +100,7 @@ export const MOCK_PLANTED_ITEMS: ItemProps[] = [
     hasImage: false,
     hasAudio: true,
     viewCount: 5,
+    status: 'ACTIVE',
   },
   {
     id: '8',
@@ -109,6 +112,7 @@ export const MOCK_PLANTED_ITEMS: ItemProps[] = [
     hasImage: true,
     hasAudio: true,
     viewCount: 8,
+    status: 'ACTIVE',
   },
   {
     id: '9',
@@ -120,6 +124,7 @@ export const MOCK_PLANTED_ITEMS: ItemProps[] = [
     hasImage: true,
     hasAudio: false,
     viewCount: 3,
+    status: 'EXPIRED',
   },
   {
     id: '10',
@@ -131,5 +136,6 @@ export const MOCK_PLANTED_ITEMS: ItemProps[] = [
     hasImage: false,
     hasAudio: true,
     viewCount: 15,
+    status: 'EXPIRED',
   },
 ];

@@ -83,6 +83,7 @@ export interface EasterEggItem {
   hasImage?: boolean;
   hasAudio?: boolean;
   viewCount?: number; // 조회수 (심은 알에서 사용)
+  status?: 'ACTIVE' | 'EXPIRED'; // 활성/소멸 상태 (심은 알에서 사용)
 }
 
 export type TabType = 'discovered' | 'planted';

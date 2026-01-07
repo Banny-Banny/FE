@@ -13,8 +13,8 @@
  * 생성 시각: 2025-01-XX
  */
 
-import React from 'react';
-import { ScrollView } from 'react-native';
+import React, { useMemo } from 'react';
+import { ScrollView, Text, View } from 'react-native';
 import { Item } from '../item';
 import type { ItemProps } from '../item';
 import { MOCK_DISCOVERED_ITEMS, MOCK_PLANTED_ITEMS } from './constants';
@@ -37,19 +37,90 @@ export function ItemList({
   const displayItems =
     items || (tabType === 'discovered' ? MOCK_DISCOVERED_ITEMS : MOCK_PLANTED_ITEMS);
 
+  // 심은 알인 경우 활성/소멸 구분
+  const { activeItems, expiredItems } = useMemo(() => {
+    if (tabType !== 'planted') {
+      return { activeItems: displayItems, expiredItems: [] };
+    }
+
+    const active: ItemProps[] = [];
+    const expired: ItemProps[] = [];
+
+    displayItems.forEach((item) => {
+      if (item.status === 'EXPIRED') {
+        expired.push(item);
+      } else {
+        active.push(item);
+      }
+    });
+
+    return { activeItems: active, expiredItems: expired };
+  }, [displayItems, tabType]);
+
+  // 발견한 알 또는 활성 알만 있는 경우
+  if (tabType === 'discovered' || expiredItems.length === 0) {
+    return (
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}>
+        {displayItems.map((item, index) => (
+          <Item
+            key={item.id || `${item.title}-${index}`}
+            {...item}
+            showViewCount={tabType === 'planted'} // 심은 알에서만 조회수 표시
+            onPress={() => onItemPress?.(item, index)}
+          />
+        ))}
+      </ScrollView>
+    );
+  }
+
+  // 심은 알이고 활성/소멸이 모두 있는 경우 섹션으로 구분
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}>
-      {displayItems.map((item, index) => (
-        <Item
-          key={item.id || `${item.title}-${index}`}
-          {...item}
-          showViewCount={tabType === 'planted'} // 심은 알에서만 조회수 표시
-          onPress={() => onItemPress?.(item, index)}
-        />
-      ))}
+      {/* 활성 알 섹션 */}
+      {activeItems.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>활성 알 ({activeItems.length})</Text>
+          </View>
+          {activeItems.map((item, index) => (
+            <Item
+              key={item.id || `active-${item.title}-${index}`}
+              {...item}
+              showViewCount={true}
+              onPress={() => {
+                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
+                onItemPress?.(item, originalIndex >= 0 ? originalIndex : index);
+              }}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* 소멸된 알 섹션 */}
+      {expiredItems.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitleExpired}>소멸된 알 ({expiredItems.length})</Text>
+          </View>
+          {expiredItems.map((item, index) => (
+            <Item
+              key={item.id || `expired-${item.title}-${index}`}
+              {...item}
+              showViewCount={true}
+              onPress={() => {
+                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
+                onItemPress?.(item, originalIndex >= 0 ? originalIndex : index);
+              }}
+            />
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }

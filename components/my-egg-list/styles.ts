@@ -34,6 +34,8 @@ export const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, // 24px
     paddingTop: Spacing.sm, // 8px
     paddingBottom: Spacing.sm, // 8px
+    zIndex: 999, // 필터가 다른 요소 위에 표시되도록
+    position: 'relative',
   },
 });
 

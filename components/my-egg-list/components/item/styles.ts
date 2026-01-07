@@ -22,12 +22,15 @@ export const styles = StyleSheet.create({
   // Container
   // ============================================
   container: {
-    backgroundColor: Colors.white[500], // Figma: #fafafa
-    borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
-    borderRadius: 16, // Figma: 16px
+    backgroundColor: Colors.white[500], // Figma: #fafafa (활성 알)
+    borderWidth: 1,
+    borderColor: Colors.border.light, // rgba(10,10,10,0.08)
+    borderRadius: 18, // 적절한 모서리
     overflow: 'hidden',
-    padding: 1, // Figma: 1px
+  },
+  containerExpired: {
+    backgroundColor: Colors.whiteGrey[100], // 소멸된 알 배경색 (#F7F7F7) - 더 연하게
+    borderColor: Colors.border.lighter, // 더 연한 테두리
   },
 
   // ============================================
@@ -36,9 +39,9 @@ export const styles = StyleSheet.create({
   content: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingHorizontal: 20, // Figma: 20px
-    paddingVertical: 16, // Figma: 16px
-    gap: 18, // Figma: 18px
+    paddingHorizontal: 20, // 적절한 여백
+    paddingVertical: 16, // 적절한 여백
+    gap: 16, // 적절한 간격
   },
 
   // ============================================
@@ -47,11 +50,11 @@ export const styles = StyleSheet.create({
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 16, // Figma: 15.99px → 16px
+    gap: 16, // 적절한 간격
     width: '100%',
   },
   iconContainer: {
-    width: 52, // Figma: 52px
+    width: 52, // 적절한 크기
     height: 52,
     justifyContent: 'center',
     alignItems: 'center',
@@ -63,24 +66,24 @@ export const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    height: 68, // Figma: 67.76px → 68px
+    minHeight: 64, // 높이 약간 줄임
     justifyContent: 'flex-start',
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6, // Figma: 25.78px - 19.8px = 5.98px → 6px
-    gap: 8,
+    marginBottom: 6, // 적절한 간격
+    gap: 8, // 적절한 간격
   },
   titleText: {
     flex: 1,
     fontFamily: Typography.header.h3.fontFamily,
-    fontSize: 18, // Figma: 18px
-    lineHeight: 20, // Figma: 19.8px → 20px
+    fontSize: 18, // 적절한 크기
+    lineHeight: 22, // 적절한 줄간격
     fontWeight: Typography.header.h5.fontWeight, // ExtraBold (800)
-    color: Colors.black[500], // Figma: #0a0a0a
-    letterSpacing: -1, // Figma: -0.7995px → -1px (반올림)
+    color: Colors.black[500], // #0a0a0a
+    letterSpacing: -0.5, // 자연스러운 간격
   },
   mediaIconsContainer: {
     flexDirection: 'row',
@@ -96,22 +99,26 @@ export const styles = StyleSheet.create({
   viewCountContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5, // 4px → 5px
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: Colors.whiteGrey[200], // 배경 추가로 더 세련되게
   },
   viewCountText: {
     fontFamily: Typography.body.body8.fontFamily,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: Typography.body.body8.fontWeight, // SemiBold (600)
-    color: Colors.grey[500], // Figma: #888
+    color: Colors.darkGrey[700], // #888 → #4B4B4B (더 진한 회색)
   },
   descriptionText: {
     fontFamily: Typography.body.body6.fontFamily,
-    fontSize: 14, // Figma: 14px
-    lineHeight: 21, // Figma: 21px
+    fontSize: 14,
+    lineHeight: 20, // 적절한 줄간격
     fontWeight: Typography.body.body6.fontWeight, // Regular (400)
-    color: Colors.grey[500], // Figma: #888
-    letterSpacing: 0, // Figma: -0.1504px → 0 (반올림)
+    color: Colors.darkGrey[600], // 더 진한 회색으로 가독성 향상
+    letterSpacing: -0.2, // 자연스러운 간격
   },
 
   // ============================================
@@ -122,49 +129,50 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 9, // Figma: 9.111px → 9px
-    borderTopWidth: 1, // Figma: 1.111px → 1px
-    borderTopColor: Colors.border.lighter, // Figma: rgba(10,10,10,0.06)
+    paddingTop: 10, // 적절한 여백
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.lighter, // rgba(10,10,10,0.06)
   },
   metaContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8, // Figma: 8px
+    gap: 10, // 8px → 10px
   },
   locationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2, // Figma: 2px
+    gap: 4, // 2px → 4px (아이콘과 텍스트 간격)
   },
   locationIconContainer: {
-    width: 12, // Figma: 12px
-    height: 12,
+    width: 14, // 12px → 14px (약간 더 큰 아이콘)
+    height: 14,
     justifyContent: 'center',
     alignItems: 'center',
   },
   metaText: {
     fontFamily: Typography.body.body8.fontFamily,
-    fontSize: 12, // Figma: 12px
-    lineHeight: 16, // Figma: 16px
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: Typography.body.body8.fontWeight, // SemiBold (600)
-    color: Colors.grey[500], // Figma: #888
+    color: Colors.darkGrey[600], // #888 → #606060 (더 진한 회색)
   },
   divider: {
-    width: 4, // Figma: 3.993px → 4px
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.grey[500], // Figma: #d0d0d0
+    width: 3, // 4px → 3px (더 작고 세련된 점)
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: Colors.grey[400], // #B2B2B2 → #C1C1C1 (더 연한 회색)
   },
   actionContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6, // Figma: 5.99px → 6px
+    gap: 8, // 6px → 8px (아이콘 간 간격)
   },
   actionButton: {
-    width: 16, // Figma: 15.99px → 16px
-    height: 16,
+    width: 18, // 적절한 크기
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    // 배경과 둥근 모서리 제거
   },
 });
 

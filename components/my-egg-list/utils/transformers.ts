@@ -49,6 +49,7 @@ export function transformPlantedEggToItem(item: PlantedEggItem, index: number): 
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,
     viewCount: item.viewCount,
+    status: item.status, // 활성/소멸 상태 포함
   };
 }
 

@@ -32,6 +32,7 @@ export interface ItemProps {
   hasAudio?: boolean;
   viewCount?: number; // 조회수 (심은 알에서 사용)
   showViewCount?: boolean; // 조회수 표시 여부 (심은 알에서 true)
+  status?: 'ACTIVE' | 'EXPIRED'; // 활성/소멸 상태 (심은 알에서 사용)
   onPress?: () => void;
 }
 
@@ -45,11 +46,14 @@ export function Item({
   hasAudio,
   viewCount,
   showViewCount = false, // 기본값은 false
+  status,
   onPress,
 }: ItemProps) {
+  const isExpired = status === 'EXPIRED';
+
   return (
     <Pressable
-      style={styles.container}
+      style={[styles.container, isExpired && styles.containerExpired]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={title}>
@@ -72,7 +76,7 @@ export function Item({
               </Text>
               {showViewCount && viewCount !== undefined && (
                 <View style={styles.viewCountContainer}>
-                  <Icon name={'ri-eye-line' as IconName} size={14} color={Colors.grey[500]} />
+                  <Icon name={'ri-eye-line' as IconName} size={13} color={Colors.darkGrey[700]} />
                   <Text style={styles.viewCountText}>{viewCount}</Text>
                 </View>
               )}
@@ -86,7 +90,7 @@ export function Item({
           <View style={styles.metaContainer}>
             <View style={styles.locationContainer}>
               <View style={styles.locationIconContainer}>
-                <Icon name={'ri-map-pin-line' as IconName} size={12} color={Colors.grey[500]} />
+                <Icon name={'ri-map-pin-line' as IconName} size={13} color={Colors.darkGrey[600]} />
               </View>
               <Text style={styles.metaText}>{location}</Text>
             </View>
@@ -96,12 +100,12 @@ export function Item({
           <View style={styles.actionContainer}>
             {hasImage && (
               <View style={styles.actionButton}>
-                <Icon name={'ri-image-line' as IconName} size={16} color={Colors.grey[500]} />
+                <Icon name={'ri-image-line' as IconName} size={16} color={Colors.darkGrey[700]} />
               </View>
             )}
             {hasAudio && (
               <View style={styles.actionButton}>
-                <Icon name={'ri-mic-line' as IconName} size={16} color={Colors.grey[500]} />
+                <Icon name={'ri-mic-line' as IconName} size={16} color={Colors.darkGrey[700]} />
               </View>
             )}
           </View>
