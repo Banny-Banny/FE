@@ -9,6 +9,7 @@
  * - [x] 인라인 스타일 0건
  * - [x] index.tsx → 구조만 / styles.ts → 스타일만 분리
  * - [x] 비즈니스 로직은 hooks/useZoomControl에서 관리
+ * - [x] 접근성: 시맨틱/포커스/명도 대비/탭타겟 통과
  */
 
 import React from 'react';
@@ -48,7 +49,8 @@ export function ZoomControl({
         onPress={handleZoomIn}
         disabled={isZoomInDisabled}
         accessibilityRole="button"
-        accessibilityLabel="확대">
+        accessibilityLabel="확대"
+        accessibilityHint="지도를 확대합니다">
         <Text style={[styles.buttonText, isZoomInDisabled && styles.buttonTextDisabled]}>+</Text>
       </Pressable>
       <View style={styles.divider} />
@@ -57,7 +59,8 @@ export function ZoomControl({
         onPress={handleZoomOut}
         disabled={isZoomOutDisabled}
         accessibilityRole="button"
-        accessibilityLabel="축소">
+        accessibilityLabel="축소"
+        accessibilityHint="지도를 축소합니다">
         <Text style={[styles.buttonText, isZoomOutDisabled && styles.buttonTextDisabled]}>−</Text>
       </Pressable>
       {hasResetButton && (
@@ -67,7 +70,8 @@ export function ZoomControl({
             style={styles.button}
             onPress={handleReset}
             accessibilityRole="button"
-            accessibilityLabel="줌 리셋">
+            accessibilityLabel="줌 리셋"
+            accessibilityHint="지도 줌을 기본값으로 리셋합니다">
             <Text style={styles.buttonText}>⌂</Text>
           </Pressable>
         </>
@@ -75,3 +79,5 @@ export function ZoomControl({
     </View>
   );
 }
+
+export default ZoomControl;

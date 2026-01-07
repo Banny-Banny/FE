@@ -31,7 +31,6 @@ export default function MapView(props: MapViewProps = {}) {
     mapCenter,
     location,
     locationLoading,
-    slotData,
     markersForWeb,
     handleMessage,
     handleMessageCommon,
@@ -112,4 +111,3 @@ export default function MapView(props: MapViewProps = {}) {
     </View>
   );
 }
-

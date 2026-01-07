@@ -6,4 +6,3 @@
 
 export { useZoomControl } from './useZoomControl';
 export type { UseZoomControlProps, UseZoomControlReturn } from './useZoomControl';
-
