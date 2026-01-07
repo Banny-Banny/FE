@@ -35,6 +35,8 @@ export interface BottomSheetProps {
   children: React.ReactNode;
   footer?: React.ReactNode; // 하단 고정 영역 (버튼 등)
   showHandle?: boolean;
+  initialHeight?: number; // 초기 높이 (픽셀 단위, 선택사항)
+  maxHeight?: number; // 최대 높이 제한 (픽셀 단위, 선택사항)
 }
 
 export const BottomSheet: React.FC<BottomSheetProps> = ({
@@ -43,20 +45,27 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   children,
   footer,
   showHandle = true,
+  initialHeight,
+  maxHeight,
 }) => {
+  // maxHeight가 있으면 해당 값 사용, 없으면 기본값 사용
+  const actualMaxHeight = maxHeight ?? BOTTOM_SHEET_HEIGHT;
+  // initialHeight가 있으면 해당 값 사용, 없으면 최대 높이 사용
+  const actualInitialHeight = initialHeight ?? actualMaxHeight;
+
   // 애니메이션 값 초기화
-  const translateY = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current;
-  const sheetHeight = useRef(new Animated.Value(BOTTOM_SHEET_HEIGHT)).current; // 초기 높이 100%
-  const [isExpanded, setIsExpanded] = useState(true);
+  const translateY = useRef(new Animated.Value(actualInitialHeight)).current;
+  const sheetHeight = useRef(new Animated.Value(actualInitialHeight)).current; // 초기 높이
+  const [isExpanded, setIsExpanded] = useState(actualInitialHeight >= actualMaxHeight);
 
   // isVisible 변경 시 애니메이션 실행
   useEffect(() => {
     if (isVisible) {
-      setIsExpanded(true);
-      // 높이를 100%로 리셋
-      sheetHeight.setValue(BOTTOM_SHEET_HEIGHT);
+      setIsExpanded(actualInitialHeight >= actualMaxHeight);
+      // 높이를 초기 높이로 리셋
+      sheetHeight.setValue(actualInitialHeight);
       // 먼저 화면 밖으로 위치 리셋 (애니메이션 없이)
-      translateY.setValue(BOTTOM_SHEET_HEIGHT);
+      translateY.setValue(actualInitialHeight);
       // 그 다음 슬라이드 업 애니메이션 (화면 하단으로)
       Animated.spring(translateY, {
         toValue: 0,
@@ -67,12 +76,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
     } else {
       // 슬라이드 다운 애니메이션 (화면 밖으로)
       Animated.timing(translateY, {
-        toValue: BOTTOM_SHEET_HEIGHT,
+        toValue: actualInitialHeight,
         duration: 250,
         useNativeDriver: false,
       }).start();
     }
-  }, [isVisible, translateY, sheetHeight]);
+  }, [isVisible, translateY, sheetHeight, actualInitialHeight, actualMaxHeight]);
 
   // 핸들 탭 핸들러 (확장/축소 토글)
   const handleToggleExpand = () => {
@@ -80,7 +89,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       // 축소
       setIsExpanded(false);
       Animated.spring(sheetHeight, {
-        toValue: BOTTOM_SHEET_HEIGHT * 0.6,
+        toValue: actualMaxHeight * 0.6,
         tension: 65,
         friction: 11,
         useNativeDriver: false,
@@ -89,7 +98,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
       // 확장
       setIsExpanded(true);
       Animated.spring(sheetHeight, {
-        toValue: BOTTOM_SHEET_HEIGHT,
+        toValue: actualMaxHeight,
         tension: 65,
         friction: 11,
         useNativeDriver: false,
@@ -114,7 +123,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         // 아래로 드래그 시 닫기
         if (gestureState.dy > 100 && velocity > 0.5) {
           Animated.timing(translateY, {
-            toValue: BOTTOM_SHEET_HEIGHT,
+            toValue: actualInitialHeight,
             duration: 200,
             useNativeDriver: false,
           }).start(() => onClose());
@@ -132,7 +141,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               useNativeDriver: false,
             }),
             Animated.spring(sheetHeight, {
-              toValue: BOTTOM_SHEET_HEIGHT,
+              toValue: actualMaxHeight,
               tension: 65,
               friction: 11,
               useNativeDriver: false,
@@ -152,7 +161,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
               useNativeDriver: false,
             }),
             Animated.spring(sheetHeight, {
-              toValue: BOTTOM_SHEET_HEIGHT * 0.6,
+              toValue: actualMaxHeight * 0.6,
               tension: 65,
               friction: 11,
               useNativeDriver: false,
@@ -170,7 +179,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             useNativeDriver: false,
           }),
           Animated.spring(sheetHeight, {
-            toValue: isExpanded ? BOTTOM_SHEET_HEIGHT : BOTTOM_SHEET_HEIGHT * 0.6,
+            toValue: isExpanded ? actualMaxHeight : actualMaxHeight * 0.6,
             tension: 65,
             friction: 11,
             useNativeDriver: false,
