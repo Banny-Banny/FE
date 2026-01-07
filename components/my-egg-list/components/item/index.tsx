@@ -21,6 +21,9 @@ import Icon, { IconName } from 'react-native-remix-icon';
 import { Colors } from '@/commons/constants';
 import { styles } from './styles';
 
+// 소멸된 알 이미지
+const BROKEN_EGG_ICON = require('@/assets/images/broken_egg.svg');
+
 export interface ItemProps {
   id?: string;
   title: string;
@@ -50,6 +53,9 @@ export function Item({
   onPress,
 }: ItemProps) {
   const isExpired = status === 'EXPIRED';
+  
+  // 소멸된 알이면 broken_egg.svg 사용, 아니면 기존 eggIcon 사용
+  const displayIcon = isExpired ? BROKEN_EGG_ICON : eggIcon;
 
   return (
     <Pressable
@@ -59,10 +65,10 @@ export function Item({
       accessibilityLabel={title}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          {eggIcon && (
+          {displayIcon && (
             <View style={styles.iconContainer}>
               <Image
-                source={typeof eggIcon === 'string' ? { uri: eggIcon } : eggIcon}
+                source={typeof displayIcon === 'string' ? { uri: displayIcon } : displayIcon}
                 style={styles.icon}
                 contentFit="contain"
                 transition={200}

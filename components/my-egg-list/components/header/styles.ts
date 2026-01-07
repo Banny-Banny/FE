@@ -28,6 +28,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 24, // Figma: 23.993px → 24px
     paddingBottom: 24, // 위아래 패딩 추가
     gap: 8, // Figma: 7.986px → 8px
+    width: '100%',
   },
 
   // ============================================
@@ -37,18 +38,20 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 40,
+    minHeight: 40, // height → minHeight로 변경 (웹 호환성)
     width: '100%',
+    flexShrink: 0, // 웹에서 축소 방지
   },
 
   // ============================================
   // Title
   // ============================================
   titleContainer: {
-    height: 33, // Figma: 32.986px → 33px
-    width: 127, // Figma: 126.753px → 127px
+    flex: 1, // 고정 width 제거, flex로 변경
+    minHeight: 33, // height → minHeight로 변경
     justifyContent: 'center',
     alignItems: 'flex-start',
+    marginRight: Spacing.md, // 버튼과의 간격
   },
   titleText: {
     fontFamily: Typography.header.h5.fontFamily,
@@ -57,6 +60,7 @@ export const styles = StyleSheet.create({
     fontWeight: Typography.header.h5.fontWeight, // ExtraBold (800)
     color: Colors.black[500], // Figma: #0a0a0a
     letterSpacing: 0, // Figma: -0.2045px → 0 (반올림)
+    flexShrink: 1, // 웹에서 텍스트 줄바꿈 허용
   },
 
   // ============================================
@@ -65,12 +69,15 @@ export const styles = StyleSheet.create({
   button: {
     width: 40,
     height: 40,
+    minWidth: 40, // 웹에서 최소 크기 보장
+    minHeight: 40,
     backgroundColor: Colors.whiteGrey[500], // Figma: #e8e8e8
     borderWidth: 1, // Figma: 1.111px → 1px
     borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     borderRadius: 28, // Figma: 28px
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0, // 웹에서 축소 방지
   },
   iconContainer: {
     width: 20,
@@ -83,8 +90,9 @@ export const styles = StyleSheet.create({
   // Subtitle
   // ============================================
   subtitleContainer: {
-    height: 20, // Figma: 19.983px → 20px
+    minHeight: 20, // height → minHeight로 변경
     width: '100%',
+    flexShrink: 0, // 웹에서 축소 방지
   },
   subtitleText: {
     fontFamily: Typography.body.body6.fontFamily,
@@ -93,6 +101,7 @@ export const styles = StyleSheet.create({
     fontWeight: Typography.body.body6.fontWeight, // Medium (500)
     color: Colors.grey[500], // Figma: #888
     letterSpacing: 0, // Figma: -0.1504px → 0 (반올림)
+    flexWrap: 'wrap', // 웹에서 텍스트 줄바꿈 허용
   },
 });
 

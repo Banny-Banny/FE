@@ -6,10 +6,9 @@
  * - [✓] JSX 구조만 작성 (View, Text 등 기본 컴포넌트 사용)
  * - [✓] 인라인 스타일 0건
  * - [✓] 모든 스타일은 styles.ts에서 import하여 사용
- * - [✓] 피그마 디자인 1:1 대응
  * - [✓] 색상 하드코딩 0건 (토큰만 사용)
+ * - [✓] 모던하고 깔끔한 탭 UI
  *
- * Figma 노드 ID: 585:2284
  * 생성 시각: 2025-01-XX
  */
 
@@ -36,7 +35,8 @@ export function Tab({
         style={styles.tabButton}
         onPress={() => onTabChange('discovered')}
         accessibilityRole="button"
-        accessibilityLabel="발견한 알">
+        accessibilityLabel="발견한 알"
+        accessibilityState={{ selected: activeTab === 'discovered' }}>
         <Text
           style={[
             styles.tabText,
@@ -50,7 +50,8 @@ export function Tab({
         style={styles.tabButton}
         onPress={() => onTabChange('planted')}
         accessibilityRole="button"
-        accessibilityLabel="심은 알">
+        accessibilityLabel="심은 알"
+        accessibilityState={{ selected: activeTab === 'planted' }}>
         <Text
           style={[
             styles.tabText,

@@ -6,11 +6,9 @@
  * - [✓] StyleSheet.create() 사용
  * - [✓] 색상 토큰만 사용 (하드코딩 0건)
  * - [✓] 인라인 스타일 0건
- * - [✓] 피그마 디자인 1:1 대응
  * - [✓] Typography 토큰 활용
- * - [✓] Figma 디자인 사이즈 정확히 반영 (소수점 반올림)
+ * - [✓] 페이지와 조화로운 세련된 탭 UI 디자인
  *
- * Figma 노드 ID: 585:2284
  * 생성 시각: 2025-01-XX
  */
 
@@ -23,13 +21,12 @@ export const styles = StyleSheet.create({
   // ============================================
   container: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderBottomWidth: 1, // Figma: 1.111px → 1px
-    borderBottomColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
-    paddingHorizontal: 24, // Figma: 23.993px → 24px
-    paddingBottom: 1, // Figma: 1.111px → 1px
-    height: 36, // Figma: 36.007px → 36px
-    gap: Spacing.xl, // 탭들 사이 간격 추가
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.white[500], // 페이지 배경색과 동일하게
+    minHeight: 48,
   },
 
   // ============================================
@@ -37,12 +34,13 @@ export const styles = StyleSheet.create({
   // ============================================
   tabButton: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
-    paddingTop: 0,
-    paddingBottom: 0,
-    height: '100%',
-    // 탭 너비는 내용에 맞게 자동 조정
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.md,
+    marginRight: Spacing.md, // 탭들 사이 간격 더 줄임 (24px → 16px)
+    position: 'relative',
+    minHeight: 48,
   },
 
   // ============================================
@@ -50,26 +48,29 @@ export const styles = StyleSheet.create({
   // ============================================
   tabText: {
     fontFamily: Typography.header.h4.fontFamily,
-    fontSize: 16, // Figma: 16px
-    lineHeight: 24, // Figma: 24px
+    fontSize: 16,
+    lineHeight: 24,
     fontWeight: Typography.header.h4.fontWeight, // SemiBold (600)
-    color: Colors.grey[500], // Figma: #888 (비활성)
-    letterSpacing: 0, // Figma: -0.3125px → 0 (반올림)
+    color: Colors.grey[500], // 비활성 색상
+    letterSpacing: -0.3125,
   },
   tabTextActive: {
-    color: Colors.black[500], // Figma: #0a0a0a (활성)
-    fontWeight: Typography.header.h4.fontWeight, // SemiBold (600) - 활성 탭도 동일한 굵기
+    color: Colors.black[500], // 활성 색상
+    fontWeight: Typography.header.h4.fontWeight, // SemiBold (600)
   },
 
   // ============================================
   // Underline
   // ============================================
   underline: {
-    height: 2, // Figma: 1.997px → 2px
-    width: '100%',
-    backgroundColor: Colors.black[500], // Figma: #0a0a0a
-    marginTop: 13, // Figma: 12.899px → 13px (텍스트와 밑줄 사이 간격)
-    alignSelf: 'flex-start',
+    position: 'absolute',
+    bottom: -1, // border와 겹치도록
+    left: 0,
+    right: 0,
+    height: 2.5,
+    backgroundColor: Colors.black[500],
+    borderTopLeftRadius: 1.5,
+    borderTopRightRadius: 1.5,
   },
 });
 
