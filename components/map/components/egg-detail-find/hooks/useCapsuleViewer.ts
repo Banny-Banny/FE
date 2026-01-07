@@ -8,7 +8,8 @@
  * - 현재 위치를 Body에 포함하여 전송
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
+import { useUserInfo } from '@/components/mypage/hooks/useUserInfo';
 import { apiClient } from '@/utils/apiClient';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -38,7 +39,7 @@ export interface UseCapsuleViewerReturn {
  */
 export function useCapsuleViewer(): UseCapsuleViewerReturn {
   const queryClient = useQueryClient();
-
+  const { data: userInfo } = useUserInfo();
   const { mutateAsync, isPending, error } = useMutation({
     mutationFn: async ({
       capsuleId,
@@ -57,10 +58,82 @@ export function useCapsuleViewer(): UseCapsuleViewerReturn {
       const response = await apiClient.post<PostCapsuleViewerResponse>(endpoint, requestBody);
       return response.data;
     },
+    // Optimistic Update: 사용자 경험 향상을 위해 즉시 UI 업데이트
+    onMutate: async ({ capsuleId, location }) => {
+      const queryKey = queryKeys.capsuleDetail({
+        capsuleId,
+        lat: location.lat,
+        lng: location.lng,
+      });
+
+      // 진행 중인 쿼리 취소
+      await queryClient.cancelQueries({ queryKey });
+
+      // 이전 데이터 백업
+      const previousData = queryClient.getQueryData(queryKey);
+
+      // Optimistic Update: 캡슐 상세의 viewers 배열에 임시 뷰어 추가
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+
+        const newViewer = {
+          id: `temp-${Date.now()}`,
+          nickname: userInfo?.nickname || '익명',
+          viewed_at: new Date().toISOString(),
+        };
+
+        return {
+          ...old,
+          viewers: [...(old.viewers || []), newViewer],
+          view_count: (old.view_count || 0) + 1,
+        };
+      });
+
+      // 캡슐 목록도 Optimistic Update
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.capsulesAll() },
+        (old: any) => {
+          if (!old?.items) return old;
+
+          return {
+            ...old,
+            items: old.items.map((item: any) =>
+              item.id === capsuleId
+                ? {
+                    ...item,
+                    view_count: (item.view_count || 0) + 1,
+                  }
+                : item,
+            ),
+          };
+        },
+      );
+
+      return { previousData };
+    },
+    onError: (err, variables, context) => {
+      // 실패 시 롤백
+      if (context?.previousData) {
+        const queryKey = queryKeys.capsuleDetail({
+          capsuleId: variables.capsuleId,
+          lat: variables.location.lat,
+          lng: variables.location.lng,
+        });
+        queryClient.setQueryData(queryKey, context.previousData);
+      }
+    },
     onSuccess: (_, variables) => {
-      // POST /viewers 성공 후 해당 캡슐의 detail query를 invalidate하여 최신 데이터 가져오기
+      // 성공 시 실제 데이터로 교체 (Optimistic Update가 이미 적용되었지만, 서버 데이터로 확정)
       queryClient.invalidateQueries({
-        queryKey: ['capsuleDetail', variables.capsuleId],
+        queryKey: queryKeys.capsuleDetail({
+          capsuleId: variables.capsuleId,
+          lat: variables.location.lat,
+          lng: variables.location.lng,
+        }),
+      });
+      // 모든 캡슐 목록 쿼리 무효화 (queryKey의 첫 번째 요소만 매칭)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.capsulesAll(),
       });
     },
   });

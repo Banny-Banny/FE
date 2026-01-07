@@ -10,7 +10,7 @@
  * - media_files: 첨부 파일들 (이미지, 비디오, 오디오)
  */
 
-import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { MediaType } from '@/commons/constants/media';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
@@ -20,6 +20,7 @@ import Constants from 'expo-constants';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Alert, Platform } from 'react-native';
@@ -33,10 +34,11 @@ interface UseEggFormProps {
 /**
  * 이스터에그 폼 관리 통합 Hook
  */
-export const useEggForm = ({ onClose }: UseEggFormProps) => {
+export function useEggForm({ onClose }: UseEggFormProps) {
   const { accessToken } = useAuth();
   const { location } = useMapLocation();
   const { generateThumbnail } = useVideoThumbnail();
+  const queryClient = useQueryClient();
   const { control, handleSubmit, watch, setValue } = useForm<EggFormData>({
     defaultValues: {
       title: '',
@@ -48,7 +50,94 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
   const title = watch('title');
   const content = watch('content');
   const attachments = watch('attachments');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 캡슐 생성 Mutation
+  const createCapsuleMutation = useMutation({
+    mutationFn: async (formData: FormData): Promise<CreateCapsuleResponse> => {
+      const rawApiBaseUrl =
+        Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
+      const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
+
+      if (!apiBaseUrl) {
+        throw new Error(
+          'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.',
+        );
+      }
+
+      if (!accessToken) {
+        throw new Error('로그인이 필요합니다.');
+      }
+
+      const response = await axios.post<CreateCapsuleResponse>(
+        buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+
+      return response.data;
+    },
+    onSuccess: () => {
+      // 캡슐 생성 성공 후 관련 쿼리 무효화
+      // Note: Optimistic Update는 적용하지 않음 (FormData 사용 및 응답 데이터 제한으로 인해 안전하지 않음)
+      // 대신 즉시 invalidateQueries를 호출하여 최신 데이터를 가져옴
+      // 1. 캡슐 목록 쿼리 무효화 (새로운 캡슐이 추가됨)
+      // 모든 캡슐 목록 쿼리 무효화 (queryKey의 첫 번째 요소만 매칭)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.capsulesAll(),
+      });
+      // 2. 슬롯 정보 쿼리 무효화 (슬롯 사용량이 변경됨)
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eggSlotData(),
+      });
+
+      // 폼 초기화 및 닫기
+      setValue('title', '');
+      setValue('content', '');
+      setValue('attachments', []);
+      onClose();
+      Alert.alert('성공', '이스터에그가 생성되었습니다.');
+    },
+    onError: (error: unknown) => {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const status = axiosError.response?.status;
+      const errorData = axiosError.response?.data;
+
+      switch (status) {
+        case 409:
+          if (errorData?.code === 'EGG_SLOTS_EXCEEDED') {
+            Alert.alert('슬롯 부족', '남은 슬롯이 없습니다.');
+          } else {
+            Alert.alert('오류', errorData?.message || errorData?.error || '요청이 충돌했습니다.');
+          }
+          break;
+        case 400:
+          Alert.alert(
+            '오류',
+            errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.',
+          );
+          break;
+        case 401:
+          Alert.alert('인증 오류', '로그인이 필요합니다.');
+          break;
+        case 404:
+          Alert.alert('오류', '요청한 상품을 찾을 수 없습니다.');
+          break;
+        default:
+          Alert.alert(
+            '오류',
+            errorData?.message || errorData?.error || '서버 오류가 발생했습니다.',
+          );
+          break;
+      }
+    },
+  });
+
+  const isSubmitting = createCapsuleMutation.isPending;
 
   // 폼 유효성 검사
   const isFormValid = title.trim().length > 0 && content.trim().length > 0 && !isSubmitting;
@@ -248,140 +337,65 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      if (!accessToken) {
-        Alert.alert('인증 오류', '로그인이 필요합니다.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const rawApiBaseUrl =
-        Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL;
-
-      const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
-
-      if (!apiBaseUrl) {
-        Alert.alert(
-          '오류',
-          'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.\n예: http://172.16.2.94:3000',
-        );
-        setIsSubmitting(false);
-        return;
-      }
-
-      // 현재 위치 확인
-      if (!location) {
-        Alert.alert('오류', '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
-        setIsSubmitting(false);
-        return;
-      }
-
-      // FormData 생성
-      const formData = new FormData();
-
-      // 기본 필드 추가
-      formData.append('title', data.title);
-      if (data.content) {
-        formData.append('content', data.content);
-      }
-      formData.append('latitude', location.lat.toString());
-      formData.append('longitude', location.lng.toString());
-
-      // 파일 추가
-      for (const attachment of attachments) {
-        if (!attachment.uri) continue;
-
-        let fileUri = attachment.uri;
-
-        // HEIC 파일이면 JPEG로 변환
-        if (attachment.type === 'IMAGE' && isHeicFormat(fileUri)) {
-          fileUri = await convertHeicToJpeg(fileUri);
-        }
-
-        // 파일명 및 MIME 타입 추출
-        const defaultFileName =
-          attachment.type === 'IMAGE'
-            ? `photo_${Date.now()}.jpg`
-            : attachment.type === 'VIDEO'
-            ? `video_${Date.now()}.mp4`
-            : `music_${Date.now()}.mp3`;
-        const fileName = getFileName(fileUri, defaultFileName);
-        const mimeType = getMimeType(fileUri, attachment.type);
-
-        // FormData에 추가
-        if (Platform.OS === 'web') {
-          try {
-            const response = await fetch(fileUri);
-            const blob = await response.blob();
-            const file = new File([blob], fileName, { type: mimeType });
-            formData.append('media_files', file);
-          } catch {
-            continue;
-          }
-        } else {
-          formData.append('media_files', {
-            uri: fileUri,
-            type: mimeType,
-            name: fileName,
-          } as any);
-        }
-      }
-
-      // axios는 FormData를 자동으로 감지하여 Content-Type을 설정하지만,
-      // 명시적으로 설정해도 문제없음 (boundary는 자동으로 추가됨)
-      const response = await axios.post<CreateCapsuleResponse>(
-        buildApiUrl(apiBaseUrl, API_ENDPOINTS.CAPSULE.CREATE),
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
-
-      // 성공 시 폼 초기화 및 닫기
-      setValue('title', '');
-      setValue('content', '');
-      setValue('attachments', []);
-      onClose();
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiErrorResponse>;
-      const status = axiosError.response?.status;
-      const errorData = axiosError.response?.data;
-
-      switch (status) {
-        case 409:
-          if (errorData?.code === 'EGG_SLOTS_EXCEEDED') {
-            Alert.alert('슬롯 부족', '남은 슬롯이 없습니다.');
-          } else {
-            Alert.alert('오류', errorData?.message || errorData?.error || '요청이 충돌했습니다.');
-          }
-          break;
-        case 400:
-          Alert.alert(
-            '오류',
-            errorData?.message || errorData?.error || '입력한 정보를 확인해주세요.',
-          );
-          break;
-        case 401:
-          Alert.alert('인증 오류', '로그인이 필요합니다.');
-          break;
-        case 404:
-          Alert.alert('오류', '요청한 상품을 찾을 수 없습니다.');
-          break;
-        default:
-          Alert.alert(
-            '오류',
-            errorData?.message || errorData?.error || '서버 오류가 발생했습니다.',
-          );
-          break;
-      }
-    } finally {
-      setIsSubmitting(false);
+    // 현재 위치 확인
+    if (!location) {
+      Alert.alert('오류', '현재 위치를 가져올 수 없습니다. 위치 권한을 확인해주세요.');
+      return;
     }
+
+    // FormData 생성
+    const formData = new FormData();
+
+    // 기본 필드 추가
+    formData.append('title', data.title);
+    if (data.content) {
+      formData.append('content', data.content);
+    }
+    formData.append('latitude', location.lat.toString());
+    formData.append('longitude', location.lng.toString());
+
+    // 파일 추가
+    for (const attachment of attachments) {
+      if (!attachment.uri) continue;
+
+      let fileUri = attachment.uri;
+
+      // HEIC 파일이면 JPEG로 변환
+      if (attachment.type === 'IMAGE' && isHeicFormat(fileUri)) {
+        fileUri = await convertHeicToJpeg(fileUri);
+      }
+
+      // 파일명 및 MIME 타입 추출
+      const defaultFileName =
+        attachment.type === 'IMAGE'
+          ? `photo_${Date.now()}.jpg`
+          : attachment.type === 'VIDEO'
+          ? `video_${Date.now()}.mp4`
+          : `music_${Date.now()}.mp3`;
+      const fileName = getFileName(fileUri, defaultFileName);
+      const mimeType = getMimeType(fileUri, attachment.type);
+
+      // FormData에 추가
+      if (Platform.OS === 'web') {
+        try {
+          const response = await fetch(fileUri);
+          const blob = await response.blob();
+          const file = new File([blob], fileName, { type: mimeType });
+          formData.append('media_files', file);
+        } catch {
+          continue;
+        }
+      } else {
+        formData.append('media_files', {
+          uri: fileUri,
+          type: mimeType,
+          name: fileName,
+        } as any);
+      }
+    }
+
+    // Mutation 실행
+    createCapsuleMutation.mutate(formData);
   };
 
   /**
@@ -415,4 +429,4 @@ export const useEggForm = ({ onClose }: UseEggFormProps) => {
     musicAttachment,
     videoAttachment,
   };
-};
+}

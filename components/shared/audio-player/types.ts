@@ -2,7 +2,7 @@
  * AudioPlayer Component Types
  */
 
-import type { MediaItem } from '../types';
+import type { MediaItem } from '@/components/map/components/shared/types';
 
 export interface AudioPlayerProps {
   /** 오디오 미디어 아이템 */

@@ -1,20 +1,22 @@
 /**
  * ZoomControl Component
- * 지도 확대/축소 컨트롤 버튼
+ * Version: 1.0.0
+ * Created: 2025-01-XX
+ *
+ * Checklist:
+ * - [x] tailwind.config.js 수정 안 함
+ * - [x] 색상값 직접 입력 0건 (Colors 토큰만 사용)
+ * - [x] 인라인 스타일 0건
+ * - [x] index.tsx → 구조만 / styles.ts → 스타일만 분리
+ * - [x] 비즈니스 로직은 hooks/useZoomControl에서 관리
  */
 
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { Colors } from '@/commons/constants';
-
-interface ZoomControlProps {
-  onZoomIn: () => void;
-  onZoomOut: () => void;
-  onReset?: () => void;
-  canZoomIn?: boolean;
-  canZoomOut?: boolean;
-}
+import { useZoomControl } from './hooks/useZoomControl';
+import { styles } from './styles';
+import type { ZoomControlProps } from './types';
 
 export function ZoomControl({
   onZoomIn,
@@ -23,31 +25,47 @@ export function ZoomControl({
   canZoomIn = true,
   canZoomOut = true,
 }: ZoomControlProps) {
+  // 비즈니스 로직은 Hook에서 가져옴
+  const {
+    handleZoomIn,
+    handleZoomOut,
+    handleReset,
+    isZoomInDisabled,
+    isZoomOutDisabled,
+    hasResetButton,
+  } = useZoomControl({
+    onZoomIn,
+    onZoomOut,
+    onReset,
+    canZoomIn,
+    canZoomOut,
+  });
+
   return (
     <View style={styles.container}>
       <Pressable
-        style={[styles.button, !canZoomIn && styles.buttonDisabled]}
-        onPress={onZoomIn}
-        disabled={!canZoomIn}
+        style={[styles.button, isZoomInDisabled && styles.buttonDisabled]}
+        onPress={handleZoomIn}
+        disabled={isZoomInDisabled}
         accessibilityRole="button"
         accessibilityLabel="확대">
-        <Text style={[styles.buttonText, !canZoomIn && styles.buttonTextDisabled]}>+</Text>
+        <Text style={[styles.buttonText, isZoomInDisabled && styles.buttonTextDisabled]}>+</Text>
       </Pressable>
       <View style={styles.divider} />
       <Pressable
-        style={[styles.button, !canZoomOut && styles.buttonDisabled]}
-        onPress={onZoomOut}
-        disabled={!canZoomOut}
+        style={[styles.button, isZoomOutDisabled && styles.buttonDisabled]}
+        onPress={handleZoomOut}
+        disabled={isZoomOutDisabled}
         accessibilityRole="button"
         accessibilityLabel="축소">
-        <Text style={[styles.buttonText, !canZoomOut && styles.buttonTextDisabled]}>−</Text>
+        <Text style={[styles.buttonText, isZoomOutDisabled && styles.buttonTextDisabled]}>−</Text>
       </Pressable>
-      {onReset && (
+      {hasResetButton && (
         <>
           <View style={styles.divider} />
           <Pressable
             style={styles.button}
-            onPress={onReset}
+            onPress={handleReset}
             accessibilityRole="button"
             accessibilityLabel="줌 리셋">
             <Text style={styles.buttonText}>⌂</Text>
@@ -57,46 +75,3 @@ export function ZoomControl({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    right: 16,
-    top: '50%',
-    transform: [{ translateY: -60 }],
-    backgroundColor: Colors.white[500],
-    borderRadius: 8,
-    shadowColor: Colors.black[500],
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
-  },
-  button: {
-    width: 44,
-    height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.white[500],
-  },
-  buttonDisabled: {
-    backgroundColor: Colors.whiteGrey[300],
-    opacity: 0.5,
-  },
-  buttonText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: Colors.black[500],
-  },
-  buttonTextDisabled: {
-    color: Colors.grey[500],
-  },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.whiteGrey[400],
-  },
-});
