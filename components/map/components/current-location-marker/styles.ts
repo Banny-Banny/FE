@@ -71,9 +71,9 @@ const RADIUS_CIRCLE_STYLES = {
 
   /**
    * 반경 원 크기 (미터 단위)
-   * 기본값: 300m
+   * 기본값: 30m
    */
-  radiusMeters: 300,
+  radiusMeters: 30,
 
   /**
    * 반경 원 색상

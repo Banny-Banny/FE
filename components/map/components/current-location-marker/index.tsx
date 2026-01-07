@@ -58,8 +58,13 @@ export function CurrentLocationMarker({
 }: CurrentLocationMarkerProps) {
   // 현재 위치 마커 표시
   useEffect(() => {
-    if (isLoading || !location) return;
+    if (isLoading || !location) {
+      // 로딩 중이거나 위치가 없으면 마커 제거
+      sendRemoveCurrentLocationMessage(webViewRef);
+      return;
+    }
 
+    // 지도가 로드될 시간을 고려한 짧은 딜레이
     const timer = setTimeout(() => {
       const mergedStyle = {
         ...DEFAULT_MARKER_CONFIG,
@@ -70,7 +75,7 @@ export function CurrentLocationMarker({
         location,
         style: mergedStyle,
       });
-    }, 2000); // 지도 및 일반 마커 표시 후 현재 위치 마커 표시
+    }, 500); // 딜레이를 2초에서 0.5초로 단축
 
     return () => clearTimeout(timer);
   }, [location, isLoading, style, webViewRef]);
