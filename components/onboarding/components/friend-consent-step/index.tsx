@@ -8,6 +8,11 @@ import { Image } from 'expo-image';
 import { Pressable, Text, View } from 'react-native';
 import { styles } from './styles';
 
+// 이미지 리소스
+const imgBackIcon = require('@/assets/icons/<.png');
+const imgFriendIcon = require('@/assets/icons/friend.png');
+const imgShieldIcon = require('@/assets/icons/shield.png');
+
 interface FriendConsentStepProps {
   isLoading: boolean;
   onConsent: () => void;
@@ -22,7 +27,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
       {/* 헤더 영역 */}
       <View style={styles.header}>
         <Pressable style={styles.backButton}>
-          <Image source={require('@/assets/icons/<.png')} style={styles.backIcon} />
+          <Image source={imgBackIcon} style={styles.backIcon} contentFit="contain" />
         </Pressable>
         <View style={styles.progressContainer}>
           <View style={styles.progressActive} />
@@ -54,7 +59,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
           {/* 카드 1: 내 친구 자동 매칭 */}
           <View style={styles.card}>
             <View style={styles.cardIconContainer}>
-              <Image source={require('@/assets/icons/friend.png')} style={styles.cardIcon} />
+              <Image source={imgFriendIcon} style={styles.cardIcon} contentFit="contain" />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>내 친구 자동 매칭</Text>
@@ -68,7 +73,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
           {/* 카드 2: 안전한 개인정보 */}
           <View style={styles.card}>
             <View style={styles.cardIconContainer}>
-              <Image source={require('@/assets/icons/shield.png')} style={styles.cardIcon} />
+              <Image source={imgShieldIcon} style={styles.cardIcon} contentFit="contain" />
             </View>
             <View style={styles.cardContent}>
               <Text style={styles.cardTitle}>안전한 개인정보</Text>
