@@ -50,22 +50,54 @@ export function useMapLocation(): UseMapLocationReturn {
         const errorMessage = '위치 서비스를 사용할 수 없습니다. 네이티브 빌드가 필요합니다.';
         setError(errorMessage);
         setIsLoading(false);
+        if (__DEV__) {
+          console.error('[useMapLocation] Location module not available');
+        }
+        return;
+      }
+
+      // 위치 서비스 활성화 여부 확인 (iOS에서만)
+      const isLocationEnabled = await Location.hasServicesEnabledAsync();
+      if (!isLocationEnabled) {
+        const errorMessage = '위치 서비스가 꺼져 있습니다. 설정에서 위치 서비스를 활성화해주세요.';
+        setError(errorMessage);
+        setIsLoading(false);
+        if (__DEV__) {
+          console.warn('[useMapLocation] Location services are disabled');
+        }
         return;
       }
 
       // 위치 권한 상태 확인
       const { status } = await Location.requestForegroundPermissionsAsync();
 
+      if (__DEV__) {
+        console.log('[useMapLocation] Permission status:', status);
+      }
+
       if (status !== 'granted') {
-        setError('위치 권한이 거부되었습니다.');
+        const errorMessage = '위치 권한이 거부되었습니다.';
+        setError(errorMessage);
         setIsLoading(false);
+        if (__DEV__) {
+          console.warn('[useMapLocation] Location permission denied:', status);
+        }
         return;
       }
 
       // 현재 위치 가져오기
+      // iOS 시뮬레이터에서도 작동하도록 timeout 추가
       const currentLocation = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
+        timeout: 10000, // 10초 타임아웃
       });
+
+      if (__DEV__) {
+        console.log('[useMapLocation] Location obtained:', {
+          lat: currentLocation.coords.latitude,
+          lng: currentLocation.coords.longitude,
+        });
+      }
 
       setLocation({
         lat: currentLocation.coords.latitude,
@@ -77,6 +109,9 @@ export function useMapLocation(): UseMapLocationReturn {
         err instanceof Error ? err.message : '위치를 가져오는 중 오류가 발생했습니다.';
       setError(errorMessage);
       setIsLoading(false);
+      if (__DEV__) {
+        console.error('[useMapLocation] Error getting location:', err);
+      }
     }
   };
 

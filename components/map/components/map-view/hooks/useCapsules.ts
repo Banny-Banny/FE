@@ -1,18 +1,20 @@
 /**
  * Capsules API Hook
- * Version: 1.0.0
+ * Version: 2.0.0
  * Created: 2025-01-XX
+ * Updated: 2025-01-XX - react-query로 마이그레이션
  *
  * [Business Logic] 캡슐 목록 조회 API 통신
  * - GET /api/capsules 엔드포인트 호출
  * - 위치 기반 캡슐 목록 조회
+ * - react-query를 사용한 데이터 페칭
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { buildEndpointWithQuery } from '@/utils/api';
 import { apiClient } from '@/utils/apiClient';
-import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import type { CapsuleItem, CapsulesResponse } from '../types';
 
 export interface UseCapsulesParams {
@@ -35,23 +37,30 @@ export interface UseCapsulesReturn {
  * 캡슐 목록을 조회하는 Hook
  */
 export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
-  const [capsules, setCapsules] = useState<CapsuleItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const { accessToken, isLoading: authLoading } = useAuth();
 
-  const fetchCapsules = useCallback(async () => {
-    // 인증 토큰이 없으면 API 호출하지 않음
-    if (!accessToken) {
-      if (__DEV__) {
-        console.warn('[useCapsules] 토큰이 없어 API 호출을 건너뜁니다.');
+  const {
+    data,
+    isLoading,
+    error,
+    refetch: refetchQuery,
+  } = useQuery({
+    queryKey: queryKeys.capsules({
+      lat: params.lat,
+      lng: params.lng,
+      radius_m: params.radius_m,
+      limit: params.limit,
+      include_locationless: params.include_locationless,
+      include_consumed: params.include_consumed,
+    }),
+    queryFn: async () => {
+      // 인증 토큰이 없으면 API 호출하지 않음
+      if (!accessToken) {
+        if (__DEV__) {
+          console.warn('[useCapsules] 토큰이 없어 API 호출을 건너뜁니다.');
+        }
+        return { items: [] };
       }
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
 
       const endpoint = buildEndpointWithQuery(API_ENDPOINTS.CAPSULE.LIST, {
         lat: params.lat,
@@ -63,42 +72,27 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
       });
 
       const response = await apiClient.get<CapsulesResponse>(endpoint);
+      return response.data;
+    },
+    enabled: !!accessToken && !authLoading && !!params.lat && !!params.lng,
+    staleTime: 60 * 1000, // 1분
+    gcTime: 5 * 60 * 1000, // 5분
+  });
 
-      setCapsules(response.data.items || []);
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.message ||
-        '캡슐 목록을 불러오는 중 오류가 발생했습니다.';
-      setError(errorMessage);
-    } finally {
-      setIsLoading(false);
+  const refetch = async () => {
+    if (accessToken) {
+      await refetchQuery();
     }
-  }, [
-    accessToken,
-    params.lat,
-    params.lng,
-    params.radius_m,
-    params.limit,
-    params.include_locationless,
-    params.include_consumed,
-  ]);
-
-  useEffect(() => {
-    // 인증 로딩 중이거나 토큰이 없으면 API 호출하지 않음
-    if (authLoading || !accessToken) {
-      return;
-    }
-
-    if (params.lat && params.lng) {
-      fetchCapsules();
-    }
-  }, [authLoading, accessToken, params.lat, params.lng, fetchCapsules]);
+  };
 
   return {
-    capsules,
-    isLoading,
-    error,
-    refetch: fetchCapsules,
+    capsules: data?.items || [],
+    isLoading: isLoading || authLoading,
+    error: error
+      ? error instanceof Error
+        ? error.message
+        : '캡슐 목록을 불러오는 중 오류가 발생했습니다.'
+      : null,
+    refetch,
   };
 }

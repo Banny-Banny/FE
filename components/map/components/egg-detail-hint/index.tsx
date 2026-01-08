@@ -44,8 +44,8 @@ export const EggDetailHint: React.FC<EggDetailHintProps> = ({
     return null;
   }
 
-  // 거리 포맷팅 (예: "약 70m 거리")
-  const formattedDistance = `약 ${hintData.distance}m 거리`;
+  // 거리 포맷팅 (예: "약 70.5m 거리") - 소수점 한 자리까지만 표시
+  const formattedDistance = `약 ${hintData.distance.toFixed(1)}m 거리`;
 
   return (
     <View style={styles.container}>

@@ -49,7 +49,7 @@ export function getCurrentLocationMarkerScript(): string {
     }
 
     function setCurrentLocationRadiusCircle(location, radiusConfig) {
-      if (!map || !location || !radiusConfig || !radiusConfig.showRadius) {
+      if (!map || !location || !radiusConfig || !radiusConfig.showRadius || !window.kakao || !window.kakao.maps) {
         if (currentLocationCircle) {
           currentLocationCircle.setMap(null);
           currentLocationCircle = null;
@@ -57,28 +57,63 @@ export function getCurrentLocationMarkerScript(): string {
         return;
       }
 
+      // kakao.maps API가 완전히 로드되었는지 확인
+      if (typeof window.kakao.maps.LatLng !== 'function') {
+        window.kakao.maps.load(() => {
+          if (!map) return;
+          createRadiusCircle(location, radiusConfig);
+        });
+      } else {
+        createRadiusCircle(location, radiusConfig);
+      }
+    }
+
+    function createRadiusCircle(location, radiusConfig) {
+      if (!map) return;
+
       if (currentLocationCircle) {
         currentLocationCircle.setMap(null);
         currentLocationCircle = null;
       }
 
-      const position = new kakao.maps.LatLng(location.lat, location.lng);
-      currentLocationCircle = new kakao.maps.Circle({
-        center: position,
-        radius: radiusConfig.radiusMeters || ${radiusMeters},
-        strokeWeight: radiusConfig.radiusStrokeWeight || ${radiusStrokeWeight},
-        strokeColor: radiusConfig.radiusStrokeColor || "${radiusStrokeColor}",
-        strokeOpacity: 1,
-        strokeStyle: "solid",
-        fillColor: radiusConfig.radiusColor || "${radiusColor}",
-        fillOpacity: 1,
-      });
+      try {
+        const position = new kakao.maps.LatLng(location.lat, location.lng);
+        currentLocationCircle = new kakao.maps.Circle({
+          center: position,
+          radius: radiusConfig.radiusMeters || ${radiusMeters},
+          strokeWeight: radiusConfig.radiusStrokeWeight || ${radiusStrokeWeight},
+          strokeColor: radiusConfig.radiusStrokeColor || "${radiusStrokeColor}",
+          strokeOpacity: 1,
+          strokeStyle: "solid",
+          fillColor: radiusConfig.radiusColor || "${radiusColor}",
+          fillOpacity: 1,
+        });
 
-      currentLocationCircle.setMap(map);
+        currentLocationCircle.setMap(map);
+      } catch (error) {
+        // 개발 환경에서만 에러 로깅
+        if (typeof __DEV__ !== 'undefined' && __DEV__) {
+          console.error("[createRadiusCircle] 원 생성 실패:", error);
+        }
+      }
     }
 
     function setCurrentLocationMarker(payload) {
-      if (!map || !payload || !payload.location) return;
+      if (!map || !payload || !payload.location || !window.kakao || !window.kakao.maps) return;
+
+      // kakao.maps API가 완전히 로드되었는지 확인
+      if (typeof window.kakao.maps.LatLng !== 'function') {
+        window.kakao.maps.load(() => {
+          if (!map) return;
+          createCurrentLocationMarker(payload);
+        });
+      } else {
+        createCurrentLocationMarker(payload);
+      }
+    }
+
+    function createCurrentLocationMarker(payload) {
+      if (!map) return;
 
       const location = payload.location;
       const style = payload.style || {
@@ -101,26 +136,33 @@ export function getCurrentLocationMarkerScript(): string {
         currentLocationMarker = null;
       }
 
-      const content = createCurrentLocationMarkerElement(style);
-      const position = new kakao.maps.LatLng(location.lat, location.lng);
-      currentLocationMarker = new kakao.maps.CustomOverlay({
-        position: position,
-        content: content,
-        yAnchor: 0.5,
-        xAnchor: 0.5,
-      });
-
-      currentLocationMarker.setMap(map);
-
-      // 반경 원 표시
-      if (style.showRadius) {
-        setCurrentLocationRadiusCircle(location, {
-          showRadius: style.showRadius,
-          radiusMeters: style.radiusMeters,
-          radiusColor: style.radiusColor,
-          radiusStrokeColor: style.radiusStrokeColor,
-          radiusStrokeWeight: style.radiusStrokeWeight,
+      try {
+        const content = createCurrentLocationMarkerElement(style);
+        const position = new kakao.maps.LatLng(location.lat, location.lng);
+        currentLocationMarker = new kakao.maps.CustomOverlay({
+          position: position,
+          content: content,
+          yAnchor: 0.5,
+          xAnchor: 0.5,
         });
+
+        currentLocationMarker.setMap(map);
+
+        // 반경 원 표시
+        if (style.showRadius) {
+          setCurrentLocationRadiusCircle(location, {
+            showRadius: style.showRadius,
+            radiusMeters: style.radiusMeters,
+            radiusColor: style.radiusColor,
+            radiusStrokeColor: style.radiusStrokeColor,
+            radiusStrokeWeight: style.radiusStrokeWeight,
+          });
+        }
+      } catch (error) {
+        // 개발 환경에서만 에러 로깅
+        if (typeof __DEV__ !== 'undefined' && __DEV__) {
+          console.error("[createCurrentLocationMarker] 마커 생성 실패:", error);
+        }
       }
     }
 

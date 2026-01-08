@@ -79,14 +79,14 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 9999,
-    backgroundColor: Colors.white[50],
+    backgroundColor: Colors.grey[50], // #F7F7F7
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.black[500],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowColor: 'rgba(4, 4, 4, 1)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
 
   /* === FAB Button Icon (fab_btn_egg, fab_btn_cap) === */
@@ -128,11 +128,11 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFC107', // Yellow - Colors에 없으므로 유지
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.black[500],
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 0,
-    shadowRadius: 20,
-    elevation: 12,
+    shadowColor: 'rgba(4, 4, 4, 1)',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 6,
   },
 
   /* === Main Button Expanded State === */

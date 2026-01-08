@@ -41,7 +41,8 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   // 현재 위치 가져오기
   const { location: currentLocation } = useMapLocation();
 
-  // 캡슐 리스트 가져오기 (진입 감지용) - 실제 사용자 위치 사용
+  // 캡슐 리스트 가져오기 (진입 감지용) - 현재 위치 기준 반경 300m
+  // 현재 위치가 없을 때만 기본 중심점 사용
   const { capsules } = useCapsules({
     lat: currentLocation?.lat || mapConfig.center.lat,
     lng: currentLocation?.lng || mapConfig.center.lng,
@@ -127,7 +128,9 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
           setIsEggDetailFindVisible(true);
         }
       } catch (error) {
-        console.error('[MapFeature] Discovery API error:', error);
+        if (__DEV__) {
+          console.error('[MapFeature] Discovery API error:', error);
+        }
       }
     };
 

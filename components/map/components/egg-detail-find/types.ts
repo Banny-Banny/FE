@@ -4,7 +4,18 @@
  * Created: 2025-01-XX
  */
 
-import type { MediaItem } from '../shared/types';
+import type { MediaType } from '@/utils/mediaType';
+
+export interface MediaItem {
+  /** 미디어 ID */
+  id: string;
+  /** 미디어 타입 */
+  type: MediaType;
+  /** 미디어 URL */
+  url: string;
+  /** 썸네일 URL (비디오용) */
+  thumbnailUrl?: string;
+}
 
 export type DiscoveryOrder = 'first' | 'second' | 'last';
 

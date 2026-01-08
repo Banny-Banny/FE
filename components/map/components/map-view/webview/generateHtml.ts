@@ -32,7 +32,24 @@ export function generateKakaoMapHtml(apiKey: string): string {
   <body>
     <div id="map"></div>
     <script>
-      ${script}
+      // 카카오 맵 SDK 스크립트가 로드된 후에만 내부 스크립트 실행
+      (function() {
+        function initMapScript() {
+          if (window.kakao && window.kakao.maps) {
+            ${script}
+          } else {
+            // 스크립트가 아직 로드되지 않았으면 재시도
+            setTimeout(initMapScript, 100);
+          }
+        }
+        
+        // DOM이 로드된 후 실행
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', initMapScript);
+        } else {
+          initMapScript();
+        }
+      })();
     </script>
   </body>
 </html>`;

@@ -16,6 +16,7 @@ import CurrentLocation from '../current-location';
 import { CurrentLocationButton } from '../current-location-button';
 import { CurrentLocationMarker } from '../current-location-marker';
 import { EggSlot } from '../egg-slot';
+import { ZoomControl } from '../zoom-control';
 import { useMapView } from './hooks/useMapView';
 import { styles } from './styles';
 import type { MapViewProps } from './types';
@@ -30,10 +31,15 @@ export default function MapView(props: MapViewProps = {}) {
     mapCenter,
     location,
     locationLoading,
-    slotData,
     markersForWeb,
     handleMessage,
     handleMessageCommon,
+    isWebViewReady,
+    scale,
+    zoomLevel,
+    handleZoomIn,
+    handleZoomOut,
+    resetZoom,
   } = useMapView(props);
 
   // 웹 환경에서 지도 이동 함수를 저장할 ref
@@ -55,12 +61,13 @@ export default function MapView(props: MapViewProps = {}) {
       ) : Platform.OS === 'web' ? (
         <WebMapView
           mapCenter={mapCenter}
-          level={initialMapConfig.level}
+          level={zoomLevel}
           markers={markersForWeb}
           onMessage={handleMessageCommon}
           currentLocation={location}
           isLoadingLocation={locationLoading}
           moveToLocationRef={moveToLocationRef}
+          scale={scale}
         />
       ) : (
         <>
@@ -77,6 +84,7 @@ export default function MapView(props: MapViewProps = {}) {
             webViewRef={webViewRef}
             location={location}
             isLoading={locationLoading}
+            isWebViewReady={isWebViewReady}
           />
         </>
       )}
@@ -94,7 +102,14 @@ export default function MapView(props: MapViewProps = {}) {
         isLoading={locationLoading}
         onMoveToLocation={Platform.OS === 'web' ? handleMoveToLocation : undefined}
       />
+      {/* 확대/축소 컨트롤 */}
+      <ZoomControl
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onReset={resetZoom}
+        canZoomIn={scale < 3}
+        canZoomOut={scale > 0.5}
+      />
     </View>
   );
 }
-
