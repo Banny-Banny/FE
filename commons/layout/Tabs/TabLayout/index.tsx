@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 
 import { TABS_SCREEN_OPTIONS } from './styles';
@@ -55,24 +56,18 @@ export function TabsLayoutConfig() {
           options={{
             title: screen.title,
             tabBarIcon: ({ color, size, focused }) => {
-              // Android View 중복 렌더링 에러 방지: 조건부로 완전히 분리된 Icon 렌더링
+              // Android View 중복 렌더링 에러 방지: View로 감싸서 완전히 독립적인 컴포넌트 생성
               if (focused) {
                 return (
-                  <Icon
-                    key={`${screen.name}-filled`}
-                    name={screen.iconNameFilled as IconName}
-                    size={size}
-                    color={color}
-                  />
+                  <View key={`${screen.name}-focused`} collapsable={false}>
+                    <Icon name={screen.iconNameFilled as IconName} size={size} color={color} />
+                  </View>
                 );
               }
               return (
-                <Icon
-                  key={`${screen.name}-line`}
-                  name={screen.iconName as IconName}
-                  size={size}
-                  color={color}
-                />
+                <View key={`${screen.name}-unfocused`} collapsable={false}>
+                  <Icon name={screen.iconName as IconName} size={size} color={color} />
+                </View>
               );
             },
           }}
