@@ -290,15 +290,27 @@ export const styles = StyleSheet.create({
   },
 
   deadlineContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  deadlineContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center', // 중앙정렬
     gap: Spacing.sm,
+    minWidth: 300, // 전체 컨테이너 고정 너비로 떨림 방지
   },
 
   deadlineIcon: {
     width: 16,
     height: 16,
+  },
+
+  deadlineTextContainer: {
+    gap: 4,
+    minWidth: 240, // 텍스트 길이 변경 시 레이아웃 떨림 방지
+    alignItems: 'center', // 중앙정렬
   },
 
   deadlineText: {
@@ -308,6 +320,17 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: -0.150390625,
     color: Colors.grey[500],
+    fontVariant: ['tabular-nums'], // 숫자를 고정 너비로 표시 (떨림 방지)
+  },
+
+  autoSubmitHint: {
+    fontFamily: 'Pretendard Variable',
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: '500',
+    letterSpacing: 0,
+    color: Colors.grey[400],
+    textAlign: 'center',
   },
 
   // 버튼 영역

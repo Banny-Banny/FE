@@ -119,15 +119,29 @@ apiClient.interceptors.response.use(
       const url = error.config?.url || 'Unknown';
       const errorData = error.response?.data;
       const errorMessage = errorData?.message || error.message || '알 수 없는 오류';
-      
-      console.error(
-        `[API] ❌ ${statusCode} ${url}`,
-        {
-          statusCode: errorData?.statusCode || statusCode,
-          message: errorMessage,
-          data: errorData,
-        },
-      );
+
+      // 409 Conflict는 정상적인 비즈니스 로직 케이스 (이미 참여 중, 이미 존재 등)
+      const isExpectedConflict = statusCode === 409;
+
+      if (isExpectedConflict) {
+        console.log(
+          `[API] ℹ️ ${statusCode} ${url}`,
+          {
+            statusCode: errorData?.statusCode || statusCode,
+            message: errorMessage,
+            data: errorData,
+          },
+        );
+      } else {
+        console.error(
+          `[API] ❌ ${statusCode} ${url}`,
+          {
+            statusCode: errorData?.statusCode || statusCode,
+            message: errorMessage,
+            data: errorData,
+          },
+        );
+      }
     }
 
     if (error.response?.status === 401) {

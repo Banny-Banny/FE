@@ -64,9 +64,6 @@ export default function StepRoom({
   // Hooks
   // ============================================
 
-  /** 호스트 여부 확인 */
-  const isHost = role === 'host';
-
   /** 라우터 */
   const router = useRouter();
 
@@ -78,14 +75,18 @@ export default function StepRoom({
    * 1. Props로 전달받은 orderId
    * 2. URL 파라미터 (추후 구현 가능)
    * 3. 백엔드 제공 테스트 ID (하드코딩)
+   *
+   * 초기 진입 경로(role)를 기반으로 orderId 설정
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
-  const orderId = isHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
+  const initialIsHost = role === 'host';
+  const orderId = initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
 
   /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
     roomSettings,
     createRoomResponse,
+    roomDetailResponse,
     capsuleId,
     isLoading: isRoomLoading,
     error: roomError,
@@ -107,6 +108,26 @@ export default function StepRoom({
     capsuleId,
     maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
   });
+
+  /**
+   * ⭐ 실제 호스트 여부 확인
+   * - 백엔드에서 받은 is_host 값 우선 사용 (myParticipant?.isHost)
+   * - 백엔드 데이터 로딩 전에는 초기 role 값으로 폴백 (initialIsHost)
+   * - 초대링크로 입장해도 백엔드가 방장 여부를 정확하게 판단
+   */
+  const isHost = myParticipant?.isHost ?? initialIsHost;
+
+  // ⭐ 디버깅: 호스트 여부 판단 로그
+  React.useEffect(() => {
+    if (myParticipant) {
+      console.log(
+        '🔍 [StepRoom] 호스트 여부 확인:',
+        `role prop="${role}"`,
+        `myParticipant.isHost=${myParticipant.isHost}`,
+        `최종 isHost=${isHost}`,
+      );
+    }
+  }, [myParticipant, isHost, role]);
 
   // ⭐ 디버깅: maxParticipants 값 확인
   React.useEffect(() => {
@@ -174,31 +195,49 @@ export default function StepRoom({
     };
   });
 
-  /** 작성 마감까지 남은 시간 계산 */
+  /** 실시간 카운트다운을 위한 현재 시간 상태 */
+  const [currentTime, setCurrentTime] = useState(dayjs());
+
+  /** 1초마다 현재 시간 업데이트 (실시간 카운트다운) */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(dayjs());
+    }, 1000); // 1초마다 업데이트
+
+    return () => clearInterval(interval);
+  }, []);
+
+  /** 작성 마감까지 남은 시간 계산 (실시간 초단위) */
   const remainingTime = useMemo(() => {
-    if (!createRoomResponse?.deadline) {
+    // 방장: createRoomResponse.deadline, 게스트: roomDetailResponse.deadline
+    const deadlineStr = createRoomResponse?.deadline || roomDetailResponse?.deadline;
+
+    if (!deadlineStr) {
       return '계산 중...';
     }
 
-    const deadline = dayjs(createRoomResponse.deadline);
-    const now = dayjs();
+    const deadline = dayjs(deadlineStr);
+    const now = currentTime;
 
     if (deadline.isBefore(now)) {
-      return '마감됨';
+      return '마감되어 자동 제출됩니다';
     }
 
     const diffDays = deadline.diff(now, 'day');
     const diffHours = deadline.diff(now, 'hour') % 24;
     const diffMinutes = deadline.diff(now, 'minute') % 60;
+    const diffSeconds = deadline.diff(now, 'second') % 60;
 
     if (diffDays > 0) {
-      return `${diffDays}일 ${diffHours}시간 남음`;
+      return `${diffDays}일 ${diffHours}시간 ${diffMinutes}분 이후 자동 제출됩니다`;
     } else if (diffHours > 0) {
-      return `${diffHours}시간 ${diffMinutes}분 남음`;
+      return `${diffHours}시간 ${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
     } else {
-      return `${diffMinutes}분 남음`;
+      return `${diffSeconds}초 이후 자동 제출됩니다`;
     }
-  }, [createRoomResponse?.deadline]);
+  }, [createRoomResponse?.deadline, roomDetailResponse?.deadline, currentTime]);
 
   // ============================================
   // 이벤트 핸들러
@@ -470,8 +509,10 @@ export default function StepRoom({
           </Text>
 
           <View style={styles.deadlineContainer}>
-            <Icon name="time-line" size={16} color={Colors.grey[500]} />
-            <Text style={styles.deadlineText}>작성 마감: {remainingTime || '계산 중...'}</Text>
+            <View style={styles.deadlineContent}>
+              <Icon name="time-line" size={16} color={Colors.grey[500]} />
+              <Text style={styles.deadlineText}>{remainingTime || '계산 중...'}</Text>
+            </View>
           </View>
 
           {/* 타임캡슐 묻기 버튼 (호스트만, 진행률 100%일 때 활성화) */}

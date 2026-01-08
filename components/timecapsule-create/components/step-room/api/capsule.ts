@@ -10,6 +10,8 @@ import type {
   CreateRoomRequest,
   CreateRoomResponse,
   InviteCodeQueryResponse,
+  JoinRoomRequest,
+  JoinRoomResponse,
   OrderResponse,
   RoomDetailResponse,
   RoomSettingsResponse,
@@ -233,6 +235,75 @@ export async function fetchRoomByInviteCode(inviteCode: string): Promise<InviteC
       throw error;
     }
     console.error('❌ [API] 초대 코드로 대기실 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 대기실 참여 (슬롯 배정) API
+ * @param capsuleId 캡슐 ID (UUID)
+ * @param inviteCode 초대 코드 (6자리 영숫자)
+ * @returns 슬롯 배정 결과
+ * @throws 403: 잘못된 초대 코드, 마감시한 경과, 또는 정원 초과
+ * @throws 404: 존재하지 않는 대기실
+ * @throws 409: 이미 참여 중
+ */
+export async function joinRoom(capsuleId: string, inviteCode: string): Promise<JoinRoomResponse> {
+  try {
+    console.log('🔄 [API] 대기실 참여 (슬롯 배정) 시작 - capsuleId:', capsuleId, 'inviteCode:', inviteCode);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.post<JoinRoomResponse, JoinRoomRequest>(
+      `/api/capsules/step-rooms/${capsuleId}/join`,
+      {
+        invite_code: inviteCode.toUpperCase(),
+      },
+    );
+
+    console.log('✅ [API] 대기실 참여 성공:', response.data);
+    console.log('  🎫 배정받은 슬롯 번호:', response.data.slot_number);
+    console.log('  👤 닉네임:', response.data.nickname);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      const errorCode = error.response?.data?.error;
+      if (errorCode === 'INVALID_INVITE_CODE') {
+        console.error('❌ [API] 잘못된 초대 코드 (403)');
+        throw new Error('잘못된 초대 코드입니다.');
+      }
+      if (errorCode === 'DEADLINE_EXPIRED') {
+        console.error('❌ [API] 마감시한 경과 (403)');
+        throw new Error('작성 마감시한이 지났습니다.');
+      }
+      if (errorCode === 'SLOTS_FULL') {
+        console.error('❌ [API] 정원 초과 (403)');
+        throw new Error('정원이 초과되었습니다.');
+      }
+      console.error('❌ [API] 참여 권한 없음 (403)');
+      throw new Error('대기실에 참여할 수 없습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 대기실 (404)');
+      throw new Error('대기실을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 409) {
+      // 이미 참여 중이면 에러가 아니라 정상 케이스로 처리 (슬롯 번호 반환)
+      const slotNumber = error.response?.data?.data?.slot_number;
+      if (slotNumber) {
+        console.log('✅ [API] 이미 참여 중입니다. 기존 슬롯 번호:', slotNumber);
+        // 이미 참여 중이면 성공 응답처럼 반환
+        return {
+          success: true,
+          room_id: capsuleId,
+          slot_number: slotNumber,
+          nickname: '', // 닉네임은 별도로 조회 필요
+          joined_at: new Date().toISOString(),
+        };
+      }
+      console.error('❌ [API] 이미 참여 중이지만 슬롯 번호를 받지 못함 (409)');
+      throw new Error('이미 참여 중입니다.');
+    }
+    console.error('❌ [API] 대기실 참여 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }

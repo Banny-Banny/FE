@@ -7,14 +7,15 @@
  * 플로우:
  * 1. URL 파라미터에서 invite_code 추출
  * 2. fetchRoomByInviteCode() API 호출 → room_id(=capsule_id) 받음
- * 3. StepRoom 컴포넌트 렌더링 (role='guest', capsuleId, inviteCode 전달)
+ * 3. joinRoom() API 호출 → 슬롯 배정 (참여자로 등록)
+ * 4. StepRoom 컴포넌트 렌더링 (role='guest', capsuleId, inviteCode 전달)
  */
 
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import { Colors, ROUTES, STORAGE_KEYS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useNavigation } from '@/commons/hooks';
-import { fetchRoomByInviteCode } from '@/components/timecapsule-create/components/step-room/api/capsule';
+import { fetchRoomByInviteCode, joinRoom } from '@/components/timecapsule-create/components/step-room/api/capsule';
 import StepRoom from '@/components/timecapsule-create/components/step-room';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -70,25 +71,41 @@ export default function RoomJoinScreen() {
       return;
     }
 
-    // 토큰 있음 → 대기실 조회
-    const joinRoom = async () => {
+    // 토큰 있음 → 대기실 조회 및 참여
+    const joinRoomFlow = async () => {
       try {
         setIsLoading(true);
-        const response = await fetchRoomByInviteCode(code);
 
+        // 1단계: 초대 코드로 대기실 조회
+        const response = await fetchRoomByInviteCode(code);
         console.log('✅ [RoomJoin] 대기실 조회 성공:', response);
         console.log('🔍 [RoomJoin] capsule_id:', response.room_id);
+
+        // 2단계: 슬롯 배정 (참여자로 등록)
+        try {
+          const joinResponse = await joinRoom(response.room_id, code);
+          console.log('✅ [RoomJoin] 슬롯 배정 성공:', joinResponse);
+          console.log('  🎫 슬롯 번호:', joinResponse.slot_number);
+          console.log('  👤 닉네임:', joinResponse.nickname);
+        } catch (joinErr) {
+          // 409 (이미 참여 중)는 정상 케이스로 처리
+          if (joinErr instanceof Error && joinErr.message.includes('이미 참여 중')) {
+            console.log('ℹ️ [RoomJoin] 이미 참여 중입니다. 계속 진행합니다.');
+          } else {
+            throw joinErr;
+          }
+        }
 
         setCapsuleId(response.room_id);
         setIsLoading(false);
       } catch (err) {
-        console.error('❌ [RoomJoin] 대기실 조회 실패:', err);
+        console.error('❌ [RoomJoin] 대기실 참여 실패:', err);
         setError(err instanceof Error ? err.message : '대기실을 찾을 수 없습니다.');
         setIsLoading(false);
       }
     };
 
-    joinRoom();
+    joinRoomFlow();
   }, [params.invite_code, accessToken, isAuthLoading, router]);
 
   // 로딩 중
