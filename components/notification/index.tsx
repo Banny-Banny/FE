@@ -26,8 +26,8 @@
 
 import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
-import { useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
@@ -39,13 +39,8 @@ export default function NotificationFeature() {
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ from?: string }>();
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
-  const {
-    newNotifications,
-    oldNotifications,
-    isLoading,
-    error,
-    refreshNotifications,
-  } = useNotifications();
+  const { newNotifications, oldNotifications, isLoading, error, refreshNotifications } =
+    useNotifications();
 
   const handleMarkAllAsRead = () => {
     // TODO: 모든 알림 읽음 처리
@@ -84,26 +79,34 @@ export default function NotificationFeature() {
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>알림</Text>
             <View style={styles.headerIcons}>
-              <Pressable
-                style={styles.iconButtonActive}
-                onPress={handleToggleNotification}
-                accessibilityRole="button"
-                accessibilityLabel={isNotificationEnabled ? '알림 끄기' : '알림 켜기'}>
-                {isNotificationEnabled ? (
+              {isNotificationEnabled ? (
+                <Pressable
+                  key="notification-enabled"
+                  style={styles.iconButtonActive}
+                  onPress={handleToggleNotification}
+                  accessibilityRole="button"
+                  accessibilityLabel="알림 끄기">
                   <Icon
                     name={'ri-notification-line' as IconName}
                     size={20}
                     color={Colors.black[500]}
                   />
-                ) : (
+                </Pressable>
+              ) : (
+                <Pressable
+                  key="notification-disabled"
+                  style={styles.iconButtonActive}
+                  onPress={handleToggleNotification}
+                  accessibilityRole="button"
+                  accessibilityLabel="알림 켜기">
                   <Image
                     source={require('@/assets/icons/unnotification.png')}
                     style={styles.notificationOffIcon}
                     contentFit="contain"
                     accessibilityLabel="알림 꺼짐"
                   />
-                )}
-              </Pressable>
+                </Pressable>
+              )}
               <Pressable
                 style={styles.iconButton}
                 onPress={handleClose}
@@ -114,9 +117,7 @@ export default function NotificationFeature() {
             </View>
           </View>
           <View style={styles.headerSubtitle}>
-            <Text style={styles.headerSubtitleText}>
-              새 알림 {newNotifications.length}개
-            </Text>
+            <Text style={styles.headerSubtitleText}>새 알림 {newNotifications.length}개</Text>
           </View>
         </View>
       </View>
@@ -137,9 +138,7 @@ export default function NotificationFeature() {
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <Pressable
-              style={styles.retryButton}
-              onPress={refreshNotifications}>
+            <Pressable style={styles.retryButton} onPress={refreshNotifications}>
               <Text style={styles.retryButtonText}>다시 시도</Text>
             </Pressable>
           </View>
@@ -150,9 +149,7 @@ export default function NotificationFeature() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>새로운 알림</Text>
-                  <Pressable
-                    style={styles.markAllReadButton}
-                    onPress={handleMarkAllAsRead}>
+                  <Pressable style={styles.markAllReadButton} onPress={handleMarkAllAsRead}>
                     <Text style={styles.markAllReadButtonText}>모두읽음</Text>
                   </Pressable>
                 </View>

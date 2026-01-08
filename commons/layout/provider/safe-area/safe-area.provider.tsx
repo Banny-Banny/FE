@@ -1,6 +1,6 @@
 import { usePathname, useSegments } from 'expo-router';
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface AppSafeAreaProviderProps {
@@ -34,13 +34,18 @@ export const AppSafeAreaProvider: React.FC<AppSafeAreaProviderProps> = ({ childr
     };
   }, [segments, pathname]);
 
-  // 4. 지도일 때: SafeAreaView를 완전히 제거하고 일반 View만 반환
-  if (isMapRoute) {
-    return <View style={{ flex: 1, backgroundColor: 'transparent' }}>{children}</View>;
-  }
-
+  /**
+   * 🚨 Android(Fabric) addViewAt 크래시 방지
+   * - 라우트에 따라 래퍼 컴포넌트 타입(View ↔ SafeAreaView)을 바꾸면,
+   *   네비게이션 트리가 다른 parent로 "리패런팅"되며
+   *   `The specified child already has a parent` 크래시가 발생할 수 있습니다.
+   * - 따라서 항상 SafeAreaView로 고정하고, 지도 화면만 edges=[]로 SafeArea를 비활성화합니다.
+   */
   return (
-    <SafeAreaView key={pathname} style={styles.safeArea} edges={edges}>
+    <SafeAreaView
+      style={isMapRoute ? styles.mapSafeArea : styles.safeArea}
+      edges={isMapRoute ? ([] as const) : edges}
+    >
       {children}
     </SafeAreaView>
   );
@@ -50,5 +55,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'hotpink', //추후 수정 예정
+  },
+  mapSafeArea: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
 });

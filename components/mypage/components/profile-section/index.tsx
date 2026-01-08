@@ -61,6 +61,7 @@ export function ProfileSection() {
           <View style={styles.switch}>
             {hasValidProfileImage && profileImageUrl ? (
               <Image
+                key="profile-image"
                 source={{ uri: profileImageUrl }}
                 style={styles.profileImage}
                 contentFit="cover"
@@ -70,7 +71,9 @@ export function ProfileSection() {
                 }}
               />
             ) : (
-              <Text style={styles.switchEmoji}>🐰</Text>
+              <Text key="profile-emoji" style={styles.switchEmoji}>
+                🐰
+              </Text>
             )}
           </View>
         </View>
