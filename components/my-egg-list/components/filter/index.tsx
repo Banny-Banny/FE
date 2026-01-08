@@ -15,10 +15,10 @@
  * - 선택 시 드롭다운 자동 닫힘
  */
 
+import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
-import { Colors } from '@/commons/constants';
 import { styles } from './styles';
 
 interface FilterProps {
@@ -52,7 +52,10 @@ export function Filter({
         </Text>
         <View style={styles.iconContainer}>
           <Icon
-            name={isOpen ? ('ri-arrow-up-s-line' as IconName) : ('ri-arrow-down-s-line' as IconName)}
+            key={isOpen ? 'arrow-up' : 'arrow-down'}
+            name={
+              isOpen ? ('ri-arrow-up-s-line' as IconName) : ('ri-arrow-down-s-line' as IconName)
+            }
             size={13}
             color={Colors.darkGrey[600]}
           />
@@ -112,4 +115,3 @@ export function Filter({
     </View>
   );
 }
-

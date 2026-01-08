@@ -49,6 +49,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         onPress={onTogglePlay}
         accessibilityLabel="재생/일시정지">
         <Icon
+          key={isPlaying ? 'pause' : 'play'}
           name={isPlaying ? 'pause-fill' : 'play-fill'}
           size={20}
           color={Colors.white[50]}
@@ -64,4 +65,3 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
     </View>
   );
 };
-

@@ -48,21 +48,13 @@ export const EggSlot: React.FC<EggSlotProps> = ({ onPress }) => {
 
         return (
           <View key={slotNumber} style={styles.eggSlotItem}>
-            {isFilled ? (
-              <Image
-                source={FilledEggIcon}
-                style={styles.eggSlotIcon}
-                contentFit="contain"
-                accessibilityLabel={`에그 슬롯 ${slotNumber} - 사용됨`}
-              />
-            ) : (
-              <Image
-                source={UnfilledEggIcon}
-                style={styles.eggSlotIconEmpty}
-                contentFit="contain"
-                accessibilityLabel={`에그 슬롯 ${slotNumber} - 비어있음`}
-              />
-            )}
+            <Image
+              key={isFilled ? 'filled' : 'unfilled'}
+              source={isFilled ? FilledEggIcon : UnfilledEggIcon}
+              style={isFilled ? styles.eggSlotIcon : styles.eggSlotIconEmpty}
+              contentFit="contain"
+              accessibilityLabel={`에그 슬롯 ${slotNumber} - ${isFilled ? '사용됨' : '비어있음'}`}
+            />
           </View>
         );
       })}
