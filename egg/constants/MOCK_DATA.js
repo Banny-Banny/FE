@@ -22,20 +22,21 @@
  * @property {string} id - 친구 고유 ID
  * @property {string} name - 친구 이름
  * @property {string} emoji - 친구 아바타 이모지
+ * @property {string|null} profileImg - 프로필 이미지 URL
  * @property {boolean} isBlocked - 차단 여부
  *
  * @type {Friend[]}
  */
 export const DEFAULT_FRIENDS = [
-  { id: '1', name: '김민수', emoji: '🐨', isBlocked: false },
-  { id: '2', name: '이지은', emoji: '🐼', isBlocked: false },
-  { id: '3', name: '최유나', emoji: '🐯', isBlocked: false },
-  { id: '4', name: '정우성', emoji: '🐰', isBlocked: false },
-  { id: '5', name: '한지민', emoji: '🦋', isBlocked: false },
-  { id: '6', name: '신유', emoji: '🐶', isBlocked: false },
-  { id: '7', name: '최산', emoji: '🦊', isBlocked: false },
-  { id: '8', name: '김선호', emoji: '🐮', isBlocked: false },
-  { id: '9', name: '박서준', emoji: '🐵', isBlocked: true },
+  { id: '1', name: '김민수', emoji: '🐨', profileImg: null, isBlocked: false },
+  { id: '2', name: '이지은', emoji: '🐼', profileImg: null, isBlocked: false },
+  { id: '3', name: '최유나', emoji: '🐯', profileImg: null, isBlocked: false },
+  { id: '4', name: '정우성', emoji: '🐰', profileImg: null, isBlocked: false },
+  { id: '5', name: '한지민', emoji: '🦋', profileImg: null, isBlocked: false },
+  { id: '6', name: '신유', emoji: '🐶', profileImg: null, isBlocked: false },
+  { id: '7', name: '최산', emoji: '🦊', profileImg: null, isBlocked: false },
+  { id: '8', name: '김선호', emoji: '🐮', profileImg: null, isBlocked: false },
+  { id: '9', name: '박서준', emoji: '🐵', profileImg: null, isBlocked: true },
 ];
 
 /**
@@ -131,4 +132,3 @@ export const DEFAULT_OLD_NOTIFICATIONS = [
     isRead: true,
   },
 ];
-

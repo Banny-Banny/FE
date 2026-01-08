@@ -7,6 +7,7 @@ export interface Friend {
   id: string;
   name: string;
   emoji: string;
+  profileImg: string | null;
   isBlocked: boolean;
 }
 
