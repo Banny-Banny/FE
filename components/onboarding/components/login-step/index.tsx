@@ -13,6 +13,12 @@ const imgGeminiGeneratedImage =
   'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
 const imgEllipse = 'http://localhost:3845/assets/5fd04f478f1b1f756c49f81b5c65ba151f3c22eb.svg';
 
+// 피그마에서 제공된 이미지 에셋 URL
+const IMG_ILLUSTRATION = 'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
+const IMG_ELLIPSE = 'http://localhost:3845/assets/5fd04f478f1b1f756c49f81b5c65ba151f3c22eb.svg';
+const IMG_LOCATION_ICON = 'http://localhost:3845/assets/e11f6bf89ea89599d3c731a4b3757e56614bcf0d.svg';
+const IMG_FRIEND_ICON = 'http://localhost:3845/assets/10cc22e87847878b14afe497576868a4fa09453f.svg';
+
 interface LoginStepProps {
   isLoading: boolean;
   onKakaoLogin: () => void;

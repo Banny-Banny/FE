@@ -11,16 +11,22 @@
  * Figma 노드 ID: 161:24090
  */
 
+import { ROUTES } from '@/commons/constants/routes';
+import { useNavigation, useToggle } from '@/commons/hooks';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useToggle } from '@/commons/hooks';
 import { useUserInfo } from '../../hooks/useUserInfo';
 import { FriendsModal } from './friends';
 import { useFriends } from './friends/hooks/useFriends';
 import { styles } from './styles';
 
 export function ActivityStats() {
-  const { isOpen: isFriendsModalVisible, open: handleFriendsPress, close: handleCloseFriendsModal } = useToggle();
+  const {
+    isOpen: isFriendsModalVisible,
+    open: handleFriendsPress,
+    close: handleCloseFriendsModal,
+  } = useToggle();
+  const navigation = useNavigation();
 
   // ============================================
   // 사용자 통계 정보 (summary만 사용)
@@ -36,6 +42,13 @@ export function ActivityStats() {
   // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)
   // ============================================
   const { friends, isRefreshing, refreshFriends, toggleBlock } = useFriends();
+
+  // ============================================
+  // 이스터에그 목록으로 이동
+  // ============================================
+  const handleEasterEggPress = () => {
+    navigation.push(ROUTES.MY_EGG_LIST);
+  };
 
   return (
     <>
@@ -54,14 +67,14 @@ export function ActivityStats() {
         <View style={styles.divider} />
 
         {/* 이스터에그 통계 */}
-        <View style={styles.statItem}>
+        <Pressable style={styles.statItem} onPress={handleEasterEggPress}>
           <View style={styles.statValueContainer}>
             <Text style={styles.statValue}>{summary.easterEggCount}</Text>
           </View>
           <View style={styles.statLabelContainer}>
             <Text style={styles.statLabel}>이스터에그</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* 구분선 */}
         <View style={styles.divider} />
