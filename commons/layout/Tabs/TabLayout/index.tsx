@@ -54,14 +54,27 @@ export function TabsLayoutConfig() {
           name={screen.name}
           options={{
             title: screen.title,
-            tabBarIcon: ({ color, size, focused }) => (
-              <Icon
-                key={focused ? `${screen.name}-filled` : `${screen.name}-line`}
-                name={focused ? (screen.iconNameFilled as IconName) : (screen.iconName as IconName)}
-                size={size}
-                color={color}
-              />
-            ),
+            tabBarIcon: ({ color, size, focused }) => {
+              // Android View 중복 렌더링 에러 방지: 조건부로 완전히 분리된 Icon 렌더링
+              if (focused) {
+                return (
+                  <Icon
+                    key={`${screen.name}-filled`}
+                    name={screen.iconNameFilled as IconName}
+                    size={size}
+                    color={color}
+                  />
+                );
+              }
+              return (
+                <Icon
+                  key={`${screen.name}-line`}
+                  name={screen.iconName as IconName}
+                  size={size}
+                  color={color}
+                />
+              );
+            },
           }}
         />
       ))}
