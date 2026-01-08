@@ -190,11 +190,11 @@ export async function getRoomDetail(capsuleId: string): Promise<RoomDetailRespon
 }
 
 /**
- * 초대 코드로 대기실 조회 API
+ * 초대 코드로 대기실 조회 API (Public API - 인증 불필요)
  * @param inviteCode 초대 코드 (6자리 영숫자, 대소문자 구분 없음)
  * @returns 대기실 정보 (snake_case)
+ * @throws 400: 초대 코드 누락/형식 오류
  * @throws 404: 존재하지 않는 초대 코드
- * @throws 500: 서버 내부 오류
  */
 export async function fetchRoomByInviteCode(inviteCode: string): Promise<InviteCodeQueryResponse> {
   try {
@@ -209,12 +209,16 @@ export async function fetchRoomByInviteCode(inviteCode: string): Promise<InviteC
     console.log('🔄 [API] 초대 코드로 대기실 조회 시작 - inviteCode:', normalizedCode);
 
     const response = await publicApiClient.get<InviteCodeQueryResponse>(
-      `/api/capsules/step-rooms?invite_code=${encodeURIComponent(normalizedCode)}`,
+      `/api/capsules/step-rooms/by-code?invite_code=${encodeURIComponent(normalizedCode)}`,
     );
 
     console.log('✅ [API] 초대 코드로 대기실 조회 성공:', response.data);
     return response.data;
   } catch (error: any) {
+    if (error.response?.status === 400) {
+      console.error('❌ [API] 초대 코드 형식 오류 (400)');
+      throw new Error('유효하지 않은 초대 코드입니다.');
+    }
     if (error.response?.status === 404) {
       console.error('❌ [API] 존재하지 않는 초대 코드입니다 (404)');
       throw new Error('존재하지 않는 초대 코드입니다.');
