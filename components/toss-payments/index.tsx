@@ -5,9 +5,11 @@
 
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
+import type { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
 import PaymentCompleteModal from '@/components/timecapsule-create/modals/payment-complete-modal';
+import { apiClient } from '@/utils';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, Platform, ScrollView, View } from 'react-native';
 import { updateOrderStatus } from './api/payment';
 import { PaymentError } from './api/types/types';
 import { AgreementDetailModal } from './components/agreement-detail-modal';
@@ -52,6 +54,41 @@ export default function TossPayment({
   }, [orderData]);
 
   // ============================================
+  // 웹 환경: 페이지 로드 시 URL 파라미터 확인 (결제 완료 후 리다이렉트 처리)
+  // ============================================
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
+    const checkUrlParams = async () => {
+      try {
+        const urlObj = new URL(window.location.href);
+        const paymentKey = urlObj.searchParams.get('paymentKey');
+        const orderIdParam = urlObj.searchParams.get('orderId');
+        const amountParam = urlObj.searchParams.get('amount');
+
+        // 토스페이먼츠 리다이렉트 파라미터 확인
+        if (paymentKey && orderIdParam && amountParam) {
+          console.log('🌐 [TossPayment - WEB] URL 파라미터에서 결제 성공 감지:', {
+            paymentKey,
+            orderId: orderIdParam,
+            amount: parseInt(amountParam),
+          });
+
+          // URL 파라미터 제거 (중복 처리 방지)
+          window.history.replaceState({}, '', window.location.pathname);
+
+          // 결제 성공 처리 (API 호출 후 자동으로 step 3으로 이동)
+          await handlePaymentSuccess(paymentKey, orderIdParam, parseInt(amountParam));
+        }
+      } catch (error) {
+        console.error('❌ [TossPayment - WEB] URL 파라미터 확인 실패:', error);
+      }
+    };
+
+    checkUrlParams();
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
+
+  // ============================================
   // 핸들러
   // ============================================
   const handlePaymentCompleteConfirm = useCallback(() => {
@@ -64,7 +101,13 @@ export default function TossPayment({
   const handlePaymentSuccess = useCallback(
     async (paymentKey: string, orderId: string, amount: number) => {
       try {
-        setShowPaymentWebView(false);
+        console.log('🎯 [TossPayment] handlePaymentSuccess 호출됨 (웹/모바일 공통)');
+        console.log('  - paymentKey:', paymentKey);
+        console.log('  - orderId:', orderId);
+        console.log('  - amount:', amount);
+
+        // ⚠️ 결제 승인 성공 시에만 모달을 닫음 (에러 발생 시 재시도 가능하도록)
+        // setShowPaymentWebView(false); // 아래로 이동
 
         // ⚠️ 보안 검증: 토스페이먼츠 문서 권장사항
         // 1. orderId 검증: 백엔드에서 생성한 주문 ID와 일치하는지 확인
@@ -99,49 +142,69 @@ export default function TossPayment({
         }
 
         // ============================================
-        // 테스트 결제 모드: 임의의 paymentKey로 백엔드 API 호출
+        // 결제 승인 API 호출 (모든 환경)
+        // ⚠️ 결제 승인 실패 시 주문 상태를 변경하지 않음
         // ============================================
-        const isTestPaymentKey =
-          paymentKey.startsWith('test_payment_key_') || paymentKey.startsWith('test-payment-key-');
+        console.log('💳 [TossPayment] 결제 승인 API 호출 시작');
+        console.log('  - Platform:', Platform.OS);
+        console.log('  - API: POST /api/payments/toss/confirm');
+        console.log('  - paymentKey:', paymentKey.substring(0, 20) + '...');
+        console.log('  - orderId:', orderId);
+        console.log('  - amount:', amount);
 
         let paymentData;
-        if (isTestPaymentKey) {
-          console.log('🧪 [TossPayment] 테스트 결제 모드: 백엔드 API 호출');
-          console.log('  - paymentKey:', paymentKey);
-          console.log('  - orderId:', orderId);
-          console.log('  - amount:', amount);
-
-          // 테스트 paymentKey로 백엔드 API 호출 시도
-          // 백엔드에서 테스트 paymentKey를 지원하지 않을 수 있으므로 에러 처리
-          try {
-            paymentData = await confirmPayment(paymentKey, orderId, amount);
-            console.log('✅ [TossPayment] 결제 승인 API 호출 성공');
-          } catch (err: any) {
-            // 백엔드에서 테스트 paymentKey를 거부하는 경우 (500 에러 등)
-            console.warn('⚠️ [TossPayment] 백엔드 결제 승인 API 호출 실패:', err);
-            console.warn(
-              '⚠️ [TossPayment] 테스트 paymentKey를 백엔드에서 지원하지 않을 수 있습니다.',
-            );
-            console.warn('⚠️ [TossPayment] Mock 데이터로 진행합니다.');
-
-            // Mock 데이터 생성 (결제 플로우는 계속 진행)
-            paymentData = {
-              order_id: orderId,
-              payment_key: paymentKey,
-              status: 'DONE',
-              amount: amount,
-              approved_at: new Date().toISOString(),
-              capsule_id: '',
-              receipt_url: '',
-            };
-          }
-        } else {
-          // 실제 결제 승인 API 호출
+        try {
           paymentData = await confirmPayment(paymentKey, orderId, amount);
+          console.log('✅ [TossPayment] 결제 승인 API 호출 성공:', {
+            order_id: paymentData.order_id,
+            payment_key: paymentData.payment_key?.substring(0, 20) + '...',
+            status: paymentData.status,
+            amount: paymentData.amount,
+          });
+
+          // 결제 승인 성공 시 모달 닫기
+          setShowPaymentWebView(false);
+        } catch (confirmError: any) {
+          // 결제 승인 실패 시 에러 처리
+          console.error('❌ [TossPayment] 결제 승인 API 호출 실패:', confirmError);
+          console.error('  - Status:', confirmError.status);
+          console.error('  - Message:', confirmError.message);
+
+          // 결제 시간 만료 에러의 경우 사용자가 다시 결제를 시도할 수 있도록 모달 유지
+          const isPaymentExpired =
+            confirmError.message?.includes('결제 시간이 만료') ||
+            confirmError.message?.includes('NOT_FOUND_PAYMENT_SESSION');
+
+          if (isPaymentExpired) {
+            // 결제 시간 만료: 모달을 유지하고 사용자에게 안내
+            Alert.alert(
+              '결제 시간 만료',
+              '결제 시간이 만료되었습니다.\n\n결제창을 닫고 다시 결제를 시도해주세요.',
+              [
+                {
+                  text: '확인',
+                  onPress: () => {
+                    // 모달을 닫고 사용자가 다시 결제 버튼을 클릭할 수 있도록 함
+                    setShowPaymentWebView(false);
+                  },
+                },
+              ],
+            );
+          } else {
+            // 기타 에러: 모달을 닫고 에러 표시
+            setShowPaymentWebView(false);
+            Alert.alert(
+              '결제 승인 실패',
+              confirmError.message || '결제 승인에 실패했습니다. 다시 시도해주세요.',
+            );
+          }
+
+          throw confirmError; // 에러를 다시 throw하여 catch 블록으로 전달
         }
 
         // ============================================
         // 주문 상태 변경 API 호출 (POST /api/orders/:orderId/status)
+        // ⚠️ 결제 승인이 성공한 경우에만 실행됨
         // ============================================
         try {
           console.log('🔄 [TossPayment] 주문 상태 변경 API 호출');
@@ -185,15 +248,8 @@ export default function TossPayment({
           console.warn('⚠️ [TossPayment] 주문 상태 변경 실패했지만 결제는 완료되었습니다.');
         }
 
-        // ============================================
-        // 실제 결제 로직 (주석처리)
-        // ============================================
-        /*
-        // 결제 승인 API 호출 (실제 서버에 저장)
-        const paymentData = await confirmPayment(paymentKey, orderId, amount);
-        */
-
-        // 결제 완료 모달 표시
+        // 결제 완료 모달 표시 (웹/모바일 공통)
+        console.log('✅ [TossPayment] 결제 완료 모달 표시');
         openModal({
           width: 344,
           height: 242,
@@ -220,6 +276,7 @@ export default function TossPayment({
       orderData.order_id,
       orderData.total_amount,
       handlePaymentCompleteConfirm,
+      setShowPaymentWebView,
     ],
   );
 
@@ -231,7 +288,7 @@ export default function TossPayment({
   // ============================================
   // WebView 결제 핸들러
   // ============================================
-  const handleSubmitPress = useCallback(() => {
+  const handleSubmitPress = useCallback(async () => {
     if (!isPaymentEnabled) {
       Alert.alert('알림', TEXTS.alerts.agreementRequired);
       return;
@@ -248,7 +305,37 @@ export default function TossPayment({
       return;
     }
 
-    setShowPaymentWebView(true);
+    // ============================================
+    // ⚠️ 중요: 결제 직전에 주문 데이터를 다시 조회하여 최신 정보 사용
+    // 결제 세션 만료 방지를 위해 주문을 갱신
+    // ============================================
+    try {
+      console.log('🔄 [TossPayment] 결제 직전 주문 데이터 조회 시작');
+      console.log('  - orderId:', orderData.order_id);
+
+      // 주문 데이터 다시 조회 (결제 세션 갱신)
+      // 백엔드 API 응답 구조에 따라 조정 필요
+      const response = await apiClient.get<{ order: CreateOrderResponse } | CreateOrderResponse>(
+        `/api/orders/${orderData.order_id}`,
+      );
+
+      // 응답 구조에 따라 데이터 추출
+      const latestOrderData = 'order' in response.data ? response.data.order : response.data;
+      console.log('✅ [TossPayment] 주문 데이터 조회 성공');
+      console.log('  - 최신 total_amount:', latestOrderData.total_amount);
+      console.log('  - 최신 status:', latestOrderData.status);
+
+      // 최신 주문 데이터로 업데이트 (결제 세션 갱신)
+      // orderData는 props이므로 직접 수정할 수 없지만,
+      // PaymentWebView/PaymentWidgetWeb에 최신 데이터를 전달할 수 있도록 함
+      // 현재는 orderData를 그대로 사용하되, 백엔드에서 주문 조회 시 세션이 갱신될 것으로 예상
+
+      setShowPaymentWebView(true);
+    } catch (error: any) {
+      console.error('❌ [TossPayment] 주문 데이터 조회 실패:', error);
+      Alert.alert('주문 조회 실패', '주문 정보를 불러오는데 실패했습니다. 다시 시도해주세요.');
+      return;
+    }
   }, [isPaymentEnabled, handlePaymentSuccess, orderData.order_id, orderData.total_amount]);
 
   const handleBackPress = useCallback(() => {

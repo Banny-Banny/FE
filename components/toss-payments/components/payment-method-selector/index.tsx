@@ -27,11 +27,6 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
       label: '신용/체크카드',
       description: '모든 카드사 지원',
     },
-    {
-      value: '간편결제',
-      label: '간편결제',
-      description: '카카오페이, 네이버페이, 토스페이',
-    },
   ];
 
   return (
@@ -52,7 +47,11 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 <Text style={[styles.methodLabel, isSelected && styles.methodLabelSelected]}>
                   {method.label}
                 </Text>
-                <Text style={[styles.methodDescription, isSelected && styles.methodDescriptionSelected]}>
+                <Text
+                  style={[
+                    styles.methodDescription,
+                    isSelected && styles.methodDescriptionSelected,
+                  ]}>
                   {method.description}
                 </Text>
               </View>
@@ -68,4 +67,3 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     </View>
   );
 };
-
