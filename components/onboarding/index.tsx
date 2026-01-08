@@ -34,6 +34,14 @@ export default function OnboardingFeature() {
         console.log('[Onboarding] 딥링크 수신:', url);
       }
 
+      // Expo Go 개발 서버 URL은 무시
+      if (url.startsWith('exp://') || url.startsWith('exps://')) {
+        if (__DEV__) {
+          console.log('[Onboarding] Expo 개발 서버 URL, 무시');
+        }
+        return;
+      }
+
       // 이미 처리 중이면 무시
       if (isProcessingDeepLink.current) {
         if (__DEV__) {
@@ -46,7 +54,7 @@ export default function OnboardingFeature() {
         const urlObj = new URL(url);
 
         // timeegg://auth/callback?token=...&isNewUser=...
-        if (urlObj.pathname.includes('/auth/callback')) {
+        if (urlObj.protocol === 'timeegg:' && urlObj.pathname.includes('/auth/callback')) {
           isProcessingDeepLink.current = true;
 
           const token = urlObj.searchParams.get('token');
