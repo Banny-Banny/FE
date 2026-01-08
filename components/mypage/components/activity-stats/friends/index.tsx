@@ -15,8 +15,8 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
-import { isValidImageUrl } from '@/utils';
 import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
+import { isValidImageUrl } from '@/utils';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
@@ -133,6 +133,7 @@ export function FriendsModal({
                       ]}>
                       {hasValidProfileImage && friend.profileImg ? (
                         <Image
+                          key={`profile-${friend.id}`}
                           source={{ uri: friend.profileImg }}
                           style={styles.avatarImage}
                           contentFit="cover"
@@ -140,6 +141,7 @@ export function FriendsModal({
                         />
                       ) : (
                         <Text
+                          key={`emoji-${friend.id}`}
                           style={[
                             styles.avatarEmoji,
                             friend.isBlocked && styles.avatarEmojiBlocked,
@@ -150,31 +152,33 @@ export function FriendsModal({
                     </View>
 
                     {/* 이름 */}
-                    <Text
-                      style={[styles.friendName, friend.isBlocked && styles.friendNameBlocked]}>
+                    <Text style={[styles.friendName, friend.isBlocked && styles.friendNameBlocked]}>
                       {friend.name}
                     </Text>
                   </View>
 
-                {/* 차단/해제 버튼 */}
-                <Pressable
-                  style={[styles.blockButton, friend.isBlocked && styles.unblockButton]}
-                  onPress={() => handleToggleBlock(friend.id)}
-                  pointerEvents="auto">
-                  <Icon
-                    name={
-                      (friend.isBlocked
-                        ? 'ri-user-unfollow-line'
-                        : 'ri-user-forbid-line') as IconName
-                    }
-                    size={16}
-                    color={friend.isBlocked ? Colors.white[500] : Colors.black[500]}
-                  />
-                  <Text style={[styles.buttonText, friend.isBlocked && styles.buttonTextUnblock]}>
-                    {friend.isBlocked ? '해제' : '차단'}
-                  </Text>
-                </Pressable>
-              </View>
+                  {/* 차단/해제 버튼 */}
+                  <Pressable
+                    style={[styles.blockButton, friend.isBlocked && styles.unblockButton]}
+                    onPress={() => handleToggleBlock(friend.id)}
+                    pointerEvents="auto">
+                    <Icon
+                      key={friend.isBlocked ? 'unblock-icon' : 'block-icon'}
+                      name={
+                        (friend.isBlocked
+                          ? 'ri-user-unfollow-line'
+                          : 'ri-user-forbid-line') as IconName
+                      }
+                      size={16}
+                      color={friend.isBlocked ? Colors.white[500] : Colors.black[500]}
+                    />
+                    <Text
+                      key={friend.isBlocked ? 'unblock-text' : 'block-text'}
+                      style={[styles.buttonText, friend.isBlocked && styles.buttonTextUnblock]}>
+                      {friend.isBlocked ? '해제' : '차단'}
+                    </Text>
+                  </Pressable>
+                </View>
               );
             }}
             keyExtractor={(friend) => friend.id}
