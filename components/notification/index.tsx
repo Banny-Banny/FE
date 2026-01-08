@@ -26,8 +26,8 @@
 
 import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
-import { useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
+import { useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
@@ -45,14 +45,26 @@ export default function NotificationFeature() {
     isLoading,
     error,
     refreshNotifications,
+    markAllAsRead,
+    deleteNotification,
   } = useNotifications();
 
-  const handleMarkAllAsRead = () => {
-    // TODO: 모든 알림 읽음 처리
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+    } catch (err) {
+      // 에러는 useNotifications 훅에서 이미 처리됨
+      // 필요시 추가 에러 처리 (예: 토스트 메시지)
+    }
   };
 
-  const handleDelete = (id: string) => {
-    // TODO: 알림 삭제 처리
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNotification(id);
+    } catch (err) {
+      // 에러는 useNotifications 훅에서 이미 처리됨
+      // 필요시 추가 에러 처리 (예: 토스트 메시지)
+    }
   };
 
   const handleToggleNotification = () => {
@@ -114,9 +126,7 @@ export default function NotificationFeature() {
             </View>
           </View>
           <View style={styles.headerSubtitle}>
-            <Text style={styles.headerSubtitleText}>
-              새 알림 {newNotifications.length}개
-            </Text>
+            <Text style={styles.headerSubtitleText}>새 알림 {newNotifications.length}개</Text>
           </View>
         </View>
       </View>
@@ -137,9 +147,7 @@ export default function NotificationFeature() {
         ) : error ? (
           <View style={styles.errorContainer}>
             <Text style={styles.errorText}>{error}</Text>
-            <Pressable
-              style={styles.retryButton}
-              onPress={refreshNotifications}>
+            <Pressable style={styles.retryButton} onPress={refreshNotifications}>
               <Text style={styles.retryButtonText}>다시 시도</Text>
             </Pressable>
           </View>
@@ -150,9 +158,7 @@ export default function NotificationFeature() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>새로운 알림</Text>
-                  <Pressable
-                    style={styles.markAllReadButton}
-                    onPress={handleMarkAllAsRead}>
+                  <Pressable style={styles.markAllReadButton} onPress={handleMarkAllAsRead}>
                     <Text style={styles.markAllReadButtonText}>모두읽음</Text>
                   </Pressable>
                 </View>
