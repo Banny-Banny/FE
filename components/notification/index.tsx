@@ -96,26 +96,34 @@ export default function NotificationFeature() {
           <View style={styles.headerTop}>
             <Text style={styles.headerTitle}>알림</Text>
             <View style={styles.headerIcons}>
-              <Pressable
-                style={styles.iconButtonActive}
-                onPress={handleToggleNotification}
-                accessibilityRole="button"
-                accessibilityLabel={isNotificationEnabled ? '알림 끄기' : '알림 켜기'}>
-                {isNotificationEnabled ? (
+              {isNotificationEnabled ? (
+                <Pressable
+                  key="notification-enabled"
+                  style={styles.iconButtonActive}
+                  onPress={handleToggleNotification}
+                  accessibilityRole="button"
+                  accessibilityLabel="알림 끄기">
                   <Icon
                     name={'ri-notification-line' as IconName}
                     size={20}
                     color={Colors.black[500]}
                   />
-                ) : (
+                </Pressable>
+              ) : (
+                <Pressable
+                  key="notification-disabled"
+                  style={styles.iconButtonActive}
+                  onPress={handleToggleNotification}
+                  accessibilityRole="button"
+                  accessibilityLabel="알림 켜기">
                   <Image
                     source={require('@/assets/icons/unnotification.png')}
                     style={styles.notificationOffIcon}
                     contentFit="contain"
                     accessibilityLabel="알림 꺼짐"
                   />
-                )}
-              </Pressable>
+                </Pressable>
+              )}
               <Pressable
                 style={styles.iconButton}
                 onPress={handleClose}

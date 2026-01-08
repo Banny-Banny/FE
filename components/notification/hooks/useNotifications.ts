@@ -135,6 +135,57 @@ export function useNotifications(): UseNotificationsReturn {
   }, []);
 
   /**
+   * 모든 알림 읽음 처리
+   *
+   * @description
+   * - PATCH /api/me/notifications/read-all
+   * - 성공 시 로컬 상태의 모든 알림을 읽음 처리
+   */
+  const markAllAsRead = useCallback(async () => {
+    try {
+      const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS_READ_ALL}`;
+      await apiClient.patch(endpoint);
+
+      // 로컬 상태 업데이트: 모든 알림을 읽음 처리
+      setNotifications((prev) =>
+        prev.map((notification) => ({
+          ...notification,
+          isRead: true,
+        })),
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      console.error('[useNotifications] 알림 읽음 처리 실패:', err);
+      throw err;
+    }
+  }, []);
+
+  /**
+   * 알림 삭제
+   *
+   * @description
+   * - DELETE /api/me/notifications/{id}
+   * - 성공 시 로컬 상태에서 해당 알림 제거
+   */
+  const deleteNotification = useCallback(async (notificationId: string) => {
+    try {
+      const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS}/${notificationId}`;
+      await apiClient.delete(endpoint);
+
+      // 로컬 상태 업데이트: 해당 알림 제거
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || err.message || '알림 삭제 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      console.error('[useNotifications] 알림 삭제 실패:', err);
+      throw err;
+    }
+  }, []);
+
+  /**
    * 읽지 않은 알림과 읽은 알림으로 구분
    */
   const newNotifications = notifications.filter((n) => !n.isRead);
