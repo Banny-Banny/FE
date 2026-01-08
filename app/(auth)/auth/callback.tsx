@@ -9,13 +9,14 @@ import { ROUTES } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { getUserFromToken } from '@/utils';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
 
 export default function AuthCallback() {
   const { token } = useLocalSearchParams<{ token?: string }>();
   const { login } = useAuth();
   const router = useRouter();
+  const isProcessingRef = useRef(false); // 로그인 처리 중복 방지
 
   useEffect(() => {
     // 토큰 없으면 온보딩 페이지로 리다이렉트
@@ -24,8 +25,18 @@ export default function AuthCallback() {
       return;
     }
 
+    // 이미 처리 중이면 무시
+    if (isProcessingRef.current) {
+      if (__DEV__) {
+        console.log('[AuthCallback] 이미 로그인 처리 중, 스킵');
+      }
+      return;
+    }
+
     const handleWebLogin = async () => {
       try {
+        isProcessingRef.current = true; // 처리 시작
+
         if (__DEV__) {
           console.log('[AuthCallback] 웹 로그인 시작:', {
             tokenLength: token.length,
@@ -60,7 +71,7 @@ export default function AuthCallback() {
     };
 
     handleWebLogin();
-  }, [token, login, router]);
+  }, [token]); // ⚠️ 의존성 배열에서 login, router 제거 → token만 남김
 
   // 웹 로그인 처리 중
   return (
