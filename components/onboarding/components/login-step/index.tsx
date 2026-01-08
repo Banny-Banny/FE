@@ -8,10 +8,10 @@ import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-na
 import Icon from 'react-native-remix-icon';
 import { createResponsiveStyles } from './styles';
 
-// Figma MCP에서 제공한 배경 이미지 URL
-const imgGeminiGeneratedImage =
-  'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
-const imgEllipse = 'http://localhost:3845/assets/5fd04f478f1b1f756c49f81b5c65ba151f3c22eb.svg';
+// 이미지 리소스
+const imgGeminiGeneratedImage = require('@/assets/icons/onboarding_page_icon.png');
+const imgLocationPin = require('@/assets/icons/locationPin.png');
+const imgFriend = require('@/assets/icons/friend.png');
 
 interface LoginStepProps {
   isLoading: boolean;
@@ -49,11 +49,7 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
                   <Text style={styles.cardDescription}>원하는 장소에 타임캡슐을 묻어보세요</Text>
                 </View>
                 <View style={styles.cardIconRight}>
-                  <Image
-                    source={require('../../../../assets/icons/locationPin.png')}
-                    style={styles.cardIcon}
-                    contentFit="contain"
-                  />
+                  <Image source={imgLocationPin} style={styles.cardIcon} contentFit="contain" />
                 </View>
               </View>
             </View>
@@ -63,11 +59,7 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
           <View style={styles.cardSecond}>
             <View style={styles.cardSecondContent}>
               <View style={styles.cardIconLeft}>
-                <Image
-                  source={require('../../../../assets/icons/friend.png')}
-                  style={styles.cardIconSecond}
-                  contentFit="contain"
-                />
+                <Image source={imgFriend} style={styles.cardIconSecond} contentFit="contain" />
               </View>
               <View style={styles.cardSecondTextContainer}>
                 <Text style={styles.cardTitle}>친구와 함께</Text>
@@ -83,7 +75,11 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
           <View style={styles.backgroundImagesWrapper}>
             <View style={styles.backgroundImagesContainer}>
               {/* <Image source={{ uri: imgEllipse }} style={styles.ellipseImage} /> */}
-              <Image source={{ uri: imgGeminiGeneratedImage }} style={styles.bunnyImage} />
+              <Image
+                source={imgGeminiGeneratedImage}
+                style={styles.bunnyImage}
+                contentFit="contain"
+              />
             </View>
 
             {/* 카카오 로그인 버튼 (이미지 위에 배치) */}
