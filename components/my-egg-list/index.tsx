@@ -19,6 +19,8 @@ import { View } from 'react-native';
 import { Filter } from './components/filter';
 import { Header } from './components/header';
 import { ItemList, ItemProps } from './components/item-list';
+import { EasterEggModal } from './components/modal';
+import { MOCK_EGG_DATA_LIST } from './components/modal/mockData';
 import { Tab } from './components/tab';
 import { styles } from './styles';
 import { EasterEggItem, FilterOption, TabType } from './types';
@@ -46,6 +48,8 @@ export default function MyEggList({
   const [activeTab, setActiveTab] = useState<TabType>('discovered');
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEggId, setSelectedEggId] = useState<number | null>(null);
 
   // EasterEggItem을 ItemProps로 변환
   const convertToItemProps = (items: EasterEggItem[]): ItemProps[] => {
@@ -87,6 +91,32 @@ export default function MyEggList({
     }
   };
 
+  // 아이템 클릭 핸들러
+  const handleItemPress = (item: EasterEggItem, index: number) => {
+    // onItemPress가 있으면 먼저 호출
+    onItemPress?.(item, index);
+
+    // TODO: 실제로는 item.id나 item.eggId를 사용하여 API 호출
+    // 현재는 mock 데이터에서 첫 번째 항목 사용
+    // 실제 구현 시: const eggData = await fetchEggDetail(item.id);
+    const mockEggData = MOCK_EGG_DATA_LIST[0]; // 임시로 첫 번째 mock 데이터 사용
+
+    setSelectedEggId(mockEggData.eggId);
+    setModalVisible(true);
+  };
+
+  // 모달 닫기 핸들러
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedEggId(null);
+  };
+
+  // 선택된 이스터에그 데이터 찾기
+  const selectedEggData = useMemo(() => {
+    if (!selectedEggId) return null;
+    return MOCK_EGG_DATA_LIST.find((data) => data.eggId === selectedEggId) || null;
+  }, [selectedEggId]);
+
   return (
     <View style={styles.container}>
       <Header
@@ -117,8 +147,15 @@ export default function MyEggList({
         onItemPress={(item, index) => {
           const originalItem =
             activeTab === 'discovered' ? discoveredItems[index] : plantedItems[index];
-          onItemPress?.(originalItem, index);
+          handleItemPress(originalItem, index);
         }}
+      />
+
+      {/* 이스터에그 상세 모달 */}
+      <EasterEggModal
+        visible={modalVisible}
+        onClose={handleModalClose}
+        data={selectedEggData}
       />
     </View>
   );
