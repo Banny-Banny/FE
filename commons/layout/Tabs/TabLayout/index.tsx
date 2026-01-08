@@ -56,6 +56,7 @@ export function TabsLayoutConfig() {
             title: screen.title,
             tabBarIcon: ({ color, size, focused }) => (
               <Icon
+                key={focused ? `${screen.name}-filled` : `${screen.name}-line`}
                 name={focused ? (screen.iconNameFilled as IconName) : (screen.iconName as IconName)}
                 size={size}
                 color={color}
