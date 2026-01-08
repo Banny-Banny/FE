@@ -5,19 +5,85 @@
 
 import { useNavigation } from '@/commons/hooks';
 import TossPayment from '@/components/toss-payments';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import StepInfo from './components/step-info';
 import { CreateOrderResponse } from './components/step-info/api/types/order';
 import { StepInfoFormData } from './components/step-info/types';
 import StepRoom from './components/step-room';
 
+// 웹 환경에서 sessionStorage 사용
+const STORAGE_KEYS = {
+  STEP: 'timecapsule_create_step',
+  STEP_INFO_DATA: 'timecapsule_create_step_info_data',
+  ORDER_DATA: 'timecapsule_create_order_data',
+};
+
 export default function TimeCapsuleCreate() {
   const navigation = useNavigation();
-  const [step, setStep] = useState(1);
-  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(null);
-  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
+
+  // 웹 환경에서는 sessionStorage에서 복원
+  const [step, setStep] = useState<number>(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(STORAGE_KEYS.STEP);
+      return saved ? parseInt(saved, 10) : 1;
+    }
+    return 1;
+  });
+
+  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(STORAGE_KEYS.STEP_INFO_DATA);
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
+
+  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(STORAGE_KEYS.ORDER_DATA);
+      return saved ? JSON.parse(saved) : null;
+    }
+    return null;
+  });
 
   console.log('🎯 TimeCapsuleCreate 렌더링! step:', step);
+
+  // 웹 환경에서 state 변경 시 sessionStorage에 저장
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      sessionStorage.setItem(STORAGE_KEYS.STEP, step.toString());
+      console.log('💾 [TimeCapsuleCreate] step 저장:', step);
+    }
+  }, [step]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (stepInfoData) {
+        sessionStorage.setItem(STORAGE_KEYS.STEP_INFO_DATA, JSON.stringify(stepInfoData));
+        console.log('💾 [TimeCapsuleCreate] stepInfoData 저장');
+      }
+    }
+  }, [stepInfoData]);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (orderData) {
+        sessionStorage.setItem(STORAGE_KEYS.ORDER_DATA, JSON.stringify(orderData));
+        console.log('💾 [TimeCapsuleCreate] orderData 저장');
+      }
+    }
+  }, [orderData]);
+
+  // 3단계 도달 시 sessionStorage 클리어
+  useEffect(() => {
+    if (step === 3 && Platform.OS === 'web' && typeof window !== 'undefined') {
+      console.log('🧹 [TimeCapsuleCreate] 3단계 도달 - sessionStorage 클리어');
+      sessionStorage.removeItem(STORAGE_KEYS.STEP);
+      sessionStorage.removeItem(STORAGE_KEYS.STEP_INFO_DATA);
+      sessionStorage.removeItem(STORAGE_KEYS.ORDER_DATA);
+    }
+  }, [step]);
 
   // 1단계: 타임캡슐 정보 입력
   if (step === 1) {

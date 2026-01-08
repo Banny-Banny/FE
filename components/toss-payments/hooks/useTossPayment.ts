@@ -95,12 +95,15 @@ export const useTossPayment = (): UseTossPaymentReturn => {
         const response = await confirmTossPayment(paymentKey, orderId, amount);
         return response;
       } catch (err) {
-        const paymentError =
-          err instanceof Error && 'status' in err
+        // PaymentError는 Error를 상속하지 않는 일반 객체이므로 'status' 속성으로 확인
+        const paymentError: PaymentError =
+          err && typeof err === 'object' && 'status' in err && 'message' in err
             ? (err as PaymentError)
             : {
-                status: 0,
-                message: err instanceof Error ? err.message : '결제 승인에 실패했습니다',
+                status: (err as any)?.status || (err as any)?.response?.status || 0,
+                message:
+                  (err as any)?.message ||
+                  (err instanceof Error ? err.message : '결제 승인에 실패했습니다'),
               };
         setError(paymentError);
         throw paymentError;

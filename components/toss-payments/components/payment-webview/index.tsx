@@ -1,12 +1,15 @@
 /**
  * components/payment-webview/index.tsx
  * 토스페이먼츠 결제창 WebView 컴포넌트
+ * 웹 환경에서는 PaymentWidgetWeb을 사용하고, 모바일 환경에서는 WebView를 사용합니다.
  */
 
 import { API_ENDPOINTS } from '@/commons/constants';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, Platform, StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { PaymentWidgetWeb } from '../payment-widget-web';
+import { generatePaymentHtml } from './html-generator';
 
 export type PaymentMethod = '카드' | '간편결제' | '카카오페이';
 
@@ -24,6 +27,7 @@ interface PaymentWebViewProps {
 
 /**
  * 토스페이먼츠 결제창을 WebView로 표시하는 컴포넌트
+ * 웹 환경에서는 PaymentWidgetWeb을 사용하고, 모바일 환경에서는 WebView를 사용합니다.
  */
 export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   visible,
@@ -36,6 +40,24 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   onFail,
   onClose,
 }) => {
+  // 웹 환경에서는 PaymentWidgetWeb 사용
+  if (Platform.OS === 'web') {
+    return (
+      <PaymentWidgetWeb
+        visible={visible}
+        orderId={orderId}
+        amount={amount}
+        orderName={orderName}
+        customerName={customerName}
+        paymentMethod={paymentMethod}
+        onSuccess={onSuccess}
+        onFail={onFail}
+        onClose={onClose}
+      />
+    );
+  }
+
+  // 모바일 환경에서는 기존 WebView 사용
   const webViewRef = useRef<WebView>(null);
   const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
   const [isSimulator, setIsSimulator] = useState(false);
@@ -59,19 +81,26 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           setIsSimulator(isSimulatorEnv);
           console.log('📱 [PaymentWebView] 시뮬레이터/에뮬레이터 감지:', isSimulatorEnv);
           if (isSimulatorEnv) {
-            console.log('💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행');
+            console.log(
+              '💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행',
+            );
           }
         }
       } catch (error: any) {
         // iOS에서 LSApplicationQueriesSchemes에 등록되지 않은 스킴을 확인하면 에러 발생
         // 이 경우 시뮬레이터이거나 실제 기기일 수 있지만, 에러 메시지로 판단
         const errorMessage = error?.message || '';
-        if (errorMessage.includes('LSApplicationQueriesSchemes') || errorMessage.includes('Unable to open URL')) {
+        if (
+          errorMessage.includes('LSApplicationQueriesSchemes') ||
+          errorMessage.includes('Unable to open URL')
+        ) {
           console.log('📱 [PaymentWebView] iOS 스킴 등록 필요 또는 시뮬레이터 환경으로 간주');
           // iOS 시뮬레이터에서는 앱 스킴이 등록되어 있어도 앱이 없으면 false 반환
           // 에러가 발생하면 시뮬레이터일 가능성이 높으므로 시뮬레이터로 간주
           setIsSimulator(true);
-          console.log('💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행');
+          console.log(
+            '💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행',
+          );
         } else {
           console.error('❌ [PaymentWebView] 시뮬레이터 감지 실패:', error);
           // 기타 에러는 실제 기기로 간주
@@ -79,7 +108,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         }
       }
     };
-    
+
     if (visible) {
       checkSimulator();
       // Modal이 열릴 때 변환된 URL 목록 초기화
@@ -91,13 +120,24 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   }, [visible]);
 
   // 결제창 HTML 생성
-  console.log('📝 [PaymentWebView] HTML 생성 시작');
-  
-  // 토스페이먼츠 리다이렉트 URL 상수
   const successUrl = API_ENDPOINTS.PAYMENT.TOSS_SUCCESS_URL;
   const failUrl = API_ENDPOINTS.PAYMENT.TOSS_FAIL_URL;
-  
-  const html = `
+
+  const html = generatePaymentHtml({
+    clientKey,
+    orderId,
+    amount,
+    orderName,
+    customerName,
+    paymentMethod,
+    successUrl,
+    failUrl,
+  });
+
+  // 기존 HTML 코드는 html-generator.ts로 이동됨
+
+  /*
+  const html_old = `
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -214,42 +254,24 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         console.log('👆 [PaymentWebView] 결제 버튼 클릭됨');
         
         // ============================================
-        // 테스트 결제 모드: 실제 토스페이먼츠 API 호출 없이 테스트
+        // 실제 결제 로직
         // ============================================
-        console.log('🧪 [PaymentWebView] 테스트 결제 모드: Mock 결제 진행');
-        loading.style.display = 'block';
-        button.disabled = true;
-        
-        // 임의의 paymentKey 생성 (고정된 형식)
-        const testPaymentKey = 'test_payment_key_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-        
-        // 2초 후 테스트 결제 성공 시뮬레이션
-        setTimeout(() => {
-          console.log('✅ [PaymentWebView] 테스트 모드: 결제 성공 시뮬레이션');
-          console.log('  - paymentKey:', testPaymentKey);
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'PAYMENT_SUCCESS',
-            data: {
-              paymentKey: testPaymentKey,
-              orderId: "${orderId}",
-              amount: ${amount}
-            }
-          }));
-          loading.style.display = 'none';
-          button.disabled = false;
-        }, 2000);
-        return;
-        
-        // ============================================
-        // 실제 결제 로직 (주석처리)
-        // ============================================
-        /*
         try {
           loading.style.display = 'block';
           button.disabled = true;
           console.log('⏳ [PaymentWebView] 결제 요청 시작...');
+          console.log('  - paymentMethod:', '${paymentMethod}');
+          console.log('  - amount:', ${amount});
+          console.log('  - orderId:', "${orderId}");
+          console.log('  - orderName:', "${orderName}");
+          console.log('  - customerName:', "${customerName}");
+          console.log('  - successUrl:', '${successUrl}');
+          console.log('  - failUrl:', '${failUrl}');
           
-          await tossPayments.requestPayment('${paymentMethod}', {
+          // 결제수단 코드 변환 ('간편결제'는 '카드'로 변환)
+          const paymentMethodCode = '${paymentMethod}' === '간편결제' ? '카드' : '${paymentMethod}';
+          
+          await tossPayments.requestPayment(paymentMethodCode, {
             amount: ${amount},
             orderId: "${orderId}",
             orderName: "${orderName}",
@@ -259,8 +281,27 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           });
           
           console.log('✅ [PaymentWebView] 결제 요청 완료');
+          // successUrl로 리다이렉트되므로 여기서는 처리하지 않음
+          // 리다이렉트 후 URL 변경 감지로 처리됨
         } catch (error) {
           console.error('❌ [PaymentWebView] 결제 요청 오류:', error);
+          loading.style.display = 'none';
+          button.disabled = false;
+          
+          // 사용자가 결제를 취소한 경우 (PAY_PROCESS_CANCELED)
+          if (error.code === 'PAY_PROCESS_CANCELED') {
+            console.log('⚠️ [PaymentWebView] 사용자가 결제를 취소했습니다');
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'PAYMENT_FAIL',
+              data: {
+                code: 'PAY_PROCESS_CANCELED',
+                message: '결제가 취소되었습니다'
+              }
+            }));
+            return;
+          }
+          
+          // 기타 에러
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'PAYMENT_ERROR',
             data: {
@@ -268,10 +309,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
               message: error.message || '결제 요청 중 오류가 발생했습니다'
             }
           }));
-          loading.style.display = 'none';
-          button.disabled = false;
         }
-        */
       });
       console.log('✅ [PaymentWebView] 버튼 이벤트 리스너 등록 완료');
     } else {
@@ -331,8 +369,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 </body>
 </html>
   `;
-  
-  console.log('✅ [PaymentWebView] HTML 생성 완료, 길이:', html.length);
+  */
+
+  // HTML 생성 완료 (generatePaymentHtml 함수로 처리됨)
 
   const handleMessage = (event: WebViewMessageEvent) => {
     try {
@@ -374,7 +413,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
    */
   const handleShouldStartLoadWithRequest = (request: any) => {
     const { url, navigationType, mainDocumentURL } = request;
-    
+
     console.log('🔍 [PaymentWebView] URL 요청:', { url, navigationType, mainDocumentURL });
 
     // 빈 URL이나 about:blank는 무시 (무한 로딩 방지)
@@ -386,7 +425,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
     // 토스 앱 딥링크 감지 (supertoss://, toss://)
     if (url.startsWith('supertoss://') || url.startsWith('toss://')) {
       console.log('🔗 [PaymentWebView] 토스 앱 딥링크 감지:', url);
-      
+
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
         // 시뮬레이터에서는 토스 앱이 없으므로 딥링크를 무시하고 테스트 모드로 진행
@@ -394,7 +433,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         // 딥링크는 무시하고 WebView 내에서 테스트 모드로 진행
         return false;
       }
-      
+
       // 실제 기기: 앱 딥링크 시도 (비동기 처리)
       // handleShouldStartLoadWithRequest는 동기적으로 반환해야 하므로
       // 앱을 열려고 시도하고, 실패하면 WebView에서 진행하도록 처리
@@ -411,7 +450,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
               `);
             });
           } else {
-            console.warn('⚠️ [PaymentWebView] 토스 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.');
+            console.warn(
+              '⚠️ [PaymentWebView] 토스 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
+            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -439,7 +480,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       url.startsWith('kakaobank://')
     ) {
       console.log('🔗 [PaymentWebView] 카카오페이/카카오뱅크 앱 딥링크 감지:', url);
-      
+
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
         // 카카오페이 딥링크에서 payweb_url 파라미터 추출
@@ -448,12 +489,15 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           // URL에서 payweb_url 파라미터 추출 (정규식 사용)
           const paywebUrlMatch = url.match(/payweb_url=([^&]+)/);
           const urlMatch = url.match(/[&?]url=([^&]+)/);
-          
+
           if (paywebUrlMatch && paywebUrlMatch[1]) {
             // payweb_url이 있으면 디코딩하여 WebView에서 로드
             const decodedPaywebUrl = decodeURIComponent(paywebUrlMatch[1]);
-            console.log('📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 payweb_url 추출:', decodedPaywebUrl);
-            
+            console.log(
+              '📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 payweb_url 추출:',
+              decodedPaywebUrl,
+            );
+
             // WebView에서 웹 URL로 리다이렉트
             setTimeout(() => {
               webViewRef.current?.injectJavaScript(`
@@ -466,7 +510,10 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             // payweb_url이 없으면 url 파라미터 확인
             const fallbackUrl = decodeURIComponent(urlMatch[1]);
             if (fallbackUrl.startsWith('http://') || fallbackUrl.startsWith('https://')) {
-              console.log('📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 fallback URL 사용:', fallbackUrl);
+              console.log(
+                '📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 fallback URL 사용:',
+                fallbackUrl,
+              );
               setTimeout(() => {
                 webViewRef.current?.injectJavaScript(`
                   window.location.href = "${fallbackUrl}";
@@ -478,18 +525,23 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         } catch (error) {
           console.error('❌ [PaymentWebView] 카카오페이 딥링크 파싱 실패:', error);
         }
-        
-        console.log('📱 [PaymentWebView] 시뮬레이터 환경: WebView 내에서 직접 결제 진행 (payweb_url 없음)');
+
+        console.log(
+          '📱 [PaymentWebView] 시뮬레이터 환경: WebView 내에서 직접 결제 진행 (payweb_url 없음)',
+        );
         // payweb_url이 없으면 WebView가 해당 URL을 로드하도록 허용 (에러 발생하지만 무시)
         return true;
       }
-      
+
       // 실제 기기: 앱 딥링크 시도 (비동기 처리)
       // handleShouldStartLoadWithRequest는 동기적으로 반환해야 하므로
       // 앱을 열려고 시도하고, 실패하면 WebView에서 진행하도록 처리
       Linking.canOpenURL(url)
         .then((supported: boolean) => {
-          console.log('📱 [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱 설치 여부:', supported);
+          console.log(
+            '📱 [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱 설치 여부:',
+            supported,
+          );
           if (supported) {
             console.log('✅ [PaymentWebView] 카카오 앱 열기 시도:', url);
             Linking.openURL(url).catch((err: Error) => {
@@ -500,7 +552,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
               `);
             });
           } else {
-            console.warn('⚠️ [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.');
+            console.warn(
+              '⚠️ [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
+            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -523,30 +577,46 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
     // 카드사 앱 딥링크 감지 (시뮬레이터에서는 WebView 내에서 처리)
     // 주요 카드사 앱 스킴: kb-acp, nhappcardansimclick, lottesmartpay, mpocket.online.ansimclick 등
     const cardAppSchemes = [
-      'kb-acp://', 'liivbank://', 'newliiv://', 'kbbank://', // KB카드
-      'nhappcardansimclick://', 'nhallonepayansimclick://', 'nonghyupcardansimclick://', // 농협카드
-      'lottesmartpay://', 'lotteappcard://', // 롯데카드
-      'mpocket.online.ansimclick://', 'mpocket.ansimclick.cert://', 'samsungpay://', // 삼성카드
-      'shinhan-sr-ansimclick://', 'smshinhanansimclick://', // 신한카드
-      'com.wooricard.wcard://', 'newsmartpib://', // 우리카드
-      'citispay://', 'citicardappkr://', 'citimobileapp://', // 씨티카드
-      'cloudpay://', 'hanawalletmembers://', // 하나카드
-      'hdcardappcardansimclick://', 'smhyundaiansimclick://', // 현대카드
+      'kb-acp://',
+      'liivbank://',
+      'newliiv://',
+      'kbbank://', // KB카드
+      'nhappcardansimclick://',
+      'nhallonepayansimclick://',
+      'nonghyupcardansimclick://', // 농협카드
+      'lottesmartpay://',
+      'lotteappcard://', // 롯데카드
+      'mpocket.online.ansimclick://',
+      'mpocket.ansimclick.cert://',
+      'samsungpay://', // 삼성카드
+      'shinhan-sr-ansimclick://',
+      'smshinhanansimclick://', // 신한카드
+      'com.wooricard.wcard://',
+      'newsmartpib://', // 우리카드
+      'citispay://',
+      'citicardappkr://',
+      'citimobileapp://', // 씨티카드
+      'cloudpay://',
+      'hanawalletmembers://', // 하나카드
+      'hdcardappcardansimclick://',
+      'smhyundaiansimclick://', // 현대카드
       'ispmobile://', // ISP
     ];
-    
-    const isCardAppScheme = cardAppSchemes.some(scheme => url.toLowerCase().startsWith(scheme.toLowerCase()));
-    
+
+    const isCardAppScheme = cardAppSchemes.some((scheme) =>
+      url.toLowerCase().startsWith(scheme.toLowerCase()),
+    );
+
     if (isCardAppScheme) {
       console.log('🔗 [PaymentWebView] 카드사 앱 딥링크 감지:', url);
-      
+
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
         console.log('📱 [PaymentWebView] 시뮬레이터 환경: 카드사 앱 딥링크를 WebView 내에서 처리');
         // WebView가 해당 URL을 로드하도록 허용 (시뮬레이터에서는 앱이 없으므로 WebView에서 처리)
         return true;
       }
-      
+
       // 실제 기기: 카드사 앱 딥링크 시도
       Linking.canOpenURL(url)
         .then((supported: boolean) => {
@@ -560,7 +630,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
               `);
             });
           } else {
-            console.warn('⚠️ [PaymentWebView] 카드사 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.');
+            console.warn(
+              '⚠️ [PaymentWebView] 카드사 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
+            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -568,12 +640,15 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }
         })
         .catch((err: Error) => {
-          console.error('❌ [PaymentWebView] 카드사 앱 딥링크 확인 실패, WebView 내에서 진행:', err);
+          console.error(
+            '❌ [PaymentWebView] 카드사 앱 딥링크 확인 실패, WebView 내에서 진행:',
+            err,
+          );
           webViewRef.current?.injectJavaScript(`
             window.location.href = "${url}";
           `);
         });
-      
+
       // 실제 기기에서 앱을 열려고 시도하므로 일단 WebView에서 로드하지 않음
       return false;
     }
@@ -632,9 +707,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       <View style={styles.container}>
         <WebView
           ref={webViewRef}
-          source={{ 
+          source={{
             html,
-            baseUrl: 'https://timeegg.com' // baseUrl 추가 (HTML 로딩 개선)
+            baseUrl: 'https://timeegg.com', // baseUrl 추가 (HTML 로딩 개선)
           }}
           injectedJavaScript={`
             console.log('💉 [PaymentWebView] JavaScript 주입 완료');
@@ -651,35 +726,45 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             const { nativeEvent } = syntheticEvent;
             const errorDescription = nativeEvent.description || '';
             const errorUrl = nativeEvent.url || '';
-            
+
             // 시뮬레이터 환경에서 발생하는 딥링크 관련 에러는 경고로만 처리
             if (isSimulator) {
               // 카드사 앱 딥링크 리다이렉트 에러
               if (errorDescription.includes('scheme that is not HTTP(S)')) {
-                console.warn('⚠️ [PaymentWebView] 시뮬레이터 환경: 카드사 앱 딥링크 리다이렉트 에러 (정상 동작)');
+                console.warn(
+                  '⚠️ [PaymentWebView] 시뮬레이터 환경: 카드사 앱 딥링크 리다이렉트 에러 (정상 동작)',
+                );
                 console.warn('  - 에러 설명:', errorDescription);
                 console.warn('  - URL:', errorUrl);
                 return;
               }
-              
+
               // 카카오페이 관련 unsupported URL 에러
               if (
-                (errorDescription.includes('unsupported URL') || errorDescription.includes('NSURLErrorDomain')) &&
-                (errorUrl.includes('kakaopay.com') || errorUrl.includes('online-payment.kakaopay.com'))
+                (errorDescription.includes('unsupported URL') ||
+                  errorDescription.includes('NSURLErrorDomain')) &&
+                (errorUrl.includes('kakaopay.com') ||
+                  errorUrl.includes('online-payment.kakaopay.com'))
               ) {
-                console.warn('⚠️ [PaymentWebView] 시뮬레이터 환경: 카카오페이 URL 에러 (정상 동작)');
+                console.warn(
+                  '⚠️ [PaymentWebView] 시뮬레이터 환경: 카카오페이 URL 에러 (정상 동작)',
+                );
                 console.warn('  - 에러 설명:', errorDescription);
                 console.warn('  - URL:', errorUrl);
                 console.warn('  - 카카오페이는 payweb_url로 자동 리다이렉트됩니다.');
                 return;
               }
             }
-            
+
             console.error('❌ [PaymentWebView] WebView 에러:', nativeEvent);
           }}
           onHttpError={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.error('❌ [PaymentWebView] HTTP 에러:', nativeEvent.statusCode, nativeEvent.url);
+            console.error(
+              '❌ [PaymentWebView] HTTP 에러:',
+              nativeEvent.statusCode,
+              nativeEvent.url,
+            );
           }}
           onLoadStart={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
@@ -691,7 +776,10 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }}
           onLoadProgress={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.log('⏳ [PaymentWebView] 로딩 진행:', Math.round(nativeEvent.progress * 100) + '%');
+            console.log(
+              '⏳ [PaymentWebView] 로딩 진행:',
+              Math.round(nativeEvent.progress * 100) + '%',
+            );
           }}
           originWhitelist={['*']}
           javaScriptEnabled={true}
@@ -726,4 +814,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
-

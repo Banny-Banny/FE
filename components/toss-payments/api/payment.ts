@@ -25,27 +25,103 @@ export const confirmTossPayment = async (
   amount: number,
 ): Promise<TossPaymentConfirmResponse> => {
   try {
-    const response = await apiClient.post<TossPaymentConfirmResponse>(
-      `/${API_ENDPOINTS.PAYMENT.TOSS_CONFIRM}`,
-      { paymentKey, orderId, amount },
-    );
+    const endpoint = `/${API_ENDPOINTS.PAYMENT.TOSS_CONFIRM}`;
+    const requestBody = { paymentKey, orderId, amount };
+
+    console.log('🌐 [confirmTossPayment] API 호출 시작');
+    console.log('  - Endpoint:', endpoint);
+    console.log('  - Method: POST');
+    console.log('  - Request Body:', {
+      paymentKey: paymentKey.substring(0, 20) + '...', // 보안을 위해 일부만 표시
+      orderId,
+      amount,
+    });
+    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
+    console.log('  - Full URL:', `${apiClient.defaults.baseURL || ''}${endpoint}`);
+
+    const response = await apiClient.post<TossPaymentConfirmResponse>(endpoint, requestBody);
+
+    console.log('✅ [confirmTossPayment] API 호출 성공');
+    console.log('  - Status:', response.status);
+    console.log('  - Response Data:', {
+      order_id: response.data.order_id,
+      payment_key: response.data.payment_key?.substring(0, 20) + '...',
+      status: response.data.status,
+      amount: response.data.amount,
+    });
+
     return response.data;
   } catch (error: any) {
-    const status = error.response?.status || 0;
+    const status = error.response?.status || error.response?.data?.statusCode || 0;
     let message = '결제 승인에 실패했습니다';
 
-    const errorCode = error.response?.data?.code;
-    const errorMessage = error.response?.data?.message;
+    // 백엔드 응답 구조 확인 (여러 가능한 구조 지원)
+    const responseData = error.response?.data;
+    const errorCode = responseData?.code || responseData?.errorCode || responseData?.data?.code;
+    const errorMessage =
+      responseData?.message || responseData?.errorMessage || responseData?.data?.message;
+
+    console.log('🔍 [confirmTossPayment] 에러 응답 구조 분석:', {
+      status,
+      responseDataKeys: responseData ? Object.keys(responseData) : [],
+      errorCode,
+      errorMessage,
+      fullResponse: responseData,
+    });
 
     if (status === 400) {
+      // errorCode가 없어도 errorMessage에 에러 코드가 포함되어 있을 수 있음
+      // 예: "TOSS_CONFIRM_FAILED: {...}" 형식
+      const isTossConfirmFailed =
+        errorCode === 'TOSS_CONFIRM_FAILED' ||
+        (errorMessage && errorMessage.includes('TOSS_CONFIRM_FAILED'));
+
       if (errorCode === 'AMOUNT_MISMATCH') {
         message = '결제 금액이 일치하지 않습니다';
       } else if (errorCode === 'ORDER_ALREADY_PAID') {
         message = '이미 결제가 완료된 주문입니다';
       } else if (errorCode === 'TOSS_SECRET_KEY_REQUIRED') {
         message = '결제 시스템 설정 오류입니다. 관리자에게 문의해주세요';
-      } else if (errorCode === 'TOSS_CONFIRM_FAILED') {
-        message = `결제 승인에 실패했습니다: ${errorMessage || ''}`;
+      } else if (isTossConfirmFailed) {
+        // TOSS_CONFIRM_FAILED 에러는 토스페이먼츠의 실제 에러가 JSON 문자열로 중첩되어 있음
+        // 예: "TOSS_CONFIRM_FAILED: {\"code\":\"NOT_FOUND_PAYMENT_SESSION\",\"message\":\"결제 시간이 만료되어...\"}"
+        let tossErrorMessage = errorMessage || '';
+
+        // JSON 문자열이 포함되어 있는지 확인하고 파싱 시도
+        try {
+          // "TOSS_CONFIRM_FAILED: {...}" 형식에서 JSON 부분 추출
+          const jsonMatch = tossErrorMessage.match(/\{.*\}/);
+          if (jsonMatch) {
+            const tossError = JSON.parse(jsonMatch[0]);
+            const tossErrorCode = tossError.code;
+            const tossErrorMsg = tossError.message;
+
+            console.log('🔍 [confirmTossPayment] 토스 에러 파싱 성공:', {
+              tossErrorCode,
+              tossErrorMsg,
+            });
+
+            // 토스페이먼츠 에러 코드에 따른 메시지 매핑
+            if (tossErrorCode === 'NOT_FOUND_PAYMENT_SESSION') {
+              message = '결제 시간이 만료되었습니다. 다시 시도해주세요.';
+            } else if (tossErrorCode === 'INVALID_PAYMENT_KEY') {
+              message = '유효하지 않은 결제 정보입니다.';
+            } else if (tossErrorCode === 'ALREADY_PROCESSED_PAYMENT') {
+              message = '이미 처리된 결제입니다.';
+            } else {
+              message = `결제 승인에 실패했습니다: ${
+                tossErrorMsg || tossErrorCode || '알 수 없는 오류'
+              }`;
+            }
+          } else {
+            // JSON 형식이 아닌 경우 원본 메시지 사용
+            message = `결제 승인에 실패했습니다: ${tossErrorMessage}`;
+          }
+        } catch (parseError) {
+          // JSON 파싱 실패 시 원본 메시지 사용
+          console.warn('[confirmTossPayment] 토스 에러 메시지 파싱 실패:', parseError);
+          message = `결제 승인에 실패했습니다: ${tossErrorMessage}`;
+        }
       } else {
         message = errorMessage || message;
       }
@@ -173,16 +249,26 @@ export const updateOrderStatus = async (
   updated_at: string;
 }> => {
   try {
+    const endpoint = `/${API_ENDPOINTS.ORDER.UPDATE_STATUS}/${orderId}/status`;
+    const requestBody = { status };
+
+    console.log('🌐 [updateOrderStatus] API 호출 시작');
+    console.log('  - Endpoint:', endpoint);
+    console.log('  - Method: POST');
+    console.log('  - Request Body:', requestBody);
+    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
+    console.log('  - Full URL:', `${apiClient.defaults.baseURL || ''}${endpoint}`);
+
     const response = await apiClient.post<{
       order_id: string;
       order_status: string;
       payment_status?: string;
       updated_at: string;
-    }>(`/${API_ENDPOINTS.ORDER.UPDATE_STATUS}/${orderId}/status`, { status });
+    }>(endpoint, requestBody);
 
-    console.log('✅ [updateOrderStatus] 주문 상태 변경 완료');
-    console.log('  - 응답 상태:', response.status);
-    console.log('  - 응답 데이터:', JSON.stringify(response.data, null, 2));
+    console.log('✅ [updateOrderStatus] API 호출 성공');
+    console.log('  - Status:', response.status);
+    console.log('  - Response Data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {
