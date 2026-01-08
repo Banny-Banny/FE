@@ -15,7 +15,7 @@
 import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors } from '@/commons/constants/color';
+import { Colors, ROUTES } from '@/commons/constants';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
@@ -362,10 +362,27 @@ export default function StepRoom({
   // 렌더링
   // ============================================
 
+  // 메인으로 나가기 핸들러 (호스트/게스트 공통)
+  const handleGoToMain = () => {
+    router.replace(ROUTES.MAIN as any);
+  };
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <TimeCapsuleHeader title="캡슐 대기실" onBack={() => router.back()} titleAlign="left" />
+      <TimeCapsuleHeader
+        title="캡슐 대기실"
+        onBack={undefined}
+        titleAlign="left"
+        rightIcons={[
+          {
+            icon: 'close-line',
+            size: 44,
+            onPress: handleGoToMain,
+            accessibilityLabel: '메인으로 나가기',
+          },
+        ]}
+      />
 
       <ScrollView
         style={styles.scrollContent}

@@ -11,10 +11,12 @@
  */
 
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors } from '@/commons/constants/color';
+import { Colors, ROUTES, STORAGE_KEYS } from '@/commons/constants';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useNavigation } from '@/commons/hooks';
 import { fetchRoomByInviteCode } from '@/components/timecapsule-create/components/step-room/api/capsule';
 import StepRoom from '@/components/timecapsule-create/components/step-room';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View, StyleSheet } from 'react-native';
@@ -23,14 +25,20 @@ export default function RoomJoinScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const params = useLocalSearchParams();
+  const { accessToken, isLoading: isAuthLoading } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [capsuleId, setCapsuleId] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
 
-  // URL 파라미터에서 invite_code 추출
+  // URL 파라미터에서 invite_code 추출 및 토큰 확인
   useEffect(() => {
+    // 인증 상태 로딩 중이면 대기
+    if (isAuthLoading) {
+      return;
+    }
+
     const code = Array.isArray(params.invite_code) ? params.invite_code[0] : params.invite_code;
 
     if (!code) {
@@ -42,7 +50,27 @@ export default function RoomJoinScreen() {
     console.log('🔗 [RoomJoin] 딥링크로 입장:', code);
     setInviteCode(code);
 
-    // 초대 코드로 대기실 조회
+    // 토큰 확인
+    if (!accessToken) {
+      // 토큰 없음 → 초대 코드 저장 후 온보딩으로 이동
+      const saveInviteCodeAndRedirect = async () => {
+        try {
+          await AsyncStorage.setItem(STORAGE_KEYS.PENDING_INVITE_CODE, code);
+          if (__DEV__) {
+            console.log('[RoomJoin] 토큰 없음 → 초대 코드 저장 후 온보딩으로 이동:', code);
+          }
+          router.replace(ROUTES.AUTH_ONBOARDING as any);
+        } catch (err) {
+          console.error('[RoomJoin] 초대 코드 저장 실패:', err);
+          setError('초대 코드를 저장하는 중 오류가 발생했습니다.');
+          setIsLoading(false);
+        }
+      };
+      saveInviteCodeAndRedirect();
+      return;
+    }
+
+    // 토큰 있음 → 대기실 조회
     const joinRoom = async () => {
       try {
         setIsLoading(true);
@@ -61,7 +89,7 @@ export default function RoomJoinScreen() {
     };
 
     joinRoom();
-  }, [params.invite_code]);
+  }, [params.invite_code, accessToken, isAuthLoading, router]);
 
   // 로딩 중
   if (isLoading) {
