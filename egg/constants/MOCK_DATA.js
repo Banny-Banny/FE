@@ -22,6 +22,7 @@
  * @property {string} id - 친구 고유 ID
  * @property {string} name - 친구 이름
  * @property {string} emoji - 친구 아바타 이모지
+ * @property {string|null} profileImg - 프로필 이미지 URL
  * @property {boolean} isBlocked - 차단 여부
  *
  * @type {Friend[]}
@@ -131,4 +132,3 @@ export const DEFAULT_OLD_NOTIFICATIONS = [
     isRead: true,
   },
 ];
-

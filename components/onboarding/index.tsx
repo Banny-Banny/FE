@@ -6,6 +6,8 @@
 
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { getUserFromToken } from '@/utils';
+import { useEffect, useRef } from 'react';
+import { Linking, Platform } from 'react-native';
 import { FriendConsentStep } from './components/friend-consent-step';
 import { LocationConsentStep } from './components/location-consent-step';
 import { LoginStep } from './components/login-step';
@@ -19,15 +21,142 @@ import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 export default function OnboardingFeature() {
   const { currentStep, login, friendConsent, locationConsent } = useOnboardingFlow();
   const { login: authLogin } = useAuth();
+  const isProcessingDeepLink = useRef(false);
+
+  // Android 딥링크 처리 (외부 브라우저에서 돌아올 때)
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+
+      if (__DEV__) {
+        console.log('[Onboarding] 🔗 딥링크 수신:', url);
+      }
+
+      /**
+       * Expo Go(개발 환경)에서는 정상 OAuth 리다이렉트도 `exp://.../--/auth/callback?...` 형태로 들어옵니다.
+       * 기존 로직처럼 exp://를 전부 무시하면 Android에서 로그인 완료 후 토큰 처리가 막힙니다.
+       *
+       * 따라서 "그냥 개발 서버 루트(exp://...)"만 무시하고,
+       * auth/callback(토큰/코드 포함) 형태는 허용합니다.
+       */
+      const isExpoDevUrl = url.startsWith('exp://') || url.startsWith('exps://');
+      if (isExpoDevUrl) {
+        const looksLikeAuthCallback =
+          url.includes('/auth/callback') || url.includes('/api/auth/kakao/callback');
+        const hasAuthParams = url.includes('token=') || url.includes('code=');
+
+        if (__DEV__) {
+          console.log('[Onboarding] 🔍 URL 체크:', {
+            looksLikeAuthCallback,
+            hasAuthParams,
+            willIgnore: !looksLikeAuthCallback && !hasAuthParams,
+          });
+        }
+
+        if (!looksLikeAuthCallback && !hasAuthParams) {
+          if (__DEV__) {
+            console.log('[Onboarding] ❌ Expo 개발 서버 루트 URL → 무시');
+          }
+          return;
+        }
+
+        if (__DEV__) {
+          console.log('[Onboarding] ✅ OAuth 콜백 URL → 처리 진행');
+        }
+      }
+
+      // 이미 처리 중이면 무시
+      if (isProcessingDeepLink.current) {
+        if (__DEV__) {
+          console.log('[Onboarding] 딥링크 처리 중, 스킵');
+        }
+        return;
+      }
+
+      try {
+        const urlObj = new URL(url);
+
+        /**
+         * 콜백 URL 예시
+         * - 프로덕션/개발빌드: timeegg://auth/callback?token=...
+         * - Expo Go: exp://<ip>:<port>/--/auth/callback?token=...
+         * - 백엔드 임시 콜백: /api/auth/kakao/callback?token=...
+         */
+        const isAuthCallbackPath =
+          urlObj.pathname.includes('/auth/callback') ||
+          urlObj.pathname.includes('/api/auth/kakao/callback');
+
+        if (isAuthCallbackPath) {
+          isProcessingDeepLink.current = true;
+
+          const token = urlObj.searchParams.get('token');
+          const isNewUser = urlObj.searchParams.get('isNewUser') === 'true';
+
+          if (!token) {
+            if (__DEV__) {
+              console.error('[Onboarding] 딥링크에 토큰 없음');
+            }
+            return;
+          }
+
+          if (__DEV__) {
+            console.log('[Onboarding] 딥링크에서 토큰 추출 성공:', {
+              tokenLength: token.length,
+              isNewUser,
+            });
+          }
+
+          // 토큰으로 유저 정보 추출
+          const userData = getUserFromToken(token);
+          if (!userData) {
+            if (__DEV__) {
+              console.error('[Onboarding] 토큰에서 유저 정보 추출 실패');
+            }
+            return;
+          }
+
+          // 로그인 처리
+          await authLogin(token, userData);
+
+          if (__DEV__) {
+            console.log('[Onboarding] 딥링크 로그인 처리 완료');
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+          console.error('[Onboarding] 딥링크 처리 오류:', error);
+        }
+      } finally {
+        isProcessingDeepLink.current = false;
+      }
+    };
+
+    // 딥링크 리스너 등록
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // 앱이 딥링크로 시작된 경우 처리
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [authLogin]);
 
   // 로그인 핸들러 (토큰 처리 포함)
   const handleKakaoLogin = async () => {
     const result = await login.loginWithKakao();
 
+    // Android는 딥링크로 처리되므로 여기서 null이 정상
     // 웹 환경이거나 취소/에러인 경우
     if (!result || !result.token) {
       if (__DEV__) {
-        console.warn('[Onboarding] 로그인 결과 없음:', result);
+        console.warn('[Onboarding] 로그인 결과 없음 (Android는 정상):', result);
       }
       return;
     }
