@@ -8,7 +8,7 @@
  * - react-query를 사용한 데이터 페칭
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { apiClient } from '@/utils/apiClient';
 import { useQuery } from '@tanstack/react-query';
@@ -28,7 +28,7 @@ export function useUserInfo(): UseUserInfoReturn {
     error,
     refetch: refetchQuery,
   } = useQuery({
-    queryKey: ['userInfo'],
+    queryKey: queryKeys.userInfo(),
     queryFn: async () => {
       // API 엔드포인트: GET /api/auth/me
       const endpoint = `/${API_ENDPOINTS.AUTH.ME}`;

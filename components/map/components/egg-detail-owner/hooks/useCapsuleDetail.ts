@@ -8,7 +8,7 @@
  * - react-query를 사용한 데이터 페칭
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { buildEndpointWithQuery } from '@/utils/api';
 import { apiClient } from '@/utils/apiClient';
 import { useQuery } from '@tanstack/react-query';
@@ -36,7 +36,11 @@ export function useCapsuleDetail({
   lng,
 }: UseCapsuleDetailParams): UseCapsuleDetailReturn {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['capsuleDetail', capsuleId, lat, lng],
+    queryKey: queryKeys.capsuleDetail({
+      capsuleId: capsuleId || '',
+      lat: lat ?? 0,
+      lng: lng ?? 0,
+    }),
     queryFn: async () => {
       if (!capsuleId || lat === null || lng === null) {
         return null;

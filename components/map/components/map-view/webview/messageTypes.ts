@@ -47,12 +47,21 @@ export interface RemoveCurrentLocationMessage {
   type: 'REMOVE_CURRENT_LOCATION';
 }
 
+export interface SetZoomLevelMessage {
+  type: 'SET_ZOOM_LEVEL';
+  payload: {
+    level: number;
+    scale: number;
+  };
+}
+
 export type RNToWebViewMessage =
   | InitMapMessage
   | SetMarkersMessage
   | MoveCameraMessage
   | SetCurrentLocationMessage
-  | RemoveCurrentLocationMessage;
+  | RemoveCurrentLocationMessage
+  | SetZoomLevelMessage;
 
 // WebView -> RN 메시지 타입
 export interface ReadyMessage {
@@ -74,6 +83,11 @@ export interface MarkerClickMessage {
   payload: { id: string };
 }
 
+export interface ZoomChangedMessage {
+  type: 'ZOOM_CHANGED';
+  payload: { level: number };
+}
+
 export interface WebErrorMessage {
   type: 'WEB_ERROR' | 'WEB_WARN' | 'WEB_ONERROR';
   payload:
@@ -86,4 +100,5 @@ export type WebViewToRNMessage =
   | CenterChangedMessage
   | MapClickMessage
   | MarkerClickMessage
+  | ZoomChangedMessage
   | WebErrorMessage;

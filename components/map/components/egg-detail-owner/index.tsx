@@ -15,7 +15,7 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Dimensions, ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
 import { BottomSheet } from '@/commons/components/bottom-sheet';
@@ -27,7 +27,19 @@ import { useEggDetail } from './hooks/useEggDetail';
 import { styles } from './styles';
 import type { EggDetailProps } from './types';
 
-export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsule, currentLocation }) => {
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+// BottomSheet 내부 계산 방식과 동일하게 맞춤
+// BOTTOM_SHEET_HEIGHT = SCREEN_HEIGHT - 100
+// 초기 높이를 화면 높이의 60%로 설정
+const BOTTOM_SHEET_HEIGHT = SCREEN_HEIGHT - 100;
+const INITIAL_BOTTOM_SHEET_HEIGHT = BOTTOM_SHEET_HEIGHT * 0.6;
+
+export const EggDetail: React.FC<EggDetailProps> = ({
+  isVisible,
+  onClose,
+  capsule,
+  currentLocation,
+}) => {
   // 비즈니스 로직은 Hook에서 가져옴
   const { formattedDate, locationText, discoveryCount, authorNickname, viewers, isLoading, error } =
     useEggDetail({ capsule, currentLocation });
@@ -37,7 +49,10 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
   }
 
   return (
-    <BottomSheet isVisible={isVisible} onClose={onClose}>
+    <BottomSheet
+      isVisible={isVisible}
+      onClose={onClose}
+      initialHeight={INITIAL_BOTTOM_SHEET_HEIGHT}>
       <View style={styles.container}>
         {isLoading ? (
           <View style={styles.loadingContainer}>
@@ -66,7 +81,9 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
 
               {/* 오른쪽: 제목과 부제목 */}
               <View style={styles.titleContainer}>
-                <Text style={styles.title}>{capsule.title}</Text>
+                <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+                  {capsule.title}
+                </Text>
                 <Text style={styles.subtitle}>{TEXTS.header.subtitle}</Text>
               </View>
             </View>
@@ -91,9 +108,7 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
                     <Icon name="map-pin-line" size={12} color={Colors.grey[700]} />
                     <Text style={styles.infoCardLabel}>{TEXTS.infoCard.locationLabel}</Text>
                   </View>
-                  <Text style={styles.infoCardValue} numberOfLines={1}>
-                    {locationText}
-                  </Text>
+                  <Text style={styles.infoCardValue}>{locationText}</Text>
                 </View>
               </View>
             </View>
@@ -136,4 +151,3 @@ export const EggDetail: React.FC<EggDetailProps> = ({ isVisible, onClose, capsul
     </BottomSheet>
   );
 };
-

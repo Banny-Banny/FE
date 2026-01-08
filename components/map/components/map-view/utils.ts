@@ -49,6 +49,8 @@ export interface MessageHandlerCallbacks {
   onMarkerClick?: (id: string) => void;
   onCapsuleClick?: (capsule: any) => void;
   onCenterChanged?: (coord: { lat: number; lng: number }) => void;
+  onZoomChanged?: (level: number) => void;
+  onReady?: () => void;
 }
 
 /**
@@ -70,6 +72,7 @@ export function createMessageHandler(
   return (message: WebViewToRNMessage) => {
     switch (message.type) {
       case 'READY':
+        callbacks.onReady?.();
         break;
 
       case 'CENTER_CHANGED':
@@ -93,6 +96,10 @@ export function createMessageHandler(
         callbacks.onMarkerClick?.(message.payload.id);
         break;
       }
+
+      case 'ZOOM_CHANGED':
+        callbacks.onZoomChanged?.(message.payload.level);
+        break;
 
       case 'WEB_ERROR':
       case 'WEB_WARN':

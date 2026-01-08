@@ -16,6 +16,10 @@ module.exports = {
       bundleIdentifier: 'com.timeegg.app',
       associatedDomains: ['applinks:be-production-8aa2.up.railway.app'],
       infoPlist: {
+        NSLocationWhenInUseUsageDescription:
+          'TimeEgg이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
+        NSLocationAlwaysAndWhenInUseUsageDescription:
+          'TimeEgg이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
         LSApplicationQueriesSchemes: [
           'supertoss',
           'toss',

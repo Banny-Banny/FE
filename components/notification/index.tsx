@@ -24,19 +24,28 @@
  * - 이전 알림은 삭제 버튼 제공
  */
 
-import { Colors } from '@/commons/constants';
+import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
-import { DEFAULT_NEW_NOTIFICATIONS, DEFAULT_OLD_NOTIFICATIONS } from '@/egg/constants/MOCK_DATA';
+import { useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { NotificationItem } from './components/notification-item';
+import { useNotifications } from './hooks/useNotifications';
 import { styles } from './styles';
 
 export default function NotificationFeature() {
   const navigation = useNavigation();
+  const params = useLocalSearchParams<{ from?: string }>();
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
+  const {
+    newNotifications,
+    oldNotifications,
+    isLoading,
+    error,
+    refreshNotifications,
+  } = useNotifications();
 
   const handleMarkAllAsRead = () => {
     // TODO: 모든 알림 읽음 처리
@@ -52,14 +61,18 @@ export default function NotificationFeature() {
   };
 
   const handleClose = () => {
-    if (navigation.canGoBack()) {
-      // 스택에 이전 화면이 있으면 뒤로 가기
-      // 마이페이지에서 push로 진입한 경우 마이페이지로 돌아감
-      navigation.back();
+    // 쿼리 파라미터로 어디서 왔는지 확인
+    if (params.from === 'mypage') {
+      // 마이페이지에서 push로 진입한 경우 뒤로 가기
+      if (navigation.canGoBack()) {
+        navigation.back();
+      } else {
+        // 뒤로 갈 수 없는 경우 마이페이지로 이동
+        navigation.replace('/(tabs)/mypage');
+      }
     } else {
-      // 스택 루트인 경우 (탭바에서 직접 진입)
-      // 홈으로 이동
-      navigation.toHome();
+      // 지도(홈)에서 탭바를 통해 진입한 경우 지도로 이동
+      navigation.replace(ROUTES.HOME);
     }
   };
 
@@ -101,7 +114,9 @@ export default function NotificationFeature() {
             </View>
           </View>
           <View style={styles.headerSubtitle}>
-            <Text style={styles.headerSubtitleText}>새 알림 3개</Text>
+            <Text style={styles.headerSubtitleText}>
+              새 알림 {newNotifications.length}개
+            </Text>
           </View>
         </View>
       </View>
@@ -110,46 +125,80 @@ export default function NotificationFeature() {
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        {[
-          {
-            title: '새로운 알림',
-            titleStyle: styles.sectionTitle,
-            data: DEFAULT_NEW_NOTIFICATIONS,
-            showMarkAllRead: true,
-            showDelete: false,
-          },
-          {
-            title: '이전 알림',
-            titleStyle: styles.sectionTitleOld,
-            data: DEFAULT_OLD_NOTIFICATIONS,
-            showMarkAllRead: false,
-            showDelete: true,
-          },
-        ].map((section, sectionIndex) => (
-          <View key={sectionIndex} style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={section.titleStyle}>{section.title}</Text>
-              {section.showMarkAllRead && (
-                <Pressable style={styles.markAllReadButton} onPress={handleMarkAllAsRead}>
-                  <Text style={styles.markAllReadButtonText}>모두읽음</Text>
-                </Pressable>
-              )}
-            </View>
-
-            {section.data.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                icon={notification.icon}
-                title={notification.title}
-                description={notification.description}
-                time={notification.time}
-                isRead={notification.isRead}
-                onDelete={section.showDelete ? () => handleDelete(notification.id) : undefined}
-              />
-            ))}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          // TODO: RefreshControl 추가 (Pull to refresh)
+          undefined
+        }>
+        {isLoading && newNotifications.length === 0 && oldNotifications.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>알림을 불러오는 중...</Text>
           </View>
-        ))}
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <Pressable
+              style={styles.retryButton}
+              onPress={refreshNotifications}>
+              <Text style={styles.retryButtonText}>다시 시도</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            {/* 새로운 알림 */}
+            {newNotifications.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitle}>새로운 알림</Text>
+                  <Pressable
+                    style={styles.markAllReadButton}
+                    onPress={handleMarkAllAsRead}>
+                    <Text style={styles.markAllReadButtonText}>모두읽음</Text>
+                  </Pressable>
+                </View>
+
+                {newNotifications.map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    icon={notification.icon}
+                    title={notification.title}
+                    description={notification.description}
+                    time={notification.time}
+                    isRead={notification.isRead}
+                  />
+                ))}
+              </View>
+            )}
+
+            {/* 이전 알림 */}
+            {oldNotifications.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <Text style={styles.sectionTitleOld}>이전 알림</Text>
+                </View>
+
+                {oldNotifications.map((notification) => (
+                  <NotificationItem
+                    key={notification.id}
+                    icon={notification.icon}
+                    title={notification.title}
+                    description={notification.description}
+                    time={notification.time}
+                    isRead={notification.isRead}
+                    onDelete={() => handleDelete(notification.id)}
+                  />
+                ))}
+              </View>
+            )}
+
+            {/* 알림이 없을 때 */}
+            {newNotifications.length === 0 && oldNotifications.length === 0 && (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>알림이 없습니다</Text>
+              </View>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );

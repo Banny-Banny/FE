@@ -22,6 +22,7 @@ export const useMapGestures = () => {
 
   return {
     scale,
+    setScale,
     handleZoomIn,
     handleZoomOut,
     resetZoom,

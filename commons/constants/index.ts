@@ -28,6 +28,9 @@ export type { MediaType } from './media';
 // 스토리지 키 상수
 export { STORAGE_KEYS } from './storage';
 
+// Query Key Factory
+export { queryKeys } from './queryKeys';
+
 // 디자인 토큰 (tailwind.config.js와 동기화)
 export { BorderRadius } from './borderRadius';
 export { Colors } from './color';

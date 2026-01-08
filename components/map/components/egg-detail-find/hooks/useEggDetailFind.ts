@@ -14,8 +14,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { getMediaUrls } from '@/utils/mediaUrl';
 
 import type { CapsuleDetailResponse } from '../../egg-detail-owner/types';
-import type { MediaItem } from '../../shared/types';
-import type { DiscoveryOrder, EggDetailFindProps, EggDiscoveryData } from '../types';
+import type { DiscoveryOrder, EggDetailFindProps, EggDiscoveryData, MediaItem } from '../types';
 
 export interface UseEggDetailFindReturn {
   /** 발견 데이터 */
@@ -173,7 +172,9 @@ export function useEggDetailFind({
           media: updatedMedia,
         });
       } catch (err) {
-        console.error('[useEggDetailFind] 미디어 URL 변환 실패:', err);
+        if (__DEV__) {
+          console.error('[useEggDetailFind] 미디어 URL 변환 실패:', err);
+        }
         // 변환 실패 시 원본 데이터 사용
         setDiscoveryData(initialDiscoveryData);
       }

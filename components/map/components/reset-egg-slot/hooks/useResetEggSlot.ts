@@ -10,9 +10,9 @@
  * - 이스터에그 슬롯을 3개로 초기화
  */
 
-import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { apiClient, buildApiUrl, normalizeApiBaseUrl } from '@/utils';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Alert } from 'react-native';
@@ -32,7 +32,8 @@ export interface UseResetEggSlotReturn {
  * 이스터에그 슬롯 초기화 Hook
  * POST /api/capsules/slots/reset
  */
-export const useResetEggSlot = (): UseResetEggSlotReturn => {
+export function useResetEggSlot(): UseResetEggSlotReturn {
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: async (): Promise<ResetEggSlotResponse> => {
       const rawApiBaseUrl =
@@ -53,10 +54,16 @@ export const useResetEggSlot = (): UseResetEggSlotReturn => {
       return response.data;
     },
     onSuccess: () => {
+      // 슬롯 초기화 성공 후 슬롯 정보 쿼리 무효화
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.eggSlotData(),
+      });
       Alert.alert('성공', '이스터에그 슬롯이 초기화되었습니다.');
     },
     onError: (error: unknown) => {
-      console.error('❌ 이스터에그 슬롯 초기화 실패:', error);
+      if (__DEV__) {
+        console.error('❌ 이스터에그 슬롯 초기화 실패:', error);
+      }
       const axiosError = error as AxiosError<{ message?: string }>;
       const errorMessage =
         axiosError?.response?.data?.message ||
@@ -71,4 +78,4 @@ export const useResetEggSlot = (): UseResetEggSlotReturn => {
     isResetting: mutation.isPending,
     error: mutation.error as Error | null,
   };
-};
+}

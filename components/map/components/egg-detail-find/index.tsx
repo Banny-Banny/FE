@@ -25,7 +25,7 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 
 import { useCapsuleDetail } from '../egg-detail-owner/hooks/useCapsuleDetail';
-import { AudioPlayer } from '../shared/audio-player';
+import { AudioPlayer } from '@/components/shared/audio-player';
 import { useEggDetailFind } from './hooks/useEggDetailFind';
 import { styles } from './styles';
 import type { EggDetailFindProps } from './types';

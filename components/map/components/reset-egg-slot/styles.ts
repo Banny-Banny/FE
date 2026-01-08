@@ -25,16 +25,16 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 9999, // 완전한 원형
-    backgroundColor: Colors.white[50],
+    backgroundColor: Colors.grey[50], // #F7F7F7
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.black[500],
+    shadowColor: 'rgba(4, 4, 4, 1)',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 6,
     },
     shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 8, // Android shadow
+    shadowRadius: 6,
+    elevation: 6, // Android shadow
   },
 });
