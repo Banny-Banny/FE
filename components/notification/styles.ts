@@ -132,4 +132,50 @@ export const styles = StyleSheet.create({
     ...Typography.body.body8,
     color: Colors.white[500],
   },
+
+  // ============================================
+  // Loading & Error States
+  // ============================================
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing['4xl'],
+  },
+  loadingText: {
+    ...Typography.body.body11,
+    color: Colors.grey[500],
+  },
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing['4xl'],
+    gap: Spacing.md,
+  },
+  errorText: {
+    ...Typography.body.body11,
+    color: Colors.red[500],
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.lg,
+    backgroundColor: Colors.black[500],
+  },
+  retryButtonText: {
+    ...Typography.body.body11,
+    color: Colors.white[500],
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing['4xl'],
+  },
+  emptyText: {
+    ...Typography.body.body11,
+    color: Colors.grey[500],
+  },
 });

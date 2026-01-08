@@ -21,6 +21,7 @@
 
 import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
+import { useNotifications } from '@/components/notification/hooks/useNotifications';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
@@ -28,9 +29,10 @@ import { styles } from './styles';
 
 export function Header() {
   const navigation = useNavigation();
+  const { newNotifications } = useNotifications();
 
   const handleNotificationPress = () => {
-    navigation.push(ROUTES.ALARM);
+    navigation.push(ROUTES.ALARM, { from: 'mypage' });
   };
 
   const handleClosePress = () => {
@@ -55,9 +57,13 @@ export function Header() {
             accessibilityLabel="알림">
             <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
             {/* 알림 배지 */}
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>3</Text>
-            </View>
+            {newNotifications.length > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>
+                  {newNotifications.length > 99 ? '99+' : newNotifications.length}
+                </Text>
+              </View>
+            )}
           </Pressable>
 
           {/* X 아이콘 */}
