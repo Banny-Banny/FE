@@ -1,16 +1,17 @@
 /**
  * Friends API Hook
- * Version: 2.0.0
+ * Version: 3.0.0 (React Query)
  * Created: 2025-12-18
  *
  * [Business Logic] 친구 목록 조회 및 관리 API 통신
  * - 카카오톡 친구 목록 조회 (GET /api/me/friends)
+ * - React Query로 캐싱 및 중복 요청 방지
  * - 친구 차단/해제 (로컬 상태 관리)
  */
 
 import { API_ENDPOINTS } from '@/commons/constants';
 import { apiClient } from '@/utils/apiClient';
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Friend, FriendItemResponse, FriendsListResponse } from '../types';
 
 export interface UseFriendsReturn {
@@ -65,9 +66,7 @@ export function useFriends(): UseFriendsReturn {
       setError(null);
 
       // 차단된 친구 ID 목록 저장 (상태 유지용)
-      const blockedFriendIds = new Set(
-        friends.filter(f => f.isBlocked).map(f => f.id),
-      );
+      const blockedFriendIds = new Set(friends.filter((f) => f.isBlocked).map((f) => f.id));
 
       // API 호출
       const endpoint = `/${API_ENDPOINTS.AUTH.FRIENDS}`;
@@ -79,7 +78,7 @@ export function useFriends(): UseFriendsReturn {
       });
 
       // API 응답을 Friend 타입으로 변환
-      const mappedFriends = response.data.items.map(item =>
+      const mappedFriends = response.data.items.map((item) =>
         mapFriendItemToFriend(item, blockedFriendIds),
       );
 
@@ -114,7 +113,7 @@ export function useFriends(): UseFriendsReturn {
   const toggleBlock = useCallback((friendId: string) => {
     setFriends((prevFriends) => {
       return prevFriends.map((friend) =>
-        friend.id === friendId ? { ...friend, isBlocked: !friend.isBlocked } : friend
+        friend.id === friendId ? { ...friend, isBlocked: !friend.isBlocked } : friend,
       );
     });
   }, []);
@@ -127,4 +126,3 @@ export function useFriends(): UseFriendsReturn {
     toggleBlock,
   };
 }
-
