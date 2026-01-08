@@ -5,9 +5,10 @@
  * - 웹: 백엔드 리다이렉트 처리
  */
 
-import { ROUTES } from '@/commons/constants';
+import { ROUTES, STORAGE_KEYS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { getUserFromToken } from '@/utils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
@@ -61,6 +62,37 @@ export default function AuthCallback() {
 
         if (__DEV__) {
           console.log('[AuthCallback] 로그인 처리 완료');
+        }
+
+        // AsyncStorage에서 온보딩 상태 확인
+        const [friendConsent, locationConsent] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.FRIEND_CONSENT),
+          AsyncStorage.getItem(STORAGE_KEYS.LOCATION_CONSENT),
+        ]);
+
+        const isFriendConsentDone = friendConsent === 'true';
+        const isLocationConsentDone = locationConsent === 'true';
+
+        if (__DEV__) {
+          console.log('[AuthCallback] 온보딩 상태:', {
+            isFriendConsentDone,
+            isLocationConsentDone,
+          });
+        }
+
+        // 온보딩 상태 확인 후 리다이렉트
+        if (!isFriendConsentDone || !isLocationConsentDone) {
+          // 온보딩 미완료 → 온보딩 페이지로
+          if (__DEV__) {
+            console.log('[AuthCallback] 온보딩 미완료 → 온보딩 페이지로 이동');
+          }
+          router.replace(ROUTES.AUTH_ONBOARDING as any);
+        } else {
+          // 온보딩 완료 → 메인 페이지로
+          if (__DEV__) {
+            console.log('[AuthCallback] 온보딩 완료 → 메인 페이지로 이동');
+          }
+          router.replace(ROUTES.MAIN as any);
         }
       } catch (error) {
         if (__DEV__) {
