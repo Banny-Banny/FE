@@ -31,15 +31,40 @@ export default function OnboardingFeature() {
       const url = event.url;
 
       if (__DEV__) {
-        console.log('[Onboarding] 딥링크 수신:', url);
+        console.log('[Onboarding] 🔗 딥링크 수신:', url);
       }
 
-      // Expo Go 개발 서버 URL은 무시
-      if (url.startsWith('exp://') || url.startsWith('exps://')) {
+      /**
+       * Expo Go(개발 환경)에서는 정상 OAuth 리다이렉트도 `exp://.../--/auth/callback?...` 형태로 들어옵니다.
+       * 기존 로직처럼 exp://를 전부 무시하면 Android에서 로그인 완료 후 토큰 처리가 막힙니다.
+       *
+       * 따라서 "그냥 개발 서버 루트(exp://...)"만 무시하고,
+       * auth/callback(토큰/코드 포함) 형태는 허용합니다.
+       */
+      const isExpoDevUrl = url.startsWith('exp://') || url.startsWith('exps://');
+      if (isExpoDevUrl) {
+        const looksLikeAuthCallback =
+          url.includes('/auth/callback') || url.includes('/api/auth/kakao/callback');
+        const hasAuthParams = url.includes('token=') || url.includes('code=');
+
         if (__DEV__) {
-          console.log('[Onboarding] Expo 개발 서버 URL, 무시');
+          console.log('[Onboarding] 🔍 URL 체크:', {
+            looksLikeAuthCallback,
+            hasAuthParams,
+            willIgnore: !looksLikeAuthCallback && !hasAuthParams,
+          });
         }
-        return;
+
+        if (!looksLikeAuthCallback && !hasAuthParams) {
+          if (__DEV__) {
+            console.log('[Onboarding] ❌ Expo 개발 서버 루트 URL → 무시');
+          }
+          return;
+        }
+
+        if (__DEV__) {
+          console.log('[Onboarding] ✅ OAuth 콜백 URL → 처리 진행');
+        }
       }
 
       // 이미 처리 중이면 무시
@@ -53,8 +78,17 @@ export default function OnboardingFeature() {
       try {
         const urlObj = new URL(url);
 
-        // timeegg://auth/callback?token=...&isNewUser=...
-        if (urlObj.protocol === 'timeegg:' && urlObj.pathname.includes('/auth/callback')) {
+        /**
+         * 콜백 URL 예시
+         * - 프로덕션/개발빌드: timeegg://auth/callback?token=...
+         * - Expo Go: exp://<ip>:<port>/--/auth/callback?token=...
+         * - 백엔드 임시 콜백: /api/auth/kakao/callback?token=...
+         */
+        const isAuthCallbackPath =
+          urlObj.pathname.includes('/auth/callback') ||
+          urlObj.pathname.includes('/api/auth/kakao/callback');
+
+        if (isAuthCallbackPath) {
           isProcessingDeepLink.current = true;
 
           const token = urlObj.searchParams.get('token');
