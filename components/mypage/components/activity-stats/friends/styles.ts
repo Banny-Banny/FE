@@ -86,6 +86,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  // 헤더 아이콘 래퍼 (Android 중복 parent 에러 방지용)
+  headerIconWrapper: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   // 서브타이틀
   subtitle: {
     ...Typography.body.body6,
@@ -239,10 +247,12 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.black[500],
   },
 
-  // 버튼 아이콘
-  buttonIcon: {
+  // 버튼 아이콘 래퍼 (Android 중복 parent 에러 방지용)
+  buttonIconWrapper: {
     width: 16,
     height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // 버튼 텍스트

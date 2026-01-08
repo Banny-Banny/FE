@@ -72,6 +72,11 @@ export function FriendsModal({
     }
   };
 
+  // 모달이 보이지 않을 때는 렌더링하지 않아 중복 뷰 삽입을 방지
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal visible={visible} onClose={onClose} width="90%" height={614} closeOnBackdropPress={true}>
       <View style={styles.modalContainer} collapsable={false}>
@@ -87,11 +92,15 @@ export function FriendsModal({
                 disabled={isRefreshing}
                 pointerEvents={isRefreshing ? 'none' : 'auto'}>
                 <Animated.View style={animatedRotationStyle}>
-                  <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+                  <View style={styles.headerIconWrapper} collapsable={false}>
+                    <Icon name={'ri-refresh-line' as IconName} size={20} color={Colors.black[500]} />
+                  </View>
                 </Animated.View>
               </Pressable>
               <Pressable style={styles.closeButton} onPress={onClose}>
-                <Icon name={'ri-close-line' as IconName} size={24} color={Colors.black[500]} />
+                <View style={styles.headerIconWrapper} collapsable={false}>
+                  <Icon name={'ri-close-line' as IconName} size={24} color={Colors.black[500]} />
+                </View>
               </Pressable>
             </View>
           </View>
@@ -162,6 +171,7 @@ export function FriendsModal({
                     style={[styles.blockButton, friend.isBlocked && styles.unblockButton]}
                     onPress={() => handleToggleBlock(friend.id)}
                     pointerEvents="auto">
+                  <View style={styles.buttonIconWrapper} collapsable={false}>
                     <Icon
                       key={friend.isBlocked ? 'unblock-icon' : 'block-icon'}
                       name={
@@ -172,6 +182,7 @@ export function FriendsModal({
                       size={16}
                       color={friend.isBlocked ? Colors.white[500] : Colors.black[500]}
                     />
+                  </View>
                     <Text
                       key={friend.isBlocked ? 'unblock-text' : 'block-text'}
                       style={[styles.buttonText, friend.isBlocked && styles.buttonTextUnblock]}>

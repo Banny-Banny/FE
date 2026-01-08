@@ -53,7 +53,9 @@ export function Header() {
             onPress={handleNotificationPress}
             accessibilityRole="button"
             accessibilityLabel="알림">
-            <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
+            <View style={styles.notificationIcon} collapsable={false}>
+              <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
+            </View>
           </Pressable>
 
           {/* X 아이콘 */}
@@ -62,7 +64,9 @@ export function Header() {
             onPress={handleClosePress}
             accessibilityRole="button"
             accessibilityLabel="닫기">
-            <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
+            <View style={styles.closeIconWrapper} collapsable={false}>
+              <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
+            </View>
           </Pressable>
         </View>
       </View>
