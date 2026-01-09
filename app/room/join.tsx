@@ -54,25 +54,33 @@ export default function RoomJoinScreen() {
       setInviteCode(code);
       setRole('guest');
 
-      // 초대 코드로 대기실 조회
-      const joinRoom = async () => {
+      // 초대 코드로 대기실 조회 및 참여
+      const joinRoomFlow = async () => {
         try {
           setIsLoading(true);
-          const response = await fetchRoomByInviteCode(code);
 
+          // 1단계: 초대 코드로 대기실 조회 (Public API)
+          const response = await fetchRoomByInviteCode(code);
           console.log('✅ [RoomJoin] 대기실 조회 성공:', response);
           console.log('🔍 [RoomJoin] capsule_id:', response.room_id);
 
-          setCapsuleId(response.room_id);
+          const foundCapsuleId = response.room_id;
+
+          // 2단계: 대기실 참여 (슬롯 배정)
+          console.log('🔄 [RoomJoin] 대기실 참여 시작...');
+          await joinRoom(foundCapsuleId, code);
+          console.log('✅ [RoomJoin] 대기실 참여 성공!');
+
+          setCapsuleId(foundCapsuleId);
           setIsLoading(false);
         } catch (err) {
-          console.error('❌ [RoomJoin] 대기실 조회 실패:', err);
-          setError(err instanceof Error ? err.message : '대기실을 찾을 수 없습니다.');
+          console.error('❌ [RoomJoin] 대기실 조회/참여 실패:', err);
+          setError(err instanceof Error ? err.message : '대기실에 참여할 수 없습니다.');
           setIsLoading(false);
         }
       };
 
-      joinRoom();
+      joinRoomFlow();
       return;
     }
 

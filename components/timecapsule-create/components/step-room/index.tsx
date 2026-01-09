@@ -77,10 +77,11 @@ export default function StepRoom({
    * 3. 백엔드 제공 테스트 ID (하드코딩)
    *
    * 초기 진입 경로(role)를 기반으로 orderId 설정
+   * ⚠️ propsCapsuleId가 있으면(보관함에서 진입) orderId를 사용하지 않음
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
   const initialIsHost = role === 'host';
-  const orderId = initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
+  const orderId = propsCapsuleId ? undefined : (initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined);
 
   /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
@@ -401,9 +402,16 @@ export default function StepRoom({
   // 렌더링
   // ============================================
 
-  // 메인으로 나가기 핸들러 (호스트/게스트 공통)
-  const handleGoToMain = () => {
-    router.replace(ROUTES.MAIN as any);
+  // X 버튼 핸들러: 진입 경로에 따라 다른 동작
+  const handleClose = () => {
+    // 캡슐보관함에서 들어온 경우: 뒤로가기
+    if (propsCapsuleId) {
+      router.back();
+    }
+    // 결제 후 들어온 경우: 메인화면으로
+    else {
+      router.replace(ROUTES.MAIN as any);
+    }
   };
 
   return (
@@ -417,8 +425,8 @@ export default function StepRoom({
           {
             icon: 'close-line',
             size: 44,
-            onPress: handleGoToMain,
-            accessibilityLabel: '메인으로 나가기',
+            onPress: handleClose,
+            accessibilityLabel: '닫기',
           },
         ]}
       />
