@@ -14,20 +14,13 @@
 import { Colors, ROUTES } from '@/commons/constants';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import UnlockedCapsuleDetail from './components/unlocked-capsule-detail';
 import { useMyCapsules } from './hooks/useMyCapsules';
 import { styles } from './styles';
 
-// Figma MCP에서 제공된 이미지 에셋 (localhost URL)
-const imgIcon = 'http://localhost:3845/assets/c7f9e7fa4ec9d540e830ce95c2d2196964a7eeef.svg'; // 닫기 버튼
-const imgIcon1 = 'http://localhost:3845/assets/a22c1af0ba98ba3fdfdf3f6a86abf8862eb407cb.svg'; // 친구 아이콘
-const imgIcon2 = 'http://localhost:3845/assets/6b05fa5d2a4ba64ac1c1ca10dc30e5039ade8232.svg'; // 캘린더 아이콘
-const imgIcon3 = 'http://localhost:3845/assets/5655b8070e93b88cf47e829b34d74978f64b73f5.svg'; // 시계 아이콘
-const imgFrame = 'http://localhost:3845/assets/f2c7ed3d753e187512bcc1a7da523b7631750016.svg'; // 위치 아이콘
-const imgFrame1 = 'http://localhost:3845/assets/f0053ac32eed9859e8321770ad0664138b0c5453.svg'; // 친구 아이콘
-const imgFrame2 = 'http://localhost:3845/assets/2b987eacf04a4f9e11b4b721a230096c6899b0fc.svg'; // 캘린더 아이콘
+// localhost 이미지 URL 제거됨 - 리믹스 아이콘 사용
 
 export default function MyCapsule() {
   const router = useRouter();
@@ -192,7 +185,7 @@ export default function MyCapsule() {
                   </View>
                 </View>
                 <View style={styles.lockedCardFooter}>
-                  <Image source={{ uri: imgIcon3 }} style={styles.lockedCardFooterIcon} />
+                  <Icon name="ri-time-line" size={16} color={Colors.grey[500]} />
                   <View style={styles.lockedCardFooterText}>
                     {/* TODO: openDate로 D-day 계산 */}
                     <Text style={styles.lockedCardFooterTextContent}>

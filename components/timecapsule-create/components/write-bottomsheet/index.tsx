@@ -19,6 +19,7 @@ import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
 import type { UserBottomSheetProps, UserContentFormData } from './types';
@@ -307,7 +308,7 @@ export default function UserBottomSheet({
                         <Pressable
                           style={styles.deleteButton}
                           onPress={() => handleDeletePhoto(index)}>
-                          <Text style={styles.deleteButtonText}>×</Text>
+                          <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                         </Pressable>
                       </View>
                     ))}
@@ -352,7 +353,7 @@ export default function UserBottomSheet({
                 <Pressable
                   style={styles.mediaDeleteButton}
                   onPress={() => setValue('music', null, { shouldDirty: true })}>
-                  <Text style={styles.deleteButtonText}>×</Text>
+                  <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                 </Pressable>
               </View>
             )}
@@ -393,7 +394,7 @@ export default function UserBottomSheet({
                 <Pressable
                   style={styles.mediaDeleteButton}
                   onPress={() => setValue('video', null, { shouldDirty: true })}>
-                  <Text style={styles.deleteButtonText}>×</Text>
+                  <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                 </Pressable>
               </View>
             )}
