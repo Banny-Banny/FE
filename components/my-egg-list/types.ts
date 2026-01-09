@@ -16,14 +16,17 @@
  * 심은 알 - 활성/만료 알 아이템
  */
 export interface PlantedEggItem {
-  eggId: number;
+  eggId: string; // UUID 문자열
   title: string;
-  content: string;
+  content: string | null;
   viewCount: number;
-  location: string | { lat: number; lng: number };
+  location: string | { lat: number; lng: number } | null;
+  latitude?: number;
+  longitude?: number;
   createdDate: string;
   hasImage: boolean;
   hasAudio: boolean;
+  hasVideo: boolean;
   status: 'ACTIVE' | 'EXPIRED';
 }
 
@@ -45,15 +48,18 @@ export interface PlantedEggsResponse {
  * 발견한 알 아이템
  */
 export interface FoundEggItem {
-  eggId: number;
+  eggId: string; // UUID 문자열
   title: string;
-  content: string;
+  content: string | null;
   viewCount: number;
-  location: string | { lat: number; lng: number };
+  location: string | { lat: number; lng: number } | null;
+  latitude?: number;
+  longitude?: number;
   foundDate: string; // ISO 8601 형식 (정렬 기준)
-  plantedDate: string; // ISO 8601 형식
+  createdDate: string; // ISO 8601 형식 (원래는 plantedDate였지만 실제 API는 createdDate)
   hasImage: boolean;
   hasAudio: boolean;
+  hasVideo: boolean;
 }
 
 /**
@@ -77,11 +83,12 @@ export interface EasterEggItem {
   id: string;
   title: string;
   description: string;
-  location: string;
+  location?: string; // latitude/longitude 기반으로 계산되며, 없을 수 있음
   date: string;
   eggIcon?: string | number;
   hasImage?: boolean;
   hasAudio?: boolean;
+  hasVideo?: boolean;
   viewCount?: number; // 조회수 (심은 알에서 사용)
   status?: 'ACTIVE' | 'EXPIRED'; // 활성/소멸 상태 (심은 알에서 사용)
 }
