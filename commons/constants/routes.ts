@@ -32,6 +32,9 @@ export const ROUTES = {
 
   // 내 알 목록
   MY_EGG_LIST: '/(tabs)/myegglist',
+
+  // 내 캡슐
+  MY_CAPSULE: '/(tabs)/my-capsule',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

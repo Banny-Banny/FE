@@ -32,7 +32,7 @@ const TAB_SCREENS = [
 /**
  * 탭바에 표시하지 않을 화면 목록 (하단 탭바는 유지)
  */
-const HIDDEN_SCREENS = ['timecapsule/create', 'timecapsule/index', 'myegglist'] as const;
+const HIDDEN_SCREENS = ['timecapsule/create', 'timecapsule/index', 'myegglist', 'my-capsule'] as const;
 
 export interface TabScreenItem {
   name: string;
