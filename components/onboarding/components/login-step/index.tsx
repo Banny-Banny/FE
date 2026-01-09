@@ -9,14 +9,16 @@ import Icon from 'react-native-remix-icon';
 import { createResponsiveStyles } from './styles';
 
 // 이미지 리소스
-const imgGeminiGeneratedImage = require('@/assets/icons/onboarding_page_icon.png');
+const imgRabbitImage = require('@/assets/icons/onboarding_page_icon.png');
 const imgLocationPin = require('@/assets/icons/locationPin.png');
 const imgFriend = require('@/assets/icons/friend.png');
 
 // 피그마에서 제공된 이미지 에셋 URL
-const IMG_ILLUSTRATION = 'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
+const IMG_ILLUSTRATION =
+  'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
 const IMG_ELLIPSE = 'http://localhost:3845/assets/5fd04f478f1b1f756c49f81b5c65ba151f3c22eb.svg';
-const IMG_LOCATION_ICON = 'http://localhost:3845/assets/e11f6bf89ea89599d3c731a4b3757e56614bcf0d.svg';
+const IMG_LOCATION_ICON =
+  'http://localhost:3845/assets/e11f6bf89ea89599d3c731a4b3757e56614bcf0d.svg';
 const IMG_FRIEND_ICON = 'http://localhost:3845/assets/10cc22e87847878b14afe497576868a4fa09453f.svg';
 
 interface LoginStepProps {
@@ -50,12 +52,12 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
           <View style={styles.cardFirst}>
             <View style={styles.cardFirstOuter}>
               <View style={styles.cardFirstContent}>
+                <View style={styles.cardIconLeft}>
+                  <Image source={imgLocationPin} style={styles.cardIcon} contentFit="contain" />
+                </View>
                 <View style={styles.cardFirstTextContainer}>
                   <Text style={styles.cardTitle}>지도에서 추억 숨기기</Text>
                   <Text style={styles.cardDescription}>원하는 장소에 타임캡슐을 묻어보세요</Text>
-                </View>
-                <View style={styles.cardIconRight}>
-                  <Image source={imgLocationPin} style={styles.cardIcon} contentFit="contain" />
                 </View>
               </View>
             </View>
@@ -64,12 +66,12 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
           {/* 친구와 함께 카드 */}
           <View style={styles.cardSecond}>
             <View style={styles.cardSecondContent}>
-              <View style={styles.cardIconLeft}>
-                <Image source={imgFriend} style={styles.cardIconSecond} contentFit="contain" />
-              </View>
               <View style={styles.cardSecondTextContainer}>
                 <Text style={styles.cardTitle}>친구와 함께</Text>
                 <Text style={styles.cardDescriptionSecond}>소중한 사람들과 추억을 공유하세요</Text>
+              </View>
+              <View style={styles.cardIconRight}>
+                <Image source={imgFriend} style={styles.cardIconSecond} contentFit="contain" />
               </View>
             </View>
           </View>
@@ -79,14 +81,7 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
         <View style={styles.bottomSection}>
           {/* 배경 이미지들 (flexbox로 하단 배치) */}
           <View style={styles.backgroundImagesWrapper}>
-            <View style={styles.backgroundImagesContainer}>
-              {/* <Image source={{ uri: imgEllipse }} style={styles.ellipseImage} /> */}
-              <Image
-                source={imgGeminiGeneratedImage}
-                style={styles.bunnyImage}
-                contentFit="contain"
-              />
-            </View>
+            <Image source={imgRabbitImage} style={styles.bunnyImage} contentFit="cover" />
 
             {/* 카카오 로그인 버튼 (이미지 위에 배치) */}
             <Pressable
@@ -103,6 +98,11 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
               </View>
             </Pressable>
           </View>
+        </View>
+
+        {/* 저작권 표시 */}
+        <View style={styles.copyrightContainer}>
+          <Text style={styles.copyrightText}>© 2025 타임캡슐</Text>
         </View>
       </ScrollView>
     </View>
