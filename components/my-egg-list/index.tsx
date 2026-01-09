@@ -74,6 +74,7 @@ export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggLis
       eggIcon: item.eggIcon,
       hasImage: item.hasImage,
       hasAudio: item.hasAudio,
+      hasVideo: item.hasVideo,
       viewCount: item.viewCount,
       status: item.status, // 활성/소멸 상태 포함
     }));

@@ -22,6 +22,7 @@ export const styles = StyleSheet.create({
   // Container
   // ============================================
   container: {
+    width: '100%', // 반응형: 화면 전체 너비 사용
     backgroundColor: Colors.white[500], // Figma: #fafafa (활성 알)
     borderWidth: 1,
     borderColor: Colors.border.light, // rgba(10,10,10,0.08)

@@ -12,14 +12,14 @@
 import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { formatRoadAddress } from '@/utils/addressFormat';
-import { apiClient } from '@/utils/apiClient';
 import { buildEndpointWithQuery } from '@/utils/api';
+import { apiClient } from '@/utils/apiClient';
 import { useQuery } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-import { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import Constants from 'expo-constants';
+import { useEffect, useMemo, useState } from 'react';
 
+import type { KakaoAddressResponse } from '@/commons/hooks/useKakaoAddress';
 import type {
   EasterEggItem,
   FoundEggItem,
@@ -27,7 +27,6 @@ import type {
   PlantedEggItem,
   PlantedEggsResponse,
 } from '../types';
-import type { KakaoAddressResponse } from '@/commons/hooks/useKakaoAddress';
 
 export interface UseMyEggsParams {
   type: 'PLANTED' | 'FOUND';
@@ -68,14 +67,19 @@ const formatDate = (dateString: string): string => {
 
 /**
  * 카카오 주소 API를 사용하여 좌표를 주소로 변환
+ * 변환 실패 시 null 반환 (호출부에서 좌표 문자열로 대체)
  */
-const convertCoordinatesToAddress = async (
-  lat: number,
-  lng: number,
-): Promise<string | null> => {
+const convertCoordinatesToAddress = async (lat: number, lng: number): Promise<string | null> => {
   try {
     // 좌표 유효성 검증
-    if (!lat || !lng || isNaN(lat) || isNaN(lng)) {
+    if (
+      lat === undefined ||
+      lng === undefined ||
+      lat === null ||
+      lng === null ||
+      isNaN(lat) ||
+      isNaN(lng)
+    ) {
       if (__DEV__) {
         console.warn('[useMyEggs] 유효하지 않은 좌표:', { lat, lng });
       }
@@ -83,8 +87,7 @@ const convertCoordinatesToAddress = async (
     }
 
     const kakaoApiKey =
-      Constants.expoConfig?.extra?.kakaoRestApiKey ||
-      process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
+      Constants.expoConfig?.extra?.kakaoRestApiKey || process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY;
 
     if (!kakaoApiKey) {
       if (__DEV__) {
@@ -112,7 +115,7 @@ const convertCoordinatesToAddress = async (
         road_address: firstDoc.road_address || null,
       };
       const address = formatRoadAddress(addressData);
-      return address || '위치 정보 없음';
+      return address || null; // 변환 실패 시 null 반환
     }
     return null;
   } catch (error) {
@@ -136,59 +139,26 @@ const convertCoordinatesToAddress = async (
 };
 
 /**
- * location을 문자열로 변환
- * location 문자열이 있으면 우선 사용, 없으면 latitude/longitude를 카카오 주소 API로 변환
- */
-const formatLocation = async (
-  location: string | { lat: number; lng: number } | null | undefined,
-  latitude?: number,
-  longitude?: number,
-): Promise<string> => {
-  // location 문자열이 있으면 우선 사용
-  if (location && typeof location === 'string') {
-    return location;
-  }
-
-  // latitude/longitude가 있으면 카카오 주소 API로 변환
-  if (latitude !== undefined && longitude !== undefined) {
-    const address = await convertCoordinatesToAddress(latitude, longitude);
-    if (address) {
-      return address;
-    }
-    // 변환 실패 시 좌표 문자열 반환
-    return `${latitude}, ${longitude}`;
-  }
-
-  if (!location) {
-    return '위치 정보 없음';
-  }
-
-  // 객체인 경우 주소 정보가 없으므로 좌표를 문자열로 변환
-  if (typeof location === 'object' && 'lat' in location && 'lng' in location) {
-    const address = await convertCoordinatesToAddress(location.lat, location.lng);
-    if (address) {
-      return address;
-    }
-    return `${location.lat}, ${location.lng}`;
-  }
-  return '위치 정보 없음';
-};
-
-/**
- * PlantedEggItem을 EasterEggItem으로 변환 (주소는 나중에 변환)
+ * PlantedEggItem을 EasterEggItem으로 변환
+ * location 필드는 무시하고 무조건 latitude/longitude 기반으로 주소 계산
  */
 const transformPlantedEggItem = (
   item: PlantedEggItem,
   addressMap: Map<string, string>,
 ): EasterEggItem => {
   const itemKey = `${item.eggId}-location`;
-  const location =
-    addressMap.get(itemKey) ||
-    (item.location && typeof item.location === 'string'
-      ? item.location
-      : item.latitude !== undefined && item.longitude !== undefined
-        ? `${item.latitude}, ${item.longitude}`
-        : '위치 정보 없음');
+  // addressMap에 변환된 주소가 있으면 사용
+  const mappedLocation = addressMap.get(itemKey);
+  let location: string | undefined;
+
+  if (mappedLocation) {
+    // 변환된 주소가 있으면 사용
+    location = mappedLocation;
+  } else if (item.latitude !== undefined && item.longitude !== undefined) {
+    // latitude/longitude가 있으면 좌표 문자열로 표시 (주소 변환 실패 시)
+    location = `${item.latitude}, ${item.longitude}`;
+  }
+  // latitude/longitude가 없으면 undefined (optional 처리)
 
   return {
     id: item.eggId,
@@ -199,13 +169,15 @@ const transformPlantedEggItem = (
     eggIcon: require('@/assets/images/filled_egg.svg'),
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,
+    hasVideo: item.hasVideo,
     viewCount: item.viewCount,
     status: item.status,
   };
 };
 
 /**
- * FoundEggItem을 EasterEggItem으로 변환 (주소는 나중에 변환)
+ * FoundEggItem을 EasterEggItem으로 변환
+ * location 필드는 무시하고 무조건 latitude/longitude 기반으로 주소 계산
  */
 const transformFoundEggItem = (
   item: FoundEggItem,
@@ -216,13 +188,18 @@ const transformFoundEggItem = (
   const dateWithLabel = `발견한 날: ${formattedDate}`;
 
   const itemKey = `${item.eggId}-location`;
-  const location =
-    addressMap.get(itemKey) ||
-    (item.location && typeof item.location === 'string'
-      ? item.location
-      : item.latitude !== undefined && item.longitude !== undefined
-        ? `${item.latitude}, ${item.longitude}`
-        : '위치 정보 없음');
+  // addressMap에 변환된 주소가 있으면 사용
+  const mappedLocation = addressMap.get(itemKey);
+  let location: string | undefined;
+
+  if (mappedLocation) {
+    // 변환된 주소가 있으면 사용
+    location = mappedLocation;
+  } else if (item.latitude !== undefined && item.longitude !== undefined) {
+    // latitude/longitude가 있으면 좌표 문자열로 표시 (주소 변환 실패 시)
+    location = `${item.latitude}, ${item.longitude}`;
+  }
+  // latitude/longitude가 없으면 undefined (optional 처리)
 
   return {
     id: item.eggId,
@@ -233,6 +210,7 @@ const transformFoundEggItem = (
     eggIcon: require('@/assets/images/filled_egg.svg'),
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,
+    hasVideo: item.hasVideo,
     viewCount: item.viewCount,
   };
 };
@@ -302,35 +280,29 @@ export function useMyEggs(params: UseMyEggsParams): UseMyEggsReturn {
         const response = data as PlantedEggsResponse;
         [...response.data.activeEggs, ...response.data.expiredEggs].forEach((item) => {
           const itemKey = `${item.eggId}-location`;
-          // location 문자열이 있으면 그대로 사용
-          if (item.location && typeof item.location === 'string') {
-            newAddressMap.set(itemKey, item.location);
-          }
-          // latitude/longitude가 있으면 주소 변환 필요
-          else if (item.latitude !== undefined && item.longitude !== undefined) {
+          // location 필드는 무시하고 무조건 latitude/longitude만 사용
+          if (item.latitude !== undefined && item.longitude !== undefined) {
             itemsToConvert.push({
               key: itemKey,
               lat: item.latitude,
               lng: item.longitude,
             });
           }
+          // latitude/longitude가 없으면 변환하지 않음 (undefined로 처리됨)
         });
       } else {
         const response = data as FoundEggsResponse;
         response.data.forEach((item) => {
           const itemKey = `${item.eggId}-location`;
-          // location 문자열이 있으면 그대로 사용
-          if (item.location && typeof item.location === 'string') {
-            newAddressMap.set(itemKey, item.location);
-          }
-          // latitude/longitude가 있으면 주소 변환 필요
-          else if (item.latitude !== undefined && item.longitude !== undefined) {
+          // location 필드는 무시하고 무조건 latitude/longitude만 사용
+          if (item.latitude !== undefined && item.longitude !== undefined) {
             itemsToConvert.push({
               key: itemKey,
               lat: item.latitude,
               lng: item.longitude,
             });
           }
+          // latitude/longitude가 없으면 변환하지 않음 (undefined로 처리됨)
         });
       }
 
@@ -408,10 +380,7 @@ export function useMyEggs(params: UseMyEggsParams): UseMyEggsReturn {
     error: error
       ? (() => {
           if (error instanceof AxiosError) {
-            return (
-              error.response?.data?.message ||
-              '알 목록을 불러오는 중 오류가 발생했습니다.'
-            );
+            return error.response?.data?.message || '알 목록을 불러오는 중 오류가 발생했습니다.';
           }
           if (error instanceof Error) {
             return error.message;
@@ -422,4 +391,3 @@ export function useMyEggs(params: UseMyEggsParams): UseMyEggsReturn {
     refetch,
   };
 }
-

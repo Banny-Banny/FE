@@ -26,6 +26,7 @@ export interface PlantedEggItem {
   createdDate: string;
   hasImage: boolean;
   hasAudio: boolean;
+  hasVideo: boolean;
   status: 'ACTIVE' | 'EXPIRED';
 }
 
@@ -58,6 +59,7 @@ export interface FoundEggItem {
   createdDate: string; // ISO 8601 형식 (원래는 plantedDate였지만 실제 API는 createdDate)
   hasImage: boolean;
   hasAudio: boolean;
+  hasVideo: boolean;
 }
 
 /**
@@ -81,11 +83,12 @@ export interface EasterEggItem {
   id: string;
   title: string;
   description: string;
-  location: string;
+  location?: string; // latitude/longitude 기반으로 계산되며, 없을 수 있음
   date: string;
   eggIcon?: string | number;
   hasImage?: boolean;
   hasAudio?: boolean;
+  hasVideo?: boolean;
   viewCount?: number; // 조회수 (심은 알에서 사용)
   status?: 'ACTIVE' | 'EXPIRED'; // 활성/소멸 상태 (심은 알에서 사용)
 }
