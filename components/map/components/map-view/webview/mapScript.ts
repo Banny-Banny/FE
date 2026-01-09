@@ -307,13 +307,22 @@ export function generateMapScript(): string {
       }
     }
 
+    //ios 주로 사용
     if (window.ReactNativeWebView) {
       window.ReactNativeWebView.onMessage = (event) => {
         handleMessage(event.data);
       };
     }
 
+    //웹/일부 플랫폼에서 주로 사용
     window.addEventListener("message", (e) => {
+      if (e.data) {
+        handleMessage(e.data);
+      }
+    });
+
+    //android 주로 사용
+    document.addEventListener("message", (e) => {
       if (e.data) {
         handleMessage(e.data);
       }

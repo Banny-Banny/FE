@@ -8,6 +8,7 @@ module.exports = {
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     splash: {
+      image: './assets/images/modal_egg.png', // 1. 여기에 실제 이미지 경로 추가!
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
@@ -77,6 +78,7 @@ module.exports = {
       [
         'expo-splash-screen',
         {
+          image: './assets/images/modal_egg.png', // 2. 플러그인 설정에도 경로 추가!
           imageWidth: 200,
         },
       ],
