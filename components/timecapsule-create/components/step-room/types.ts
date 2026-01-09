@@ -278,6 +278,30 @@ export interface InviteCodeQueryResponse {
 }
 
 // ============================================
+// 대기실 참여 (슬롯 배정) API 타입
+// ============================================
+
+/** 대기실 참여 요청 타입 */
+export interface JoinRoomRequest {
+  /** 초대 코드 (6자리 영숫자) */
+  invite_code: string;
+}
+
+/** 대기실 참여 응답 타입 */
+export interface JoinRoomResponse {
+  /** 성공 여부 */
+  success: boolean;
+  /** 대기실 ID (UUID) */
+  room_id: string;
+  /** 배정받은 슬롯 번호 (1부터 시작) */
+  slot_number: number;
+  /** 닉네임 */
+  nickname: string;
+  /** 참여 시각 (ISO 8601) */
+  joined_at: string;
+}
+
+// ============================================
 // 타임캡슐 제출 API 타입
 // ============================================
 

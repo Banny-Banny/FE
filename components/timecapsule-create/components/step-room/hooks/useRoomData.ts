@@ -4,9 +4,9 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { createRoomAndGetSettings, getRoomSettings } from '../api/capsule';
+import { createRoomAndGetSettings, getRoomDetail, getRoomSettings } from '../api/capsule';
 import { mockRoomData } from '../constants';
-import type { CreateRoomResponse, Participant, Progress, RoomSettingsResponse } from '../types';
+import type { CreateRoomResponse, Participant, Progress, RoomDetailResponse, RoomSettingsResponse } from '../types';
 
 // ============================================
 // 타입 정의
@@ -18,6 +18,8 @@ interface UseRoomDataReturn {
   roomSettings: RoomSettingsResponse | null;
   /** 대기실 생성 응답 (실제 API 응답, 추가 필드 포함) */
   createRoomResponse: CreateRoomResponse | null;
+  /** 대기실 상세 정보 (게스트 모드용) */
+  roomDetailResponse: RoomDetailResponse | null;
   /** 캡슐 ID (참여자 조회용) */
   capsuleId: string | null;
   /** 로딩 상태 */
@@ -56,6 +58,7 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
 
   const [roomSettings, setRoomSettings] = useState<RoomSettingsResponse | null>(null);
   const [createRoomResponse, setCreateRoomResponse] = useState<CreateRoomResponse | null>(null);
+  const [roomDetailResponse, setRoomDetailResponse] = useState<RoomDetailResponse | null>(null);
   const [capsuleId, setCapsuleId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -141,14 +144,19 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
             setRoomSettings(fallbackSettings);
           }
         }
-        // ⭐ 게스트 모드: capsuleId로 대기실 설정값만 조회
+        // ⭐ 게스트 모드: capsuleId로 대기실 상세 정보 조회
         else if (guestCapsuleId) {
           console.log('🔄 [useRoomData] 게스트 모드 - 대기실 조회 시작, capsuleId:', guestCapsuleId);
           setCapsuleId(guestCapsuleId);
 
-          // 대기실 설정값만 조회
+          // 대기실 상세 정보 조회 (deadline 포함)
+          const detailData = await getRoomDetail(guestCapsuleId);
+          console.log('✅ [useRoomData] 게스트 모드 - 대기실 상세 조회 성공:', detailData);
+          setRoomDetailResponse(detailData);
+
+          // 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
           const settingsData = await getRoomSettings(guestCapsuleId);
-          console.log('✅ [useRoomData] 게스트 모드 - 대기실 조회 성공:', settingsData);
+          console.log('✅ [useRoomData] 게스트 모드 - 대기실 설정값 조회 성공:', settingsData);
           setRoomSettings(settingsData);
         }
         // orderId도 capsuleId도 없으면 목데이터 사용
@@ -234,6 +242,7 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
   return {
     roomSettings,
     createRoomResponse,
+    roomDetailResponse,
     capsuleId,
     isLoading,
     error,

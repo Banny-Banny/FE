@@ -38,10 +38,19 @@ export function useKakaoLogin() {
       // 플랫폼별 redirect_uri 설정
       // ⚠️ 중요: 웹 환경에서는 프론트엔드 라우트 경로를 사용해야 함
       // 백엔드는 이 redirect_uri로 리다이렉트하므로, 프론트엔드 라우트와 일치해야 함
-      const redirectUri =
+      let redirectUri =
         Platform.OS === 'web'
           ? `${window.location.origin}${ROUTES.AUTH_CALLBACK}` // 웹: 프론트엔드 라우트 경로 사용
           : Linking.createURL(ROUTES.AUTH_CALLBACK.replace(/^\//, '')); // 모바일(Expo Go 포함): 환경에 맞는 딥링크 자동 생성
+
+      // iOS에서는 'exp://' 스킴이 시스템에 등록되지 않아 사파리가 열 수 없음
+      // → iOS에서 'exp://'로 시작하는 경우 'timeegg://'로 변환
+      if (Platform.OS === 'ios' && redirectUri.startsWith('exp://')) {
+        redirectUri = redirectUri.replace('exp://', 'timeegg://');
+        if (__DEV__) {
+          console.log('[KakaoLogin] 🔄 iOS redirect_uri 변환:', redirectUri);
+        }
+      }
 
       if (__DEV__) {
         console.log('[KakaoLogin] 🎯 Redirect URI:', redirectUri);
@@ -68,11 +77,18 @@ export function useKakaoLogin() {
         }, 60000);
       });
 
-      // Expo Go에서는 'exp://' 스킴을 리다이렉트 스킴으로 지정
-      const redirectScheme = redirectUri.startsWith('exp://') ? 'exp://' : 'timeegg://';
+      // iOS에서는 'exp://' 스킴이 시스템에 등록되지 않아 사파리가 열 수 없음
+      // → iOS는 항상 'timeegg://' 사용, Android는 'exp://' 또는 'timeegg://' 사용
+      const redirectScheme =
+        Platform.OS === 'ios'
+          ? 'timeegg://'
+          : redirectUri.startsWith('exp://')
+          ? 'exp://'
+          : 'timeegg://';
 
       if (__DEV__) {
         console.log('[KakaoLogin] 🔗 Redirect scheme:', redirectScheme);
+        console.log('[KakaoLogin] 📱 Platform:', Platform.OS);
       }
 
       const webBrowserPromise = WebBrowser.openAuthSessionAsync(loginUrl, redirectScheme, {
