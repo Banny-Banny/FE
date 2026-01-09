@@ -348,18 +348,34 @@ export function useParticipants({
           if (slot.user_id && slot.nickname) {
             // 배정된 슬롯
             const isMe = slot.user_id === currentUserId;
+
+            // ⭐ AsyncStorage에서 저장된 콘텐츠 불러오기 (본인 것만)
+            let savedContent: ParticipantContent | undefined;
+            if (isMe) {
+              try {
+                const storageKey = `capsule_content_${capsuleId}_${slot.user_id}`;
+                const savedContentStr = await AsyncStorage.getItem(storageKey);
+                if (savedContentStr) {
+                  savedContent = JSON.parse(savedContentStr);
+                  console.log('📖 [useParticipants] AsyncStorage에서 콘텐츠 불러오기 성공:', storageKey);
+                }
+              } catch (err) {
+                console.warn('⚠️ [useParticipants] AsyncStorage 콘텐츠 불러오기 실패:', err);
+              }
+            }
+
             participantsList.push({
               id: slot.user_id,
               name: slot.nickname,
               emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
-              status:
-                slot.status === 'ACCEPTED'
-                  ? PARTICIPANT_STATUS.PENDING
-                  : PARTICIPANT_STATUS.WAITING,
+              status: savedContent
+                ? PARTICIPANT_STATUS.COMPLETED // ⭐ 저장된 콘텐츠가 있으면 COMPLETED
+                : slot.status === 'ACCEPTED'
+                ? PARTICIPANT_STATUS.PENDING
+                : PARTICIPANT_STATUS.WAITING,
               isHost: slot.is_host,
               isMe,
-              // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
-              // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+              content: savedContent, // ⭐ 저장된 콘텐츠 추가
             });
           } else {
             // 빈 슬롯 (user_id가 null인 경우)
@@ -483,6 +499,10 @@ export function useParticipants({
    * - multipart/form-data 형식으로 파일을 직접 전송
    * - 백엔드 API 명세에 맞게 구현
    *
+   * ⭐ AsyncStorage 저장:
+   * - 백엔드가 콘텐츠 조회 API를 제공하지 않으므로
+   * - AsyncStorage에도 저장하여 재진입 시 불러올 수 있도록 함
+   *
    * @param {string} participantId 참여자 ID
    * @param {ParticipantContent} content 작성 내용
    */
@@ -518,7 +538,11 @@ export function useParticipants({
         const formData = new FormData();
 
         // 텍스트 메시지 추가 (필수)
-        formData.append('text_message', content.text.trim());
+        const textMessage = content.text.trim();
+        formData.append('text_message', textMessage);
+        console.log('✅ [useParticipants] 텍스트 메시지 FormData에 추가 완료');
+        console.log('  📝 텍스트 내용:', textMessage.substring(0, 50) + (textMessage.length > 50 ? '...' : ''));
+        console.log('  📏 텍스트 길이:', textMessage.length, '자');
 
         // 이미지 파일 추가 (배열로 여러 개 추가)
         if (content.images && content.images.length > 0) {
@@ -580,6 +604,13 @@ export function useParticipants({
           console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
         }
 
+        // FormData 최종 확인 로그
+        console.log('📋 [useParticipants] FormData 최종 확인:');
+        console.log('  ✅ text_message: 추가됨');
+        console.log('  ✅ images:', content.images?.length || 0, '개');
+        console.log('  ✅ music:', content.voiceRecording ? '추가됨' : '없음');
+        console.log('  ✅ video:', content.video ? '추가됨' : '없음');
+
         console.log('📤 [useParticipants] API 제출 시작 (multipart/form-data)');
 
         // 2. API 호출 (⭐ multipart/form-data 전송)
@@ -588,9 +619,16 @@ export function useParticipants({
         console.log('✅ [useParticipants] API 호출 성공!');
         console.log('  📊 응답 데이터:', JSON.stringify(result, null, 2));
         console.log('  🎯 상태:', result.data.status);
+        console.log('  📝 텍스트:', result.data.text_message ? `저장됨 (${result.data.text_message.length}자)` : '⚠️ 응답에 텍스트 없음');
         console.log('  🖼️  이미지:', result.data.uploaded_images, '개');
         console.log('  🎵 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
         console.log('  🎬 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
+        
+        // 텍스트가 응답에 없으면 경고
+        if (!result.data.text_message && textMessage) {
+          console.warn('⚠️ [useParticipants] 경고: 텍스트를 전송했지만 응답에 텍스트가 없습니다!');
+          console.warn('  전송한 텍스트:', textMessage.substring(0, 100) + (textMessage.length > 100 ? '...' : ''));
+        }
 
         // 4. 로컬 상태 업데이트 (작성 내용 저장 및 상태를 'completed'로 업데이트)
         setParticipants((prev) =>
@@ -598,6 +636,11 @@ export function useParticipants({
             p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
           ),
         );
+
+        // 5. ⭐ AsyncStorage에 저장 (재진입 시 불러오기 위함)
+        const storageKey = `capsule_content_${capsuleId}_${participantId}`;
+        await AsyncStorage.setItem(storageKey, JSON.stringify(content));
+        console.log('💾 [useParticipants] AsyncStorage에 콘텐츠 저장 완료:', storageKey);
 
         console.log('✅ [useParticipants] 작성 내용 저장 성공!');
       } catch (err) {

@@ -7,7 +7,7 @@
  * - [✓] UseMediaPickerReturn 타입 정의
  */
 
-import type { RoomSettingsResponse } from '../step-room/types';
+import type { Participant, RoomSettingsResponse } from '../step-room/types';
 
 /**
  * 미디어 파일 타입 정의
@@ -106,16 +106,6 @@ export interface UserContentFormData {
 /**
  * UserBottomSheet Props 인터페이스
  */
-
-/** 참여자 타입 */
-export interface Participant {
-  id: string;
-  name: string;
-  emoji: string;
-  status: 'completed' | 'pending' | 'waiting';
-  isHost?: boolean;
-  isMe?: boolean;
-}
 
 /** UserBottomSheet Props */
 export interface UserBottomSheetProps {

@@ -15,6 +15,7 @@
 import { BottomSheet } from '@/commons/components/bottom-sheet';
 import { Button } from '@/commons/components/button';
 import { DualButton } from '@/commons/components/dual-button';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -33,12 +34,19 @@ export default function UserBottomSheet({
   onSave,
   roomSettings,
 }: UserBottomSheetProps) {
+  // 모달 제어 Hook
+  const { openModal, closeModal } = useModal();
+
+  // ⭐ 로컬 저장 상태 (연타 방지용)
+  const [isSaving, setIsSaving] = React.useState(false);
+
   // react-hook-form 설정
   const {
     control,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { isDirty },
   } = useForm<UserContentFormData>({
     mode: 'onChange',
@@ -49,6 +57,28 @@ export default function UserBottomSheet({
       video: null,
     },
   });
+
+  // ⭐ 바텀시트가 열릴 때 participant의 기존 콘텐츠로 폼 초기화
+  React.useEffect(() => {
+    if (isVisible && participant?.content) {
+      console.log('🔄 [UserBottomSheet] 기존 콘텐츠 불러오기:', participant.content);
+      reset({
+        textContent: participant.content.text || '',
+        photos: participant.content.images || [],
+        music: participant.content.voiceRecording || null,
+        video: participant.content.video || null,
+      });
+    } else if (isVisible && !participant?.content) {
+      // 새로 작성하는 경우 빈 값으로 초기화
+      console.log('📝 [UserBottomSheet] 새로운 콘텐츠 작성');
+      reset({
+        textContent: '',
+        photos: [],
+        music: null,
+        video: null,
+      });
+    }
+  }, [isVisible, participant, reset]);
 
   // 현재 폼 상태 감시
   const currentPhotos = watch('photos');
@@ -121,12 +151,29 @@ export default function UserBottomSheet({
     }
   }, [error]);
 
+  // ⭐ 바텀시트가 닫혔다가 다시 열릴 때 저장 상태 초기화
+  React.useEffect(() => {
+    if (!isVisible) {
+      setIsSaving(false);
+    }
+  }, [isVisible]);
+
   // 폼 제출 핸들러
   const onFormSubmit = async (data: UserContentFormData) => {
+    // ⭐ 연타 방지: 이미 저장 중이면 즉시 무시
+    if (isSaving || isSubmitting) {
+      console.log('⚠️ [UserBottomSheet] 이미 저장 중입니다. 무시됨.');
+      return;
+    }
+
+    // ⭐ 즉시 저장 상태를 true로 설정 (연타 차단)
+    setIsSaving(true);
+
     try {
       // ⭐ text_message 필수 검증
       if (!data.textContent || data.textContent.trim().length === 0) {
         Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        setIsSaving(false);
         return;
       }
 
@@ -134,6 +181,7 @@ export default function UserBottomSheet({
       const validation = validateContent(data);
       if (!validation.isValid) {
         Alert.alert('검증 실패', validation.message);
+        setIsSaving(false);
         return;
       }
 
@@ -159,16 +207,50 @@ export default function UserBottomSheet({
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
 
-      // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      // 제출 성공 시 모달 표시 후 바텀시트 닫기
       console.log('🎉 [UserBottomSheet] 저장 성공!');
-      Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose();
-          },
-        },
-      ]);
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="checkbox-circle-fill" size={64} color={Colors.green[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 완료
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              타임캡슐 내용이 저장되었습니다!{'\n'}나중에도 수정할 수 있어요
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button
+              label="확인"
+              variant="primary"
+              size="S"
+              fullWidth={true}
+              onPress={() => {
+                closeModal();
+                setIsSaving(false); // ⭐ 모달 닫을 때 저장 상태 해제
+                onClose();
+              }}
+            />
+          </View>
+        ),
+      });
     } catch (err) {
       // 에러 처리
       console.error('❌ [UserBottomSheet] 제출 중 오류 발생');
@@ -177,7 +259,49 @@ export default function UserBottomSheet({
       if (err instanceof Error && err.stack) {
         console.error('  스택 트레이스:', err.stack);
       }
-      Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
+
+      // ⭐ 에러 발생 시 저장 상태 해제
+      setIsSaving(false);
+
+      // 에러 모달 표시
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 에러 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 실패
+            </Text>
+
+            {/* 에러 메시지 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {err instanceof Error ? err.message : '저장에 실패했습니다.'}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button
+              label="확인"
+              variant="primary"
+              size="S"
+              fullWidth={true}
+              onPress={closeModal}
+            />
+          </View>
+        ),
+      });
     }
   };
 
@@ -202,14 +326,14 @@ export default function UserBottomSheet({
       <DualButton
         cancelLabel="취소"
         confirmLabel={
-          isSubmitting
+          isSaving || isSubmitting
             ? (uploadProgress || '저장 중...') // ⭐ 업로드 진행 상태 표시
             : '저장'
         }
         size="M"
         cancelVariant="outline"
         confirmVariant="primary"
-        confirmDisabled={isSubmitting}
+        confirmDisabled={isSaving || isSubmitting} // ⭐ 로컬 상태도 체크
         onCancelPress={handleCancel}
         onConfirmPress={handleSave}
       />

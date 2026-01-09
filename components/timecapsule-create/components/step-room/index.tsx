@@ -595,6 +595,8 @@ export default function StepRoom({
                                     if (onSubmit) {
                                       onSubmit();
                                     }
+                                    // 모달 닫은 후 메인 화면으로 이동
+                                    router.replace(ROUTES.MAIN as any);
                                   }}
                                 />
                               ),
