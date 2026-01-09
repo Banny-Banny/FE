@@ -23,7 +23,7 @@ export function MenuList() {
       {/* 설정 메뉴 */}
       <View style={styles.menuItem}>
         <Text style={styles.menuText}>설정</Text>
-        <View style={styles.iconContainer}>
+        <View style={styles.iconContainer} collapsable={false}>
           <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
         </View>
       </View>
@@ -31,7 +31,7 @@ export function MenuList() {
       {/* 결제 내역 메뉴 */}
       <View style={styles.menuItem}>
         <Text style={styles.menuText}>결제 내역</Text>
-        <View style={styles.iconContainer}>
+        <View style={styles.iconContainer} collapsable={false}>
           <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
         </View>
       </View>
@@ -39,7 +39,7 @@ export function MenuList() {
       {/* 고객 센터 메뉴 (마지막 항목 - 구분선 없음) */}
       <View style={styles.menuItemLast}>
         <Text style={styles.menuText}>고객 센터</Text>
-        <View style={styles.iconContainer}>
+        <View style={styles.iconContainer} collapsable={false}>
           <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
         </View>
       </View>

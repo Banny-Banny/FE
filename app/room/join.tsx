@@ -12,10 +12,12 @@
  */
 
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors } from '@/commons/constants/color';
+import { Colors, ROUTES, STORAGE_KEYS } from '@/commons/constants';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useNavigation } from '@/commons/hooks';
-import { fetchRoomByInviteCode } from '@/components/timecapsule-create/components/step-room/api/capsule';
+import { fetchRoomByInviteCode, joinRoom } from '@/components/timecapsule-create/components/step-room/api/capsule';
 import StepRoom from '@/components/timecapsule-create/components/step-room';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Text, View, StyleSheet } from 'react-native';
@@ -24,6 +26,7 @@ export default function RoomJoinScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const params = useLocalSearchParams();
+  const { accessToken, isLoading: isAuthLoading } = useAuth();
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

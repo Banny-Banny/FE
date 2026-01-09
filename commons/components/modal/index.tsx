@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Pressable, Modal as RNModal, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, Modal as RNModal, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import { DEFAULT_CONFIG, styles } from './styles';
 import { ModalConfig } from './types';
@@ -48,6 +48,11 @@ export const Modal: React.FC<ModalProps> = ({
   closeOnBackdropPress = DEFAULT_CONFIG.closeOnBackdropPress,
   disableAnimation = false,
 }) => {
+  // Android + Fabric에서 Reanimated 진입/퇴장 애니메이션이 Modal 내부 View를 중복 마운트하며
+  // "addViewAt: The specified child already has a parent" 크래시가 발생할 수 있음.
+  // 안드로이드에서는 애니메이션을 비활성화해 안정성을 우선시한다.
+  const shouldDisableAnimation = disableAnimation || Platform.OS === 'android';
+
   // 모달 컨테이너 스타일 계산 (width, height, padding)
   const modalContainerStyle = useMemo(() => {
     const dynamicStyle: any = {};
@@ -91,13 +96,14 @@ export const Modal: React.FC<ModalProps> = ({
       onRequestClose={onClose}
       statusBarTranslucent>
       {/* Backdrop (뒷배경) */}
-      {disableAnimation ? (
-        <View style={styles.backdrop}>
+      {shouldDisableAnimation ? (
+        <View style={styles.backdrop} collapsable={false}>
           {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
           <Pressable style={StyleSheet.absoluteFill} onPress={handleBackdropPress} />
           {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
           <View
-            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}>
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
+            collapsable={false}>
             {/* Modal Content - children을 그대로 렌더링 */}
             {children}
           </View>
@@ -106,14 +112,16 @@ export const Modal: React.FC<ModalProps> = ({
         <Animated.View
           entering={FadeIn.duration(200)}
           exiting={FadeOut.duration(200)}
-          style={styles.backdrop}>
+          style={styles.backdrop}
+          collapsable={false}>
           {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
           <Pressable style={StyleSheet.absoluteFill} onPress={handleBackdropPress} />
           {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
           <Animated.View
             entering={SlideInUp.duration(300).springify()}
             exiting={SlideOutDown.duration(200)}
-            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}>
+            style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
+            collapsable={false}>
             {/* Modal Content - children을 그대로 렌더링 */}
             {children}
           </Animated.View>

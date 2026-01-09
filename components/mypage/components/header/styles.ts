@@ -91,6 +91,8 @@ export const styles = StyleSheet.create({
   notificationIcon: {
     width: 24,
     height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   notificationOffIcon: {
     width: 24,
@@ -126,5 +128,11 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 1,
+  },
+  closeIconWrapper: {
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

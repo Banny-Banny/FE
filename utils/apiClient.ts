@@ -119,15 +119,29 @@ apiClient.interceptors.response.use(
       const url = error.config?.url || 'Unknown';
       const errorData = error.response?.data;
       const errorMessage = errorData?.message || error.message || '알 수 없는 오류';
-      
-      console.error(
-        `[API] ❌ ${statusCode} ${url}`,
-        {
-          statusCode: errorData?.statusCode || statusCode,
-          message: errorMessage,
-          data: errorData,
-        },
-      );
+
+      // 409 Conflict는 정상적인 비즈니스 로직 케이스 (이미 참여 중, 이미 존재 등)
+      const isExpectedConflict = statusCode === 409;
+
+      if (isExpectedConflict) {
+        console.log(
+          `[API] ℹ️ ${statusCode} ${url}`,
+          {
+            statusCode: errorData?.statusCode || statusCode,
+            message: errorMessage,
+            data: errorData,
+          },
+        );
+      } else {
+        console.error(
+          `[API] ❌ ${statusCode} ${url}`,
+          {
+            statusCode: errorData?.statusCode || statusCode,
+            message: errorMessage,
+            data: errorData,
+          },
+        );
+      }
     }
 
     if (error.response?.status === 401) {
@@ -170,3 +184,58 @@ export const publicApiClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Public API 요청 인터셉터: URL 검증 및 로깅
+publicApiClient.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    // Base URL 검증
+    if (!BASE_URL) {
+      const errorMsg =
+        'API 서버 주소가 설정되지 않았습니다.\n\n' +
+        '해결 방법:\n' +
+        '1. 프로젝트 루트에 .env 파일 생성\n' +
+        '2. 다음 내용 추가:\n' +
+        '   EXPO_PUBLIC_API_BASE_URL=http://your-server:3000\n' +
+        '3. 개발 서버 재시작 (npm start)';
+
+      Alert.alert('설정 오류', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    if (__DEV__) {
+      console.log(`[Public API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+      console.log('[Public API] 🌐 인증 없이 요청 (Public API)');
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+// Public API 응답 인터셉터: 로깅
+publicApiClient.interceptors.response.use(
+  (response) => {
+    if (__DEV__) {
+      console.log(`[Public API] ✅ ${response.status} ${response.config.url}`);
+    }
+    return response;
+  },
+  (error) => {
+    if (__DEV__) {
+      const statusCode = error.response?.status || 'Network';
+      const url = error.config?.url || 'Unknown';
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || error.message || '알 수 없는 오류';
+
+      console.error(
+        `[Public API] ❌ ${statusCode} ${url}`,
+        {
+          statusCode: errorData?.statusCode || statusCode,
+          message: errorMessage,
+          data: errorData,
+        },
+      );
+    }
+    return Promise.reject(error);
+  },
+);

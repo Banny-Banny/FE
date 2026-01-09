@@ -94,8 +94,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           router.replace(ROUTES.AUTH_ONBOARDING);
         }
       } else if (isAuthPage && currentRoute === 'onboarding') {
-        // 온보딩 완료 + onboarding 페이지 → 메인으로
-        router.replace(ROUTES.MAIN);
+        // 온보딩 완료 + onboarding 페이지 → 저장된 초대 코드 확인 후 리다이렉트
+        const checkPendingInviteCode = async () => {
+          try {
+            const pendingInviteCode = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_INVITE_CODE);
+            if (pendingInviteCode) {
+              // 초대 코드 있음 → 대기실로 이동 후 삭제
+              if (__DEV__) {
+                console.log('[AuthProvider] 저장된 초대 코드 발견 → 대기실로 이동:', pendingInviteCode);
+              }
+              await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
+              router.replace(`/room/join?invite_code=${pendingInviteCode}` as any);
+            } else {
+              // 초대 코드 없음 → 메인으로
+              router.replace(ROUTES.MAIN);
+            }
+          } catch (error) {
+            if (__DEV__) {
+              console.error('[AuthProvider] 초대 코드 확인 중 오류:', error);
+            }
+            // 오류 발생 시 메인으로 이동
+            router.replace(ROUTES.MAIN);
+          }
+        };
+        checkPendingInviteCode();
       }
     } else if (!isAuthPage) {
       // 미인증 + 메인 페이지 → 온보딩으로

@@ -27,6 +27,12 @@ export const styles = StyleSheet.create({
     minHeight: 84,
   },
 
+  // 왼쪽 정렬 + 뒤로가기 버튼 없을 때 (제목 왼쪽으로 붙게)
+  headerContainerLeft: {
+    paddingLeft: 24,
+    paddingRight: 24,
+  },
+
   // 왼쪽 영역 (뒤로가기 버튼)
   backButton: {
     width: 24,

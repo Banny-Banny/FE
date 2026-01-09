@@ -14,14 +14,13 @@
  * 생성 시각: 2025-01-XX
  *
  * @description
- * - 추후 공통 컴포넌트로 교체 예정
+ * - 추후 공통 컴포넌트로 교체 예정ㅞ
  * - 현재는 마이페이지 전용 헤더 컴포넌트
  * - react-native-remix-icon 사용
  */
 
 import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
-import { useNotifications } from '@/components/notification/hooks/useNotifications';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
@@ -29,7 +28,6 @@ import { styles } from './styles';
 
 export function Header() {
   const navigation = useNavigation();
-  const { newNotifications } = useNotifications();
 
   const handleNotificationPress = () => {
     navigation.push(ROUTES.ALARM, { from: 'mypage' });
@@ -49,21 +47,15 @@ export function Header() {
 
         {/* 오른쪽: 아이콘 컨테이너 */}
         <View style={styles.iconContainer}>
-          {/* 알림 아이콘 (배지 있음) */}
+          {/* 알림 아이콘 */}
           <Pressable
             style={styles.notificationButton}
             onPress={handleNotificationPress}
             accessibilityRole="button"
             accessibilityLabel="알림">
-            <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
-            {/* 알림 배지 */}
-            {newNotifications.length > 0 && (
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>
-                  {newNotifications.length > 99 ? '99+' : newNotifications.length}
-                </Text>
-              </View>
-            )}
+            <View style={styles.notificationIcon} collapsable={false}>
+              <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
+            </View>
           </Pressable>
 
           {/* X 아이콘 */}
@@ -72,7 +64,9 @@ export function Header() {
             onPress={handleClosePress}
             accessibilityRole="button"
             accessibilityLabel="닫기">
-            <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
+            <View style={styles.closeIconWrapper} collapsable={false}>
+              <Icon name={'ri-close-line' as IconName} size={20} color={Colors.black[500]} />
+            </View>
           </Pressable>
         </View>
       </View>
