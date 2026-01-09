@@ -90,22 +90,98 @@ export default function MyCapsule() {
         <View style={styles.horizontalScrollContainer}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.cardListContainer}>
-              {capsules.waitingRooms.map((capsule) => (
-                <TouchableOpacity
-                  key={capsule.id}
-                  style={styles.capsuleCard}
-                  onPress={() => handleWaitingRoomPress(capsule.id)}>
-                  <View style={styles.cardHeader}>
-                    <View style={styles.cardTitleContainer}>
-                      <Text style={styles.cardTitle}>{capsule.title}</Text>
-                    </View>
-                  </View>
+              {capsules.waitingRooms.map((capsule) => {
+                // 진행률 계산
+                const progressPercent =
+                  capsule.participantCount > 0
+                    ? (capsule.completedCount / capsule.participantCount) * 100
+                    : 0;
 
-                  {/* TODO: 진행 상황, 이모지, 남은 시간 등 추가 UI 데이터 매핑 */}
-                  {/* 현재 API는 title, status, openDate, participantCount, myWriteStatus만 제공 */}
-                  {/* 추후 API 확장 필요 또는 별도 API 호출 필요 */}
-                </TouchableOpacity>
-              ))}
+                // 남은 시간 계산
+                const now = new Date();
+                const deadlineDate = new Date(capsule.deadline);
+                const diffTime = deadlineDate.getTime() - now.getTime();
+                const diffMinutes = Math.floor(diffTime / (1000 * 60));
+                const diffHours = Math.floor(diffMinutes / 60);
+                const diffDays = Math.floor(diffHours / 24);
+                const remainingHours = diffHours % 24;
+                const remainingMinutes = diffMinutes % 60;
+
+                let timeText = '';
+                if (diffTime < 0) {
+                  timeText = '마감됨';
+                } else if (diffDays > 0) {
+                  timeText = `${diffDays}일 ${remainingHours}시간 ${remainingMinutes}분`;
+                } else if (diffHours > 0) {
+                  timeText = `${diffHours}시간 ${remainingMinutes}분`;
+                } else {
+                  timeText = `${remainingMinutes}분`;
+                }
+
+                return (
+                  <TouchableOpacity
+                    key={capsule.id}
+                    style={styles.capsuleCard}
+                    onPress={() => handleWaitingRoomPress(capsule.id)}>
+                    <View style={styles.cardHeader}>
+                      <View style={styles.cardTitleContainer}>
+                        <Text style={styles.cardTitle}>{capsule.title}</Text>
+                      </View>
+                    </View>
+
+                    {/* 진행 상황 섹션 */}
+                    <View style={styles.cardProgressSection}>
+                      <View style={styles.progressLabelRow}>
+                        <View style={styles.progressLabel}>
+                          <Text style={styles.progressLabelText}>진행 상황</Text>
+                        </View>
+                        <View style={styles.progressValue}>
+                          <Text style={styles.progressValueText}>
+                            {capsule.completedCount}/{capsule.participantCount}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={styles.progressBarContainer}>
+                        <View style={styles.progressBar}>
+                          <View
+                            style={[
+                              styles.progressBarFill,
+                              { width: `${progressPercent}%` },
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* 알 아이콘 섹션 */}
+                    <View style={styles.cardEggsSection}>
+                      {Array.from({ length: capsule.participantCount }).map((_, index) => (
+                        <View
+                          key={index}
+                          style={
+                            index < capsule.completedCount
+                              ? styles.eggIconGrey
+                              : styles.eggIconWhite
+                          }>
+                          <Text style={styles.eggEmoji}>🥚</Text>
+                        </View>
+                      ))}
+                    </View>
+
+                    {/* 남은 시간 섹션 */}
+                    <View style={styles.cardTimeSection}>
+                      <View style={styles.timeSectionContent}>
+                        <View style={styles.timeLabel}>
+                          <Text style={styles.timeLabelText}>남은 시간</Text>
+                        </View>
+                        <View style={styles.timeValue}>
+                          <Text style={styles.timeValueText}>{timeText}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </ScrollView>
         </View>
@@ -209,7 +285,11 @@ export default function MyCapsule() {
       )}
 
       {/* 열린 캡슐 상세 모달 */}
-      <UnlockedCapsuleDetail visible={isDetailModalVisible} onClose={handleCloseModal} />
+      <UnlockedCapsuleDetail
+        visible={isDetailModalVisible}
+        onClose={handleCloseModal}
+        capsuleId={selectedCapsuleId}
+      />
     </View>
   );
 }

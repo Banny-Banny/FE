@@ -19,66 +19,15 @@ import Icon from 'react-native-remix-icon';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants/color';
 import { styles } from './styles';
-
-// localhost 이미지 URL 제거됨 - 리믹스 아이콘 사용
-
-// 사용자별 데이터
-const USER_DATA = {
-  '김민수': {
-    emoji: '😊',
-    message: '2024년 정말 고생 많았어! 2025년엔 더 멋진 일들만 가득하길 바랄게 ㅎㅎ',
-    images: [
-      'http://localhost:3845/assets/placeholder1.jpg',
-      'http://localhost:3845/assets/placeholder2.jpg',
-    ],
-    video: {
-      thumbnail: 'http://localhost:3845/assets/video-thumbnail1.jpg',
-      url: '',
-    },
-    audio: {
-      title: 'Perfect Day - Lou Reed',
-      url: '',
-    },
-  },
-  '박지은': {
-    emoji: '🌸',
-    message: '올해 너무 즐거웠어! 내년에도 함께하자 ♥',
-    images: [
-      'http://localhost:3845/assets/placeholder3.jpg',
-    ],
-    video: {
-      thumbnail: 'http://localhost:3845/assets/video-thumbnail2.jpg',
-      url: '',
-    },
-    audio: {
-      title: 'Perfect Day - Lou Reed',
-      url: '',
-    },
-  },
-  '이준호': {
-    emoji: '⚡',
-    message: '2024년 함께한 모든 순간이 소중했어!',
-    images: [
-      'http://localhost:3845/assets/placeholder4.jpg',
-      'http://localhost:3845/assets/placeholder5.jpg',
-      'http://localhost:3845/assets/placeholder6.jpg',
-    ],
-    video: {
-      thumbnail: 'http://localhost:3845/assets/video-thumbnail3.jpg',
-      url: '',
-    },
-    audio: {
-      title: 'Perfect Day - Lou Reed',
-      url: '',
-    },
-  },
-};
+import { useOpenedCapsuleDetail } from '../../hooks/useOpenedCapsuleDetail';
 
 interface UnlockedCapsuleDetailProps {
   /** 모달 표시 여부 */
   visible: boolean;
   /** 모달 닫기 함수 */
   onClose: () => void;
+  /** 캡슐 ID (필수) */
+  capsuleId: string | null;
 }
 
 // 모달 너비에서 좌우 패딩 제외한 이미지 너비
@@ -86,16 +35,24 @@ const MODAL_WIDTH = 345.347;
 const CONTENT_PADDING = 15.99;
 const IMAGE_WIDTH = MODAL_WIDTH - CONTENT_PADDING * 2; // 313.367
 
-export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCapsuleDetailProps) {
-  const [selectedUser, setSelectedUser] = useState<'김민수' | '박지은' | '이준호'>('김민수');
+export default function UnlockedCapsuleDetail({
+  visible,
+  onClose,
+  capsuleId
+}: UnlockedCapsuleDetailProps) {
+  // API 데이터 로드
+  const { data, writtenSlots, isLoading, error } = useOpenedCapsuleDetail(capsuleId);
+
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const currentUserData = USER_DATA[selectedUser];
-  const imageCount = currentUserData.images.length;
+  // 선택된 슬롯
+  const selectedSlot = writtenSlots[selectedSlotIndex];
+  const imageCount = selectedSlot?.content?.images?.length || 0;
 
-  const handleUserSelect = (userName: '김민수' | '박지은' | '이준호') => {
-    setSelectedUser(userName);
+  const handleUserSelect = (index: number) => {
+    setSelectedSlotIndex(index);
     setCurrentImageIndex(0);
     // 이미지 스크롤을 처음으로 리셋
     if (scrollViewRef.current) {
@@ -108,6 +65,50 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
     const index = Math.round(scrollPosition / IMAGE_WIDTH);
     setCurrentImageIndex(index);
   };
+
+  // 로딩 상태 처리
+  if (isLoading) {
+    return (
+      <Modal
+        visible={visible}
+        onClose={onClose}
+        width={345.347}
+        height={724.375}
+        padding={0}
+        closeOnBackdropPress={true}
+        disableAnimation={false}>
+        <View style={styles.modalContainer}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: Colors.grey[500] }}>로딩 중...</Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  // 에러 또는 데이터 없음 처리
+  if (error || !data || !selectedSlot) {
+    return (
+      <Modal
+        visible={visible}
+        onClose={onClose}
+        width={345.347}
+        height={724.375}
+        padding={0}
+        closeOnBackdropPress={true}
+        disableAnimation={false}>
+        <View style={styles.modalContainer}>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <Text style={{ fontSize: 16, color: Colors.grey[500] }}>
+              {error || '데이터를 불러올 수 없습니다.'}
+            </Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  }
+
+  const currentContent = selectedSlot.content;
 
   return (
     <Modal
@@ -127,93 +128,41 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
 
         {/* 헤더 섹션 */}
         <View style={styles.headerSection}>
-          {/* 제목 */}
+          {/* 제목 - API 데이터 */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>2024 추억 타임캡슐</Text>
+            <Text style={styles.title}>{data.title}</Text>
           </View>
 
-          {/* 사용자 아바타 섹션 */}
+          {/* 사용자 아바타 섹션 - API 데이터로 동적 렌더링 */}
           <View style={styles.userAvatarsContainer}>
-            {/* 김민수 */}
-            <TouchableOpacity
-              style={styles.userAvatarWrapper}
-              onPress={() => handleUserSelect('김민수')}
-              activeOpacity={0.7}>
-              <View style={styles.userAvatarContainer}>
-                <View
-                  style={
-                    selectedUser === '김민수'
-                      ? styles.userAvatarBorderSelected
-                      : styles.userAvatarBorder
-                  }>
-                  <View style={styles.userAvatarInner}>
-                    <Text style={styles.userAvatarEmoji}>😊</Text>
+            {writtenSlots.map((slot, index) => (
+              <TouchableOpacity
+                key={slot.slotId}
+                style={styles.userAvatarWrapper}
+                onPress={() => handleUserSelect(index)}
+                activeOpacity={0.7}>
+                <View style={styles.userAvatarContainer}>
+                  <View
+                    style={
+                      selectedSlotIndex === index
+                        ? styles.userAvatarBorderSelected
+                        : styles.userAvatarBorder
+                    }>
+                    <View style={styles.userAvatarInner}>
+                      <Text style={styles.userAvatarEmoji}>{slot.author.emoji}</Text>
+                    </View>
                   </View>
+                  <Text
+                    style={
+                      selectedSlotIndex === index
+                        ? styles.userAvatarNameSelected
+                        : styles.userAvatarName
+                    }>
+                    {slot.author.name}
+                  </Text>
                 </View>
-                <Text
-                  style={
-                    selectedUser === '김민수'
-                      ? styles.userAvatarNameSelected
-                      : styles.userAvatarName
-                  }>
-                  김민수
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* 박지은 */}
-            <TouchableOpacity
-              style={styles.userAvatarWrapper}
-              onPress={() => handleUserSelect('박지은')}
-              activeOpacity={0.7}>
-              <View style={styles.userAvatarContainer}>
-                <View
-                  style={
-                    selectedUser === '박지은'
-                      ? styles.userAvatarBorderSelected
-                      : styles.userAvatarBorder
-                  }>
-                  <View style={styles.userAvatarInner}>
-                    <Text style={styles.userAvatarEmoji}>🌸</Text>
-                  </View>
-                </View>
-                <Text
-                  style={
-                    selectedUser === '박지은'
-                      ? styles.userAvatarNameSelected
-                      : styles.userAvatarName
-                  }>
-                  박지은
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* 이준호 */}
-            <TouchableOpacity
-              style={styles.userAvatarWrapper}
-              onPress={() => handleUserSelect('이준호')}
-              activeOpacity={0.7}>
-              <View style={styles.userAvatarContainer}>
-                <View
-                  style={
-                    selectedUser === '이준호'
-                      ? styles.userAvatarBorderSelected
-                      : styles.userAvatarBorder
-                  }>
-                  <View style={styles.userAvatarInner}>
-                    <Text style={styles.userAvatarEmoji}>⚡</Text>
-                  </View>
-                </View>
-                <Text
-                  style={
-                    selectedUser === '이준호'
-                      ? styles.userAvatarNameSelected
-                      : styles.userAvatarName
-                  }>
-                  이준호
-                </Text>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -222,14 +171,16 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
           style={styles.contentSection}
           contentContainerStyle={styles.contentScrollContainer}
           showsVerticalScrollIndicator={false}>
-          {/* 텍스트 메시지 (1개만) */}
-          <View style={styles.textMessagesContainer}>
-            <View style={styles.textMessageCard}>
-              <Text style={styles.textMessageText}>{currentUserData.message}</Text>
+          {/* 텍스트 메시지 - API 데이터 */}
+          {currentContent?.text && (
+            <View style={styles.textMessagesContainer}>
+              <View style={styles.textMessageCard}>
+                <Text style={styles.textMessageText}>{currentContent.text}</Text>
+              </View>
             </View>
-          </View>
+          )}
 
-          {/* 이미지 캐러셀 섹션 */}
+          {/* 이미지 캐러셀 섹션 - API 데이터 */}
           {imageCount > 0 && (
             <View style={styles.imageSection}>
               <View style={styles.imageContainer}>
@@ -240,10 +191,10 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={handleImageScroll}
                   style={styles.imageScrollView}>
-                  {currentUserData.images.map((imageUrl, index) => (
-                    <View key={index} style={styles.imageItem}>
+                  {currentContent.images!.map((image) => (
+                    <View key={image.id} style={styles.imageItem}>
                       <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: image.url }}
                         style={styles.imagePlaceholder}
                         contentFit="cover"
                       />
@@ -262,9 +213,9 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
               {/* 페이지네이션 인디케이터 */}
               {imageCount > 1 && (
                 <View style={styles.paginationContainer}>
-                  {currentUserData.images.map((_, index) => (
+                  {currentContent.images!.map((image, index) => (
                     <View
-                      key={index}
+                      key={image.id}
                       style={
                         index === currentImageIndex
                           ? styles.paginationDotActive
@@ -277,12 +228,12 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
             </View>
           )}
 
-          {/* 동영상 섹션 */}
-          {currentUserData.video && (
+          {/* 동영상 섹션 - API 데이터 */}
+          {currentContent?.video && (
             <View style={styles.videoSection}>
               <View style={styles.videoContainer}>
                 <Image
-                  source={{ uri: currentUserData.video.thumbnail }}
+                  source={{ uri: currentContent.video.thumbnailUrl }}
                   style={styles.videoThumbnail}
                   contentFit="cover"
                 />
@@ -296,8 +247,8 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
             </View>
           )}
 
-          {/* 오디오 플레이어 섹션 */}
-          {currentUserData.audio && (
+          {/* 오디오 플레이어 섹션 - API 데이터 */}
+          {currentContent?.audio && (
             <View style={styles.audioSection}>
               <View style={styles.audioCard}>
                 <View style={styles.audioContent}>
@@ -306,7 +257,7 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
                   </View>
                   <View style={styles.audioTitleContainer}>
                     <Text style={styles.audioTitle} numberOfLines={1}>
-                      {currentUserData.audio.title}
+                      {currentContent.audio.title}
                     </Text>
                   </View>
                   <TouchableOpacity style={styles.audioPlayButton} activeOpacity={0.8}>
