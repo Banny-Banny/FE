@@ -20,12 +20,7 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants/color';
 import { styles } from './styles';
 
-// Figma에서 제공된 이미지 URL
-const audioIcon = 'http://localhost:3845/assets/4452e7715b0a848b06571c00179e826c80ee7f60.svg';
-const playIcon = 'http://localhost:3845/assets/c6ff6cc82fcfb137172507e02f322e5ac6bc8e83.svg';
-
-// Figma에서 제공된 이미지 URL
-const videoPlayIcon = 'http://localhost:3845/assets/5a61d5b430fa29ef6d770c92a233424cdfade97d.svg';
+// localhost 이미지 URL 제거됨 - 리믹스 아이콘 사용
 
 // 사용자별 데이터
 const USER_DATA = {
@@ -294,11 +289,7 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
                 {/* 오버레이 및 재생 버튼 */}
                 <View style={styles.videoOverlay} pointerEvents="box-none">
                   <TouchableOpacity style={styles.playButton} activeOpacity={0.8}>
-                    <Image
-                      source={{ uri: videoPlayIcon }}
-                      style={styles.playButtonIcon}
-                      contentFit="contain"
-                    />
+                    <Icon name="ri-play-circle-line" size={24} color={Colors.white[500]} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -311,7 +302,7 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
               <View style={styles.audioCard}>
                 <View style={styles.audioContent}>
                   <View style={styles.audioIconContainer}>
-                    <Image source={{ uri: audioIcon }} style={styles.audioIcon} contentFit="contain" />
+                    <Icon name="ri-music-line" size={20} color={Colors.black[500]} />
                   </View>
                   <View style={styles.audioTitleContainer}>
                     <Text style={styles.audioTitle} numberOfLines={1}>
@@ -319,7 +310,7 @@ export default function UnlockedCapsuleDetail({ visible, onClose }: UnlockedCaps
                     </Text>
                   </View>
                   <TouchableOpacity style={styles.audioPlayButton} activeOpacity={0.8}>
-                    <Image source={{ uri: playIcon }} style={styles.audioPlayIcon} contentFit="contain" />
+                    <Icon name="ri-play-line" size={16} color={Colors.white[500]} />
                   </TouchableOpacity>
                 </View>
               </View>
