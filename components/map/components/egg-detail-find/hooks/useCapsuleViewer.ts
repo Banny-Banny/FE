@@ -90,24 +90,21 @@ export function useCapsuleViewer(): UseCapsuleViewerReturn {
       });
 
       // 캡슐 목록도 Optimistic Update
-      queryClient.setQueriesData(
-        { queryKey: queryKeys.capsulesAll() },
-        (old: any) => {
-          if (!old?.items) return old;
+      queryClient.setQueriesData({ queryKey: queryKeys.capsulesAll() }, (old: any) => {
+        if (!old?.items) return old;
 
-          return {
-            ...old,
-            items: old.items.map((item: any) =>
-              item.id === capsuleId
-                ? {
-                    ...item,
-                    view_count: (item.view_count || 0) + 1,
-                  }
-                : item,
-            ),
-          };
-        },
-      );
+        return {
+          ...old,
+          items: old.items.map((item: any) =>
+            item.id === capsuleId
+              ? {
+                  ...item,
+                  view_count: (item.view_count || 0) + 1,
+                }
+              : item,
+          ),
+        };
+      });
 
       return { previousData };
     },

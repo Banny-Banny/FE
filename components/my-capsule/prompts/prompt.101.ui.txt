@@ -1,0 +1,101 @@
+# UI 구현 가이드
+
+## 📋 목표
+Figma 디자인을 React Native 컴포넌트로 1:1 정확하게 구현
+
+---
+
+## 🎯 핵심 원칙
+- Figma의 사이즈, 간격, 색상을 **픽셀 단위로 정확히** 재현
+- 디자인만 구현 (추가 기능, 애니메이션 금지)
+- 토큰 시스템 100% 준수 (하드코딩 절대 금지)
+
+---
+
+## 🔧 설정 정보
+
+### Figma
+- MCP: Talk to Figma
+- 채널: `a2okcd4a`
+- 디자인: https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=1078-2782&t=GhfPjyy371XbSd0T-4
+
+### 파일 경로
+- TSX: `components/my-capsule/index.tsx`
+- Style: `components/my-capsule/styles.ts`
+
+### 커서 룰
+- @.cursor/rules/01-common.mdc
+- @.cursor/rules/02-wireframe.mdc
+- @.cursor/rules/03-ui.mdc
+- @.cursor/rules/figma.mdc
+
+---
+
+## 📐 스타일 시스템 규칙
+
+### StyleSheet
+- React Native `StyleSheet.create()` 사용
+- 모든 스타일은 `styles.ts`에만 작성
+- 인라인 스타일 절대 금지 (`style={{...}}` 금지)
+
+### 색상
+- `globals.css`에 정의된 색상 토큰만 사용
+- hex, rgb, hsl 직접 입력 금지
+- 비슷한 토큰을 찾아서 사용
+
+### 타이포그래피
+- `globals.css`에 정의된 타이포그래피 토큰만 사용
+- 폰트 크기/굵기 하드코딩 금지
+
+### 아이콘/이미지
+- 아이콘: `assets/icons/`
+- 이미지: `assets/images/`
+- 외부 패키지 설치 금지
+
+### 컴포넌트
+- `components/` 내 공통 컴포넌트 최대한 재사용
+
+---
+
+## 🔍 1단계: 사전 분석
+
+1. **package.json** 확인 → 사용 가능한 라이브러리 파악
+2. **Figma 구조 분석** → 레이아웃 → 섹션 → 컴포넌트 순서로 분석
+3. **globals.css** 확인 → 사용 가능한 색상/타이포 토큰 목록 작성
+4. **공통 컴포넌트** 확인 → 재사용 가능한 컴포넌트 파악
+
+---
+
+## 🛠️ 2단계: 구현
+
+1. **index.tsx** 작성
+   - JSX 구조만 작성 (View, Text 등 기본 컴포넌트)
+   - 로직 없이 순수 UI만
+
+2. **styles.ts** 작성
+   - StyleSheet.create()로 모든 스타일 정의
+   - 토큰 기반 색상/타이포그래피
+
+3. **Figma 1:1 매칭**
+   - 레이아웃, 간격, 크기 정확히 구현
+   - 디자인 시스템 토큰으로만 스타일링
+
+---
+
+## ✅ 최종 체크리스트
+
+### 필수 통과 항목
+- [ ] Figma 디자인과 픽셀 단위로 동일
+- [ ] 색상 하드코딩 0건 (토큰만 사용)
+- [ ] 인라인 스타일 0건
+- [ ] index.tsx는 구조만, styles.ts는 스타일만
+- [ ] 외부 라이브러리 설치 0건
+- [ ] 명시된 파일 외 수정 0건
+- [ ] globals.css 수정 0건
+- [ ] 공통 컴포넌트 최대한 활용
+
+---
+
+## 📤 결과물
+
+체크리스트와 함께 구현 완료 여부를 보고할 것.

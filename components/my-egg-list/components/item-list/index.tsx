@@ -17,7 +17,6 @@ import React, { useMemo } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { Item } from '../item';
 import type { ItemProps } from '../item';
-import { MOCK_DISCOVERED_ITEMS, MOCK_PLANTED_ITEMS } from './constants';
 import { styles } from './styles';
 
 export type { ItemProps };
@@ -29,13 +28,12 @@ interface ItemListProps {
 }
 
 export function ItemList({
-  items,
+  items = [],
   tabType = 'discovered',
   onItemPress,
 }: ItemListProps) {
-  // items가 제공되지 않으면 mock 데이터 사용
-  const displayItems =
-    items || (tabType === 'discovered' ? MOCK_DISCOVERED_ITEMS : MOCK_PLANTED_ITEMS);
+  // items가 없으면 빈 배열 사용
+  const displayItems = items;
 
   // 심은 알인 경우 활성/소멸 구분
   const { activeItems, expiredItems } = useMemo(() => {

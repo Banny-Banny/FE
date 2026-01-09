@@ -19,36 +19,52 @@ import { View } from 'react-native';
 import { Filter } from './components/filter';
 import { Header } from './components/header';
 import { ItemList, ItemProps } from './components/item-list';
+import { EasterEggModal } from './components/modal';
 import { Tab } from './components/tab';
+import { useMyEggs } from './hooks/useMyEggs';
 import { styles } from './styles';
-import { EasterEggItem, FilterOption, TabType } from './types';
+import { FilterOption, TabType } from './types';
 
 interface MyEggListProps {
-  discoveredItems?: EasterEggItem[];
-  plantedItems?: EasterEggItem[];
-  discoveredCount?: number;
-  plantedCount?: number;
-  activeCount?: number;
-  onItemPress?: (item: EasterEggItem, index: number) => void;
+  onItemPress?: (item: { id: string; eggId: number }, index: number) => void;
   onHeaderButtonPress?: () => void;
 }
 
-export default function MyEggList({
-  discoveredItems = [],
-  plantedItems = [],
-  discoveredCount = 5,
-  plantedCount = 5,
-  activeCount = 3,
-  onItemPress,
-  onHeaderButtonPress,
-}: MyEggListProps) {
+export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggListProps) {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabType>('discovered');
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEggId, setSelectedEggId] = useState<number | null>(null);
+
+  // API 파라미터 변환
+  const apiType = useMemo(() => {
+    return activeTab === 'discovered' ? 'FOUND' : 'PLANTED';
+  }, [activeTab]);
+
+  const apiSort = useMemo(() => {
+    return selectedFilter === 'latest' ? 'LATEST' : 'OLDEST';
+  }, [selectedFilter]);
+
+  // 발견한 알 데이터 조회 (필터는 발견한 알에서만 사용)
+  const discoveredData = useMyEggs({
+    type: 'FOUND',
+    sort: activeTab === 'discovered' ? apiSort : undefined,
+  });
+
+  // 심은 알 데이터 조회
+  const plantedData = useMyEggs({
+    type: 'PLANTED',
+  });
+
+  // 현재 탭에 따른 데이터 선택
+  const currentData = useMemo(() => {
+    return activeTab === 'discovered' ? discoveredData : plantedData;
+  }, [activeTab, discoveredData, plantedData]);
 
   // EasterEggItem을 ItemProps로 변환
-  const convertToItemProps = (items: EasterEggItem[]): ItemProps[] => {
+  const convertToItemProps = (items: typeof currentData.items): ItemProps[] => {
     return items.map((item) => ({
       id: item.id,
       title: item.title,
@@ -58,15 +74,15 @@ export default function MyEggList({
       eggIcon: item.eggIcon,
       hasImage: item.hasImage,
       hasAudio: item.hasAudio,
+      hasVideo: item.hasVideo,
       viewCount: item.viewCount,
       status: item.status, // 활성/소멸 상태 포함
     }));
   };
 
   const currentItems = useMemo(() => {
-    const items = activeTab === 'discovered' ? discoveredItems : plantedItems;
-    return convertToItemProps(items);
-  }, [activeTab, discoveredItems, plantedItems]);
+    return convertToItemProps(currentData.items);
+  }, [currentData.items]);
 
   const handleFilterPress = () => {
     setFilterOpen(!filterOpen);
@@ -86,6 +102,42 @@ export default function MyEggList({
       navigation.push('/(tabs)/mypage');
     }
   };
+
+  // 아이템 클릭 핸들러
+  const handleItemPress = (item: ItemProps, index: number) => {
+    if (!item.id) {
+      return;
+    }
+    const eggId = parseInt(item.id, 10);
+    if (!isNaN(eggId)) {
+      // onItemPress가 있으면 먼저 호출
+      onItemPress?.({ id: item.id, eggId }, index);
+
+      // TODO: 실제로는 item.id나 eggId를 사용하여 상세 API 호출
+      // 현재는 모달을 열지 않음 (상세 API 연동 필요)
+      // setSelectedEggId(eggId);
+      // setModalVisible(true);
+    }
+  };
+
+  // 모달 닫기 핸들러
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedEggId(null);
+  };
+
+  // 선택된 이스터에그 데이터 찾기
+  // TODO: 상세 API 연동 후 구현
+  const selectedEggData = useMemo(() => {
+    // if (!selectedEggId) return null;
+    // return await fetchEggDetail(selectedEggId);
+    return null;
+  }, [selectedEggId]);
+
+  // 카운트 계산
+  const discoveredCount = discoveredData.summary?.totalFoundCount || 0;
+  const plantedCount = plantedData.summary?.totalPlantedCount || 0;
+  const activeCount = plantedData.summary?.activeCount || 0;
 
   return (
     <View style={styles.container}>
@@ -114,12 +166,12 @@ export default function MyEggList({
       <ItemList
         items={currentItems.length > 0 ? currentItems : undefined}
         tabType={activeTab}
-        onItemPress={(item, index) => {
-          const originalItem =
-            activeTab === 'discovered' ? discoveredItems[index] : plantedItems[index];
-          onItemPress?.(originalItem, index);
-        }}
+        onItemPress={handleItemPress}
       />
+
+      {/* 이스터에그 상세 모달 */}
+      {/* TODO: 상세 API 연동 후 활성화 */}
+      <EasterEggModal visible={modalVisible} onClose={handleModalClose} data={selectedEggData} />
     </View>
   );
 }
