@@ -25,9 +25,10 @@ export type { ButtonSize, ButtonVariant } from './styles';
 /**
  * 아이콘 위치 타입
  * - left: 아이콘 + 텍스트 (아이콘이 텍스트 왼쪽)
+ * - right: 아이콘 + 텍스트 (아이콘이 텍스트 오른쪽)
  * - only: 아이콘만 표시 (텍스트 숨김)
  */
-export type IconPosition = 'left' | 'only';
+export type IconPosition = 'left' | 'right' | 'only';
 
 /**
  * Button 컴포넌트 Props
@@ -57,7 +58,8 @@ export interface ButtonProps {
 
   /**
    * 아이콘 위치 (선택, 기본값: 'left')
-   * - left: 아이콘 + 텍스트
+   * - left: 아이콘 + 텍스트 (아이콘이 텍스트 왼쪽)
+   * - right: 아이콘 + 텍스트 (아이콘이 텍스트 오른쪽)
    * - only: 아이콘만
    */
   iconPosition?: IconPosition;
@@ -111,7 +113,8 @@ function ButtonComponent({
 
   // 아이콘 표시 여부
   const showIconOnly = iconPosition === 'only' && icon;
-  const showIconWithText = iconPosition === 'left' && icon;
+  const showIconWithTextLeft = iconPosition === 'left' && icon;
+  const showIconWithTextRight = iconPosition === 'right' && icon;
 
   return (
     <Pressable
@@ -119,15 +122,26 @@ function ButtonComponent({
       disabled={disabled}
       style={[styles.button, buttonStyle]}>
       <View style={styles.content}>
-        {(showIconOnly || showIconWithText) && icon && (
+        {showIconWithTextLeft && icon && (
           <Icon
             name={icon as any}
             size={BUTTON_ICON_SIZE}
             color={textColor}
-            style={showIconWithText ? { marginRight: BUTTON_ICON_TEXT_GAP } : undefined}
+            style={{ marginRight: BUTTON_ICON_TEXT_GAP }}
           />
         )}
         {!showIconOnly && <Text style={[styles.text, { color: textColor }]}>{label}</Text>}
+        {showIconWithTextRight && icon && (
+          <Icon
+            name={icon as any}
+            size={BUTTON_ICON_SIZE}
+            color={textColor}
+            style={{ marginLeft: BUTTON_ICON_TEXT_GAP }}
+          />
+        )}
+        {showIconOnly && icon && (
+          <Icon name={icon as any} size={BUTTON_ICON_SIZE} color={textColor} />
+        )}
       </View>
     </Pressable>
   );
