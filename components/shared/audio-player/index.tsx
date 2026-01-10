@@ -56,7 +56,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         />
       </Pressable>
       <View style={styles.audioControls}>
-        <Icon name="music-2-line" size={20} color={Colors.grey[600]} />
         <View style={styles.progressBarContainer}>
           <Animated.View style={[styles.progressBar, progressBarStyle]} />
         </View>

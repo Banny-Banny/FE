@@ -22,6 +22,7 @@ import { ItemList, ItemProps } from './components/item-list';
 import { EasterEggModal } from './components/modal';
 import { Tab } from './components/tab';
 import { useMyEggs } from './hooks/useMyEggs';
+import { useEggDetail } from './hooks/useEggDetail';
 import { styles } from './styles';
 import { FilterOption, TabType } from './types';
 
@@ -36,7 +37,7 @@ export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggLis
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedEggId, setSelectedEggId] = useState<number | null>(null);
+  const [selectedEggId, setSelectedEggId] = useState<string | null>(null);
 
   // API 파라미터 변환
   const apiType = useMemo(() => {
@@ -108,16 +109,13 @@ export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggLis
     if (!item.id) {
       return;
     }
+    // onItemPress가 있으면 먼저 호출
     const eggId = parseInt(item.id, 10);
-    if (!isNaN(eggId)) {
-      // onItemPress가 있으면 먼저 호출
-      onItemPress?.({ id: item.id, eggId }, index);
+    onItemPress?.({ id: item.id, eggId }, index);
 
-      // TODO: 실제로는 item.id나 eggId를 사용하여 상세 API 호출
-      // 현재는 모달을 열지 않음 (상세 API 연동 필요)
-      // setSelectedEggId(eggId);
-      // setModalVisible(true);
-    }
+    // 상세 API 호출을 위해 모달 열기
+    setSelectedEggId(item.id);
+    setModalVisible(true);
   };
 
   // 모달 닫기 핸들러
@@ -126,13 +124,10 @@ export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggLis
     setSelectedEggId(null);
   };
 
-  // 선택된 이스터에그 데이터 찾기
-  // TODO: 상세 API 연동 후 구현
-  const selectedEggData = useMemo(() => {
-    // if (!selectedEggId) return null;
-    // return await fetchEggDetail(selectedEggId);
-    return null;
-  }, [selectedEggId]);
+  // 선택된 이스터에그 상세 데이터 조회
+  const { data: selectedEggData, isLoading: isDetailLoading } = useEggDetail({
+    eggId: selectedEggId,
+  });
 
   // 카운트 계산
   const discoveredCount = discoveredData.summary?.totalFoundCount || 0;

@@ -8,9 +8,9 @@
             - @04-func.mdc
             - @project-structure.mdc
 
-조건-파일경로) 구현될 TSX 파일경로: FE/components/my-egg-list/index.tsx
-조건-파일경로) 구현될 CSS 파일경로: FE/components/my-egg-list/styles.ts
-조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/my-egg-list/hooks 하위 폴더
+조건-파일경로) 구현될 TSX 파일경로: FE/components/my-egg-list/components/modal/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/my-egg-list/components/modal/styles.ts
+조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/my-egg-list/components/modal/hooks 하위 폴더
 
 조건-라이브러리) axios와 이미 구현되어 있는 react-query provider 사용
 
@@ -33,4 +33,46 @@
     - 이전에 명시해둔 모든 데이터를 적절하게 배치시킬 것
 
   2-3) type: "PLANTED"의 경우
-    - 응답받은 데이터 title, message, imageMediaId, audioMediaId, videoMediaId, location.latitude, location.longitude, auth
+    - 응답받은 데이터 title, message, imageMediaId, audioMediaId, videoMediaId, location.latitude, location.longitude, location.address, viewers[id].nickname, viewers[id].profileImg, viewers[id].viewedAt 데이터를 활용하여 적절히 데이터 바인딩 할 것
+    - 이때, mediaId로 반환 받는 경우 api/media/{id}/url을 활용해서 이미지를 가져와 띄울 것
+    - location.latitude와 location.longitude를 활용해서, useKakaoAddress를 훅을 활용해 string 주소로 띄워줄 것. 이때, location.address가 있다면 고걸 띄우기!
+    - 이전에 명시해둔 모든 데이터를 적절하게 배치시킬 것
+
+3. my-egg-list에 있는 이스터에그 id 기반으로 API 조회할 것
+
+4. 데이터 예시
+{
+  "eggId": "550e8400-e29b-41d4-a716-446655440000",
+  "type": "FOUND",
+  "isMine": false,
+  "title": "좋은 하루",
+  "message": "오늘도 웃으면서 보내! 넌 최고야",
+  "imageMediaId": "550e8400-e29b-41d4-a716-446655440002",
+  "imageObjectKey": "media/user-id/IMAGE/uuid.jpg",
+  "audioMediaId": "550e8400-e29b-41d4-a716-446655440003",
+  "audioObjectKey": "media/user-id/AUDIO/uuid.mp3",
+  "videoMediaId": "550e8400-e29b-41d4-a716-446655440004",
+  "videoObjectKey": "media/user-id/VIDEO/uuid.mp4",
+  "location": {
+    "address": "서울 강남구",
+    "latitude": 37.5665,
+    "longitude": 126.978
+  },
+  "author": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "nickname": "김철수",
+    "profileImg": "https://example.com/profile.jpg"
+  },
+  "createdAt": "2024-11-10T00:00:00.000Z",
+  "foundAt": "2024-12-01T14:30:00.000Z",
+  "expiredAt": "2024-11-15T00:00:00.000Z",
+  "discoveredCount": 3,
+  "viewers": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "nickname": "이영희",
+      "profileImg": "https://example.com/profile2.jpg",
+      "viewedAt": "2025-01-05T14:30:00.000Z"
+    }
+  ]
+}
