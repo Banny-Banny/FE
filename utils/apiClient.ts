@@ -123,7 +123,14 @@ apiClient.interceptors.response.use(
       // 409 Conflict는 정상적인 비즈니스 로직 케이스 (이미 참여 중, 이미 존재 등)
       const isExpectedConflict = statusCode === 409;
 
-      if (isExpectedConflict) {
+      // 404 중에서도 정상적인 케이스 (예: /my-content는 아직 작성하지 않은 경우 404가 정상)
+      const isExpectedNotFound =
+        statusCode === 404 &&
+        (url.includes('/my-content') ||
+          errorMessage.includes('아직 작성하지 않았습니다') ||
+          errorMessage.includes('작성하지 않았습니다'));
+
+      if (isExpectedConflict || isExpectedNotFound) {
         console.log(
           `[API] ℹ️ ${statusCode} ${url}`,
           {

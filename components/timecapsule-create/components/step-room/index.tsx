@@ -271,15 +271,26 @@ export default function StepRoom({
 
   /** 바텀시트 저장 핸들러 */
   const handleBottomSheetSave = async (content: any) => {
-    if (!selectedParticipant) return;
+    if (!selectedParticipant) {
+      throw new Error('참여자 정보가 없습니다.');
+    }
 
+    console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
+    console.log('  📝 콘텐츠 정보:', {
+      textLength: content.text?.length || 0,
+      imagesCount: content.images?.length || 0,
+      hasVoice: !!content.voiceRecording,
+      hasVideo: !!content.video,
+    });
+    
     try {
-      console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
       await saveContent(selectedParticipant.id, content);
       console.log('✅ [StepRoom] 바텀시트 저장 성공!');
       setIsBottomSheetVisible(false);
     } catch (err) {
       console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
+      // ⭐ 에러를 다시 throw하여 UserBottomSheet에서 처리할 수 있도록 함
+      throw err;
     }
   };
 
@@ -595,8 +606,14 @@ export default function StepRoom({
                                     if (onSubmit) {
                                       onSubmit();
                                     }
-                                    // 모달 닫은 후 메인 화면으로 이동
-                                    router.replace(ROUTES.MAIN as any);
+                                    // ⭐ 진입 경로에 따라 다른 화면으로 이동
+                                    // - 마이페이지(캡슐 보관함)에서 진입한 경우: 캡슐 보관함으로 이동
+                                    // - 결제 후 진입한 경우: 메인 화면으로 이동
+                                    if (propsCapsuleId) {
+                                      router.replace(ROUTES.MY_CAPSULE as any);
+                                    } else {
+                                      router.replace(ROUTES.MAIN as any);
+                                    }
                                   }}
                                 />
                               ),

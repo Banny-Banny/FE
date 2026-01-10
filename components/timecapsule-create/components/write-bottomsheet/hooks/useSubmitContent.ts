@@ -4,46 +4,19 @@
  *
  * 체크리스트:
  * - [✓] validateContent 함수 구현
- * - [✓] uriToFile 헬퍼 함수 구현
- * - [✓] createFormData 함수 구현
+ * - [✓] React Native FormData 형식으로 파일 추가 ({ uri, type, name })
  * - [✓] 실제 API 연동 submitContent 함수 구현
  * - [✓] 로딩 상태 관리 (isSubmitting)
  * - [✓] 에러 상태 관리 (error)
+ * - [✓] 업로드 진행 상태 관리 (uploadProgress)
  * - [✓] capsuleId 파라미터 추가
  * - [✓] text_message 필수 검증
  */
 
 import { useState } from 'react';
+import { Platform } from 'react-native';
 import { submitMyContent } from '../api/content';
 import type { UserContentFormData, ValidationResult, UseSubmitContentReturn } from '../types';
-
-/**
- * URI를 Blob으로 변환하는 헬퍼 함수
- */
-async function uriToBlob(uri: string): Promise<Blob> {
-  const response = await fetch(uri);
-  const blob = await response.blob();
-  return blob;
-}
-
-/**
- * URI를 File 객체로 변환하는 헬퍼 함수
- * React Native 환경에서 URI를 File/Blob 객체로 변환
- *
- * @param uri - 파일 URI
- * @param name - 파일명
- * @param type - MIME 타입
- * @returns File 객체
- */
-async function uriToFile(uri: string, name: string, type: string): Promise<File> {
-  try {
-    const blob = await uriToBlob(uri);
-    return new File([blob], name, { type });
-  } catch (error) {
-    console.error('URI to File 변환 실패:', error);
-    throw new Error('파일 변환에 실패했습니다');
-  }
-}
 
 /**
  * 파일명 생성 헬퍼 함수
@@ -60,11 +33,34 @@ function generateFileName(uri: string, prefix: string, extension: string): strin
 }
 
 /**
+ * URI가 로컬 파일인지 확인 (HTTP/HTTPS URL이 아닌지)
+ * @param uri 파일 URI
+ * @returns 로컬 파일이면 true, HTTP URL이면 false
+ */
+function isLocalFile(uri: string): boolean {
+  return !uri.startsWith('http://') && !uri.startsWith('https://');
+}
+
+/**
+ * 웹 환경에서 URI를 Blob으로 변환
+ * @param uri 파일 URI
+ * @returns Blob 객체
+ */
+async function uriToBlob(uri: string): Promise<Blob> {
+  const response = await fetch(uri);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch file: ${response.statusText}`);
+  }
+  return await response.blob();
+}
+
+/**
  * 타임캡슐 콘텐츠 제출 Hook
  */
 export function useSubmitContent(): UseSubmitContentReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<string>('');
 
   /**
    * 콘텐츠 검증 함수
@@ -108,6 +104,7 @@ export function useSubmitContent(): UseSubmitContentReturn {
         throw new Error(validation.message);
       }
 
+      setUploadProgress('파일 준비 중...');
       console.log('📤 [useSubmitContent] FormData 생성 시작');
 
       // 2. FormData 생성
@@ -116,48 +113,118 @@ export function useSubmitContent(): UseSubmitContentReturn {
       // text_message 추가 (필수!)
       formData.append('text_message', data.textContent.trim());
 
+      // invite_code 추가 (선택사항)
+      if (data.inviteCode && data.inviteCode.trim().length > 0) {
+        formData.append('invite_code', data.inviteCode.trim());
+        console.log('📤 [useSubmitContent] 초대 코드 추가:', data.inviteCode.trim());
+      }
+
       // 이미지 파일 추가
       if (data.photos.length > 0) {
-        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 변환 중...`);
+        setUploadProgress(`이미지 ${data.photos.length}개 추가 중...`);
+        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 추가 중...`);
         for (let i = 0; i < data.photos.length; i++) {
           const photoUri = data.photos[i];
+
+          // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+          if (!isLocalFile(photoUri)) {
+            console.log(`  ⏭️  이미지 ${i + 1}: 이미 업로드된 파일이므로 건너뜀 - ${photoUri}`);
+            continue;
+          }
+
           const fileName = generateFileName(photoUri, 'photo', 'jpg');
-          const photoFile = await uriToFile(photoUri, fileName, 'image/jpeg');
-          formData.append('images', photoFile);
-          console.log(
-            `✅ [useSubmitContent] 이미지 ${i + 1}/${data.photos.length} 변환 완료: ${fileName}`,
-          );
+
+          // ⭐ 플랫폼별 분기 처리
+          if (Platform.OS === 'web') {
+            // 웹: URI를 Blob으로 변환 후 추가
+            const blob = await uriToBlob(photoUri);
+            formData.append('images', blob, fileName);
+            console.log(
+              `✅ [useSubmitContent] [웹] 이미지 ${i + 1}/${data.photos.length} 추가 완료: ${fileName}`,
+            );
+          } else {
+            // React Native: { uri, type, name } 형태로 추가
+            formData.append('images', {
+              uri: photoUri,
+              type: 'image/jpeg',
+              name: fileName,
+            } as any);
+            console.log(
+              `✅ [useSubmitContent] [앱] 이미지 ${i + 1}/${data.photos.length} 추가 완료: ${fileName}`,
+            );
+          }
         }
       }
 
       // 음악 파일 추가
       if (data.music) {
-        console.log('📤 [useSubmitContent] 음악 파일 변환 중...');
-        const fileName = generateFileName(data.music, 'music', 'mp3');
-        const musicFile = await uriToFile(data.music, fileName, 'audio/mpeg');
-        formData.append('music', musicFile);
-        console.log(`✅ [useSubmitContent] 음악 파일 변환 완료: ${fileName}`);
+        // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+        if (isLocalFile(data.music)) {
+          setUploadProgress('음악 파일 추가 중...');
+          console.log('📤 [useSubmitContent] 음악 파일 추가 중...');
+          const fileName = generateFileName(data.music, 'music', 'mp3');
+
+          // ⭐ 플랫폼별 분기 처리
+          if (Platform.OS === 'web') {
+            // 웹: URI를 Blob으로 변환 후 추가
+            const blob = await uriToBlob(data.music);
+            formData.append('music', blob, fileName);
+            console.log(`✅ [useSubmitContent] [웹] 음악 파일 추가 완료: ${fileName}`);
+          } else {
+            // React Native: { uri, type, name } 형태로 추가
+            formData.append('music', {
+              uri: data.music,
+              type: 'audio/mpeg',
+              name: fileName,
+            } as any);
+            console.log(`✅ [useSubmitContent] [앱] 음악 파일 추가 완료: ${fileName}`);
+          }
+        } else {
+          console.log('  ⏭️  음악: 이미 업로드된 파일이므로 건너뜀 - ', data.music);
+        }
       }
 
       // 비디오 파일 추가
       if (data.video) {
-        console.log('📤 [useSubmitContent] 비디오 파일 변환 중...');
-        const fileName = generateFileName(data.video, 'video', 'mp4');
-        const videoFile = await uriToFile(data.video, fileName, 'video/mp4');
-        formData.append('video', videoFile);
-        console.log(`✅ [useSubmitContent] 비디오 파일 변환 완료: ${fileName}`);
+        // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+        if (isLocalFile(data.video)) {
+          setUploadProgress('비디오 파일 추가 중...');
+          console.log('📤 [useSubmitContent] 비디오 파일 추가 중...');
+          const fileName = generateFileName(data.video, 'video', 'mp4');
+
+          // ⭐ 플랫폼별 분기 처리
+          if (Platform.OS === 'web') {
+            // 웹: URI를 Blob으로 변환 후 추가
+            const blob = await uriToBlob(data.video);
+            formData.append('video', blob, fileName);
+            console.log(`✅ [useSubmitContent] [웹] 비디오 파일 추가 완료: ${fileName}`);
+          } else {
+            // React Native: { uri, type, name } 형태로 추가
+            formData.append('video', {
+              uri: data.video,
+              type: 'video/mp4',
+              name: fileName,
+            } as any);
+            console.log(`✅ [useSubmitContent] [앱] 비디오 파일 추가 완료: ${fileName}`);
+          }
+        } else {
+          console.log('  ⏭️  비디오: 이미 업로드된 파일이므로 건너뜀 - ', data.video);
+        }
       }
 
+      setUploadProgress('저장 중...');
       console.log('📤 [useSubmitContent] API 제출 시작');
 
       // 3. API 호출
       const result = await submitMyContent(capsuleId, formData);
 
+      setUploadProgress('');
       console.log('✅ [useSubmitContent] 제출 완료:', result);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '제출에 실패했습니다.';
       console.error('❌ [useSubmitContent] 제출 실패:', errorMessage);
       setError(errorMessage);
+      setUploadProgress('');
       throw err;
     } finally {
       setIsSubmitting(false);
@@ -169,5 +236,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
     isSubmitting,
     error,
     validateContent,
+    uploadProgress,
   };
 }

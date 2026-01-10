@@ -12,7 +12,7 @@
  */
 
 import { Colors, ROUTES } from '@/commons/constants';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
@@ -30,6 +30,14 @@ export default function MyCapsule() {
 
   // API 데이터 로드
   const { capsules, isLoading, error, refetch } = useMyCapsules();
+
+  // ⭐ 화면이 포커스될 때마다 데이터 리페치 (대기실에서 돌아왔을 때)
+  useFocusEffect(
+    React.useCallback(() => {
+      console.log('🔄 [MyCapsule] 화면 포커스 - 데이터 리페치');
+      refetch();
+    }, [refetch])
+  );
 
   const handleTabPress = (tab: 'opened' | 'locked') => {
     setActiveTab(tab);
