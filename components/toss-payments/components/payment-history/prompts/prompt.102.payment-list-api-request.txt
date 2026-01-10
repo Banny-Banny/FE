@@ -1,0 +1,244 @@
+==============================================
+결제 내역 목록 조회 API 추가 요청
+==============================================
+
+요청 배경:
+- 마이페이지에 "결제 내역" 기능 구현 중
+- 현재 단건 조회 API만 있어서 사용자가 주문번호를 직접 입력해야 함
+- 사용자는 자신의 주문번호를 외우지 못함
+- 로그인한 사용자의 전체 결제 내역을 자동으로 조회할 수 있어야 함
+
+==============================================
+
+API 스펙 요청
+
+엔드포인트: GET /api/payments/toss/my-payments
+
+설명:
+- 로그인한 사용자의 토스페이먼츠 결제 내역 목록 조회
+- JWT 토큰에서 user_id를 추출하여 해당 사용자의 결제 내역만 반환
+- 페이지네이션 지원
+- 최신순 정렬 (approvedAt 기준)
+
+==============================================
+
+요청 (Request)
+
+Method: GET
+URL: /api/payments/toss/my-payments
+Headers:
+  Authorization: Bearer {JWT}
+
+Query Parameters:
+  - page?: number (선택, 기본값: 1)
+      페이지 번호
+
+  - limit?: number (선택, 기본값: 10)
+      페이지당 항목 수
+
+  - status?: string (선택, 기본값: 'ALL')
+      결제 상태 필터
+      가능한 값: 'ALL' | 'DONE' | 'CANCELED'
+      - ALL: 모든 결제 내역
+      - DONE: 완료된 결제만
+      - CANCELED: 취소된 결제만
+
+예시:
+GET /api/payments/toss/my-payments?page=1&limit=10&status=ALL
+GET /api/payments/toss/my-payments?status=DONE
+GET /api/payments/toss/my-payments
+
+==============================================
+
+응답 (Response)
+
+성공 응답 (200 OK):
+
+{
+  "payments": [
+    {
+      "paymentKey": "tviva20241231abc123...",
+      "orderNo": "ORDER20241231001",
+      "tossStatus": "DONE",
+      "method": "카드",
+      "currency": "KRW",
+      "amount": 10000,
+      "approvedAt": "2024-12-31T10:00:00Z",
+      "receiptUrl": "https://..."
+    },
+    {
+      "paymentKey": "tviva20241230xyz789...",
+      "orderNo": "ORDER20241230005",
+      "tossStatus": "CANCELED",
+      "method": "카드",
+      "currency": "KRW",
+      "amount": 5000,
+      "approvedAt": "2024-12-30T15:30:00Z",
+      "receiptUrl": "https://..."
+    }
+  ],
+  "pagination": {
+    "total": 25,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 3
+  }
+}
+
+필드 설명:
+- payments: 결제 내역 배열
+  - paymentKey: 토스페이먼츠 결제 키
+  - orderNo: 주문 번호
+  - tossStatus: 결제 상태 (DONE, CANCELED 등)
+  - method: 결제 수단 (카드, 계좌이체 등)
+  - currency: 통화 (KRW)
+  - amount: 결제 금액 (balance_amount - 잔액)
+  - approvedAt: 승인 일시 (ISO 8601 형식)
+  - receiptUrl: 영수증 URL
+
+- pagination: 페이지네이션 정보
+  - total: 전체 결제 건수
+  - page: 현재 페이지
+  - limit: 페이지당 항목 수
+  - totalPages: 전체 페이지 수
+
+==============================================
+
+에러 응답
+
+401 Unauthorized:
+{
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "code": "UNAUTHORIZED"
+}
+- JWT 토큰이 없거나 유효하지 않은 경우
+
+500 Internal Server Error:
+{
+  "statusCode": 500,
+  "message": "서버 오류가 발생했습니다",
+  "code": "INTERNAL_SERVER_ERROR"
+}
+- 서버 내부 오류
+
+==============================================
+
+구현 가이드 (백엔드)
+
+1. 인증
+   - JwtAuthGuard 사용
+   - JWT 토큰에서 userId 추출
+
+2. 데이터 조회
+   - Payment 테이블에서 userId로 필터링
+   - status 파라미터가 있으면 toss_status로 추가 필터링
+   - approvedAt 기준 내림차순 정렬 (최신순)
+   - 페이지네이션 적용
+
+3. 응답 구성
+   - 각 결제의 기본 정보만 반환 (취소 내역은 제외)
+   - 취소 내역은 상세 조회 API(기존 API) 사용
+
+4. SQL 예시 (참고용)
+```sql
+SELECT
+  payment_key,
+  order_no,
+  toss_status,
+  method,
+  currency,
+  balance_amount as amount,
+  approved_at,
+  receipt_url
+FROM payments
+WHERE user_id = :userId
+  AND (:status = 'ALL' OR toss_status = :status)
+ORDER BY approved_at DESC
+LIMIT :limit OFFSET :offset
+```
+
+==============================================
+
+프론트엔드 사용 계획
+
+이 API가 완성되면:
+
+1. PaymentHistory 컴포넌트 수정
+   - 주문번호 입력 방식 제거
+   - 자동으로 결제 내역 목록 조회
+   - FlatList로 목록 표시
+   - 각 항목 클릭 시 상세 조회 (기존 API 사용)
+
+2. React Query 사용
+```typescript
+const { data, isLoading } = useQuery({
+  queryKey: ['payments', 'my-list', page, status],
+  queryFn: () => getMyPayments({ page, limit: 10, status }),
+});
+```
+
+3. UI 구성
+   - 상단: 필터 탭 (전체/완료/취소)
+   - 중단: 결제 내역 목록 (카드 형태)
+   - 하단: 페이지네이션 또는 무한스크롤
+
+==============================================
+
+우선순위 및 일정
+
+중요도: 높음
+사유:
+- 결제 내역 조회 기능의 핵심 API
+- 현재 방식(주문번호 입력)은 실사용 불가능
+- 사용자 경험에 직접적인 영향
+
+요청 일정:
+- 가능하다면 이번 스프린트 내 완료 희망
+- 늦어도 다음 스프린트 초반까지 필요
+
+==============================================
+
+참고: 기존 API와의 관계
+
+기존 API (단건 조회):
+1. GET /api/payments/toss/{paymentKey}
+   - 결제 키로 상세 조회
+   - 취소 내역 포함
+
+2. GET /api/payments/toss/orders/{orderNo}
+   - 주문 번호로 상세 조회
+   - 취소 내역 포함
+
+신규 API (목록 조회):
+3. GET /api/payments/toss/my-payments
+   - 사용자의 전체 결제 내역 목록
+   - 취소 내역 제외 (요약 정보만)
+
+사용 흐름:
+1. 마이페이지 진입 → 신규 API로 목록 조회
+2. 특정 결제 클릭 → 기존 API로 상세 조회 (취소 내역 포함)
+
+==============================================
+
+추가 문의사항
+
+1. 페이지네이션 기본값 (limit: 10)이 적절한가요?
+   - 모바일 환경을 고려하여 10개로 설정했습니다
+   - 조정이 필요하면 알려주세요
+
+2. 무한스크롤 지원이 필요한가요?
+   - 현재는 페이지네이션 방식 예정
+   - cursor 기반 페이징이 필요하면 알려주세요
+
+3. 취소 내역도 목록에 포함해야 하나요?
+   - 현재는 제외로 설계 (응답 크기 최소화)
+   - 필요하면 포함 가능
+
+==============================================
+
+작성자: 프론트엔드 팀
+작성일: 2025-01-10
+관련 이슈: 결제 내역 조회 기능 구현
+
+==============================================

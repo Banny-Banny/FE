@@ -7,6 +7,7 @@
  */
 
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { router } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
 import { ActivityStats } from './components/activity-stats';
@@ -23,6 +24,10 @@ export default function MyPageFeature() {
     await logout();
   };
 
+  const handlePaymentHistoryPress = () => {
+    router.push('/(tabs)/payment-history');
+  };
+
   return (
     <View style={styles.container}>
       <Header />
@@ -34,7 +39,7 @@ export default function MyPageFeature() {
           <ActivityStats />
         </View>
         <View style={styles.menuList}>
-          <MenuList />
+          <MenuList onPaymentHistoryPress={handlePaymentHistoryPress} />
         </View>
         <View style={styles.logoutButton}>
           <LogoutButton onPress={handleLogout} />

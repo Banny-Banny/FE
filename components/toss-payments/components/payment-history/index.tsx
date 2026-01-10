@@ -1,0 +1,246 @@
+/**
+ * components/toss-payments/components/payment-history/index.tsx
+ * 토스페이먼츠 결제 내역 조회 컴포넌트
+ *
+ * @description
+ * - 결제 내역 목록 표시 (목데이터 사용)
+ * - 피그마 디자인 기반 UI 구현
+ * - 각 카드 클릭 시 상세 Modal 표시
+ * - 영수증 보기 기능
+ */
+
+import { Modal } from '@/commons/components/modal';
+import { Colors, Spacing } from '@/commons/constants';
+import { useNavigation } from '@/commons/hooks';
+import { formatCurrency } from '@/utils';
+import React, { useState } from 'react';
+import { FlatList, Linking, Pressable, Text, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
+import { MOCK_PAYMENT_DETAILS, MOCK_PAYMENT_LIST } from './mockData';
+import { styles } from './styles';
+import type { PaymentListItem } from './types';
+
+/**
+ * 날짜 포맷팅 함수
+ * ISO 8601 → "YYYY-MM-DD"
+ */
+const formatDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * 결제 상태 텍스트 변환
+ */
+const getStatusText = (status: string): string => {
+  switch (status) {
+    case 'DONE':
+      return '완료';
+    case 'CANCELED':
+      return '취소됨';
+    default:
+      return status;
+  }
+};
+
+/**
+ * PaymentHistory 컴포넌트
+ */
+export const PaymentHistory: React.FC = () => {
+  const navigation = useNavigation();
+  const [selectedPayment, setSelectedPayment] = useState<PaymentListItem | null>(null);
+  const [isDetailVisible, setIsDetailVisible] = useState(false);
+
+  // 목데이터 사용
+  const allPayments = MOCK_PAYMENT_LIST.payments;
+
+  // 헤더 닫기 핸들러
+  const handleClose = () => {
+    navigation.back();
+  };
+
+  // 카드 클릭 핸들러
+  const handleCardPress = (payment: PaymentListItem) => {
+    setSelectedPayment(payment);
+    setIsDetailVisible(true);
+  };
+
+  // 영수증 보기
+  const handleViewReceipt = async (receiptUrl: string) => {
+    try {
+      const supported = await Linking.canOpenURL(receiptUrl);
+      if (supported) {
+        await Linking.openURL(receiptUrl);
+      } else {
+        console.error('[PaymentHistory] 영수증 URL을 열 수 없습니다:', receiptUrl);
+      }
+    } catch (err) {
+      console.error('[PaymentHistory] 영수증 열기 실패:', err);
+    }
+  };
+
+  // 결제 카드 렌더링
+  const renderPaymentCard = ({ item }: { item: PaymentListItem }) => {
+    const isDone = item.tossStatus === 'DONE';
+
+    return (
+      <Pressable style={styles.paymentCard} onPress={() => handleCardPress(item)}>
+        {/* 헤더: 주문명 + 화살표 */}
+        <View style={styles.cardHeader}>
+          <Text style={styles.orderName} numberOfLines={1}>
+            {item.orderName}
+          </Text>
+          <Icon
+            name="ri-arrow-right-s-line"
+            size={20}
+            color={Colors.black[500]}
+            style={styles.cardArrow}
+          />
+        </View>
+
+        {/* 바디: 날짜 + 상태 뱃지 + 금액 */}
+        <View style={styles.cardBody}>
+          <View style={styles.cardInfo}>
+            <Text style={styles.cardDate}>{formatDate(item.approvedAt)}</Text>
+            <View
+              style={[styles.statusBadge, isDone ? styles.statusBadgeDone : styles.statusBadgeCanceled]}>
+              <Text style={styles.statusText}>{getStatusText(item.tossStatus)}</Text>
+            </View>
+          </View>
+          <Text style={styles.cardAmount}>{formatCurrency(item.amount)}</Text>
+        </View>
+      </Pressable>
+    );
+  };
+
+  // 빈 화면
+  const renderEmpty = () => {
+    return (
+      <View style={styles.emptyContainer}>
+        <Icon name="ri-inbox-line" size={64} color={Colors.grey[400]} />
+        <Text style={styles.emptyText}>결제 내역이 없습니다</Text>
+        <Text style={styles.emptySubText}>결제한 내역이 없습니다</Text>
+      </View>
+    );
+  };
+
+  // 상세 정보 Modal (영수증)
+  const renderDetailModal = () => {
+    if (!selectedPayment) return null;
+
+    const detailData = MOCK_PAYMENT_DETAILS[selectedPayment.orderNo];
+    if (!detailData) return null;
+
+    const { payment } = detailData;
+
+    return (
+      <Modal
+        visible={isDetailVisible}
+        onClose={() => setIsDetailVisible(false)}
+        width={340}
+        height={623}
+        padding={Spacing.lg}
+        closeOnBackdropPress={true}>
+        <View style={styles.modalContent}>
+          {/* 닫기 버튼 */}
+          <Pressable style={styles.modalCloseButton} onPress={() => setIsDetailVisible(false)}>
+            <Icon name="ri-close-line" size={24} color={Colors.black[500]} />
+          </Pressable>
+
+          {/* 헤더 */}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalHeaderIcon}>🧾</Text>
+            <Text style={styles.modalTitle}>결제 영수증</Text>
+            <Text style={styles.modalSubtitle}>Receipt</Text>
+          </View>
+
+          <View style={styles.modalDivider} />
+
+          {/* 상세 정보 */}
+          <View style={styles.modalSection}>
+            <View style={styles.modalInfoItem}>
+              <Text style={styles.modalLabel}>캡슐 이름</Text>
+              <Text style={styles.modalValue}>{selectedPayment.orderName}</Text>
+            </View>
+
+            <View style={styles.modalInfoItem}>
+              <Text style={styles.modalLabel}>결제일</Text>
+              <Text style={styles.modalValue}>{formatDate(payment.approvedAt)}</Text>
+            </View>
+
+            <View style={styles.modalInfoItem}>
+              <Text style={styles.modalLabel}>참여 인원</Text>
+              <Text style={styles.modalValue}>3명</Text>
+            </View>
+          </View>
+
+          <View style={styles.modalDivider} />
+
+          {/* 상세 내역 (목 데이터에는 없으므로 피그마 디자인 기반으로 표시) */}
+          <View style={styles.modalSection}>
+            <View style={styles.modalItemList}>
+              <View style={styles.modalItemRow}>
+                <Text style={styles.modalItemLabel}>텍스트 저장 (3개)</Text>
+                <Text style={styles.modalItemValue}>{formatCurrency(3000)}</Text>
+              </View>
+              <View style={styles.modalItemRow}>
+                <Text style={styles.modalItemLabel}>사진 저장 (2개)</Text>
+                <Text style={styles.modalItemValue}>{formatCurrency(6000)}</Text>
+              </View>
+              <View style={styles.modalItemRow}>
+                <Text style={styles.modalItemLabel}>음악 저장 (1개)</Text>
+                <Text style={styles.modalItemValue}>{formatCurrency(6000)}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.modalDivider} />
+
+          {/* 총 결제금액 */}
+          <View style={styles.modalTotalSection}>
+            <Text style={styles.modalTotalLabel}>총 결제금액</Text>
+            <Text style={styles.modalTotalAmount}>{formatCurrency(payment.amount)}</Text>
+          </View>
+
+          {/* 하단 텍스트 */}
+          <View style={styles.modalFooter}>
+            <Text style={styles.modalFooterText}>이 영수증은 결제 확인용입니다</Text>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>결제 내역</Text>
+          <Text style={styles.headerSubtitle}>총 {allPayments.length}건의 결제</Text>
+        </View>
+        <Pressable style={styles.headerCloseButton} onPress={handleClose}>
+          <Icon name="ri-close-line" size={24} color={Colors.black[500]} />
+        </Pressable>
+      </View>
+
+      {/* 결제 내역 목록 */}
+      <FlatList
+        data={allPayments}
+        renderItem={renderPaymentCard}
+        keyExtractor={(item) => item.orderNo}
+        contentContainerStyle={styles.listContainer}
+        ListEmptyComponent={renderEmpty}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* 상세 정보 Modal */}
+      {renderDetailModal()}
+    </View>
+  );
+};
+
+export default PaymentHistory;
