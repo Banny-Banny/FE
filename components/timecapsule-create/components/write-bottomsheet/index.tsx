@@ -16,13 +16,11 @@ import { BottomSheet } from '@/commons/components/bottom-sheet';
 import { Button } from '@/commons/components/button';
 import { DualButton } from '@/commons/components/dual-button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
-import { AudioAttachment } from '@/components/shared/audio-attachment';
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { fetchMyContent, NotFoundError } from './api/content';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
 import type { UserBottomSheetProps, UserContentFormData } from './types';
@@ -42,10 +40,7 @@ export default function UserBottomSheet({
   // ⭐ 로컬 저장 상태 (연타 방지용)
   const [isSaving, setIsSaving] = React.useState(false);
 
-  // ⭐ 음성 첨부 모달 상태
-  const [isAudioAttachmentVisible, setIsAudioAttachmentVisible] = React.useState(false);
-
-  // ⭐ 저장된 콘텐츠 불러오기 상태
+  // ⭐ API 로딩 상태
   const [isLoadingContent, setIsLoadingContent] = React.useState(false);
 
   // react-hook-form 설정
@@ -66,83 +61,92 @@ export default function UserBottomSheet({
     },
   });
 
-  // ⭐ 바텀시트가 열릴 때마다 저장된 콘텐츠를 API에서 불러와서 폼에 채우기
+  // ⭐ 바텀시트가 열릴 때 서버에서 최신 콘텐츠 불러오기
   React.useEffect(() => {
-    if (!isVisible || !capsuleId || !participant?.isMe) {
-      return;
-    }
+    async function loadContent() {
+      if (!isVisible || !capsuleId) {
+        return;
+      }
 
-    // 바텀시트가 열릴 때마다 최신 콘텐츠를 불러옴
-    const loadSavedContent = async () => {
       setIsLoadingContent(true);
+
       try {
-        console.log('🔄 [UserBottomSheet] 저장된 콘텐츠 불러오기 시작 - capsuleId:', capsuleId);
-        const response = await fetchMyContent(capsuleId);
+        console.log('🔄 [UserBottomSheet] 서버에서 최신 콘텐츠 불러오기 시작...');
+        const { fetchMyContent } = await import('./api/content');
+        const myContent = await fetchMyContent(capsuleId);
 
-        // API 응답 데이터를 폼 데이터 형식으로 변환
-        const apiData = response.data;
-        const savedContent: UserContentFormData = {
-          textContent:
-            typeof apiData.text_message === 'string'
-              ? apiData.text_message
-              : apiData.text_message && Object.keys(apiData.text_message).length > 0
-              ? JSON.stringify(apiData.text_message)
-              : '',
-          photos: apiData.images?.map((img) => img.url) || [],
-          music: apiData.music?.url || null,
-          video: apiData.video?.url || null,
-        };
+        if (myContent && myContent.data) {
+          console.log('✅ [UserBottomSheet] 서버에서 콘텐츠 불러오기 성공');
+          const textContent = typeof myContent.data.text_message === 'string'
+            ? myContent.data.text_message
+            : JSON.stringify(myContent.data.text_message);
 
-        console.log('✅ [UserBottomSheet] 저장된 콘텐츠 불러오기 성공');
-        console.log('  📝 텍스트:', savedContent.textContent?.substring(0, 30) + '...');
-        console.log('  🖼️  이미지:', savedContent.photos.length, '개');
-        console.log('  🎵 음악:', savedContent.music ? '있음' : '없음');
-        console.log('  🎬 비디오:', savedContent.video ? '있음' : '없음');
-
-        // 폼에 저장된 콘텐츠 채우기
-        reset(savedContent);
+          reset({
+            textContent,
+            photos: myContent.data.images?.map((img) => img.url) || [],
+            music: myContent.data.music?.url || null,
+            video: myContent.data.video?.url || null,
+          });
+        }
       } catch (err: any) {
-        // 404 에러는 정상적인 경우 (아직 작성하지 않음)
-        // 여러 방식으로 404 에러인지 확인 (React Native 호환성)
+        // 404는 정상 (아직 작성 안 함)
+        const { NotFoundError } = await import('./api/content');
         const errorResponse = err?.response || err?.config?.response;
         const statusCode = errorResponse?.status || err?.statusCode || err?.status;
         const isNotFoundError =
           statusCode === 404 ||
           err instanceof NotFoundError ||
           err?.name === 'NotFoundError' ||
-          err?.message?.includes('아직 작성하지 않았습니다') ||
-          err?.message?.includes('작성하지 않았습니다') ||
-          err?.message?.includes('CONTENT_NOT_FOUND');
+          err?.message?.includes('아직 작성하지 않았습니다');
 
         if (isNotFoundError) {
-          console.log('ℹ️ [UserBottomSheet] 작성한 콘텐츠 없음 - 새로 작성 가능');
-          reset({
-            textContent: '',
-            photos: [],
-            music: null,
-            video: null,
-          });
+          console.log('ℹ️ [UserBottomSheet] 아직 작성하지 않음 (404) - 빈 폼 표시');
+          // participant.content 폴백 사용
+          if (participant?.content) {
+            console.log('🔄 [UserBottomSheet] participant.content 폴백 사용');
+            reset({
+              textContent: participant.content.text || '',
+              photos: participant.content.images || [],
+              music: participant.content.voiceRecording || null,
+              video: participant.content.video || null,
+            });
+          } else {
+            // 새로 작성하는 경우 빈 값으로 초기화
+            console.log('📝 [UserBottomSheet] 새로운 콘텐츠 작성');
+            reset({
+              textContent: '',
+              photos: [],
+              music: null,
+              video: null,
+            });
+          }
         } else {
-          console.error('⚠️ [UserBottomSheet] 저장된 콘텐츠 불러오기 실패:', err);
-          console.error('  상태 코드:', statusCode);
-          console.error('  에러 타입:', typeof err);
-          console.error('  에러 이름:', err?.name);
-          console.error('  에러 메시지:', err?.message);
-          // 에러가 발생해도 빈 폼으로 시작
-          reset({
-            textContent: '',
-            photos: [],
-            music: null,
-            video: null,
-          });
+          console.error('❌ [UserBottomSheet] 콘텐츠 불러오기 실패:', err);
+          // 에러 발생 시 participant.content 폴백
+          if (participant?.content) {
+            console.log('🔄 [UserBottomSheet] 에러 발생, participant.content 폴백 사용');
+            reset({
+              textContent: participant.content.text || '',
+              photos: participant.content.images || [],
+              music: participant.content.voiceRecording || null,
+              video: participant.content.video || null,
+            });
+          } else {
+            reset({
+              textContent: '',
+              photos: [],
+              music: null,
+              video: null,
+            });
+          }
         }
       } finally {
         setIsLoadingContent(false);
       }
-    };
+    }
 
-    loadSavedContent();
-  }, [isVisible, capsuleId, participant?.isMe, reset]);
+    loadContent();
+  }, [isVisible, capsuleId, participant, reset]);
 
   // 현재 폼 상태 감시
   const currentPhotos = watch('photos');
@@ -154,23 +158,26 @@ export default function UserBottomSheet({
   const hasMusic = roomSettings?.has_music ?? false;
   const hasVideo = roomSettings?.has_video ?? false;
 
-  // useMediaPicker Hook 사용 (음성은 AudioAttachment 컴포넌트 사용)
-  const { pickImage, pickVideo, isPickingImage, isPickingVideo, error } = useMediaPicker(
-    // 이미지 선택 완료 콜백
-    (uris: string[]) => {
-      setValue('photos', [...currentPhotos, ...uris], { shouldDirty: true });
-    },
-    // 비디오 선택 완료 콜백
-    (uri: string) => {
-      setValue('video', uri, { shouldDirty: true });
-    },
-    // 오디오 선택 완료 콜백 (사용하지 않음 - AudioAttachment 컴포넌트 사용)
-    () => {},
-    currentPhotos.length,
-    !!currentVideo,
-    !!currentMusic,
-    maxImagesPerPerson, // ⭐ 추가
-  );
+  // useMediaPicker Hook 사용
+  const { pickImage, pickVideo, pickAudio, isPickingImage, isPickingVideo, isPickingAudio, error } =
+    useMediaPicker(
+      // 이미지 선택 완료 콜백
+      (uris: string[]) => {
+        setValue('photos', [...currentPhotos, ...uris], { shouldDirty: true });
+      },
+      // 비디오 선택 완료 콜백
+      (uri: string) => {
+        setValue('video', uri, { shouldDirty: true });
+      },
+      // 오디오 선택 완료 콜백
+      (uri: string) => {
+        setValue('music', uri, { shouldDirty: true });
+      },
+      currentPhotos.length,
+      !!currentVideo,
+      !!currentMusic,
+      maxImagesPerPerson, // ⭐ 추가
+    );
 
   // useSubmitContent Hook 사용
   const {
@@ -200,15 +207,9 @@ export default function UserBottomSheet({
     pickVideo();
   };
 
-  // 음성 첨부 핸들러
+  // 음악 추가 핸들러
   const handleAddMusic = () => {
-    setIsAudioAttachmentVisible(true);
-  };
-
-  // 음성 선택 완료 핸들러
-  const handleAudioSelected = (uri: string, name: string) => {
-    setValue('music', uri, { shouldDirty: true });
-    setIsAudioAttachmentVisible(false);
+    pickAudio();
   };
 
   // 에러 발생 시 알림 표시
@@ -269,7 +270,7 @@ export default function UserBottomSheet({
         console.log('  📝 제출 데이터 요약:');
         console.log('    - 텍스트:', data.textContent.trim().substring(0, 30) + '...');
         console.log('    - 이미지:', data.photos.length, '개');
-        console.log('    - 음성:', data.music ? '있음' : '없음');
+        console.log('    - 음악:', data.music ? '있음' : '없음');
         console.log('    - 비디오:', data.video ? '있음' : '없음');
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
@@ -393,16 +394,14 @@ export default function UserBottomSheet({
       <DualButton
         cancelLabel="취소"
         confirmLabel={
-          isLoadingContent
-            ? '불러오는 중...'
-            : isSaving || isSubmitting
+          isSaving || isSubmitting
             ? (uploadProgress || '저장 중...') // ⭐ 업로드 진행 상태 표시
             : '저장'
         }
         size="M"
         cancelVariant="outline"
         confirmVariant="primary"
-        confirmDisabled={isLoadingContent || isSaving || isSubmitting} // ⭐ 로딩 상태도 체크
+        confirmDisabled={isSaving || isSubmitting} // ⭐ 로컬 상태도 체크
         onCancelPress={handleCancel}
         onConfirmPress={handleSave}
       />
@@ -512,7 +511,7 @@ export default function UserBottomSheet({
           />
         </View>
 
-        {/* 음성 섹션 - hasMusic이 true일 때만 표시 */}
+        {/* 음악 섹션 - hasMusic이 true일 때만 표시 */}
         {hasMusic && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -520,18 +519,18 @@ export default function UserBottomSheet({
                 source={{ uri: 'http://localhost:3845/assets/music-icon.svg' }}
                 style={styles.sectionIcon}
               />
-              <Text style={styles.sectionTitle}>음성 ({currentMusic ? 1 : 0}/1)</Text>
+              <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
             </View>
             <Button
-              label={currentMusic ? '음성 교체' : '음성 추가'}
+              label={isPickingAudio ? '선택 중...' : currentMusic ? '음악 교체' : '음악 추가'}
               variant="outline"
               size="M"
               icon="ri-add-line"
-              disabled={isAudioAttachmentVisible}
+              disabled={isPickingAudio}
               onPress={handleAddMusic}
             />
 
-            {/* 선택된 음성 표시 */}
+            {/* 선택된 음악 표시 */}
             {currentMusic && (
               <View style={styles.mediaFileContainer}>
                 <View style={styles.mediaFileInfo}>
@@ -540,7 +539,7 @@ export default function UserBottomSheet({
                     style={styles.mediaFileIcon}
                   />
                   <Text style={styles.mediaFileName} numberOfLines={1}>
-                    {currentMusic.split('/').pop() || '음성 파일'}
+                    {currentMusic.split('/').pop() || '음악 파일'}
                   </Text>
                 </View>
                 <Pressable
@@ -594,13 +593,6 @@ export default function UserBottomSheet({
           </View>
         )}
       </View>
-
-      {/* 음성 첨부 모달 */}
-      <AudioAttachment
-        visible={isAudioAttachmentVisible}
-        onClose={() => setIsAudioAttachmentVisible(false)}
-        onSelectAudio={handleAudioSelected}
-      />
     </BottomSheet>
   );
 }

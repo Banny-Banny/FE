@@ -393,13 +393,32 @@ export function useParticipants({
           console.log('🔄 [useParticipants] 본인 콘텐츠 작성 여부 확인 중...');
           const myContent = await fetchMyContent(capsuleId);
 
-          // 콘텐츠가 존재하면 본인 상태를 COMPLETED로 업데이트
+          // 콘텐츠가 존재하면 본인 상태를 COMPLETED로 업데이트 + 콘텐츠 데이터 저장
           if (myContent && myContent.data) {
             console.log('✅ [useParticipants] 본인이 이미 작성한 콘텐츠 발견!');
+
+            // API 응답 데이터를 ParticipantContent 형식으로 변환
+            const contentData: ParticipantContent = {
+              text: typeof myContent.data.text_message === 'string'
+                ? myContent.data.text_message
+                : JSON.stringify(myContent.data.text_message),
+              images: myContent.data.images?.map((img) => img.url) || [],
+              voiceRecording: myContent.data.music?.url || null,
+              video: myContent.data.video?.url || null,
+            };
+
+            console.log('📦 [useParticipants] 변환된 콘텐츠 데이터:', {
+              text: contentData.text?.substring(0, 30) + '...',
+              imagesCount: contentData.images?.length || 0,
+              hasMusic: !!contentData.voiceRecording,
+              hasVideo: !!contentData.video,
+            });
+
             participantsList.forEach((p) => {
               if (p.isMe && p.status === PARTICIPANT_STATUS.PENDING) {
                 p.status = PARTICIPANT_STATUS.COMPLETED;
-                console.log('✅ [useParticipants] 본인 상태를 COMPLETED로 업데이트:', p.name);
+                p.content = contentData; // ⭐ 서버에서 받은 URL 데이터 저장
+                console.log('✅ [useParticipants] 본인 상태를 COMPLETED로 업데이트 및 콘텐츠 저장:', p.name);
               }
             });
           }
@@ -651,12 +670,54 @@ export function useParticipants({
         console.log('  🎵 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
         console.log('  🎬 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
 
-        // 4. 로컬 상태 업데이트 (작성 내용 저장 및 상태를 'completed'로 업데이트)
-        setParticipants((prev) =>
-          prev.map((p) =>
-            p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
-          ),
-        );
+        // 4. ⭐ 서버에서 업로드된 콘텐츠 다시 조회 (URL 포함)
+        console.log('🔄 [useParticipants] 업로드된 콘텐츠 URL 가져오기...');
+        try {
+          const savedContent = await fetchMyContent(capsuleId);
+
+          if (savedContent && savedContent.data) {
+            // API 응답 데이터를 ParticipantContent 형식으로 변환
+            const contentData: ParticipantContent = {
+              text: typeof savedContent.data.text_message === 'string'
+                ? savedContent.data.text_message
+                : JSON.stringify(savedContent.data.text_message),
+              images: savedContent.data.images?.map((img) => img.url) || [],
+              voiceRecording: savedContent.data.music?.url || null,
+              video: savedContent.data.video?.url || null,
+            };
+
+            console.log('✅ [useParticipants] 서버에서 받은 URL로 콘텐츠 업데이트:', {
+              imagesCount: contentData.images?.length || 0,
+              hasMusic: !!contentData.voiceRecording,
+              hasVideo: !!contentData.video,
+            });
+
+            // 로컬 상태 업데이트 (서버에서 받은 URL 사용)
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === participantId
+                  ? { ...p, content: contentData, status: PARTICIPANT_STATUS.COMPLETED }
+                  : p,
+              ),
+            );
+          } else {
+            // 폴백: 로컬 데이터로 업데이트 (웹에서는 blob: URI 만료 문제 있음)
+            console.warn('⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용 (웹에서 문제 발생 가능)');
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
+              ),
+            );
+          }
+        } catch (fetchErr) {
+          console.warn('⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용:', fetchErr);
+          // 폴백: 로컬 데이터로 업데이트
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
+            ),
+          );
+        }
 
         console.log('✅ [useParticipants] 작성 내용 저장 성공!');
       } catch (err) {

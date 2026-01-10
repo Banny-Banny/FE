@@ -97,11 +97,22 @@ export interface CapsuleSlot {
 }
 
 /**
+ * 캡슐 통계 정보
+ */
+export interface CapsuleStats {
+  totalSlots: number;             // 전체 슬롯 수
+  filledSlots: number;            // 작성된 슬롯 수
+  emptySlots: number;             // 빈 슬롯 수
+}
+
+/**
  * 타임캡슐 상세 조회 API 응답
  */
 export interface OpenedCapsuleDetailResponse {
   id: string;                     // 캡슐 ID (UUID)
   title: string;                  // 캡슐 제목
   headcount: number;              // 참여 인원 수
+  isLocked: boolean;              // 잠김 여부 (true: 잠김, false: 열림)
   slots: CapsuleSlot[];           // 슬롯 배열 (headcount만큼)
+  stats?: CapsuleStats;           // 통계 정보 (선택적)
 }

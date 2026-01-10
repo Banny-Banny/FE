@@ -8,6 +8,7 @@ import type {
   AudioMedia,
   Author,
   CapsuleSlot,
+  CapsuleStats,
   ImageMedia,
   MyCapsuleListResponse,
   OpenedCapsuleDetailResponse,
@@ -86,6 +87,11 @@ interface ApiCapsuleDetailResponse {
     media_types: string[];
   };
   slots: ApiSlotResponse[];
+  stats?: {
+    total_slots: number;
+    filled_slots: number;
+    empty_slots: number;
+  };
 }
 
 function transformSlotContent(
@@ -144,18 +150,19 @@ function transformSlotContent(
 }
 
 function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCapsuleDetailResponse {
+  const isLocked = apiResponse.is_locked;
+
   const slots: CapsuleSlot[] = apiResponse.slots.map((slot) => {
     // 작성 여부 판단:
-    // 1. entry_id가 있으면 작성된 것
-    // 2. user_id가 있으면 작성자가 있는 것으로 간주 (콘텐츠가 없어도 작성자 정보는 표시)
+    // ⭐ entry_id가 있으면 작성된 것으로 간주 (가장 중요!)
     const hasEntry = slot.entry_id !== null;
+
+    // entry_id가 없어도 content나 media가 있으면 작성된 것으로 간주
     const hasContent = slot.content !== null && slot.content.trim() !== '';
     const hasMedia = slot.media_items && slot.media_items.length > 0;
-    const hasUser = slot.user_id !== null;
 
-    // user_id가 있으면 작성자가 있는 것으로 간주하여 화면에 표시
-    // entry_id가 있거나, content/media가 있으면 작성된 것으로 간주
-    const isWritten = hasUser || hasEntry || hasContent || hasMedia;
+    // 작성 여부: entry_id가 있거나, content/media가 있으면 작성된 것
+    const isWritten = hasEntry || hasContent || hasMedia;
 
     // 작성자 정보 (user_id가 있으면 작성자가 있는 것)
     const author: Author = slot.user_id
@@ -170,22 +177,34 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
           emoji: '🥚',
         };
 
-    // 콘텐츠 변환
-    const content = transformSlotContent(slot.content, slot.media_items);
+    // 🔒 잠긴 상태일 때는 콘텐츠를 숨김
+    // 🔓 열린 상태일 때만 콘텐츠 표시
+    const content = isLocked ? undefined : transformSlotContent(slot.content, slot.media_items);
 
     return {
       slotId: slot.slot_id,
       author,
       isWritten,
-      content: isWritten ? content : undefined,
+      content: isWritten && !isLocked ? content : undefined,
     };
   });
+
+  // 통계 정보 변환 (있는 경우만)
+  const stats: CapsuleStats | undefined = apiResponse.stats
+    ? {
+        totalSlots: apiResponse.stats.total_slots,
+        filledSlots: apiResponse.stats.filled_slots,
+        emptySlots: apiResponse.stats.empty_slots,
+      }
+    : undefined;
 
   return {
     id: apiResponse.id,
     title: apiResponse.title,
     headcount: apiResponse.headcount,
+    isLocked,
     slots,
+    stats,
   };
 }
 

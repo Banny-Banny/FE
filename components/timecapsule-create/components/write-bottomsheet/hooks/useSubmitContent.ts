@@ -16,7 +16,7 @@
 import { useState } from 'react';
 import { Platform } from 'react-native';
 import { submitMyContent } from '../api/content';
-import type { UserContentFormData, ValidationResult, UseSubmitContentReturn } from '../types';
+import type { UserContentFormData, UseSubmitContentReturn, ValidationResult } from '../types';
 
 /**
  * 파일명 생성 헬퍼 함수
@@ -140,7 +140,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
             const blob = await uriToBlob(photoUri);
             formData.append('images', blob, fileName);
             console.log(
-              `✅ [useSubmitContent] [웹] 이미지 ${i + 1}/${data.photos.length} 추가 완료: ${fileName}`,
+              `✅ [useSubmitContent] [웹] 이미지 ${i + 1}/${
+                data.photos.length
+              } 추가 완료: ${fileName}`,
             );
           } else {
             // React Native: { uri, type, name } 형태로 추가
@@ -150,7 +152,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
               name: fileName,
             } as any);
             console.log(
-              `✅ [useSubmitContent] [앱] 이미지 ${i + 1}/${data.photos.length} 추가 완료: ${fileName}`,
+              `✅ [useSubmitContent] [앱] 이미지 ${i + 1}/${
+                data.photos.length
+              } 추가 완료: ${fileName}`,
             );
           }
         }
