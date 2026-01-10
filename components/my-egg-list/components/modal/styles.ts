@@ -153,10 +153,9 @@ export const styles = StyleSheet.create({
   discovererInfoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center', // 중앙 정렬
     gap: Spacing.xs, // 4px
-    alignSelf: 'flex-start', // 왼쪽 정렬
     width: '100%',
-    paddingHorizontal: Spacing.xl, // 32px (모달 컨텐츠와 동일한 패딩)
   },
 
   // 발견자 텍스트 (첫 번째 발견자 등)
