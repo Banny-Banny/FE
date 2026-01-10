@@ -227,7 +227,7 @@ import { ROUTES } from '@/commons/constants';
 ROUTES.HOME; // '/'
 ROUTES.ALARM; // '/alarm'
 ROUTES.CALENDAR; // '/calendar'
-ROUTES.MY_PAGE; // '/my-page'
+ROUTES.MY_PAGE; // '/(tabs)/mypage'
 
 // 타임캡슐
 ROUTES.TIMECAPSULE_CREATE; // '/timecapsule/create'

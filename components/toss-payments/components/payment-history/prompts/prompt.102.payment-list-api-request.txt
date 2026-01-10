@@ -237,8 +237,110 @@ const { data, isLoading } = useQuery({
 
 ==============================================
 
+🎉 백엔드 API 완성 (2025-01-10)
+
+==============================================
+
+백엔드에서 API 구현 완료했습니다!
+
+실제 구현된 API 응답 형식:
+
+```json
+{
+  "payments": [
+    {
+      "paymentKey": {},
+      "orderNo": {},
+      "tossStatus": {},
+      "method": {},
+      "currency": "string",
+      "amount": 0,
+      "approvedAt": {},
+      "receiptUrl": {}
+    }
+  ],
+  "total": 0,
+  "page": 0,
+  "limit": 0
+}
+```
+
+요청했던 형식과의 차이점:
+- ❌ pagination 객체 대신 최상위 레벨에 total, page, limit 배치
+- ❌ totalPages 필드 없음 (프론트에서 계산: Math.ceil(total / limit))
+
+이 형식으로 프론트엔드 구현을 진행합니다.
+
+==============================================
+
+프론트엔드 구현 가이드
+
+1. API 함수 작성 (api/payments.ts)
+```typescript
+export interface PaymentListItem {
+  paymentKey: string;
+  orderNo: string;
+  tossStatus: 'DONE' | 'CANCELED';
+  method: string;
+  currency: string;
+  amount: number;
+  approvedAt: string;
+  receiptUrl: string;
+}
+
+export interface PaymentListResponse {
+  payments: PaymentListItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export const getMyPayments = async ({
+  page = 1,
+  limit = 10,
+  status = 'ALL',
+}: {
+  page?: number;
+  limit?: number;
+  status?: 'ALL' | 'DONE' | 'CANCELED';
+}): Promise<PaymentListResponse> => {
+  const response = await apiClient.get('/api/payments/toss/my-payments', {
+    params: { page, limit, status },
+  });
+  return response.data;
+};
+```
+
+2. React Query Hook 작성 (hooks/usePayments.ts)
+```typescript
+export const useMyPayments = ({
+  page = 1,
+  limit = 10,
+  status = 'ALL',
+}: {
+  page?: number;
+  limit?: number;
+  status?: 'ALL' | 'DONE' | 'CANCELED';
+}) => {
+  return useQuery({
+    queryKey: ['payments', 'my-list', page, limit, status],
+    queryFn: () => getMyPayments({ page, limit, status }),
+  });
+};
+```
+
+3. PaymentHistory 컴포넌트 수정
+- 주문번호 입력 제거
+- FlatList로 목록 표시
+- 필터 탭 추가 (전체/완료/취소)
+- 페이지네이션 또는 무한스크롤
+- 각 항목 클릭 시 상세 조회
+
+==============================================
+
 작성자: 프론트엔드 팀
 작성일: 2025-01-10
+업데이트: 2025-01-10 (백엔드 API 완성)
 관련 이슈: 결제 내역 조회 기능 구현
 
 ==============================================

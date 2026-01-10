@@ -44,23 +44,31 @@ export interface PaymentQueryError {
 export interface PaymentListItem {
   paymentKey: string;
   orderNo: string;
-  orderName: string; // 주문명 (피그마 디자인)
+  orderName?: string; // 주문명 (선택적, UI 표시용)
   tossStatus: 'DONE' | 'CANCELED';
   method: string;
+  currency: string;
   amount: number;
   approvedAt: string;
   receiptUrl: string;
 }
 
 /**
- * 결제 목록 응답 (목데이터용)
+ * 결제 목록 응답
+ * 백엔드 API: GET /api/payments/toss/my-payments
  */
 export interface PaymentListResponse {
   payments: PaymentListItem[];
-  pagination: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
+  total: number;
+  page: number;
+  limit: number;
+}
+
+/**
+ * 결제 목록 조회 파라미터
+ */
+export interface GetMyPaymentsParams {
+  page?: number;
+  limit?: number;
+  status?: 'ALL' | 'DONE' | 'CANCELED';
 }

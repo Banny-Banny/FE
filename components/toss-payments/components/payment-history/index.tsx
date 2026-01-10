@@ -3,20 +3,21 @@
  * 토스페이먼츠 결제 내역 조회 컴포넌트
  *
  * @description
- * - 결제 내역 목록 표시 (목데이터 사용)
+ * - 결제 내역 목록 표시 (실제 API 연동)
  * - 피그마 디자인 기반 UI 구현
  * - 각 카드 클릭 시 상세 Modal 표시
- * - 영수증 보기 기능
+ * - 영수증 상세보기 기능
  */
 
+import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
-import { Colors, Spacing } from '@/commons/constants';
+import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
 import { formatCurrency } from '@/utils';
 import React, { useState } from 'react';
 import { FlatList, Linking, Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { MOCK_PAYMENT_DETAILS, MOCK_PAYMENT_LIST } from './mockData';
+import { useMyPayments } from './hooks/usePaymentHistory';
 import { styles } from './styles';
 import type { PaymentListItem } from './types';
 
@@ -54,12 +55,18 @@ export const PaymentHistory: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<PaymentListItem | null>(null);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
 
-  // 목데이터 사용
-  const allPayments = MOCK_PAYMENT_LIST.payments;
+  // API 호출
+  const { data } = useMyPayments({
+    page: 1,
+    limit: 100, // 일단 많은 양을 가져옴 (추후 무한스크롤 추가 가능)
+    status: 'ALL',
+  });
+
+  const allPayments = data?.payments || [];
 
   // 헤더 닫기 핸들러
   const handleClose = () => {
-    navigation.back();
+    navigation.replace(ROUTES.MY_PAGE);
   };
 
   // 카드 클릭 핸들러
@@ -68,7 +75,7 @@ export const PaymentHistory: React.FC = () => {
     setIsDetailVisible(true);
   };
 
-  // 영수증 보기
+  // 영수증 상세보기
   const handleViewReceipt = async (receiptUrl: string) => {
     try {
       const supported = await Linking.canOpenURL(receiptUrl);
@@ -91,10 +98,10 @@ export const PaymentHistory: React.FC = () => {
         {/* 헤더: 주문명 + 화살표 */}
         <View style={styles.cardHeader}>
           <Text style={styles.orderName} numberOfLines={1}>
-            {item.orderName}
+            {item.orderName || '타임캡슐 결제'}
           </Text>
           <Icon
-            name="ri-arrow-right-s-line"
+            name="arrow-right-s-line"
             size={20}
             color={Colors.black[500]}
             style={styles.cardArrow}
@@ -106,7 +113,10 @@ export const PaymentHistory: React.FC = () => {
           <View style={styles.cardInfo}>
             <Text style={styles.cardDate}>{formatDate(item.approvedAt)}</Text>
             <View
-              style={[styles.statusBadge, isDone ? styles.statusBadgeDone : styles.statusBadgeCanceled]}>
+              style={[
+                styles.statusBadge,
+                isDone ? styles.statusBadgeDone : styles.statusBadgeCanceled,
+              ]}>
               <Text style={styles.statusText}>{getStatusText(item.tossStatus)}</Text>
             </View>
           </View>
@@ -120,7 +130,7 @@ export const PaymentHistory: React.FC = () => {
   const renderEmpty = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Icon name="ri-inbox-line" size={64} color={Colors.grey[400]} />
+        <Icon name="inbox-line" size={64} color={Colors.grey[400]} />
         <Text style={styles.emptyText}>결제 내역이 없습니다</Text>
         <Text style={styles.emptySubText}>결제한 내역이 없습니다</Text>
       </View>
@@ -131,28 +141,22 @@ export const PaymentHistory: React.FC = () => {
   const renderDetailModal = () => {
     if (!selectedPayment) return null;
 
-    const detailData = MOCK_PAYMENT_DETAILS[selectedPayment.orderNo];
-    if (!detailData) return null;
-
-    const { payment } = detailData;
-
     return (
       <Modal
         visible={isDetailVisible}
         onClose={() => setIsDetailVisible(false)}
         width={340}
-        height={623}
-        padding={Spacing.lg}
+        height="auto"
+        padding={0}
         closeOnBackdropPress={true}>
         <View style={styles.modalContent}>
           {/* 닫기 버튼 */}
           <Pressable style={styles.modalCloseButton} onPress={() => setIsDetailVisible(false)}>
-            <Icon name="ri-close-line" size={24} color={Colors.black[500]} />
+            <Icon name="close-line" size={24} color={Colors.black[500]} />
           </Pressable>
 
           {/* 헤더 */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalHeaderIcon}>🧾</Text>
             <Text style={styles.modalTitle}>결제 영수증</Text>
             <Text style={styles.modalSubtitle}>Receipt</Text>
           </View>
@@ -162,37 +166,31 @@ export const PaymentHistory: React.FC = () => {
           {/* 상세 정보 */}
           <View style={styles.modalSection}>
             <View style={styles.modalInfoItem}>
-              <Text style={styles.modalLabel}>캡슐 이름</Text>
-              <Text style={styles.modalValue}>{selectedPayment.orderName}</Text>
+              <Text style={styles.modalLabel}>주문번호</Text>
+              <Text style={styles.modalValue}>{selectedPayment.orderNo}</Text>
             </View>
 
             <View style={styles.modalInfoItem}>
               <Text style={styles.modalLabel}>결제일</Text>
-              <Text style={styles.modalValue}>{formatDate(payment.approvedAt)}</Text>
+              <Text style={styles.modalValue}>{formatDate(selectedPayment.approvedAt)}</Text>
             </View>
 
             <View style={styles.modalInfoItem}>
-              <Text style={styles.modalLabel}>참여 인원</Text>
-              <Text style={styles.modalValue}>3명</Text>
+              <Text style={styles.modalLabel}>결제수단</Text>
+              <Text style={styles.modalValue}>{selectedPayment.method}</Text>
             </View>
           </View>
 
           <View style={styles.modalDivider} />
 
-          {/* 상세 내역 (목 데이터에는 없으므로 피그마 디자인 기반으로 표시) */}
+          {/* 상세 내역 */}
           <View style={styles.modalSection}>
             <View style={styles.modalItemList}>
               <View style={styles.modalItemRow}>
-                <Text style={styles.modalItemLabel}>텍스트 저장 (3개)</Text>
-                <Text style={styles.modalItemValue}>{formatCurrency(3000)}</Text>
-              </View>
-              <View style={styles.modalItemRow}>
-                <Text style={styles.modalItemLabel}>사진 저장 (2개)</Text>
-                <Text style={styles.modalItemValue}>{formatCurrency(6000)}</Text>
-              </View>
-              <View style={styles.modalItemRow}>
-                <Text style={styles.modalItemLabel}>음악 저장 (1개)</Text>
-                <Text style={styles.modalItemValue}>{formatCurrency(6000)}</Text>
+                <Text style={styles.modalItemLabel}>
+                  {selectedPayment.orderName || '타임캡슐 결제'}
+                </Text>
+                <Text style={styles.modalItemValue}>{formatCurrency(selectedPayment.amount)}</Text>
               </View>
             </View>
           </View>
@@ -202,8 +200,22 @@ export const PaymentHistory: React.FC = () => {
           {/* 총 결제금액 */}
           <View style={styles.modalTotalSection}>
             <Text style={styles.modalTotalLabel}>총 결제금액</Text>
-            <Text style={styles.modalTotalAmount}>{formatCurrency(payment.amount)}</Text>
+            <Text style={styles.modalTotalAmount}>{formatCurrency(selectedPayment.amount)}</Text>
           </View>
+
+          {/* 영수증 상세보기 버튼 */}
+          {selectedPayment.receiptUrl && (
+            <View style={styles.modalButtonContainer}>
+              <Button
+                label="영수증 상세보기"
+                variant="outline"
+                size="M"
+                icon="external-link-line"
+                iconPosition="left"
+                onPress={() => handleViewReceipt(selectedPayment.receiptUrl)}
+              />
+            </View>
+          )}
 
           {/* 하단 텍스트 */}
           <View style={styles.modalFooter}>
@@ -223,7 +235,7 @@ export const PaymentHistory: React.FC = () => {
           <Text style={styles.headerSubtitle}>총 {allPayments.length}건의 결제</Text>
         </View>
         <Pressable style={styles.headerCloseButton} onPress={handleClose}>
-          <Icon name="ri-close-line" size={24} color={Colors.black[500]} />
+          <Icon name="close-line" size={24} color={Colors.black[500]} />
         </Pressable>
       </View>
 

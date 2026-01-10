@@ -168,16 +168,13 @@ export const styles = StyleSheet.create({
   },
 
   // Modal 스타일 (영수증)
-  // Modal 컴포넌트가 이미 컨테이너 스타일(width, height, backgroundColor, borderRadius)을 제공하므로
-  // 여기서는 padding만 설정 (또는 Modal의 padding prop 사용)
   modalContent: {
     padding: Spacing.lg,
-    minHeight: 623,
   },
 
   modalHeader: {
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
 
   modalTitle: {
@@ -263,9 +260,14 @@ export const styles = StyleSheet.create({
     color: Colors.red[500],
   },
 
+  modalButtonContainer: {
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+
   modalFooter: {
     alignItems: 'center',
-    marginTop: Spacing.lg,
+    marginTop: Spacing.md,
   },
 
   modalFooterText: {
@@ -286,11 +288,69 @@ export const styles = StyleSheet.create({
     zIndex: 1,
   },
 
-  // 모달 헤더 아이콘
-  modalHeaderIcon: {
-    fontSize: 36,
+  // 필터 탭
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
+  },
+
+  filterTab: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: 20,
+    backgroundColor: Colors.white[500],
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+  },
+
+  filterTabActive: {
+    backgroundColor: Colors.black[500],
+    borderColor: Colors.black[500],
+  },
+
+  filterTabText: {
+    ...Typography.body.body6,
+    color: Colors.grey[700],
+  },
+
+  filterTabTextActive: {
+    ...Typography.body.body6,
+    color: Colors.white[500],
+  },
+
+  // 로딩 상태
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+
+  loadingText: {
+    ...Typography.body.body6,
+    color: Colors.grey[700],
+  },
+
+  // 에러 상태
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.md,
+  },
+
+  errorText: {
+    ...Typography.header.h3,
+    color: Colors.grey[700],
     textAlign: 'center',
-    marginBottom: Spacing.xs,
-    lineHeight: 40,
+  },
+
+  errorSubText: {
+    ...Typography.body.body6,
+    color: Colors.grey[500],
+    textAlign: 'center',
   },
 });

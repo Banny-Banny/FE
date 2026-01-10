@@ -41,6 +41,7 @@ export const API_ENDPOINTS = {
     TOSS_CONFIRM: 'api/payments/toss/confirm', // 토스페이먼츠 결제 승인 (POST)
     TOSS_GET_BY_KEY: 'api/payments/toss', // 토스 결제 조회 (paymentKey) (GET) - {paymentKey} 파라미터 필요
     TOSS_GET_BY_ORDER: 'api/payments/toss/orders', // 토스 결제 조회 (orderId) (GET) - {orderNo} 파라미터 필요
+    TOSS_MY_PAYMENTS: 'api/payments/toss/my-payments', // 내 결제 내역 목록 조회 (GET) - 페이지네이션 파라미터: page, limit, status
     TOSS_CANCEL: 'api/payments/toss', // 토스 결제 취소 (POST) - {paymentKey}/cancel 파라미터 필요
     // 토스페이먼츠 결제 리다이렉트 URL
     TOSS_SUCCESS_URL: 'https://timeegg.com/payment/success', // 결제 성공 리다이렉트 URL

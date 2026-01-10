@@ -10,7 +10,7 @@ export const ROUTES = {
   HOME: '/',
   ALARM: '/alarm',
   CALENDAR: '/calendar',
-  MY_PAGE: '/my-page',
+  MY_PAGE: '/(tabs)/mypage',
 
   // 타임캡슐
   TIMECAPSULE_CREATE: '/timecapsule/create',
