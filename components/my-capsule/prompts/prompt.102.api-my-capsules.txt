@@ -543,7 +543,7 @@ export default function MyCapsule() {
 
 4. UI 렌더링
    - 헤더: 열린/잠긴 캡슐 개수 표시
-   - 캡슐 대기실: waitingRooms 가로 스크롤
+   - 캡슐 대기실: waitingRooms 가로 스크롤                                            
    - 열린 캡슐 탭: openedCapsules 세로 리스트
    - 잠긴 캡슐 탭: lockedCapsules 세로 리스트
 

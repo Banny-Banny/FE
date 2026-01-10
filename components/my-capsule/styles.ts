@@ -19,13 +19,11 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white[500],
-    width: 393,
-    height: 852,
   },
 
   // ========== 헤더 섹션 ==========
   headerContainer: {
-    width: 393,
+    width: '100%',
     height: 124,
     paddingTop: 32,
     paddingLeft: 24,
@@ -36,7 +34,7 @@ export const styles = StyleSheet.create({
   },
 
   headerTopRow: {
-    width: 345,
+    width: '100%',
     height: 40,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -67,7 +65,7 @@ export const styles = StyleSheet.create({
   },
 
   headerSubtitle: {
-    width: 345,
+    width: '100%',
     height: 20,
     marginTop: 8,
   },
@@ -75,19 +73,19 @@ export const styles = StyleSheet.create({
   headerSubtitleText: {
     ...Typography.body.body9,
     color: Colors.grey[500],
-    width: 345,
+    width: '100%',
     height: 20,
   },
 
   // ========== 열려있는 캡슐 섹션 ==========
   openCapsulesSection: {
-    width: 393,
+    width: '100%',
     height: 241,
     marginTop: 23,
   },
 
   sectionHeader: {
-    width: 393,
+    width: '100%',
     height: 26,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -119,7 +117,7 @@ export const styles = StyleSheet.create({
 
   // 가로 스크롤 컨테이너
   horizontalScrollContainer: {
-    width: 393,
+    width: '100%',
     height: 203,
     marginTop: 12,
   },
@@ -333,7 +331,7 @@ export const styles = StyleSheet.create({
 
   // ========== 탭 섹션 ==========
   tabContainer: {
-    width: 393,
+    width: '100%',
     height: 37,
     borderBottomWidth: 1,
     borderColor: Colors.border.light,
@@ -345,7 +343,7 @@ export const styles = StyleSheet.create({
   },
 
   tabInner: {
-    width: 345,
+    width: '100%',
     height: 36,
     flexDirection: 'row',
     gap: 32,
@@ -385,21 +383,21 @@ export const styles = StyleSheet.create({
 
   // ========== 잠긴 캡슐 리스트 섹션 ==========
   lockedCapsulesSection: {
-    width: 393,
+    width: '100%',
     marginTop: 0,
     paddingLeft: 24,
     paddingRight: 24,
   },
 
   lockedCapsulesList: {
-    width: 345,
+    width: '100%',
     gap: 16,
     marginTop: 34,
   },
 
   // 잠긴 캡슐 카드 (열린 캡슐도 동일한 스타일 사용)
   lockedCapsuleCard: {
-    width: 345,
+    width: '100%',
     height: 145,
     backgroundColor: Colors.white[500],
     borderWidth: 1,
@@ -410,27 +408,28 @@ export const styles = StyleSheet.create({
   },
 
   lockedCardImageContainer: {
-    width: 343,
+    width: '100%',
     height: 80,
     marginLeft: 1,
     marginTop: 1,
   },
 
   lockedCardGradient: {
-    width: 343,
+    width: '100%',
     height: 80,
     position: 'absolute',
     backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
 
   lockedCardContent: {
-    width: 303,
+    width: '100%',
     height: 104,
     marginLeft: 20,
     marginTop: 20,
     flexDirection: 'row',
     gap: 16,
     position: 'absolute',
+    paddingRight: 20,
   },
 
   lockedCardIcon: {
@@ -460,12 +459,12 @@ export const styles = StyleSheet.create({
   },
 
   lockedCardInfo: {
-    width: 231,
+    flex: 1,
     height: 104,
   },
 
   lockedCardTitleContainer: {
-    width: 231,
+    width: '100%',
     height: 20,
     marginTop: 4,
   },
@@ -480,14 +479,14 @@ export const styles = StyleSheet.create({
   },
 
   lockedCardDetails: {
-    width: 231,
+    width: '100%',
     height: 72,
     marginTop: 8,
     gap: 6,
   },
 
   lockedCardDetailRow: {
-    width: 231,
+    width: '100%',
     height: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -510,12 +509,12 @@ export const styles = StyleSheet.create({
   },
 
   lockedCardFooter: {
-    width: 343,
+    width: '100%',
     height: 64,
     backgroundColor: Colors.white[500],
     borderTopWidth: 1,
     borderTopColor: Colors.border.light,
-    marginLeft: 1,
+    marginLeft: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -553,7 +552,7 @@ export const styles = StyleSheet.create({
 
   // ========== 열린 캡슐 카드 ==========
   openedCapsuleCard: {
-    width: 345,
+    width: '100%',
     height: 145,
     backgroundColor: Colors.white[500],
     borderWidth: 1,
@@ -564,7 +563,7 @@ export const styles = StyleSheet.create({
   },
 
   openedCardContent: {
-    width: 303,
+    width: '100%',
     height: 104,
     flexDirection: 'row',
     gap: 16,
@@ -592,13 +591,12 @@ export const styles = StyleSheet.create({
   },
 
   openedCardInfo: {
-    width: 231,
-    height: 104,
     flex: 1,
+    height: 104,
   },
 
   openedCardTitleContainer: {
-    width: 231,
+    width: '100%',
     height: 20,
     marginTop: 4,
   },
@@ -613,14 +611,14 @@ export const styles = StyleSheet.create({
   },
 
   openedCardDetails: {
-    width: 231,
+    width: '100%',
     height: 72,
     marginTop: 8,
     gap: 6,
   },
 
   openedCardDetailRow: {
-    width: 231,
+    width: '100%',
     height: 20,
     flexDirection: 'row',
     alignItems: 'center',

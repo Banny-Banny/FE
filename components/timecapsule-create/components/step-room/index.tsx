@@ -77,10 +77,11 @@ export default function StepRoom({
    * 3. 백엔드 제공 테스트 ID (하드코딩)
    *
    * 초기 진입 경로(role)를 기반으로 orderId 설정
+   * ⚠️ propsCapsuleId가 있으면(보관함에서 진입) orderId를 사용하지 않음
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
   const initialIsHost = role === 'host';
-  const orderId = initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
+  const orderId = propsCapsuleId ? undefined : (initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined);
 
   /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
@@ -270,15 +271,26 @@ export default function StepRoom({
 
   /** 바텀시트 저장 핸들러 */
   const handleBottomSheetSave = async (content: any) => {
-    if (!selectedParticipant) return;
+    if (!selectedParticipant) {
+      throw new Error('참여자 정보가 없습니다.');
+    }
 
+    console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
+    console.log('  📝 콘텐츠 정보:', {
+      textLength: content.text?.length || 0,
+      imagesCount: content.images?.length || 0,
+      hasVoice: !!content.voiceRecording,
+      hasVideo: !!content.video,
+    });
+    
     try {
-      console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
       await saveContent(selectedParticipant.id, content);
       console.log('✅ [StepRoom] 바텀시트 저장 성공!');
       setIsBottomSheetVisible(false);
     } catch (err) {
       console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
+      // ⭐ 에러를 다시 throw하여 UserBottomSheet에서 처리할 수 있도록 함
+      throw err;
     }
   };
 
@@ -401,9 +413,16 @@ export default function StepRoom({
   // 렌더링
   // ============================================
 
-  // 메인으로 나가기 핸들러 (호스트/게스트 공통)
-  const handleGoToMain = () => {
-    router.replace(ROUTES.MAIN as any);
+  // X 버튼 핸들러: 진입 경로에 따라 다른 동작
+  const handleClose = () => {
+    // 캡슐보관함에서 들어온 경우: 뒤로가기
+    if (propsCapsuleId) {
+      router.back();
+    }
+    // 결제 후 들어온 경우: 메인화면으로
+    else {
+      router.replace(ROUTES.MAIN as any);
+    }
   };
 
   return (
@@ -417,8 +436,8 @@ export default function StepRoom({
           {
             icon: 'close-line',
             size: 44,
-            onPress: handleGoToMain,
-            accessibilityLabel: '메인으로 나가기',
+            onPress: handleClose,
+            accessibilityLabel: '닫기',
           },
         ]}
       />
@@ -586,6 +605,14 @@ export default function StepRoom({
                                     closeModal();
                                     if (onSubmit) {
                                       onSubmit();
+                                    }
+                                    // ⭐ 진입 경로에 따라 다른 화면으로 이동
+                                    // - 마이페이지(캡슐 보관함)에서 진입한 경우: 캡슐 보관함으로 이동
+                                    // - 결제 후 진입한 경우: 메인 화면으로 이동
+                                    if (propsCapsuleId) {
+                                      router.replace(ROUTES.MY_CAPSULE as any);
+                                    } else {
+                                      router.replace(ROUTES.MAIN as any);
                                     }
                                   }}
                                 />

@@ -6,6 +6,10 @@
 import { API_ENDPOINTS } from '@/commons/constants';
 import { apiClient } from '@/utils';
 import type {
+  GetMyPaymentsParams,
+  PaymentListResponse,
+} from '../components/payment-history/types';
+import type {
   PaymentError,
   TossPaymentCancelResponse,
   TossPaymentConfirmResponse,
@@ -295,5 +299,46 @@ export const updateOrderStatus = async (
 
     console.error('[updateOrderStatus] 주문 상태 변경 실패:', { status, errorCode, errorMessage });
     throw new Error(message);
+  }
+};
+
+/**
+ * 내 결제 내역 목록 조회
+ * @param params 조회 파라미터 { page, limit, status }
+ * @returns 결제 목록 및 페이지네이션 정보
+ */
+export const getMyPayments = async ({
+  page = 1,
+  limit = 10,
+  status = 'ALL',
+}: GetMyPaymentsParams = {}): Promise<PaymentListResponse> => {
+  try {
+    const response = await apiClient.get<PaymentListResponse>(
+      `/${API_ENDPOINTS.PAYMENT.TOSS_MY_PAYMENTS}`,
+      {
+        params: { page, limit, status },
+      },
+    );
+    return response.data;
+  } catch (error: any) {
+    const statusCode = error.response?.status || 0;
+    let message = '결제 내역을 불러오는데 실패했습니다';
+
+    const errorCode = error.response?.data?.code;
+    const errorMessage = error.response?.data?.message;
+
+    if (statusCode === 401) {
+      message = '로그인이 필요합니다';
+    } else if (statusCode === 500) {
+      message = '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요';
+    } else if (!statusCode) {
+      message = '네트워크 연결을 확인해주세요';
+    } else if (errorMessage) {
+      message = errorMessage;
+    }
+
+    const paymentError: PaymentError = { status: statusCode, message };
+    console.error('[TossPayment API] 결제 내역 조회 실패:', { statusCode, errorCode, errorMessage });
+    throw paymentError;
   }
 };

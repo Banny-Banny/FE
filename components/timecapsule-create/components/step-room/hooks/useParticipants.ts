@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
-import { submitMyContent } from '../../write-bottomsheet/api/content';
+import { fetchMyContent, NotFoundError, submitMyContent } from '../../write-bottomsheet/api/content';
 import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
@@ -281,6 +281,15 @@ function isHeicFormat(uri: string): boolean {
   return extension === 'heic' || extension === 'heif';
 }
 
+/**
+ * URI가 로컬 파일인지 확인 (HTTP/HTTPS URL이 아닌지)
+ * @param uri 파일 URI
+ * @returns 로컬 파일이면 true, HTTP URL이면 false
+ */
+function isLocalFile(uri: string): boolean {
+  return !uri.startsWith('http://') && !uri.startsWith('https://');
+}
+
 // ============================================
 // Hook
 // ============================================
@@ -358,8 +367,7 @@ export function useParticipants({
                   : PARTICIPANT_STATUS.WAITING,
               isHost: slot.is_host,
               isMe,
-              // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
-              // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+              // ⭐ 작성 완료 여부는 아래에서 본인 콘텐츠 조회로 확인
             });
           } else {
             // 빈 슬롯 (user_id가 null인 경우)
@@ -379,6 +387,60 @@ export function useParticipants({
           `participantsList.length=${participantsList.length}`,
           `maxParticipants=${maxParticipants}`,
         );
+
+        // ⭐ 본인의 콘텐츠 작성 여부 확인
+        try {
+          console.log('🔄 [useParticipants] 본인 콘텐츠 작성 여부 확인 중...');
+          const myContent = await fetchMyContent(capsuleId);
+
+          // 콘텐츠가 존재하면 본인 상태를 COMPLETED로 업데이트 + 콘텐츠 데이터 저장
+          if (myContent && myContent.data) {
+            console.log('✅ [useParticipants] 본인이 이미 작성한 콘텐츠 발견!');
+
+            // API 응답 데이터를 ParticipantContent 형식으로 변환
+            const contentData: ParticipantContent = {
+              text: typeof myContent.data.text_message === 'string'
+                ? myContent.data.text_message
+                : JSON.stringify(myContent.data.text_message),
+              images: myContent.data.images?.map((img) => img.url) || [],
+              voiceRecording: myContent.data.music?.url || null,
+              video: myContent.data.video?.url || null,
+            };
+
+            console.log('📦 [useParticipants] 변환된 콘텐츠 데이터:', {
+              text: contentData.text?.substring(0, 30) + '...',
+              imagesCount: contentData.images?.length || 0,
+              hasMusic: !!contentData.voiceRecording,
+              hasVideo: !!contentData.video,
+            });
+
+            participantsList.forEach((p) => {
+              if (p.isMe && p.status === PARTICIPANT_STATUS.PENDING) {
+                p.status = PARTICIPANT_STATUS.COMPLETED;
+                p.content = contentData; // ⭐ 서버에서 받은 URL 데이터 저장
+                console.log('✅ [useParticipants] 본인 상태를 COMPLETED로 업데이트 및 콘텐츠 저장:', p.name);
+              }
+            });
+          }
+        } catch (err: any) {
+          // 404 에러는 정상 (아직 작성하지 않음)
+          const errorResponse = err?.response || err?.config?.response;
+          const statusCode = errorResponse?.status || err?.statusCode || err?.status;
+          const isNotFoundError =
+            statusCode === 404 ||
+            err instanceof NotFoundError ||
+            err?.name === 'NotFoundError' ||
+            err?.message?.includes('아직 작성하지 않았습니다') ||
+            err?.message?.includes('작성하지 않았습니다') ||
+            err?.message?.includes('CONTENT_NOT_FOUND');
+
+          if (isNotFoundError) {
+            console.log('ℹ️ [useParticipants] 본인이 아직 작성하지 않음 (404) - 정상');
+          } else {
+            console.error('⚠️ [useParticipants] 본인 콘텐츠 조회 실패:', err);
+            // 에러가 발생해도 계속 진행 (상태는 PENDING 유지)
+          }
+        }
 
         setParticipants(participantsList);
         console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
@@ -528,6 +590,12 @@ export function useParticipants({
           for (let i = 0; i < content.images.length; i++) {
             let imageUri = content.images[i];
 
+            // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+            if (!isLocalFile(imageUri)) {
+              console.log(`  ⏭️  이미지 ${i + 1}: 이미 업로드된 파일이므로 건너뜀 - ${imageUri}`);
+              continue;
+            }
+
             // HEIC 파일이면 JPEG로 변환
             if (isHeicFormat(imageUri)) {
               console.log(`  🔄 이미지 ${i + 1}: HEIC → JPEG 변환 중...`);
@@ -552,32 +620,42 @@ export function useParticipants({
 
         // 음악 파일 추가
         if (content.voiceRecording) {
-          console.log('📤 [useParticipants] 음악 파일 FormData에 추가 중...');
-          const fileName = getFileName(content.voiceRecording, `music_${Date.now()}.mp3`);
-          const mimeType = getMimeType(content.voiceRecording, 'audio');
+          // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+          if (isLocalFile(content.voiceRecording)) {
+            console.log('📤 [useParticipants] 음악 파일 FormData에 추가 중...');
+            const fileName = getFileName(content.voiceRecording, `music_${Date.now()}.mp3`);
+            const mimeType = getMimeType(content.voiceRecording, 'audio');
 
-          formData.append('music', {
-            uri: content.voiceRecording,
-            type: mimeType,
-            name: fileName,
-          } as any);
+            formData.append('music', {
+              uri: content.voiceRecording,
+              type: mimeType,
+              name: fileName,
+            } as any);
 
-          console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+            console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+          } else {
+            console.log('  ⏭️  음악: 이미 업로드된 파일이므로 건너뜀 - ', content.voiceRecording);
+          }
         }
 
         // 비디오 파일 추가
         if (content.video) {
-          console.log('📤 [useParticipants] 비디오 파일 FormData에 추가 중...');
-          const fileName = getFileName(content.video, `video_${Date.now()}.mp4`);
-          const mimeType = getMimeType(content.video, 'video');
+          // ⭐ HTTP/HTTPS URL은 이미 업로드된 파일이므로 제외
+          if (isLocalFile(content.video)) {
+            console.log('📤 [useParticipants] 비디오 파일 FormData에 추가 중...');
+            const fileName = getFileName(content.video, `video_${Date.now()}.mp4`);
+            const mimeType = getMimeType(content.video, 'video');
 
-          formData.append('video', {
-            uri: content.video,
-            type: mimeType,
-            name: fileName,
-          } as any);
+            formData.append('video', {
+              uri: content.video,
+              type: mimeType,
+              name: fileName,
+            } as any);
 
-          console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+            console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+          } else {
+            console.log('  ⏭️  비디오: 이미 업로드된 파일이므로 건너뜀 - ', content.video);
+          }
         }
 
         console.log('📤 [useParticipants] API 제출 시작 (multipart/form-data)');
@@ -592,12 +670,54 @@ export function useParticipants({
         console.log('  🎵 음악:', result.data.uploaded_music ? '업로드됨' : '없음');
         console.log('  🎬 비디오:', result.data.uploaded_video ? '업로드됨' : '없음');
 
-        // 4. 로컬 상태 업데이트 (작성 내용 저장 및 상태를 'completed'로 업데이트)
-        setParticipants((prev) =>
-          prev.map((p) =>
-            p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
-          ),
-        );
+        // 4. ⭐ 서버에서 업로드된 콘텐츠 다시 조회 (URL 포함)
+        console.log('🔄 [useParticipants] 업로드된 콘텐츠 URL 가져오기...');
+        try {
+          const savedContent = await fetchMyContent(capsuleId);
+
+          if (savedContent && savedContent.data) {
+            // API 응답 데이터를 ParticipantContent 형식으로 변환
+            const contentData: ParticipantContent = {
+              text: typeof savedContent.data.text_message === 'string'
+                ? savedContent.data.text_message
+                : JSON.stringify(savedContent.data.text_message),
+              images: savedContent.data.images?.map((img) => img.url) || [],
+              voiceRecording: savedContent.data.music?.url || null,
+              video: savedContent.data.video?.url || null,
+            };
+
+            console.log('✅ [useParticipants] 서버에서 받은 URL로 콘텐츠 업데이트:', {
+              imagesCount: contentData.images?.length || 0,
+              hasMusic: !!contentData.voiceRecording,
+              hasVideo: !!contentData.video,
+            });
+
+            // 로컬 상태 업데이트 (서버에서 받은 URL 사용)
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === participantId
+                  ? { ...p, content: contentData, status: PARTICIPANT_STATUS.COMPLETED }
+                  : p,
+              ),
+            );
+          } else {
+            // 폴백: 로컬 데이터로 업데이트 (웹에서는 blob: URI 만료 문제 있음)
+            console.warn('⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용 (웹에서 문제 발생 가능)');
+            setParticipants((prev) =>
+              prev.map((p) =>
+                p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
+              ),
+            );
+          }
+        } catch (fetchErr) {
+          console.warn('⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용:', fetchErr);
+          // 폴백: 로컬 데이터로 업데이트
+          setParticipants((prev) =>
+            prev.map((p) =>
+              p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
+            ),
+          );
+        }
 
         console.log('✅ [useParticipants] 작성 내용 저장 성공!');
       } catch (err) {

@@ -13,8 +13,8 @@ import type { CategorizedCapsules, MyCapsuleItem } from '../types';
  *
  * 분류 기준:
  * - waitingRooms: status === "WAITING"
- * - openedCapsules: status !== "WAITING" && openDate < 현재시각
- * - lockedCapsules: status !== "WAITING" && openDate >= 현재시각
+ * - openedCapsules: status === "COMPLETED" || status === "EXPIRED"
+ * - lockedCapsules: status === "BURIED"
  *
  * @returns {object} capsules, isLoading, error, refetch
  */
@@ -39,28 +39,29 @@ export function useMyCapsules() {
 
     console.log('🔄 [useMyCapsules] 캡슐 리스트 분류 시작');
 
-    // 현재 시각
-    const now = new Date();
-
-    // status와 openDate로 3가지 상태 분류
+    // status 값으로 3가지 상태 분류
     const waitingRooms: MyCapsuleItem[] = [];
     const openedCapsules: MyCapsuleItem[] = [];
     const lockedCapsules: MyCapsuleItem[] = [];
 
     data.items.forEach((capsule) => {
+      // 디버깅: 각 캡슐 정보 출력
+      console.log('📦 [캡슐 분류 디버깅]', {
+        id: capsule.id,
+        title: capsule.title,
+        status: capsule.status,
+        openDate: capsule.openDate,
+      });
+
       if (capsule.status === 'WAITING') {
-        // 대기실
+        // 대기실 - 작성 대기 중인 캡슐
         waitingRooms.push(capsule);
-      } else {
-        // 개봉 날짜 기준으로 열린/잠긴 구분
-        const openDate = new Date(capsule.openDate);
-        if (openDate <= now) {
-          // 열린 캡슐
-          openedCapsules.push(capsule);
-        } else {
-          // 잠긴 캡슐
-          lockedCapsules.push(capsule);
-        }
+      } else if (capsule.status === 'COMPLETED' || capsule.status === 'EXPIRED') {
+        // 열린 캡슐 - COMPLETED(정상 개봉) 또는 EXPIRED(기한 만료)
+        openedCapsules.push(capsule);
+      } else if (capsule.status === 'BURIED') {
+        // 잠긴 캡슐 - 아직 개봉되지 않은 캡슐
+        lockedCapsules.push(capsule);
       }
     });
 

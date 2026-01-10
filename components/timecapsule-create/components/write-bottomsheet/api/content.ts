@@ -11,7 +11,18 @@
  */
 
 import { apiClient } from '@/utils/apiClient';
-import type { ContentSubmitResponse } from '../types';
+import type { ContentSubmitResponse, MyContentResponse } from '../types';
+
+/**
+ * 404 에러를 구분하기 위한 커스텀 에러 클래스
+ */
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+    Object.setPrototypeOf(this, NotFoundError.prototype);
+  }
+}
 
 /**
  * 타임캡슐 콘텐츠 제출 API
@@ -67,6 +78,57 @@ export async function submitMyContent(
       throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
     console.error('❌ [API] 타임캡슐 콘텐츠 제출 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 본인이 작성한 콘텐츠 조회 API
+ * @param capsuleId 캡슐 ID (UUID)
+ * @returns 본인이 작성한 콘텐츠 정보
+ * @throws 401: 인증 실패
+ * @throws 403: 참여자가 아님
+ * @throws 404: 콘텐츠를 작성하지 않음 (NotFoundError)
+ */
+export async function fetchMyContent(
+  capsuleId: string,
+): Promise<MyContentResponse> {
+  try {
+    console.log('🔄 [API] 본인 작성 콘텐츠 조회 시작 - capsuleId:', capsuleId);
+
+    const response = await apiClient.get<MyContentResponse>(
+      `/api/capsules/step-rooms/${capsuleId}/my-content`,
+    );
+
+    console.log('✅ [API] 본인 작성 콘텐츠 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // 401: 인증 실패
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    // 403: 참여자가 아님
+    if (error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || '이 캡슐의 참여자가 아닙니다.';
+      console.error('❌ [API] 참여자 아님 (403):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    // 404: 콘텐츠를 작성하지 않음 (정상적인 경우, NotFoundError로 구분)
+    if (error.response?.status === 404) {
+      console.log('ℹ️ [API] 작성한 콘텐츠 없음 (404) - 새로 작성 가능');
+      const notFoundError = new NotFoundError('아직 작성하지 않았습니다');
+      // 상태 코드 정보를 에러 객체에 포함 (React Native 호환성)
+      (notFoundError as any).statusCode = 404;
+      (notFoundError as any).response = error.response;
+      throw notFoundError;
+    }
+    // 500: 서버 내부 오류
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 본인 작성 콘텐츠 조회 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }
