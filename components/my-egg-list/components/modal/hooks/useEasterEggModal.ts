@@ -15,8 +15,7 @@ import { useKakaoAddress } from '@/commons/hooks/useKakaoAddress';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { getMediaUrl, isValidImageUrl } from '@/utils';
 import { formatRoadAddress } from '@/utils/addressFormat';
-import { Video } from 'expo-av';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import type { EggDetailResponse } from '../../../hooks/useEggDetail';
 
@@ -31,9 +30,7 @@ export interface UseEasterEggModalReturn {
   // 미디어 관련
   mediaUrls: {
     imageUrl: string | null;
-    videoUrl: string | null;
   };
-  videoRef: React.RefObject<Video | null>;
 
   // 주소 관련
   locationAddress: string;
@@ -60,47 +57,35 @@ export function useEasterEggModal({ data }: UseEasterEggModalProps): UseEasterEg
   // 현재 사용자 정보
   const { user } = useAuth();
 
-  // 비디오 재생 상태 관리
-  const videoRef = useRef<Video>(null);
-
-  // 미디어 URL 상태 관리 (이미지, 비디오만 URL로 변환, 오디오는 AudioPlayer에서 처리)
+  // 미디어 URL 상태 관리 (이미지만 URL로 변환, 오디오/비디오는 각각의 Player 컴포넌트에서 처리)
   const [mediaUrls, setMediaUrls] = useState<{
     imageUrl: string | null;
-    videoUrl: string | null;
   }>({
     imageUrl: null,
-    videoUrl: null,
   });
 
-  // 미디어 ID를 URL로 변환 (이미지, 비디오만)
+  // 미디어 ID를 URL로 변환 (이미지만)
   useEffect(() => {
     if (!data) {
       setMediaUrls({
         imageUrl: null,
-        videoUrl: null,
       });
       return;
     }
 
     const fetchMediaUrls = async () => {
       try {
-        const [imageUrl, videoUrl] = await Promise.all([
-          data.imageMediaId
-            ? getMediaUrl(data.imageMediaId).catch(() => null)
-            : Promise.resolve(null),
-          data.videoMediaId
-            ? getMediaUrl(data.videoMediaId).catch(() => null)
-            : Promise.resolve(null),
-        ]);
+        const imageUrl = data.imageMediaId
+          ? await getMediaUrl(data.imageMediaId).catch(() => null)
+          : null;
 
-        setMediaUrls({ imageUrl, videoUrl });
+        setMediaUrls({ imageUrl });
       } catch (error) {
         if (__DEV__) {
           console.error('[EasterEggModal] 미디어 URL 변환 실패:', error);
         }
         setMediaUrls({
           imageUrl: null,
-          videoUrl: null,
         });
       }
     };
@@ -197,7 +182,6 @@ export function useEasterEggModal({ data }: UseEasterEggModalProps): UseEasterEg
 
     // 미디어 관련
     mediaUrls,
-    videoRef,
 
     // 주소 관련
     locationAddress,

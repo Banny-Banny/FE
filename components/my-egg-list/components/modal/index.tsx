@@ -16,7 +16,6 @@
  * - [x] useKakaoAddress 훅으로 주소 변환
  */
 
-import { ResizeMode, Video } from 'expo-av';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -25,6 +24,7 @@ import Icon from 'react-native-remix-icon';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 import { AudioPlayer } from '@/components/shared/audio-player';
+import { VideoPlayer } from '@/components/shared/video-player';
 import { isValidImageUrl } from '@/utils';
 
 import type { EggDetailResponse } from '../../hooks/useEggDetail';
@@ -41,16 +41,11 @@ export interface EasterEggModalProps {
 }
 
 export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose, data }) => {
-  // 데이터가 없으면 렌더링하지 않음
-  if (!data) {
-    return null;
-  }
-
   // 모든 비즈니스 로직을 hook에서 가져옴
+  // data가 없어도 hook은 호출하여 항상 같은 구조 유지
   const {
     // 미디어 관련
     mediaUrls,
-    videoRef,
     // 주소 관련
     locationAddress,
     // 프로필 이미지
@@ -63,11 +58,30 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
     getCurrentUserViewedAt,
   } = useEasterEggModal({ data });
 
+  // 데이터가 없으면 빈 모달 반환 (항상 같은 구조 유지)
+  if (!data) {
+    return (
+      <Modal
+        visible={visible}
+        onClose={onClose}
+        width={340}
+        height="auto"
+        padding={0}
+        closeOnBackdropPress>
+        <View style={styles.scrollViewWrapper}>
+          <Pressable style={styles.closeButton} onPress={onClose}>
+            <Icon name="close-line" size={20} color={Colors.black[500]} />
+          </Pressable>
+        </View>
+      </Modal>
+    );
+  }
+
   // 미디어 렌더링 함수
   const renderMedia = () => {
     const hasImage = isValidImageUrl(mediaUrls.imageUrl);
     const hasAudio = data?.audioMediaId != null;
-    const hasVideo = isValidImageUrl(mediaUrls.videoUrl);
+    const hasVideo = data?.videoMediaId != null;
 
     if (!hasImage && !hasAudio && !hasVideo) {
       return null;
@@ -94,19 +108,9 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
           </View>
         )}
 
-        {/* 비디오 렌더링 */}
-        {hasVideo && mediaUrls.videoUrl && (
-          <View style={styles.videoContainer}>
-            <Video
-              ref={videoRef}
-              source={{ uri: mediaUrls.videoUrl }}
-              style={styles.video}
-              useNativeControls={true}
-              resizeMode={ResizeMode.CONTAIN}
-              isLooping={false}
-              shouldPlay={false}
-            />
-          </View>
+        {/* 비디오 플레이어 렌더링 */}
+        {hasVideo && data.videoMediaId && (
+          <VideoPlayer mediaId={data.videoMediaId} />
         )}
       </View>
     );
@@ -117,9 +121,10 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
       visible={visible}
       onClose={onClose}
       width={340}
-      height="auto"
+      height="80%"
       padding={0}
-      closeOnBackdropPress>
+      closeOnBackdropPress
+      disableAnimation={false}>
       <View style={styles.scrollViewWrapper}>
         {/* 닫기 버튼 (우측 상단) */}
         <Pressable style={styles.closeButton} onPress={onClose}>
@@ -135,7 +140,9 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
           directionalLockEnabled={true}
           alwaysBounceVertical={false}
           keyboardShouldPersistTaps="handled"
-          contentInsetAdjustmentBehavior="automatic">
+          contentInsetAdjustmentBehavior="never"
+          contentInset={{ top: 0, bottom: 0 }}
+          automaticallyAdjustContentInsets={false}>
           {/* 상단 프로필 이미지 */}
           <View style={styles.profileImageContainer}>
             {authorProfileImg ? (
@@ -201,6 +208,17 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
 
             {/* 미디어 렌더링 */}
             {renderMedia()}
+
+            {/* TODO: 테스트용 - 확인 후 삭제 */}
+            <View style={{ marginTop: 20, marginBottom: 20 }}>
+              <Text style={{ marginBottom: 10, fontSize: 14, fontWeight: 'bold', color: Colors.black[500] }}>
+                [테스트] 비디오 플레이어 예시
+              </Text>
+              <VideoPlayer
+                mediaId="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+                thumbnailUrl={undefined}
+              />
+            </View>
 
             {/* 발견한 사람들 목록 (PLANTED 타입일 때만, 0명일 때도 공간 유지) */}
             {data.type === 'PLANTED' && (

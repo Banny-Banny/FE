@@ -17,26 +17,32 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   // ScrollView를 감싸는 래퍼 (Modal 내부 높이 확보용)
   scrollViewWrapper: {
-    flex: 1,
     width: '100%',
+    maxWidth: '100%', // iOS에서 너비 제한
+    maxHeight: '80%', // 모달 최대 높이 제한
     position: 'relative',
     overflow: 'hidden', // 콘텐츠가 밖으로 나가지 않도록
+    alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
   },
 
   // ScrollView 컨테이너
   scrollView: {
-    flex: 1,
     width: '100%',
+    maxWidth: '100%', // iOS에서 너비 제한
+    alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
   },
 
   // 모달 컨텐츠 컨테이너
   modalContent: {
     paddingHorizontal: Spacing.xl, // 32px
-    paddingVertical: Spacing.lg, // 24px
+    paddingTop: Spacing.xl * 1.5, // 48px (상단 패딩 더 추가)
+    paddingBottom: 0, // 하단 패딩 제거 (하얀 부분 제거)
     width: '100%',
+    maxWidth: '100%', // iOS에서 너비 제한
+    flexGrow: 1, // 스크롤을 위해 flexGrow 활성화
     alignItems: 'center',
     gap: Spacing.lg, // 24px - 일관된 간격
-    paddingBottom: Spacing.xl, // 하단 패딩 추가
+    alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
   },
 
   // 닫기 버튼 (우측 상단)
@@ -175,6 +181,8 @@ export const styles = StyleSheet.create({
   // 메인 컨텐츠 카드
   contentCard: {
     width: '100%',
+    maxWidth: '100%', // iOS에서 너비 제한
+    flexShrink: 1, // iOS에서 콘텐츠가 넘칠 때 축소
     backgroundColor: Colors.white[500], // 더 밝게 (대비 강조)
     borderWidth: 2,
     borderColor: Colors.whiteGrey[300], // 약간 진한 테두리 (대비 강조)
@@ -183,6 +191,7 @@ export const styles = StyleSheet.create({
     gap: 20, // Figma 정확한 값 (Spacing.md=16, Spacing.lg=24 사이)
     minHeight: 200, // 최소 높이 설정
     overflow: 'hidden', // 콘텐츠가 카드 밖으로 나가지 않도록
+    alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
     // 그림자 효과로 아래쪽 강조
     shadowColor: Colors.black[500],
     shadowOffset: {
@@ -410,6 +419,7 @@ export const styles = StyleSheet.create({
   // 미디어 컨테이너
   mediaContainer: {
     width: '100%',
+    maxWidth: '100%', // iOS에서 너비 제한
     gap: Spacing.md, // 16px
   },
 
@@ -429,21 +439,6 @@ export const styles = StyleSheet.create({
 
   // 이미지
   image: {
-    width: '100%',
-    height: '100%',
-  },
-
-  // 비디오 컨테이너
-  videoContainer: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    backgroundColor: Colors.black[500],
-  },
-
-  // 비디오 플레이어
-  video: {
     width: '100%',
     height: '100%',
   },

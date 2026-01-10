@@ -17,7 +17,7 @@
 
 import { Image } from 'expo-image';
 import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
 import { Button } from '@/commons/components/button';
@@ -25,6 +25,7 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 
 import { AudioPlayer } from '@/components/shared/audio-player';
+import { VideoPlayer } from '@/components/shared/video-player';
 import { useCapsuleDetail } from '../egg-detail-owner/hooks/useCapsuleDetail';
 import { useEggDetailFind } from './hooks/useEggDetailFind';
 import { styles } from './styles';
@@ -112,26 +113,14 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({
           <AudioPlayer key={audio.id} mediaId={audio.url} />
         ))}
 
-        {/* 비디오 렌더링 */}
+        {/* 비디오 플레이어 렌더링 */}
         {videos.map((video) => (
-          <Pressable
+          // video.url에는 비디오 미디어 ID가 들어있음 (URL 변환하지 않음)
+          <VideoPlayer
             key={video.id}
-            style={styles.videoContainer}
-            onPress={() => {
-              // TODO: 비디오 재생 로직 추가
-            }}
-            accessibilityLabel="이스터에그 비디오 재생">
-            <Image
-              source={{ uri: video.thumbnailUrl || video.url }}
-              style={styles.videoThumbnail}
-              contentFit="cover"
-            />
-            <View style={styles.videoOverlay}>
-              <View style={styles.videoPlayButton}>
-                <Icon name="play-fill" size={28} color={Colors.black[500]} />
-              </View>
-            </View>
-          </Pressable>
+            mediaId={video.url}
+            thumbnailUrl={video.thumbnailUrl || undefined}
+          />
         ))}
       </View>
     );

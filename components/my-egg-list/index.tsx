@@ -81,6 +81,7 @@ export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggLis
         </View>
       )}
       <ItemList
+        key={`item-list-${activeTab}`}
         items={currentItems.length > 0 ? currentItems : undefined}
         tabType={activeTab}
         onItemPress={handleItemPress}
