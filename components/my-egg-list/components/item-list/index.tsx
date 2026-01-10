@@ -55,70 +55,74 @@ export function ItemList({
     return { activeItems: active, expiredItems: expired };
   }, [displayItems, tabType]);
 
-  // 발견한 알 또는 활성 알만 있는 경우
-  if (tabType === 'discovered' || expiredItems.length === 0) {
-    return (
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}>
-        {displayItems.map((item, index) => (
-          <Item
-            key={item.id || `${item.title}-${index}`}
-            {...item}
-            showViewCount={tabType === 'planted'} // 심은 알에서만 조회수 표시
-            onPress={() => onItemPress?.(item, index)}
-          />
-        ))}
-      </ScrollView>
-    );
-  }
+  // 항상 같은 구조를 반환하여 React 내부 에러 방지
+  const showSections = tabType === 'planted' && expiredItems.length > 0;
 
-  // 심은 알이고 활성/소멸이 모두 있는 경우 섹션으로 구분
+  // 렌더링할 아이템 목록 준비
+  const renderContent = useMemo(() => {
+    if (showSections) {
+      return (
+        <>
+          {/* 활성 알 섹션 */}
+          {activeItems.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>활성 알 ({activeItems.length})</Text>
+              </View>
+              {activeItems.map((item, index) => {
+                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
+                return (
+                  <Item
+                    key={item.id || `active-${item.title}-${index}`}
+                    {...item}
+                    showViewCount={true}
+                    onPress={() => onItemPress?.(item, originalIndex >= 0 ? originalIndex : index)}
+                  />
+                );
+              })}
+            </View>
+          )}
+
+          {/* 소멸된 알 섹션 */}
+          {expiredItems.length > 0 && (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitleExpired}>소멸된 알 ({expiredItems.length})</Text>
+              </View>
+              {expiredItems.map((item, index) => {
+                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
+                return (
+                  <Item
+                    key={item.id || `expired-${item.title}-${index}`}
+                    {...item}
+                    showViewCount={true}
+                    onPress={() => onItemPress?.(item, originalIndex >= 0 ? originalIndex : index)}
+                  />
+                );
+              })}
+            </View>
+          )}
+        </>
+      );
+    }
+
+    // 발견한 알 또는 활성 알만 있는 경우
+    return displayItems.map((item, index) => (
+      <Item
+        key={item.id || `${item.title}-${index}`}
+        {...item}
+        showViewCount={tabType === 'planted'} // 심은 알에서만 조회수 표시
+        onPress={() => onItemPress?.(item, index)}
+      />
+    ));
+  }, [showSections, activeItems, expiredItems, displayItems, tabType, onItemPress]);
+
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}>
-      {/* 활성 알 섹션 */}
-      {activeItems.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>활성 알 ({activeItems.length})</Text>
-          </View>
-          {activeItems.map((item, index) => (
-            <Item
-              key={item.id || `active-${item.title}-${index}`}
-              {...item}
-              showViewCount={true}
-              onPress={() => {
-                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
-                onItemPress?.(item, originalIndex >= 0 ? originalIndex : index);
-              }}
-            />
-          ))}
-        </View>
-      )}
-
-      {/* 소멸된 알 섹션 */}
-      {expiredItems.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitleExpired}>소멸된 알 ({expiredItems.length})</Text>
-          </View>
-          {expiredItems.map((item, index) => (
-            <Item
-              key={item.id || `expired-${item.title}-${index}`}
-              {...item}
-              showViewCount={true}
-              onPress={() => {
-                const originalIndex = displayItems.findIndex((i) => i.id === item.id);
-                onItemPress?.(item, originalIndex >= 0 ? originalIndex : index);
-              }}
-            />
-          ))}
-        </View>
-      )}
+      {renderContent}
     </ScrollView>
   );
 }
