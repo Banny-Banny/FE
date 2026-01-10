@@ -38,8 +38,8 @@ export const styles = StyleSheet.create({
   },
   // 헤더 영역
   header: {
-    paddingTop: 60, // Figma: y=60
-    paddingHorizontal: 30, // Figma: x=30
+    paddingTop: 60,
+    paddingHorizontal: 32,
     paddingBottom: 12,
   },
   progressContainer: {
@@ -61,12 +61,13 @@ export const styles = StyleSheet.create({
   },
   // 메인 컨텐츠
   content: {
+    flex: 1,
     alignItems: 'flex-start',
-    paddingHorizontal: 30, // Figma: x=30
     paddingTop: 0,
     width: 329,
     alignSelf: 'center',
     marginTop: 0,
+    // justifyContent: 'center',
   },
   stepBadge: {
     backgroundColor: Colors.black[500],
@@ -74,6 +75,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: BorderRadius.full, // 원형
     marginBottom: 20,
+    marginTop: 34,
     alignSelf: 'flex-start',
   },
   stepBadgeText: {
@@ -155,26 +157,23 @@ export const styles = StyleSheet.create({
   },
   // 하단 버튼 영역
   buttonContainer: {
-    paddingHorizontal: 30, // Figma: x=30
-    paddingBottom: 35,
+    paddingBottom: 62,
     paddingTop: 0,
-    gap: 16, // Figma: 버튼 간격 (71.99 - 56 = 15.99px → 16px)
     alignItems: 'center',
     width: 329,
     alignSelf: 'center',
+    marginTop: 'auto',
   },
   skipButton: {
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16, // BorderRadius 토큰에 16px 없음 - Figma 디자인 요구사항
   },
   skipButtonText: {
     ...Typography.body.body6,
     color: Colors.grey[300],
     fontSize: 15,
     lineHeight: 23,
-    fontWeight: '600', // SemiBold - Figma 디자인 요구사항
   },
 });
 
@@ -182,6 +181,11 @@ export const styles = StyleSheet.create({
  * ✅ 스타일 일관성 재검토 체크리스트 (recheck.102.required.codestyle 기준)
  *
  * location-consent-step과 일관성:
+ * - [✅] header: paddingHorizontal: 32 (location-consent-step과 일치)
+ * - [✅] content: flex: 1, justifyContent: 'center' 추가 (location-consent-step과 일치)
+ * - [✅] buttonContainer: paddingBottom: 62, marginTop: 'auto' 사용 (location-consent-step과 일치)
+ * - [✅] skipButton: borderRadius 제거 (location-consent-step과 일치)
+ * - [✅] skipButtonText: fontWeight 제거 (location-consent-step과 일치)
  * - [✅] BorderRadius 토큰 사용 (가능한 경우)
  * - [✅] stepBadge: BorderRadius.full 사용 (원형)
  * - [✅] progressActive/Inactive: borderRadius: 6px 주석 명시 (토큰에 없음)
