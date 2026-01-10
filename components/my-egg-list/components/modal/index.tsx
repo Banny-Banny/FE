@@ -18,20 +18,18 @@
 
 import { ResizeMode, Video } from 'expo-av';
 import { Image } from 'expo-image';
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 import type { MediaType } from '@/commons/constants/media';
-import { useKakaoAddress } from '@/commons/hooks/useKakaoAddress';
-import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { AudioPlayer } from '@/components/shared/audio-player';
-import { getMediaUrl, isValidImageUrl } from '@/utils';
-import { formatRoadAddress } from '@/utils/addressFormat';
+import { isValidImageUrl } from '@/utils';
 
 import type { EggDetailResponse } from '../../hooks/useEggDetail';
+import { useEasterEggModal } from './hooks/useEasterEggModal';
 import { styles } from './styles';
 
 export interface EasterEggModalProps {
@@ -43,167 +41,33 @@ export interface EasterEggModalProps {
   data: EggDetailResponse | null;
 }
 
-/**
- * 날짜를 YYYY-MM-DD 형식으로 포맷팅
- */
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose, data }) => {
-  // 현재 사용자 정보
-  const { user } = useAuth();
-
-  // 오디오 재생 상태 관리
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  // 비디오 재생 상태 관리
-  const videoRef = useRef<Video>(null);
-
-  // 미디어 URL 상태 관리 (미디어 ID를 URL로 변환)
-  const [mediaUrls, setMediaUrls] = useState<{
-    imageUrl: string | null;
-    audioUrl: string | null;
-    videoUrl: string | null;
-  }>({
-    imageUrl: null,
-    audioUrl: null,
-    videoUrl: null,
-  });
-
-  // 미디어 ID를 URL로 변환
-  useEffect(() => {
-    if (!data) {
-      setMediaUrls({
-        imageUrl: null,
-        audioUrl: null,
-        videoUrl: null,
-      });
-      return;
-    }
-
-    const fetchMediaUrls = async () => {
-      try {
-        const [imageUrl, audioUrl, videoUrl] = await Promise.all([
-          data.imageMediaId
-            ? getMediaUrl(data.imageMediaId).catch(() => null)
-            : Promise.resolve(null),
-          data.audioMediaId
-            ? getMediaUrl(data.audioMediaId).catch(() => null)
-            : Promise.resolve(null),
-          data.videoMediaId
-            ? getMediaUrl(data.videoMediaId).catch(() => null)
-            : Promise.resolve(null),
-        ]);
-
-        setMediaUrls({ imageUrl, audioUrl, videoUrl });
-      } catch (error) {
-        if (__DEV__) {
-          console.error('[EasterEggModal] 미디어 URL 변환 실패:', error);
-        }
-        setMediaUrls({
-          imageUrl: null,
-          audioUrl: null,
-          videoUrl: null,
-        });
-      }
-    };
-
-    fetchMediaUrls();
-  }, [data]);
-
-  // 주소 변환 (useKakaoAddress 훅 사용)
-  const { addressData: kakaoAddressData, isLoading: isAddressLoading } = useKakaoAddress({
-    lat: data?.location.latitude ?? null,
-    lng: data?.location.longitude ?? null,
-  });
-
-  // 주소 결정: location.address가 있으면 우선 사용, 없으면 카카오 주소 변환 결과 사용
-  const locationAddress =
-    data?.location.address ||
-    (kakaoAddressData ? formatRoadAddress(kakaoAddressData) : null) ||
-    '위치 정보 없음';
-
   // 데이터가 없으면 렌더링하지 않음
   if (!data) {
     return null;
   }
 
-  // 프로필 이미지 URL 유효성 검사
-  const authorProfileImg = isValidImageUrl(data.author.profileImg) ? data.author.profileImg : null;
-
-  // 날짜 포맷팅 (MM.DD 형식)
-  const formatShortDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${month}.${day}`;
-  };
-
-  // 날짜 포맷팅 (MM.DD HH:mm 형식)
-  const formatShortDateWithTime = (dateString: string): string => {
-    const date = new Date(dateString);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${month}.${day} ${hours}:${minutes}`;
-  };
-
-  const createdDate = formatShortDate(data.createdAt);
-  const foundDate = data.type === 'FOUND' && data.foundAt ? formatShortDate(data.foundAt) : null;
-
-  // 발견 순서 텍스트 (FOUND 타입일 때만)
-  const getDiscoveryOrderText = (): string | null => {
-    if (data.type === 'FOUND' && data.viewers && data.viewers.length > 0 && user?.id) {
-      const currentUserIndex = data.viewers.findIndex((viewer) => viewer.id === user.id);
-      if (currentUserIndex === -1) {
-        return null;
-      }
-
-      const maxViewCount = data.discoveredCount || 3;
-
-      if (currentUserIndex === 0) {
-        return '첫 번째';
-      }
-      if (currentUserIndex === 1) {
-        return '두 번째';
-      }
-      if (currentUserIndex === maxViewCount - 1) {
-        return '마지막';
-      }
-      return `${currentUserIndex + 1}번째`;
-    }
-    return null;
-  };
-
-  // 현재 사용자의 발견 날짜 및 시간 (FOUND 타입일 때만)
-  const getCurrentUserViewedAt = (): string | null => {
-    if (data.type === 'FOUND' && data.viewers && data.viewers.length > 0 && user?.id) {
-      const currentUser = data.viewers.find((viewer) => viewer.id === user.id);
-      if (currentUser?.viewedAt) {
-        const date = new Date(currentUser.viewedAt);
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${month}.${day} ${hours}:${minutes}`;
-      }
-    }
-    return null;
-  };
-
-  // 오디오 재생/일시정지 토글
-  const handleTogglePlay = () => {
-    setIsPlaying(!isPlaying);
-    // TODO: 실제 오디오 재생 로직 구현
-  };
+  // 모든 비즈니스 로직을 hook에서 가져옴
+  const {
+    // 미디어 관련
+    mediaUrls,
+    videoRef,
+    // 오디오 재생 상태
+    isPlaying,
+    currentTime,
+    duration,
+    handleTogglePlay,
+    // 주소 관련
+    locationAddress,
+    // 프로필 이미지
+    authorProfileImg,
+    // 날짜 포맷팅
+    createdDate,
+    formatShortDateWithTime,
+    // 발견 순서 관련
+    getDiscoveryOrderText,
+    getCurrentUserViewedAt,
+  } = useEasterEggModal({ data });
 
   // 미디어 렌더링 함수
   const renderMedia = () => {
@@ -323,13 +187,11 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
             </View>
           )}
 
-          {/* 위치 정보 배지 (FOUND 타입일 때만, 중앙 정렬) */}
-          {data.type === 'FOUND' && (
-            <View style={styles.badgeContainer}>
-              <Icon name="map-pin-line" size={16} color={Colors.black[500]} />
-              <Text style={styles.badgeText}>{locationAddress}</Text>
-            </View>
-          )}
+          {/* 위치 정보 배지 (중앙 정렬) */}
+          <View style={styles.badgeContainer}>
+            <Icon name="map-pin-line" size={16} color={Colors.black[500]} />
+            <Text style={styles.badgeText}>{locationAddress}</Text>
+          </View>
 
           {/* 발견 날짜 정보 (FOUND 타입일 때만, 카드 밖) */}
           {data.type === 'FOUND' && getCurrentUserViewedAt() && (
@@ -389,7 +251,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
                             <Text style={styles.viewerName}>{viewer.nickname}</Text>
                           </View>
                           <View style={styles.viewerDateBadge}>
-                            <Icon name="calendar-line" size={12} color={Colors.grey[600]} />
+                            <Icon name="time-line" size={12} color={Colors.grey[600]} />
                             <Text style={styles.viewerDateText}>{viewedDate}</Text>
                           </View>
                         </View>

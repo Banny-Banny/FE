@@ -10,7 +10,7 @@
  * - 좌표를 주소로 변환
  */
 
-import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
+import { API_ENDPOINTS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { apiClient } from '@/utils/apiClient';
 import { useQuery } from '@tanstack/react-query';
@@ -167,7 +167,7 @@ export function useEggDetail(params: UseEggDetailParams): UseEggDetailReturn {
         return null;
       }
 
-      const endpoint = `api/capsules/${params.eggId}/detail`;
+      const endpoint = `${API_ENDPOINTS.CAPSULE.LIST}/${params.eggId}/detail`;
       const response = await apiClient.get<EggDetailResponse>(endpoint);
       return response.data;
     },
@@ -185,12 +185,14 @@ export function useEggDetail(params: UseEggDetailParams): UseEggDetailReturn {
   };
 
   return {
-    data: apiData,
+    data: apiData ?? null,
     isLoading: isLoading || authLoading,
     error: error
       ? (() => {
           if (error instanceof AxiosError) {
-            return error.response?.data?.message || '이스터에그 상세를 불러오는 중 오류가 발생했습니다.';
+            return (
+              error.response?.data?.message || '이스터에그 상세를 불러오는 중 오류가 발생했습니다.'
+            );
           }
           if (error instanceof Error) {
             return error.message;
@@ -201,4 +203,3 @@ export function useEggDetail(params: UseEggDetailParams): UseEggDetailReturn {
     refetch,
   };
 }
-
