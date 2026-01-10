@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
-import { submitMyContent } from '../../write-bottomsheet/api/content';
+import { fetchMyContent, NotFoundError, submitMyContent } from '../../write-bottomsheet/api/content';
 import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
@@ -349,18 +349,41 @@ export function useParticipants({
             // 배정된 슬롯
             const isMe = slot.user_id === currentUserId;
 
-            // ⭐ AsyncStorage에서 저장된 콘텐츠 불러오기 (본인 것만)
+            // ⭐ API에서 본인이 작성한 콘텐츠 불러오기
             let savedContent: ParticipantContent | undefined;
             if (isMe) {
               try {
-                const storageKey = `capsule_content_${capsuleId}_${slot.user_id}`;
-                const savedContentStr = await AsyncStorage.getItem(storageKey);
-                if (savedContentStr) {
-                  savedContent = JSON.parse(savedContentStr);
-                  console.log('📖 [useParticipants] AsyncStorage에서 콘텐츠 불러오기 성공:', storageKey);
-                }
+                console.log('🔄 [useParticipants] 본인 작성 콘텐츠 조회 시작 - capsuleId:', capsuleId);
+                const myContentResponse = await fetchMyContent(capsuleId);
+                
+                // API 응답을 ParticipantContent 형식으로 변환
+                const apiData = myContentResponse.data;
+                savedContent = {
+                  text: typeof apiData.text_message === 'string' 
+                    ? apiData.text_message 
+                    : (apiData.text_message && Object.keys(apiData.text_message).length > 0
+                        ? JSON.stringify(apiData.text_message)
+                        : ''),
+                  images: apiData.images?.map(img => img.url) || [],
+                  voiceRecording: apiData.music?.url || null,
+                  video: apiData.video?.url || null,
+                };
+                
+                console.log('✅ [useParticipants] API에서 콘텐츠 불러오기 성공');
+                console.log('  📝 텍스트:', savedContent.text?.substring(0, 30) + '...');
+                console.log('  🖼️  이미지:', savedContent.images?.length || 0, '개');
+                console.log('  🎵 음악:', savedContent.voiceRecording ? '있음' : '없음');
+                console.log('  🎬 비디오:', savedContent.video ? '있음' : '없음');
               } catch (err) {
-                console.warn('⚠️ [useParticipants] AsyncStorage 콘텐츠 불러오기 실패:', err);
+                // 404 에러는 정상적인 경우 (아직 작성하지 않음)
+                if (err instanceof NotFoundError) {
+                  console.log('ℹ️ [useParticipants] 작성한 콘텐츠 없음 - 새로 작성 가능');
+                  savedContent = undefined;
+                } else {
+                  console.warn('⚠️ [useParticipants] API 콘텐츠 조회 실패:', err);
+                  // 에러가 발생해도 참여자 목록은 표시 (콘텐츠만 비어있음)
+                  savedContent = undefined;
+                }
               }
             }
 
@@ -499,9 +522,9 @@ export function useParticipants({
    * - multipart/form-data 형식으로 파일을 직접 전송
    * - 백엔드 API 명세에 맞게 구현
    *
-   * ⭐ AsyncStorage 저장:
-   * - 백엔드가 콘텐츠 조회 API를 제공하지 않으므로
-   * - AsyncStorage에도 저장하여 재진입 시 불러올 수 있도록 함
+   * ⭐ 백엔드 저장:
+   * - POST /api/capsules/step-rooms/:capsuleId/my-content로 백엔드에 저장
+   * - 저장된 콘텐츠는 GET /api/capsules/step-rooms/:capsuleId/my-content로 조회 가능
    *
    * @param {string} participantId 참여자 ID
    * @param {ParticipantContent} content 작성 내용
@@ -637,10 +660,8 @@ export function useParticipants({
           ),
         );
 
-        // 5. ⭐ AsyncStorage에 저장 (재진입 시 불러오기 위함)
-        const storageKey = `capsule_content_${capsuleId}_${participantId}`;
-        await AsyncStorage.setItem(storageKey, JSON.stringify(content));
-        console.log('💾 [useParticipants] AsyncStorage에 콘텐츠 저장 완료:', storageKey);
+        // ⭐ 백엔드에 저장되었으므로 추가 저장 불필요
+        // (이미 submitMyContent API 호출로 백엔드에 저장됨)
 
         console.log('✅ [useParticipants] 작성 내용 저장 성공!');
       } catch (err) {

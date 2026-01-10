@@ -211,3 +211,40 @@ export interface ContentSubmitErrorResponse {
   /** 에러 메시지 */
   message: string;
 }
+
+/**
+ * ========================================
+ * 본인 작성 콘텐츠 조회 API 타입 정의
+ * ========================================
+ */
+
+/**
+ * 본인 작성 콘텐츠 조회 API 응답 타입
+ */
+export interface MyContentResponse {
+  success: boolean;
+  data: {
+    slot_id: string;
+    user_id: string;
+    /** 텍스트 메시지 (문자열 또는 객체) - 실제 API 응답에 따라 다를 수 있음 */
+    text_message: string | Record<string, any>;
+    status: 'COMPLETED' | 'PENDING' | 'WAITING';
+    images: Array<{
+      media_id: string;
+      url: string;
+      order: number;
+    }>;
+    music: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    video: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    created_at: string;
+    updated_at: string;
+  };
+}
