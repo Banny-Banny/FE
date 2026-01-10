@@ -451,7 +451,7 @@ export const styles = StyleSheet.create({
 
   // 빈 발견자 목록 컨테이너
   emptyViewersContainer: {
-    paddingVertical: Spacing.lg, // 24px
+    paddingVertical: Spacing.sm, // 8px
     alignItems: 'center',
     justifyContent: 'center',
   },

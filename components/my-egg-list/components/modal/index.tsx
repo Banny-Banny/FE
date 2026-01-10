@@ -146,36 +146,39 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
     return `${month}.${day}`;
   };
 
+  // 날짜 포맷팅 (MM.DD HH:mm 형식)
+  const formatShortDateWithTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${month}.${day} ${hours}:${minutes}`;
+  };
+
   const createdDate = formatShortDate(data.createdAt);
   const foundDate = data.type === 'FOUND' && data.foundAt ? formatShortDate(data.foundAt) : null;
 
-  // 발견 순서에 따른 배지 텍스트 (FOUND 타입일 때만)
-  // viewers 배열의 인덱스를 기반으로 몇 번째 발견자인지 판단
-  const getBadgeText = (): string | null => {
+  // 발견 순서 텍스트 (FOUND 타입일 때만)
+  const getDiscoveryOrderText = (): string | null => {
     if (data.type === 'FOUND' && data.viewers && data.viewers.length > 0 && user?.id) {
-      // 현재 사용자가 viewers 배열의 어느 인덱스에 있는지 찾기
       const currentUserIndex = data.viewers.findIndex((viewer) => viewer.id === user.id);
-
-      // 현재 사용자가 viewers 배열에 없으면 null 반환
       if (currentUserIndex === -1) {
         return null;
       }
 
       const maxViewCount = data.discoveredCount || 3;
 
-      // viewers[0] = 첫 번째 발견자
-      // viewers[1] = 두 번째 발견자
-      // viewers[2] = 마지막 발견자 (discoveredCount가 3인 경우)
       if (currentUserIndex === 0) {
-        return '첫 번째 발견자';
+        return '첫 번째';
       }
       if (currentUserIndex === 1) {
-        return '두 번째 발견자';
+        return '두 번째';
       }
       if (currentUserIndex === maxViewCount - 1) {
-        return '마지막 발견자';
+        return '마지막';
       }
-      return `${currentUserIndex + 1}번째 발견자`;
+      return `${currentUserIndex + 1}번째`;
     }
     return null;
   };
@@ -307,22 +310,11 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
               <Text style={styles.subtitle}>
                 <Text style={styles.subtitleBold}>{data.author.nickname}</Text>
                 <Text>님의 소중한 추억을 </Text>
-                {getBadgeText() && (
-                  <>
-                    <Text style={styles.subtitleBold}>
-                      {getBadgeText() === '첫 번째 발견자'
-                        ? '첫 번째'
-                        : getBadgeText() === '두 번째 발견자'
-                        ? '두 번째'
-                        : getBadgeText() === '마지막 발견자'
-                        ? '마지막'
-                        : getBadgeText()?.replace(' 발견자', '') || ''}
-                    </Text>
-                    <Text>(으)로</Text>
-                  </>
+                {getDiscoveryOrderText() && (
+                  <Text style={styles.subtitleBold}>{getDiscoveryOrderText()}</Text>
                 )}
               </Text>
-              <Text style={styles.subtitle}>찾으셨군요!</Text>
+              <Text style={styles.subtitle}>(으)로 찾으셨군요!</Text>
             </View>
           ) : (
             <View style={styles.subtitleContainer}>
@@ -377,7 +369,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
                       const viewerProfileImg = isValidImageUrl(viewer.profileImg)
                         ? viewer.profileImg
                         : null;
-                      const viewedDate = formatShortDate(viewer.viewedAt);
+                      const viewedDate = formatShortDateWithTime(viewer.viewedAt);
 
                       return (
                         <View key={viewer.id} style={styles.viewerItem}>
