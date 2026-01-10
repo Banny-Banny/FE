@@ -14,6 +14,8 @@ import { API_ENDPOINTS } from '@/commons/constants';
 import { apiClient } from '@/utils/apiClient';
 import { formatRelativeTime } from '@/utils/format';
 import { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
+import { notificationEvents } from '../utils/notificationEvents';
 import type {
   Notification,
   NotificationApiResponse,
@@ -38,7 +40,9 @@ export interface UseNotificationsReturn {
 const getNotificationIcon = (type: NotificationType): string => {
   const iconMap: Record<string, string> = {
     CAPSULE_OPEN: '💊',
+    FRIEND_INVITE: '👥',
     FRIEND_ACCEPTED: '🎉',
+    EASTER_EGG_VIEWED: '🥚',
   };
   return iconMap[type] || '🔔';
 };
@@ -135,6 +139,50 @@ export function useNotifications(): UseNotificationsReturn {
   }, []);
 
   /**
+   * 앱이 포그라운드로 돌아올 때 즉시 알림 목록 새로고침
+   */
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        // 앱이 포그라운드로 돌아올 때 즉시 새로고침
+        refreshNotifications();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [refreshNotifications]);
+
+  /**
+   * 푸시 알림 수신 시 즉시 알림 목록 새로고침
+   * - usePushNotifications에서 이벤트 발생 시 자동 새로고침
+   */
+  useEffect(() => {
+    const unsubscribe = notificationEvents.subscribe(() => {
+      refreshNotifications();
+    });
+
+    return unsubscribe;
+  }, [refreshNotifications]);
+
+  /**
+   * 앱이 포그라운드에 있을 때 주기적으로 알림 목록 확인
+   * - 30초마다 자동 새로고침
+   * - 앱이 백그라운드에 있으면 중단
+   */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // 앱이 포그라운드에 있을 때만 새로고침
+      if (AppState.currentState === 'active') {
+        refreshNotifications();
+      }
+    }, 30000); // 30초마다
+
+    return () => clearInterval(interval);
+  }, [refreshNotifications]);
+
+  /**
    * 모든 알림 읽음 처리
    *
    * @description
@@ -166,13 +214,13 @@ export function useNotifications(): UseNotificationsReturn {
    * 알림 삭제
    *
    * @description
-   * - DELETE /api/me/notifications/{id}
+   * - POST /api/me/notifications/{notificationId}/delete
    * - 성공 시 로컬 상태에서 해당 알림 제거
    */
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS}/${notificationId}`;
-      await apiClient.delete(endpoint);
+      const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS}/${notificationId}/delete`;
+      await apiClient.post(endpoint);
 
       // 로컬 상태 업데이트: 해당 알림 제거
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
