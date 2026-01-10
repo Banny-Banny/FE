@@ -11,11 +11,14 @@
  * - [x] 피그마 구조 대비 누락 섹션 없음
  * - [x] react-native-remix-icon 사용
  * - [x] commons/components/modal 사용
+ * - [x] title 필드 사용
+ * - [x] 미디어 ID를 직접 URL로 변환
+ * - [x] useKakaoAddress 훅으로 주소 변환
  */
 
 import { ResizeMode, Video } from 'expo-av';
 import { Image } from 'expo-image';
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
@@ -25,107 +28,52 @@ import type { MediaType } from '@/commons/constants/media';
 import { AudioPlayer } from '@/components/shared/audio-player';
 import { isValidImageUrl } from '@/utils';
 
+import type { EggDetailResponse } from '../../hooks/useEggDetail';
+import { useEasterEggModal } from './hooks/useEasterEggModal';
 import { styles } from './styles';
-
-/**
- * 이스터에그 상세 데이터 타입
- */
-export interface EasterEggDetailData {
-  eggId: number;
-  type: 'FOUND' | 'PLANTED'; // "FOUND" (내가 발견한 것) 또는 "PLANTED" (내가 심은 것)
-  isMine: boolean; // 내가 작성자인지 여부 (수정/삭제 버튼 노출 분기용)
-
-  // 콘텐츠 정보
-  title: string;
-  message: string;
-  imageUrl?: string; // media_id 넘겨주면 프론트에서 url로 전환해도 됨 -> 모든 미디어 동일
-  audioUrl?: string;
-  videoUrl?: string;
-
-  // 위치 정보
-  location: {
-    address?: string; // 안 보내도 됨(프론트에서 전환 가능)
-    latitude: number;
-    longitude: number;
-  };
-
-  // 상태 및 통계 정보
-  author: {
-    id: number;
-    name: string;
-    profileUrl?: string;
-  };
-  createdAt: string; // 생성일
-  foundAt?: string; // (내가) 발견한 날짜 (type이 FOUND일 때만 존재)
-  expiredAt?: string | null; // 소멸된 날짜 (소멸되지 않았다면, null로 반환)
-  discoveredCount?: number; // 이 알을 발견한 총 인원 수 (내가 심은 알 상세용)
-  viewer?: {
-    id: number;
-    name: string;
-    profileUrl?: string;
-  };
-}
 
 export interface EasterEggModalProps {
   /** 모달 표시 여부 */
   visible: boolean;
   /** 모달 닫기 함수 */
   onClose: () => void;
-  /** 이스터에그 상세 데이터 */
-  data: EasterEggDetailData | null;
+  /** 이스터에그 상세 데이터 (원본 API 응답) */
+  data: EggDetailResponse | null;
 }
 
-/**
- * 날짜를 YYYY-MM-DD 형식으로 포맷팅
- */
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose, data }) => {
-  // 오디오 재생 상태 관리
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  // 비디오 재생 상태 관리
-  const videoRef = useRef<Video>(null);
-
   // 데이터가 없으면 렌더링하지 않음
   if (!data) {
     return null;
   }
 
-  // 위치 주소 (address가 없으면 기본값 사용)
-  const locationAddress = data.location.address || '위치 정보 없음';
-
-  // 날짜 포맷팅
-  const createdDate = formatDate(data.createdAt);
-  const foundDate = data.foundAt ? formatDate(data.foundAt) : null;
-
-  // 날짜 텍스트 생성
-  const getDateText = (): string => {
-    if (data.type === 'FOUND' && foundDate) {
-      return `작성일: ${createdDate} · 발견일: ${foundDate}`;
-    }
-    return `작성일: ${createdDate}`;
-  };
-
-  // 오디오 재생/일시정지 토글
-  const handleTogglePlay = () => {
-    setIsPlaying(!isPlaying);
-    // TODO: 실제 오디오 재생 로직 구현
-  };
+  // 모든 비즈니스 로직을 hook에서 가져옴
+  const {
+    // 미디어 관련
+    mediaUrls,
+    videoRef,
+    // 오디오 재생 상태
+    isPlaying,
+    currentTime,
+    duration,
+    handleTogglePlay,
+    // 주소 관련
+    locationAddress,
+    // 프로필 이미지
+    authorProfileImg,
+    // 날짜 포맷팅
+    createdDate,
+    formatShortDateWithTime,
+    // 발견 순서 관련
+    getDiscoveryOrderText,
+    getCurrentUserViewedAt,
+  } = useEasterEggModal({ data });
 
   // 미디어 렌더링 함수
   const renderMedia = () => {
-    const hasImage = isValidImageUrl(data.imageUrl);
-    const hasAudio = isValidImageUrl(data.audioUrl);
-    const hasVideo = isValidImageUrl(data.videoUrl);
+    const hasImage = isValidImageUrl(mediaUrls.imageUrl);
+    const hasAudio = isValidImageUrl(mediaUrls.audioUrl);
+    const hasVideo = isValidImageUrl(mediaUrls.videoUrl);
 
     if (!hasImage && !hasAudio && !hasVideo) {
       return null;
@@ -134,10 +82,10 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
     return (
       <View style={styles.mediaContainer}>
         {/* 이미지 렌더링 */}
-        {hasImage && data.imageUrl && (
+        {hasImage && mediaUrls.imageUrl && (
           <View style={styles.imageContainer}>
             <Image
-              source={{ uri: data.imageUrl }}
+              source={{ uri: mediaUrls.imageUrl }}
               style={styles.image}
               contentFit="cover"
               accessibilityLabel="이스터에그 이미지"
@@ -146,26 +94,28 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         )}
 
         {/* 오디오 플레이어 렌더링 */}
-        {hasAudio && data.audioUrl && (
-          <AudioPlayer
-            audio={{
-              id: `audio-${data.eggId}`,
-              type: 'AUDIO' as MediaType,
-              url: data.audioUrl,
-            }}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            onTogglePlay={handleTogglePlay}
-          />
+        {hasAudio && mediaUrls.audioUrl && (
+          <View style={styles.audioPlayerWrapper}>
+            <AudioPlayer
+              audio={{
+                id: `audio-${data.eggId}`,
+                type: 'AUDIO' as MediaType,
+                url: mediaUrls.audioUrl,
+              }}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              onTogglePlay={handleTogglePlay}
+            />
+          </View>
         )}
 
         {/* 비디오 렌더링 */}
-        {hasVideo && data.videoUrl && (
+        {hasVideo && mediaUrls.videoUrl && (
           <View style={styles.videoContainer}>
             <Video
               ref={videoRef}
-              source={{ uri: data.videoUrl }}
+              source={{ uri: mediaUrls.videoUrl }}
               style={styles.video}
               useNativeControls={true}
               resizeMode={ResizeMode.CONTAIN}
@@ -183,105 +133,138 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
       visible={visible}
       onClose={onClose}
       width={340}
-      height="80%"
+      height="auto"
       padding={0}
       closeOnBackdropPress>
       <View style={styles.scrollViewWrapper}>
+        {/* 닫기 버튼 (우측 상단) */}
+        <Pressable style={styles.closeButton} onPress={onClose}>
+          <Icon name="close-line" size={20} color={Colors.black[500]} />
+        </Pressable>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={styles.modalContent}
           showsVerticalScrollIndicator={false}
           bounces={true}
-          nestedScrollEnabled={true}
+          nestedScrollEnabled={false}
           scrollEnabled={true}
           directionalLockEnabled={true}
           alwaysBounceVertical={false}
-          keyboardShouldPersistTaps="handled">
-          {/* 닫기 버튼 */}
-          <Pressable style={styles.closeButton} onPress={onClose} accessibilityLabel="닫기">
-            <Icon name="close-line" size={20} color={Colors.black[500]} />
-          </Pressable>
-
-          <View style={styles.contentWrapper}>
-            {/* 상단 섹션 (아이콘, 제목, 위치) */}
-            <View style={styles.topSection}>
-              <View style={styles.iconContainer}>
-                <View style={styles.iconWrapper}>
-                  <Image
-                    source={require('@/assets/images/modal_egg.png')}
-                    style={styles.iconImage}
-                    contentFit="contain"
-                    accessibilityLabel="이스터에그 아이콘"
-                  />
-                </View>
+          keyboardShouldPersistTaps="handled"
+          contentInsetAdjustmentBehavior="automatic">
+          {/* 상단 프로필 이미지 */}
+          <View style={styles.profileImageContainer}>
+            {authorProfileImg ? (
+              <Image
+                source={{ uri: authorProfileImg }}
+                style={styles.profileImage}
+                contentFit="cover"
+                accessibilityLabel={`${data.author.nickname} 프로필 이미지`}
+              />
+            ) : (
+              <View style={styles.profileImagePlaceholder}>
+                <Icon name="gift-line" size={40} color={Colors.grey[400]} />
               </View>
+            )}
+          </View>
 
-              {/* 제목 */}
-              <Text style={styles.title}>{data.title}</Text>
+          {/* 서브타이틀 */}
+          {data.type === 'FOUND' ? (
+            <View style={styles.subtitleContainer}>
+              <Text style={styles.subtitle}>
+                <Text style={styles.subtitleBold}>{data.author.nickname}</Text>
+                <Text>님의 소중한 추억을 </Text>
+                {getDiscoveryOrderText() && (
+                  <Text style={styles.subtitleBold}>{getDiscoveryOrderText()}</Text>
+                )}
+              </Text>
+              <Text style={styles.subtitle}>(으)로 찾으셨군요!</Text>
+            </View>
+          ) : (
+            <View style={styles.subtitleContainer}>
+              <Text style={styles.subtitle}>다른 사람들이 발견한 내 이스터에그를</Text>
+              <Text style={styles.subtitle}>확인해보세요!</Text>
+            </View>
+          )}
 
-              {/* 위치 정보 */}
-              <View style={styles.locationContainer}>
-                <Icon name="map-pin-line" size={14} color={Colors.grey[700]} />
-                <Text style={styles.locationText}>{locationAddress}</Text>
+          {/* 위치 정보 배지 (중앙 정렬) */}
+          <View style={styles.badgeContainer}>
+            <Icon name="map-pin-line" size={16} color={Colors.black[500]} />
+            <Text style={styles.badgeText}>{locationAddress}</Text>
+          </View>
+
+          {/* 발견 날짜 정보 (FOUND 타입일 때만, 카드 밖) */}
+          {data.type === 'FOUND' && getCurrentUserViewedAt() && (
+            <View style={styles.discovererInfoContainer}>
+              <Icon name="time-line" size={14} color={Colors.grey[600]} />
+              <Text style={styles.discovererDateText}>{getCurrentUserViewedAt()}에 발견함</Text>
+            </View>
+          )}
+
+          {/* 메인 컨텐츠 카드 */}
+          <View style={styles.contentCard}>
+            {/* 제목 헤더 */}
+            <View style={styles.titleHeader}>
+              <Text style={styles.contentTitle}>{data.title}</Text>
+              <View style={styles.dateBadge}>
+                <Icon name="calendar-line" size={14} color={Colors.grey[600]} />
+                <Text style={styles.dateText}>{createdDate}</Text>
               </View>
             </View>
 
-            {/* 하단 섹션 (메시지 카드, 작성자 카드, 미디어) */}
-            <View style={styles.bottomSection}>
-              {/* 메시지 카드 */}
-              <View style={styles.messageCard}>
-                <View style={styles.messageHeader}>
-                  <Text style={styles.messageEmoji}>💬</Text>
-                  <Text style={styles.messageLabel}>메시지</Text>
+            {/* 본문 */}
+            <Text style={styles.contentText}>{data.message}</Text>
+
+            {/* 미디어 렌더링 */}
+            {renderMedia()}
+
+            {/* 발견한 사람들 목록 (PLANTED 타입일 때만, 0명일 때도 공간 유지) */}
+            {data.type === 'PLANTED' && (
+              <View style={styles.viewersSection}>
+                <View style={styles.viewersHeader}>
+                  <Icon name="group-line" size={16} color={Colors.black[500]} />
+                  <Text style={styles.viewersTitle}>발견한 사람 ({data.viewers?.length || 0})</Text>
                 </View>
-                <Text style={styles.messageText}>{data.message}</Text>
-              </View>
+                <View style={styles.viewersList}>
+                  {data.viewers && data.viewers.length > 0 ? (
+                    data.viewers.map((viewer) => {
+                      const viewerProfileImg = isValidImageUrl(viewer.profileImg)
+                        ? viewer.profileImg
+                        : null;
+                      const viewedDate = formatShortDateWithTime(viewer.viewedAt);
 
-              {/* 미디어 렌더링 (이미지, 오디오, 비디오) */}
-              {renderMedia()}
-
-              {/* 작성자/발견자 정보 카드 */}
-              {data.type === 'PLANTED' && data.isMine ? (
-                // 내가 심은 알일 때: 누가 발견했는지 표시
-                <View style={styles.authorCard}>
-                  <View style={styles.authorHeader}>
-                    <Icon name="eye-line" size={16} color={Colors.black[500]} />
-                    <Text style={styles.authorLabel}>
-                      발견한 사람 {data.discoveredCount ? `(${data.discoveredCount}명)` : ''}
-                    </Text>
-                  </View>
-                  {data.viewer ? (
-                    <View style={styles.viewerInfo}>
-                      <View style={styles.viewerAvatar}>
-                        {isValidImageUrl(data.viewer.profileUrl) && data.viewer.profileUrl ? (
-                          <Image
-                            source={{ uri: data.viewer.profileUrl }}
-                            style={styles.viewerAvatarImage}
-                            contentFit="cover"
-                            accessibilityLabel={`${data.viewer.name} 프로필 이미지`}
-                          />
-                        ) : (
-                          <Text style={styles.viewerAvatarEmoji}>👤</Text>
-                        )}
-                      </View>
-                      <Text style={styles.viewerName}>{data.viewer.name}</Text>
-                    </View>
+                      return (
+                        <View key={viewer.id} style={styles.viewerItem}>
+                          <View style={styles.viewerInfo}>
+                            <View style={styles.viewerAvatar}>
+                              {viewerProfileImg ? (
+                                <Image
+                                  source={{ uri: viewerProfileImg }}
+                                  style={styles.viewerAvatarImage}
+                                  contentFit="cover"
+                                  accessibilityLabel={`${viewer.nickname} 프로필 이미지`}
+                                />
+                              ) : (
+                                <Icon name="gift-line" size={16} color={Colors.black[500]} />
+                              )}
+                            </View>
+                            <Text style={styles.viewerName}>{viewer.nickname}</Text>
+                          </View>
+                          <View style={styles.viewerDateBadge}>
+                            <Icon name="time-line" size={12} color={Colors.grey[600]} />
+                            <Text style={styles.viewerDateText}>{viewedDate}</Text>
+                          </View>
+                        </View>
+                      );
+                    })
                   ) : (
-                    <Text style={styles.dateText}>아직 발견한 사람이 없습니다</Text>
+                    <View style={styles.emptyViewersContainer}>
+                      <Text style={styles.emptyViewersText}>아직 발견한 사람이 없습니다</Text>
+                    </View>
                   )}
-                  <Text style={styles.dateText}>{getDateText()}</Text>
                 </View>
-              ) : (
-                // 내가 발견한 알일 때: 누가 숨겼는지 표시
-                <View style={styles.authorCard}>
-                  <View style={styles.authorHeader}>
-                    <Icon name="star-fill" size={16} color={Colors.black[500]} />
-                    <Text style={styles.authorLabel}>{data.author.name}님이 숨긴 알</Text>
-                  </View>
-                  <Text style={styles.dateText}>{getDateText()}</Text>
-                </View>
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </ScrollView>
       </View>

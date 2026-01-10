@@ -13,17 +13,15 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { useNavigation } from '@/commons/hooks';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import { Filter } from './components/filter';
 import { Header } from './components/header';
-import { ItemList, ItemProps } from './components/item-list';
+import { ItemList } from './components/item-list';
 import { EasterEggModal } from './components/modal';
 import { Tab } from './components/tab';
-import { useMyEggs } from './hooks/useMyEggs';
+import { useMyEggList } from './hooks/useMyEggList';
 import { styles } from './styles';
-import { FilterOption, TabType } from './types';
 
 interface MyEggListProps {
   onItemPress?: (item: { id: string; eggId: number }, index: number) => void;
@@ -31,113 +29,32 @@ interface MyEggListProps {
 }
 
 export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggListProps) {
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState<TabType>('discovered');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedEggId, setSelectedEggId] = useState<number | null>(null);
-
-  // API 파라미터 변환
-  const apiType = useMemo(() => {
-    return activeTab === 'discovered' ? 'FOUND' : 'PLANTED';
-  }, [activeTab]);
-
-  const apiSort = useMemo(() => {
-    return selectedFilter === 'latest' ? 'LATEST' : 'OLDEST';
-  }, [selectedFilter]);
-
-  // 발견한 알 데이터 조회 (필터는 발견한 알에서만 사용)
-  const discoveredData = useMyEggs({
-    type: 'FOUND',
-    sort: activeTab === 'discovered' ? apiSort : undefined,
+  // 모든 비즈니스 로직을 hook에서 가져옴
+  const {
+    // 탭 관련
+    activeTab,
+    setActiveTab,
+    // 필터 관련
+    filterOpen,
+    selectedFilter,
+    handleFilterPress,
+    handleFilterOptionSelect,
+    // 모달 관련
+    modalVisible,
+    selectedEggData,
+    handleItemPress,
+    handleModalClose,
+    // 헤더 관련
+    handleHeaderButtonPress,
+    // 데이터
+    currentItems,
+    discoveredCount,
+    plantedCount,
+    activeCount,
+  } = useMyEggList({
+    onItemPress,
+    onHeaderButtonPress,
   });
-
-  // 심은 알 데이터 조회
-  const plantedData = useMyEggs({
-    type: 'PLANTED',
-  });
-
-  // 현재 탭에 따른 데이터 선택
-  const currentData = useMemo(() => {
-    return activeTab === 'discovered' ? discoveredData : plantedData;
-  }, [activeTab, discoveredData, plantedData]);
-
-  // EasterEggItem을 ItemProps로 변환
-  const convertToItemProps = (items: typeof currentData.items): ItemProps[] => {
-    return items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      location: item.location,
-      date: item.date,
-      eggIcon: item.eggIcon,
-      hasImage: item.hasImage,
-      hasAudio: item.hasAudio,
-      hasVideo: item.hasVideo,
-      viewCount: item.viewCount,
-      status: item.status, // 활성/소멸 상태 포함
-    }));
-  };
-
-  const currentItems = useMemo(() => {
-    return convertToItemProps(currentData.items);
-  }, [currentData.items]);
-
-  const handleFilterPress = () => {
-    setFilterOpen(!filterOpen);
-  };
-
-  const handleFilterOptionSelect = (option: FilterOption) => {
-    setSelectedFilter(option);
-  };
-
-  // 헤더 X 버튼 클릭 시 마이페이지로 이동
-  // 탭 네비게이션에서는 back()이 제대로 동작하지 않을 수 있으므로 명시적으로 마이페이지로 이동
-  const handleHeaderButtonPress = () => {
-    if (onHeaderButtonPress) {
-      onHeaderButtonPress();
-    } else {
-      // 마이페이지 탭으로 이동
-      navigation.push('/(tabs)/mypage');
-    }
-  };
-
-  // 아이템 클릭 핸들러
-  const handleItemPress = (item: ItemProps, index: number) => {
-    if (!item.id) {
-      return;
-    }
-    const eggId = parseInt(item.id, 10);
-    if (!isNaN(eggId)) {
-      // onItemPress가 있으면 먼저 호출
-      onItemPress?.({ id: item.id, eggId }, index);
-
-      // TODO: 실제로는 item.id나 eggId를 사용하여 상세 API 호출
-      // 현재는 모달을 열지 않음 (상세 API 연동 필요)
-      // setSelectedEggId(eggId);
-      // setModalVisible(true);
-    }
-  };
-
-  // 모달 닫기 핸들러
-  const handleModalClose = () => {
-    setModalVisible(false);
-    setSelectedEggId(null);
-  };
-
-  // 선택된 이스터에그 데이터 찾기
-  // TODO: 상세 API 연동 후 구현
-  const selectedEggData = useMemo(() => {
-    // if (!selectedEggId) return null;
-    // return await fetchEggDetail(selectedEggId);
-    return null;
-  }, [selectedEggId]);
-
-  // 카운트 계산
-  const discoveredCount = discoveredData.summary?.totalFoundCount || 0;
-  const plantedCount = plantedData.summary?.totalPlantedCount || 0;
-  const activeCount = plantedData.summary?.activeCount || 0;
 
   return (
     <View style={styles.container}>
