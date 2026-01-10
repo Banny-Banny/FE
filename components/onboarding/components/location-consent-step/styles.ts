@@ -70,6 +70,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: BorderRadius.full, // 원형
     marginBottom: 20,
+    marginTop: 34,
     alignSelf: 'flex-start',
   },
   stepBadgeText: {

@@ -51,14 +51,14 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
 
           {/* 제목 */}
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>친구들과 함께 찾아보세요</Text>
+            <Text style={styles.title}>친구들과 함께</Text>
+            <Text style={styles.title}>찾아보세요!</Text>
           </View>
 
           {/* 설명 */}
           <View style={styles.descriptionContainer}>
-            <Text style={styles.description}>
-              연락처를 연동하면 이미 활동 중인 친구들을 바로 만날 수 있어요.
-            </Text>
+            <Text style={styles.description}>연락처를 연동하면 이미 활동 중인</Text>
+            <Text style={styles.description}>친구들을 바로 만날 수 있어요.</Text>
           </View>
 
           {/* 카드 섹션 */}
@@ -99,7 +99,7 @@ export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepPro
             variant="primary"
             size="M"
             icon="arrow-right-line"
-            iconPosition="left"
+            iconPosition="right"
             disabled={isLoading}
             onPress={onConsent}
             fullWidth={true}

@@ -73,7 +73,7 @@ export function LocationConsentStep({ isLoading, onConsent }: LocationConsentSte
             variant="primary"
             size="M"
             icon="arrow-right-line"
-            iconPosition="left"
+            iconPosition="right"
             disabled={isLoading}
             onPress={onConsent}
             fullWidth={true}

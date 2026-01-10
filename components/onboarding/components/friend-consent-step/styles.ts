@@ -158,7 +158,7 @@ export const styles = StyleSheet.create({
   // 하단 버튼 영역
   buttonContainer: {
     paddingBottom: 62,
-    paddingTop: 0,
+    paddingTop: 54,
     alignItems: 'center',
     width: 329,
     alignSelf: 'center',
