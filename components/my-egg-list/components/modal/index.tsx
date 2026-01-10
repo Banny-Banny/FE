@@ -24,7 +24,6 @@ import Icon from 'react-native-remix-icon';
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
-import type { MediaType } from '@/commons/constants/media';
 import { AudioPlayer } from '@/components/shared/audio-player';
 import { isValidImageUrl } from '@/utils';
 
@@ -52,11 +51,6 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
     // 미디어 관련
     mediaUrls,
     videoRef,
-    // 오디오 재생 상태
-    isPlaying,
-    currentTime,
-    duration,
-    handleTogglePlay,
     // 주소 관련
     locationAddress,
     // 프로필 이미지
@@ -72,7 +66,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
   // 미디어 렌더링 함수
   const renderMedia = () => {
     const hasImage = isValidImageUrl(mediaUrls.imageUrl);
-    const hasAudio = isValidImageUrl(mediaUrls.audioUrl);
+    const hasAudio = data?.audioMediaId != null;
     const hasVideo = isValidImageUrl(mediaUrls.videoUrl);
 
     if (!hasImage && !hasAudio && !hasVideo) {
@@ -94,19 +88,9 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         )}
 
         {/* 오디오 플레이어 렌더링 */}
-        {hasAudio && mediaUrls.audioUrl && (
+        {hasAudio && data.audioMediaId && (
           <View style={styles.audioPlayerWrapper}>
-            <AudioPlayer
-              audio={{
-                id: `audio-${data.eggId}`,
-                type: 'AUDIO' as MediaType,
-                url: mediaUrls.audioUrl,
-              }}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              onTogglePlay={handleTogglePlay}
-            />
+            <AudioPlayer mediaId={data.audioMediaId} />
           </View>
         )}
 

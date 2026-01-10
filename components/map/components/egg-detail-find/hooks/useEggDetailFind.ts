@@ -19,14 +19,6 @@ import type { DiscoveryOrder, EggDetailFindProps, EggDiscoveryData, MediaItem } 
 export interface UseEggDetailFindReturn {
   /** 발견 데이터 */
   discoveryData: EggDiscoveryData | null;
-  /** 오디오 재생 중 여부 */
-  isPlaying: boolean;
-  /** 오디오 재생 시간 (초) */
-  currentTime: number;
-  /** 오디오 전체 시간 (초) */
-  duration: number;
-  /** 오디오 재생/일시정지 토글 */
-  togglePlay: () => void;
   /** 로딩 상태 */
   isLoading: boolean;
   /** 에러 상태 */
@@ -136,18 +128,20 @@ export function useEggDetailFind({
     return null;
   }, [data, detailData]);
 
-  // 미디어 URL 변환 상태
+  // 미디어 URL 변환 상태 (이미지, 비디오만 URL로 변환, 오디오는 AudioPlayer에서 처리)
   const [discoveryData, setDiscoveryData] = useState<EggDiscoveryData | null>(initialDiscoveryData);
 
-  // 미디어 URL 변환 (ID인 경우 URL로 변환)
+  // 미디어 URL 변환 (이미지, 비디오만 URL로 변환)
   useEffect(() => {
     if (!initialDiscoveryData || !initialDiscoveryData.media.length) {
       setDiscoveryData(initialDiscoveryData);
       return;
     }
 
-    // 미디어 URL이 이미 URL인지 확인
-    const needsConversion = initialDiscoveryData.media.some((m) => !isUrl(m.url));
+    // 이미지와 비디오만 URL 변환이 필요한지 확인
+    const needsConversion = initialDiscoveryData.media.some(
+      (m) => (m.type === 'IMAGE' || m.type === 'VIDEO') && !isUrl(m.url),
+    );
 
     if (!needsConversion) {
       // 이미 URL이면 그대로 사용
@@ -155,17 +149,28 @@ export function useEggDetailFind({
       return;
     }
 
-    // 미디어 ID를 URL로 변환
+    // 이미지와 비디오만 URL로 변환
     const convertMediaUrls = async () => {
       try {
-        const mediaIds = initialDiscoveryData.media.map((m) => m.url);
+        // 이미지와 비디오만 필터링하여 URL 변환
+        const mediaToConvert = initialDiscoveryData.media.filter(
+          (m) => (m.type === 'IMAGE' || m.type === 'VIDEO') && !isUrl(m.url),
+        );
+        const mediaIds = mediaToConvert.map((m) => m.url);
         const convertedUrls = await getMediaUrls(mediaIds);
 
-        // 변환된 URL로 미디어 데이터 업데이트
-        const updatedMedia: MediaItem[] = initialDiscoveryData.media.map((m, index) => ({
-          ...m,
-          url: convertedUrls[index] || m.url,
-        }));
+        // 변환된 URL로 미디어 데이터 업데이트 (이미지, 비디오만)
+        let urlIndex = 0;
+        const updatedMedia: MediaItem[] = initialDiscoveryData.media.map((m) => {
+          if ((m.type === 'IMAGE' || m.type === 'VIDEO') && !isUrl(m.url)) {
+            return {
+              ...m,
+              url: convertedUrls[urlIndex++] || m.url,
+            };
+          }
+          // 오디오는 그대로 유지 (AudioPlayer에서 처리)
+          return m;
+        });
 
         setDiscoveryData({
           ...initialDiscoveryData,
@@ -183,23 +188,8 @@ export function useEggDetailFind({
     convertMediaUrls();
   }, [initialDiscoveryData]);
 
-  // 오디오 재생 상태
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-
-  // 오디오 재생/일시정지 토글
-  const togglePlay = () => {
-    setIsPlaying((prev) => !prev);
-    // TODO: 실제 오디오 플레이어 연동
-  };
-
   return {
     discoveryData,
-    isPlaying,
-    currentTime,
-    duration,
-    togglePlay,
     isLoading,
     error,
   };

@@ -49,14 +49,13 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({
   });
 
   // 비즈니스 로직은 Hook에서 가져옴
-  const { discoveryData, isPlaying, currentTime, duration, togglePlay, isLoading, error } =
-    useEggDetailFind({
-      visible,
-      data,
-      detailData,
-      isLoading: isDetailLoading,
-      error: detailError,
-    });
+  const { discoveryData, isLoading, error } = useEggDetailFind({
+    visible,
+    data,
+    detailData,
+    isLoading: isDetailLoading,
+    error: detailError,
+  });
 
   // 데이터가 없으면 렌더링하지 않음
   if (!discoveryData) {
@@ -108,16 +107,18 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({
         ))}
 
         {/* 오디오 플레이어 렌더링 */}
-        {audios.map((audio) => (
-          <AudioPlayer
-            key={audio.id}
-            audio={audio}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            onTogglePlay={togglePlay}
-          />
-        ))}
+        {audios.map((audio) => {
+          // audio.url이 URL인지 ID인지 확인
+          // URL이 아니면 ID로 간주하여 AudioPlayer에 전달
+          const isUrl = audio.url.startsWith('http://') || audio.url.startsWith('https://');
+          return (
+            <AudioPlayer
+              key={audio.id}
+              mediaId={isUrl ? null : audio.url}
+              audioUrl={isUrl ? audio.url : undefined}
+            />
+          );
+        })}
 
         {/* 비디오 렌더링 */}
         {videos.map((video) => (
