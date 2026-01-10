@@ -168,7 +168,8 @@ export function useEggDetailFind({
               url: convertedUrls[urlIndex++] || m.url,
             };
           }
-          // 오디오는 그대로 유지 (AudioPlayer에서 처리)
+          // 오디오는 그대로 유지 (AudioPlayer에서 ID를 URL로 변환)
+          // audio.url에는 미디어 ID가 들어있음
           return m;
         });
 

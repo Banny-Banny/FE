@@ -24,8 +24,8 @@ import { Button } from '@/commons/components/button';
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
 
-import { useCapsuleDetail } from '../egg-detail-owner/hooks/useCapsuleDetail';
 import { AudioPlayer } from '@/components/shared/audio-player';
+import { useCapsuleDetail } from '../egg-detail-owner/hooks/useCapsuleDetail';
 import { useEggDetailFind } from './hooks/useEggDetailFind';
 import { styles } from './styles';
 import type { EggDetailFindProps } from './types';
@@ -107,18 +107,10 @@ export const EggDetailFind: React.FC<EggDetailFindProps> = ({
         ))}
 
         {/* 오디오 플레이어 렌더링 */}
-        {audios.map((audio) => {
-          // audio.url이 URL인지 ID인지 확인
-          // URL이 아니면 ID로 간주하여 AudioPlayer에 전달
-          const isUrl = audio.url.startsWith('http://') || audio.url.startsWith('https://');
-          return (
-            <AudioPlayer
-              key={audio.id}
-              mediaId={isUrl ? null : audio.url}
-              audioUrl={isUrl ? audio.url : undefined}
-            />
-          );
-        })}
+        {audios.map((audio) => (
+          // audio.url에는 오디오 미디어 ID가 들어있음 (URL 변환하지 않음)
+          <AudioPlayer key={audio.id} mediaId={audio.url} />
+        ))}
 
         {/* 비디오 렌더링 */}
         {videos.map((video) => (

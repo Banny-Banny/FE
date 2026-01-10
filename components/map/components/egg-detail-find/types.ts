@@ -7,11 +7,15 @@
 import type { MediaType } from '@/utils/mediaType';
 
 export interface MediaItem {
-  /** 미디어 ID */
+  /** 미디어 고유 식별자 (렌더링용) */
   id: string;
   /** 미디어 타입 */
   type: MediaType;
-  /** 미디어 URL */
+  /**
+   * 미디어 URL 또는 ID
+   * - IMAGE/VIDEO: 변환된 URL
+   * - AUDIO: 미디어 ID (AudioPlayer에서 URL로 변환)
+   */
   url: string;
   /** 썸네일 URL (비디오용) */
   thumbnailUrl?: string;
