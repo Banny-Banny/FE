@@ -16,15 +16,16 @@ const imgShield = require('@/assets/icons/shield.png');
 interface FriendConsentStepProps {
   isLoading: boolean;
   onConsent: () => void;
+  onSkip: () => void;
 }
 
 /**
  * 친구 연동 동의 단계 (UI만 담당)
  */
-export function FriendConsentStep({ isLoading, onConsent }: FriendConsentStepProps) {
-  // 건너뛰기 핸들러 (동의와 동일하게 처리)
+export function FriendConsentStep({ isLoading, onConsent, onSkip }: FriendConsentStepProps) {
+  // 건너뛰기 핸들러 (권한 거부 처리)
   const handleSkip = () => {
-    onConsent();
+    onSkip();
   };
 
   return (

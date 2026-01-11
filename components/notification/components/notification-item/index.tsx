@@ -14,10 +14,15 @@ export function NotificationItem({
   description,
   time,
   isRead,
+  type,
+  onPress,
   onDelete,
 }: NotificationItemProps) {
   return (
-    <View style={[styles.notificationItem, isRead && styles.notificationItemRead]}>
+    <Pressable
+      style={[styles.notificationItem, isRead && styles.notificationItemRead]}
+      onPress={onPress}
+      disabled={!onPress}>
       {/* 아이콘 */}
       <View style={[styles.iconContainer, isRead && styles.iconContainerRead]}>
         <Text style={styles.iconText}>{icon}</Text>
@@ -44,7 +49,12 @@ export function NotificationItem({
             <Text style={styles.timeText}>{time}</Text>
           </View>
           {isRead && onDelete && (
-            <Pressable style={styles.deleteButton} onPress={onDelete}>
+            <Pressable
+              style={styles.deleteButton}
+              onPress={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}>
               <Text style={styles.deleteButtonText}>삭제</Text>
             </Pressable>
           )}

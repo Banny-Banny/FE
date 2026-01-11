@@ -42,6 +42,7 @@ export interface Notification {
   description: string;
   time: string;
   isRead: boolean;
+  type: NotificationType;
 }
 
 /**
@@ -53,6 +54,8 @@ export interface NotificationItemProps {
   description: string;
   time: string;
   isRead: boolean;
+  type: NotificationType;
+  onPress?: () => void;
   onDelete?: () => void;
 }
 

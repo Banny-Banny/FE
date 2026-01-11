@@ -27,9 +27,10 @@
 import { Colors, ROUTES } from '@/commons/constants';
 import { useNavigation } from '@/commons/hooks';
 import { Image } from 'expo-image';
+import * as Notifications from 'expo-notifications';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { AppState, Pressable, ScrollView, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { NotificationItem } from './components/notification-item';
 import { useNotifications } from './hooks/useNotifications';
@@ -38,7 +39,7 @@ import { styles } from './styles';
 export default function NotificationFeature() {
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ from?: string }>();
-  const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
+  const [isNotificationEnabled, setIsNotificationEnabled] = useState(false);
   const {
     newNotifications,
     oldNotifications,
@@ -46,12 +47,40 @@ export default function NotificationFeature() {
     error,
     refreshNotifications,
     markAllAsRead,
+    markAsRead,
     deleteNotification,
   } = useNotifications();
+
+  // 알림 권한 상태 확인
+  const checkNotificationPermission = async () => {
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      setIsNotificationEnabled(status === 'granted');
+    } catch (error) {
+      console.error('[NotificationFeature] 권한 확인 실패:', error);
+    }
+  };
+
+  // 컴포넌트 마운트 시 및 앱이 포그라운드로 돌아올 때 권한 상태 확인
+  useEffect(() => {
+    checkNotificationPermission();
+
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        checkNotificationPermission();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead();
+      // 모두읽음 처리 후 알림 목록 새로고침하여 이전 알림으로 이동
+      await refreshNotifications();
     } catch (err) {
       // 에러는 useNotifications 훅에서 이미 처리됨
       // 필요시 추가 에러 처리 (예: 토스트 메시지)
@@ -67,9 +96,49 @@ export default function NotificationFeature() {
     }
   };
 
-  const handleToggleNotification = () => {
-    setIsNotificationEnabled((prev) => !prev);
-    // TODO: 실제 알림 설정 API 호출
+  const handleNotificationPress = async (notification: { id: string; type: string }) => {
+    try {
+      // 알림 읽음 처리
+      await markAsRead(notification.id);
+
+      // 알림 타입에 따라 라우팅
+      if (notification.type === 'FRIEND_INVITE' || notification.type === 'FRIEND_ACCEPTED') {
+        // 친구 관련 알림 → 마이페이지로 이동
+        navigation.replace('/(tabs)/mypage');
+      } else if (notification.type === 'CAPSULE_OPEN') {
+        // 캡슐 열림 알림 → 홈(지도)으로 이동
+        navigation.replace(ROUTES.HOME);
+      } else if (notification.type === 'EASTER_EGG_VIEWED') {
+        // 이스터에그 발견 알림 → 홈(지도)으로 이동
+        navigation.replace(ROUTES.HOME);
+      }
+      // 기본적으로는 알림 화면에 머무름
+    } catch (err) {
+      // 에러는 useNotifications 훅에서 이미 처리됨
+      // 필요시 추가 에러 처리 (예: 토스트 메시지)
+    }
+  };
+
+  const handleToggleNotification = async () => {
+    try {
+      // 현재 권한 상태 확인
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+
+      if (existingStatus === 'granted') {
+        // 이미 권한이 있으면 토글
+        setIsNotificationEnabled(false);
+        // TODO: 실제 알림 설정 API 호출 (알림 끄기)
+      } else {
+        // 권한이 없으면 권한 요청
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status === 'granted') {
+          setIsNotificationEnabled(true);
+          // TODO: 실제 알림 설정 API 호출 (알림 켜기)
+        }
+      }
+    } catch (error) {
+      console.error('[NotificationFeature] 알림 토글 실패:', error);
+    }
   };
 
   const handleClose = () => {
@@ -179,6 +248,8 @@ export default function NotificationFeature() {
                     description={notification.description}
                     time={notification.time}
                     isRead={notification.isRead}
+                    type={notification.type}
+                    onPress={() => handleNotificationPress(notification)}
                   />
                 ))}
               </View>
@@ -199,6 +270,8 @@ export default function NotificationFeature() {
                     description={notification.description}
                     time={notification.time}
                     isRead={notification.isRead}
+                    type={notification.type}
+                    onPress={() => handleNotificationPress(notification)}
                     onDelete={() => handleDelete(notification.id)}
                   />
                 ))}
