@@ -106,12 +106,16 @@ export function Item({
                       color={Colors.darkGrey[600]}
                     />
                   </View>
-                  <Text style={styles.metaText}>{location}</Text>
+                  <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+                    {location}
+                  </Text>
                 </View>
                 <View style={styles.divider} />
               </>
             )}
-            <Text style={styles.metaText}>{date}</Text>
+            <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+              {date}
+            </Text>
           </View>
           <View style={styles.actionContainer}>
             {hasImage && (

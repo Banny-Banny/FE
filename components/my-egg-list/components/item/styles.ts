@@ -135,14 +135,19 @@ export const styles = StyleSheet.create({
     borderTopColor: Colors.border.lighter, // rgba(10,10,10,0.06)
   },
   metaContainer: {
+    flex: 1,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10, // 8px → 10px
+    minWidth: 0, // flex shrink를 위한 필수 속성
   },
   locationContainer: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4, // 2px → 4px (아이콘과 텍스트 간격)
+    minWidth: 0, // flex shrink를 위한 필수 속성
   },
   locationIconContainer: {
     width: 14, // 12px → 14px (약간 더 큰 아이콘)
@@ -151,6 +156,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   metaText: {
+    flexShrink: 1,
     fontFamily: Typography.body.body8.fontFamily,
     fontSize: 12,
     lineHeight: 16,
