@@ -12,6 +12,8 @@ import { useRef } from 'react';
 import { Platform, Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 
+import { Spinner } from '@/commons/components/spinner';
+
 import CurrentLocation from '../current-location';
 import { CurrentLocationButton } from '../current-location-button';
 import { CurrentLocationMarker } from '../current-location-marker';
@@ -35,6 +37,7 @@ export default function MapView(props: MapViewProps = {}) {
     handleMessage,
     handleMessageCommon,
     isWebViewReady,
+    isInitialLoadComplete,
     scale,
     zoomLevel,
     handleZoomIn,
@@ -58,58 +61,71 @@ export default function MapView(props: MapViewProps = {}) {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>카카오 API 키가 설정되지 않았습니다.</Text>
         </View>
-      ) : Platform.OS === 'web' ? (
-        <WebMapView
-          mapCenter={mapCenter}
-          level={zoomLevel}
-          markers={markersForWeb}
-          onMessage={handleMessageCommon}
-          currentLocation={location}
-          isLoadingLocation={locationLoading}
-          moveToLocationRef={moveToLocationRef}
-          scale={scale}
-        />
       ) : (
         <>
-          <WebView
-            ref={webViewRef}
-            source={{ html: htmlContent }}
-            style={styles.webview}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-            originWhitelist={['*']}
-            onMessage={handleMessage}
-          />
-          <CurrentLocationMarker
-            webViewRef={webViewRef}
-            location={location}
-            isLoading={locationLoading}
-            isWebViewReady={isWebViewReady}
-          />
+          {/* 지도 UI 먼저 렌더링 (웹/앱 분기) */}
+          {Platform.OS === 'web' ? (
+            <WebMapView
+              mapCenter={mapCenter}
+              level={zoomLevel}
+              markers={markersForWeb}
+              onMessage={handleMessageCommon}
+              currentLocation={location}
+              isLoadingLocation={locationLoading}
+              moveToLocationRef={moveToLocationRef}
+              scale={scale}
+            />
+          ) : (
+            <>
+              <WebView
+                ref={webViewRef}
+                source={{ html: htmlContent }}
+                style={styles.webview}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                originWhitelist={['*']}
+                onMessage={handleMessage}
+              />
+              <CurrentLocationMarker
+                webViewRef={webViewRef}
+                location={location}
+                isLoading={locationLoading}
+                isWebViewReady={isWebViewReady}
+              />
+            </>
+          )}
+
+          {/* 로딩 중일 때 Spinner를 지도 위에 오버레이 */}
+          {!isInitialLoadComplete && <Spinner fullScreen />}
+
+          {/* 공통 UI 컴포넌트 - 로딩 완료 후 표시 */}
+          {isInitialLoadComplete && mapCenter && (
+            <View style={styles.currentLocationWrapper}>
+              <CurrentLocation lat={mapCenter.lat} lng={mapCenter.lng} />
+            </View>
+          )}
+          {isInitialLoadComplete && <EggSlot onPress={props.onEggSlotPress} />}
+          {/* 현재 위치로 이동 버튼 */}
+          {isInitialLoadComplete && (
+            <CurrentLocationButton
+              webViewRef={webViewRef}
+              location={location}
+              isLoading={locationLoading}
+              onMoveToLocation={Platform.OS === 'web' ? handleMoveToLocation : undefined}
+            />
+          )}
+          {/* 확대/축소 컨트롤 */}
+          {isInitialLoadComplete && (
+            <ZoomControl
+              onZoomIn={handleZoomIn}
+              onZoomOut={handleZoomOut}
+              onReset={resetZoom}
+              canZoomIn={scale < 3}
+              canZoomOut={scale > 0.5}
+            />
+          )}
         </>
       )}
-      {/* 공통 UI 컴포넌트 - web과 native 모두에서 사용 */}
-      {mapCenter && (
-        <View style={styles.currentLocationWrapper}>
-          <CurrentLocation lat={mapCenter.lat} lng={mapCenter.lng} />
-        </View>
-      )}
-      <EggSlot onPress={props.onEggSlotPress} />
-      {/* 현재 위치로 이동 버튼 */}
-      <CurrentLocationButton
-        webViewRef={webViewRef}
-        location={location}
-        isLoading={locationLoading}
-        onMoveToLocation={Platform.OS === 'web' ? handleMoveToLocation : undefined}
-      />
-      {/* 확대/축소 컨트롤 */}
-      <ZoomControl
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onReset={resetZoom}
-        canZoomIn={scale < 3}
-        canZoomOut={scale > 0.5}
-      />
     </View>
   );
 }
