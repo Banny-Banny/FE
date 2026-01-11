@@ -47,33 +47,37 @@ export interface Author {
   id: string;                    // 사용자 ID
   name: string;                  // 사용자 이름
   emoji: string;                 // 사용자 이모지
+  profileImg?: string;           // 프로필 이미지 URL (선택적)
 }
 
 /**
  * 이미지 미디어
  */
 export interface ImageMedia {
-  id: string;                    // 이미지 ID
-  url: string;                   // 이미지 URL
+  id: string;                    // 이미지 ID (media_id)
+  url: string;                   // 이미지 URL (비동기로 가져옴)
   thumbnailUrl?: string;         // 썸네일 URL (선택적)
+  objectKey?: string;            // S3 object key (선택적)
 }
 
 /**
  * 비디오 미디어
  */
 export interface VideoMedia {
-  id: string;                    // 비디오 ID
-  url: string;                   // 비디오 URL
+  id: string;                    // 비디오 ID (media_id)
+  url: string;                   // 비디오 URL (비동기로 가져옴)
   thumbnailUrl: string;          // 비디오 썸네일 URL
+  objectKey?: string;            // S3 object key (선택적)
 }
 
 /**
  * 오디오 미디어
  */
 export interface AudioMedia {
-  id: string;                    // 오디오 ID
+  id: string;                    // 오디오 ID (media_id)
   title: string;                 // 오디오 제목
-  url: string;                   // 오디오 URL
+  url: string;                   // 오디오 URL (비동기로 가져옴)
+  objectKey?: string;            // S3 object key (선택적)
 }
 
 /**
