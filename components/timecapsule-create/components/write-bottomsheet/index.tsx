@@ -20,7 +20,7 @@ import { Colors } from '@/commons/constants';
 import { AudioAttachment } from '@/components/shared/audio-attachment';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
@@ -601,28 +601,63 @@ export default function UserBottomSheet({
   // react-hook-form의 handleSubmit 함수 저장
   const handleFormSubmit = handleSubmit(onFormSubmit);
 
-  // 저장 버튼 핸들러 (확인 모달 먼저 표시)
+  // 저장 버튼 핸들러 (플랫폼별 분기: 웹=Modal, 앱=Alert)
   const handleSave = () => {
+    console.log('🟢 [handleSave] 저장 버튼 클릭됨!');
+    console.log('  - Platform:', Platform.OS);
+
     // ⭐ 이미 제출 완료된 경우 또는 읽기 전용 모드인 경우 저장 불가
     if (hasSubmitted || isReadOnly) {
+      if (Platform.OS === 'web') {
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              <View style={{ marginBottom: 16 }}>
+                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              </View>
+              <Text
+                style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+                저장 불가
+              </Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  marginBottom: 24,
+                  textAlign: 'center',
+                }}>
+                이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
+              </Text>
+              <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+            </View>
+          ),
+        });
+      } else {
+        Alert.alert('저장 불가', '이미 제출 완료된 콘텐츠는 수정할 수 없습니다.', [
+          { text: '확인', style: 'default' },
+        ]);
+      }
+      return;
+    }
+
+    // ⭐ 플랫폼별 저장 확인 다이얼로그
+    if (Platform.OS === 'web') {
+      // 웹: 커스텀 Modal 사용
       openModal({
         width: 344,
         height: 'auto',
         closeOnBackdropPress: true,
         children: (
           <View style={{ padding: 24, alignItems: 'center' }}>
-            {/* 경고 아이콘 */}
             <View style={{ marginBottom: 16 }}>
-              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              <Icon name="save-line" size={64} color={Colors.blue[500]} />
             </View>
-
-            {/* 타이틀 */}
-            <Text
-              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              저장 불가
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장하시겠어요?
             </Text>
-
-            {/* 설명 */}
             <Text
               style={{
                 fontSize: 14,
@@ -630,62 +665,46 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
+              한번 저장한 내용은 수정할 수 없어요
             </Text>
-
-            {/* 확인 버튼 */}
-            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+            <DualButton
+              cancelLabel="취소"
+              confirmLabel="저장하기"
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={async () => {
+                closeModal();
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                await handleFormSubmit();
+              }}
+            />
           </View>
         ),
       });
-      return;
+    } else {
+      // 앱: React Native Alert 사용
+      Alert.alert(
+        '저장하시겠어요?',
+        '한번 저장한 내용은 수정할 수 없어요',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: '저장하기',
+            style: 'default',
+            onPress: async () => {
+              await handleFormSubmit();
+            },
+          },
+        ],
+        { cancelable: true }
+      );
     }
-
-    // 저장 확인 모달 표시
-    openModal({
-      width: 344,
-      height: 'auto',
-      closeOnBackdropPress: true,
-      children: (
-        <View style={{ padding: 24, alignItems: 'center' }}>
-          {/* 아이콘 */}
-          <View style={{ marginBottom: 16 }}>
-            <Icon name="save-line" size={64} color={Colors.blue[500]} />
-          </View>
-
-          {/* 타이틀 */}
-          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-            저장하시겠어요?
-          </Text>
-
-          {/* 설명 */}
-          <Text
-            style={{
-              fontSize: 14,
-              color: Colors.grey[600],
-              marginBottom: 24,
-              textAlign: 'center',
-            }}>
-            한번 저장한 내용은 수정할 수 없어요
-          </Text>
-
-          {/* 버튼 */}
-          <DualButton
-            cancelLabel="취소"
-            confirmLabel="저장하기"
-            size="S"
-            cancelVariant="outline"
-            confirmVariant="primary"
-            fullWidth={true}
-            onCancelPress={closeModal}
-            onConfirmPress={() => {
-              closeModal();
-              handleFormSubmit();
-            }}
-          />
-        </View>
-      ),
-    });
   };
 
   // 취소 버튼 핸들러
@@ -757,8 +776,15 @@ export default function UserBottomSheet({
             cancelVariant="outline"
             confirmVariant="primary"
             confirmDisabled={isSaving || isSubmitting || hasSubmitted} // ⭐ 제출 완료 시에도 비활성화
-            onCancelPress={handleCancel}
-            onConfirmPress={handleSave}
+            onCancelPress={() => {
+              console.log('🔴 [DualButton] 취소 버튼 클릭됨');
+              handleCancel();
+            }}
+            onConfirmPress={() => {
+              console.log('🟢 [DualButton] 저장 버튼 클릭 시도');
+              console.log('  - disabled 상태:', isSaving || isSubmitting || hasSubmitted);
+              handleSave();
+            }}
           />
           <Text style={styles.hintText}>한번 저장한 내용은 수정할 수 없어요</Text>
         </>

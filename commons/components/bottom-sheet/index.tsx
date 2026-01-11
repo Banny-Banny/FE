@@ -107,12 +107,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   };
 
   // PanResponder 설정 (드래그 핸들링)
+  // ⭐ 핸들 영역에만 적용되도록 수정 (footer 버튼 클릭 허용)
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponder: () => {
+        console.log('⚪ [PanResponder] onStartShouldSetPanResponder 호출됨');
+        return false; // ⭐ 기본적으로 비활성화
+      },
       onMoveShouldSetPanResponder: (_, gestureState) => {
         // 수직 이동이 수평 이동보다 클 때만 PanResponder 활성화
-        return Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+        // ⭐ 최소 5px 이상 이동해야 드래그로 인식 (버튼 클릭과 구분)
+        const shouldActivate =
+          Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 5;
+        if (shouldActivate) {
+          console.log('⚪ [PanResponder] 드래그 활성화됨', gestureState.dy);
+        }
+        return shouldActivate;
       },
       onPanResponderMove: (_, gestureState) => {
         // 드래그 중 처리 없음
@@ -228,8 +238,12 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             {children}
           </ScrollView>
 
-          {/* 하단 고정 영역 (footer) */}
-          {footer && <View style={styles.footer}>{footer}</View>}
+          {/* 하단 고정 영역 (footer) - ⭐ PanResponder 영향 받지 않도록 설정 */}
+          {footer && (
+            <View style={styles.footer} pointerEvents="auto">
+              {footer}
+            </View>
+          )}
         </Animated.View>
       </View>
     </Modal>

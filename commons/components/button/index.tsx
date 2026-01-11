@@ -115,7 +115,14 @@ function ButtonComponent({
 
   return (
     <Pressable
-      onPress={disabled ? undefined : onPress}
+      onPress={
+        disabled
+          ? undefined
+          : () => {
+              console.log(`🔘 [Button] 버튼 "${label}" 클릭됨 (disabled: ${disabled})`);
+              onPress();
+            }
+      }
       disabled={disabled}
       style={[styles.button, buttonStyle]}>
       <View style={styles.content}>
