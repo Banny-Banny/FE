@@ -4,13 +4,14 @@
  *
  * [Business Logic] 읽지 않은 알림 개수 조회 API 통신
  * - GET /api/me/notifications/unread-count
- * - React Query로 캐싱 및 자동 새로고침
+ * - 앱이 포그라운드로 돌아올 때 자동 새로고침
+ * - 푸시 알림 수신 시 자동 새로고침
  */
 
-import { API_ENDPOINTS } from '@/commons/constants';
-import { apiClient } from '@/utils/apiClient';
 import { useEffect, useState } from 'react';
 import { AppState } from 'react-native';
+import { API_ENDPOINTS } from '@/commons/constants';
+import { apiClient } from '@/utils/apiClient';
 import { notificationEvents } from '../utils/notificationEvents';
 
 export interface UnreadNotificationCountResponse {
