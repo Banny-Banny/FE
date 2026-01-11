@@ -65,7 +65,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         visible={visible}
         onClose={onClose}
         width={340}
-        height="auto"
+        height="100%"
         padding={0}
         closeOnBackdropPress>
         <View style={styles.scrollViewWrapper}>
@@ -109,9 +109,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         )}
 
         {/* 비디오 플레이어 렌더링 */}
-        {hasVideo && data.videoMediaId && (
-          <VideoPlayer mediaId={data.videoMediaId} />
-        )}
+        {hasVideo && data.videoMediaId && <VideoPlayer mediaId={data.videoMediaId} />}
       </View>
     );
   };
@@ -209,17 +207,6 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
             {/* 미디어 렌더링 */}
             {renderMedia()}
 
-            {/* TODO: 테스트용 - 확인 후 삭제 */}
-            <View style={{ marginTop: 20, marginBottom: 20 }}>
-              <Text style={{ marginBottom: 10, fontSize: 14, fontWeight: 'bold', color: Colors.black[500] }}>
-                [테스트] 비디오 플레이어 예시
-              </Text>
-              <VideoPlayer
-                mediaId="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-                thumbnailUrl={undefined}
-              />
-            </View>
-
             {/* 발견한 사람들 목록 (PLANTED 타입일 때만, 0명일 때도 공간 유지) */}
             {data.type === 'PLANTED' && (
               <View style={styles.viewersSection}>
@@ -237,12 +224,12 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
 
                       return (
                         <View key={viewer.id} style={styles.viewerItem}>
-                          <View style={styles.viewerInfo}>
-                            <View style={styles.viewerAvatar}>
+                          <View style={styles.discovererViewerInfo}>
+                            <View style={styles.discovererViewerAvatar}>
                               {viewerProfileImg ? (
                                 <Image
                                   source={{ uri: viewerProfileImg }}
-                                  style={styles.viewerAvatarImage}
+                                  style={styles.discovererViewerAvatarImage}
                                   contentFit="cover"
                                   accessibilityLabel={`${viewer.nickname} 프로필 이미지`}
                                 />
