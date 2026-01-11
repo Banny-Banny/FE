@@ -199,6 +199,7 @@ export default function OnboardingFeature() {
         <FriendConsentStep
           isLoading={friendConsent.isLoading}
           onConsent={friendConsent.handleConsent}
+          onSkip={friendConsent.handleSkip}
         />
       );
     case 'location-consent':
@@ -206,6 +207,7 @@ export default function OnboardingFeature() {
         <LocationConsentStep
           isLoading={locationConsent.isLoading}
           onConsent={locationConsent.handleConsent}
+          onSkip={locationConsent.handleSkip}
         />
       );
     case 'complete':

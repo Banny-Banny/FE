@@ -14,15 +14,16 @@ const imgLocationIcon = require('@/assets/icons/onboarding_location.png');
 interface LocationConsentStepProps {
   isLoading: boolean;
   onConsent: () => void;
+  onSkip: () => void;
 }
 
 /**
  * 위치 연동 동의 단계 (UI만 담당)
  */
-export function LocationConsentStep({ isLoading, onConsent }: LocationConsentStepProps) {
-  // 건너뛰기 핸들러 (동의와 동일하게 처리)
+export function LocationConsentStep({ isLoading, onConsent, onSkip }: LocationConsentStepProps) {
+  // 건너뛰기 핸들러 (권한 거부 처리)
   const handleSkip = () => {
-    onConsent();
+    onSkip();
   };
 
   return (

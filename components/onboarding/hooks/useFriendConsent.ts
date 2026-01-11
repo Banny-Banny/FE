@@ -3,16 +3,22 @@
  * 친구 연동 동의 비즈니스 로직 Hook
  */
 
+import { STORAGE_KEYS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
+import { Alert } from 'react-native';
+import { completeOnboarding } from '../api/onboarding';
 
 /**
  * 친구 연동 동의 Hook
- * @returns {isLoading, handleConsent}
+ * @returns {isLoading, handleConsent, handleSkip}
  */
 export function useFriendConsent() {
   const [isLoading, setIsLoading] = useState(false);
   const { completeFriendConsent } = useAuth();
+  const router = useRouter();
 
   /**
    * 친구 연동 동의 처리
@@ -29,9 +35,59 @@ export function useFriendConsent() {
     }
   }, [completeFriendConsent]);
 
+  /**
+   * 친구 연동 건너뛰기 처리 (권한 거부)
+   */
+  const handleSkip = useCallback(async () => {
+    try {
+      setIsLoading(true);
+
+      // 친구 동의를 false로 저장 (로컬 스토리지에 저장하지 않고 바로 API 호출)
+      // 위치 동의 상태 확인
+      const locationConsent = (await AsyncStorage.getItem(STORAGE_KEYS.LOCATION_CONSENT)) === 'true';
+
+      // 위치 동의가 완료되어 있으면 바로 API 호출
+      if (locationConsent) {
+        try {
+          await completeOnboarding(false, locationConsent);
+
+          if (__DEV__) {
+            console.log('[FriendConsent] 온보딩 완료 API 호출 성공 (건너뛰기)');
+          }
+        } catch (apiError) {
+          const errorMessage =
+            apiError instanceof Error
+              ? apiError.message
+              : '온보딩 완료 처리 중 오류가 발생했습니다.';
+
+          Alert.alert(
+            '알림',
+            errorMessage + '\n\n앱은 정상적으로 사용할 수 있지만, 일부 기능이 제한될 수 있습니다.',
+            [{ text: '확인' }],
+          );
+
+          if (__DEV__) {
+            console.error('[FriendConsent] 온보딩 완료 API 호출 실패:', apiError);
+          }
+        }
+      }
+
+      // 친구 동의 완료 처리 (다음 단계로 이동하기 위해)
+      await completeFriendConsent();
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[FriendConsent] 건너뛰기 처리 중 오류:', error);
+      }
+      Alert.alert('오류', '처리 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [completeFriendConsent, router]);
+
   return {
     isLoading,
     handleConsent,
+    handleSkip,
   };
 }
 

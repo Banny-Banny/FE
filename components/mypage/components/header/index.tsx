@@ -24,10 +24,12 @@ import { useNavigation } from '@/commons/hooks';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Icon, { IconName } from 'react-native-remix-icon';
+import { useUnreadNotificationCount } from '@/components/notification/hooks/useUnreadNotificationCount';
 import { styles } from './styles';
 
 export function Header() {
   const navigation = useNavigation();
+  const { count: unreadCount } = useUnreadNotificationCount();
 
   const handleNotificationPress = () => {
     navigation.push(ROUTES.ALARM, { from: 'mypage' });
@@ -55,6 +57,13 @@ export function Header() {
             accessibilityLabel="알림">
             <View style={styles.notificationIcon} collapsable={false}>
               <Icon name={'ri-notification-line' as IconName} size={24} color={Colors.black[500]} />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount.toString()}
+                  </Text>
+                </View>
+              )}
             </View>
           </Pressable>
 

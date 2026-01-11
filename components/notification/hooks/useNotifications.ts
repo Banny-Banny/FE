@@ -31,6 +31,7 @@ export interface UseNotificationsReturn {
   error: string | null;
   refreshNotifications: () => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  markAsRead: (notificationId: string) => Promise<void>;
   deleteNotification: (notificationId: string) => Promise<void>;
 }
 
@@ -58,6 +59,7 @@ const mapApiResponseToNotification = (item: NotificationApiResponse): Notificati
     description: item.content,
     time: formatRelativeTime(item.createdAt),
     isRead: item.isRead,
+    type: item.type,
   };
 };
 
@@ -211,6 +213,35 @@ export function useNotifications(): UseNotificationsReturn {
   }, []);
 
   /**
+   * 개별 알림 읽음 처리
+   *
+   * @description
+   * - POST /api/me/notifications/{notificationId}/read
+   * - 성공 시 로컬 상태의 해당 알림을 읽음 처리
+   */
+  const markAsRead = useCallback(async (notificationId: string) => {
+    try {
+      const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS}/${notificationId}/read`;
+      await apiClient.post(endpoint);
+
+      // 로컬 상태 업데이트: 해당 알림을 읽음 처리
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === notificationId
+            ? { ...notification, isRead: true }
+            : notification,
+        ),
+      );
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
+      setError(errorMessage);
+      console.error('[useNotifications] 알림 읽음 처리 실패:', err);
+      throw err;
+    }
+  }, []);
+
+  /**
    * 알림 삭제
    *
    * @description
@@ -247,6 +278,7 @@ export function useNotifications(): UseNotificationsReturn {
     error,
     refreshNotifications,
     markAllAsRead,
+    markAsRead,
     deleteNotification,
   };
 }

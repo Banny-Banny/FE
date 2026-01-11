@@ -12,6 +12,7 @@
 
 import { API_ENDPOINTS, ROUTES } from '@/commons/constants';
 import { apiClient } from '@/utils/apiClient';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -110,10 +111,10 @@ export function usePushNotifications() {
     return () => {
       subscription.remove();
       if (notificationListener.current) {
-        Notifications.removeNotificationSubscription(notificationListener.current);
+        notificationListener.current.remove();
       }
       if (responseListener.current) {
-        Notifications.removeNotificationSubscription(responseListener.current);
+        responseListener.current.remove();
       }
     };
   }, []);
@@ -160,8 +161,14 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     }
 
     // Expo Push Token 가져오기
+    // projectId는 EAS Build에서 자동으로 설정되거나, expo-constants에서 가져올 수 있음
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ||
+      Constants.expoConfig?.extra?.projectId ||
+      undefined;
+
     const tokenData = await Notifications.getExpoPushTokenAsync({
-      projectId: undefined, // Expo Go에서는 필요 없음, EAS Build에서는 자동 설정됨
+      projectId: projectId,
     });
     token = tokenData.data;
 
