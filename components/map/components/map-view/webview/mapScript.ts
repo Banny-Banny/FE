@@ -15,6 +15,10 @@ export function generateMapScript(): string {
     let currentLocationMarker = null;
     let currentScale = 1; // 현재 줌 스케일
 
+    // ✅ INIT 유실 방지용: 카카오 SDK 로딩 전에 INIT가 오면 저장했다가 나중에 처리
+    let pendingInitPayload = null;
+    let kakaoWaitTimer = null;
+
     function sendToRN(message) {
       if (window.ReactNativeWebView?.postMessage) {
         window.ReactNativeWebView.postMessage(JSON.stringify(message));
@@ -29,8 +33,28 @@ export function generateMapScript(): string {
       }
     }
 
+    function waitForKakaoThenInit() {
+      if (kakaoWaitTimer) return; // 이미 대기 중이면 중복 실행 방지
+
+      kakaoWaitTimer = setInterval(() => {
+        if (window.kakao && window.kakao.maps) {
+          clearInterval(kakaoWaitTimer);
+          kakaoWaitTimer = null;
+
+          if (pendingInitPayload) {
+            const payload = pendingInitPayload;
+            pendingInitPayload = null;
+            initMap(payload);
+          }
+        }
+      }, 100);
+    }
+
     function initMap(payload) {
+      // ✅ 카카오 SDK가 아직 로드되지 않았으면 payload를 저장하고 대기
       if (!window.kakao || !window.kakao.maps) {
+        pendingInitPayload = payload;
+        waitForKakaoThenInit();
         return;
       }
 
@@ -307,11 +331,27 @@ export function generateMapScript(): string {
       }
     }
 
-    //ios 주로 사용
-    if (window.ReactNativeWebView) {
-      window.ReactNativeWebView.onMessage = (event) => {
-        handleMessage(event.data);
-      };
+    // ✅ iOS용 메시지 리스너 설정 (재시도 로직 포함)
+    function setupIOSListener() {
+      if (window.ReactNativeWebView) {
+        window.ReactNativeWebView.onMessage = (event) => {
+          handleMessage(event.data);
+        };
+        return true;
+      }
+      return false;
+    }
+
+    // iOS: ReactNativeWebView가 준비될 때까지 재시도
+    if (!setupIOSListener()) {
+      let retryCount = 0;
+      const maxRetries = 50; // 최대 5초 (100ms * 50)
+      const retryTimer = setInterval(() => {
+        if (setupIOSListener() || retryCount >= maxRetries) {
+          clearInterval(retryTimer);
+        }
+        retryCount++;
+      }, 100);
     }
 
     //웹/일부 플랫폼에서 주로 사용

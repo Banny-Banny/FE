@@ -8,7 +8,7 @@
  * - 이 컴포넌트는 렌더링만 담당
  */
 
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Platform, Text, View } from 'react-native';
 import WebView from 'react-native-webview';
 
@@ -36,6 +36,7 @@ export default function MapView(props: MapViewProps = {}) {
     markersForWeb,
     handleMessage,
     handleMessageCommon,
+    handleWebViewLoad,
     isWebViewReady,
     isInitialLoadComplete,
     scale,
@@ -44,6 +45,13 @@ export default function MapView(props: MapViewProps = {}) {
     handleZoomOut,
     resetZoom,
   } = useMapView(props);
+
+  // ✅ 지도 초기 로딩 완료 시 부모에게 알림
+  useEffect(() => {
+    if (isInitialLoadComplete && props.onMapReady) {
+      props.onMapReady();
+    }
+  }, [isInitialLoadComplete, props]);
 
   // 웹 환경에서 지도 이동 함수를 저장할 ref
   const moveToLocationRef = useRef<((location: { lat: number; lng: number }) => void) | null>(null);
@@ -85,6 +93,7 @@ export default function MapView(props: MapViewProps = {}) {
                 domStorageEnabled={true}
                 originWhitelist={['*']}
                 onMessage={handleMessage}
+                onLoadEnd={handleWebViewLoad}
               />
               <CurrentLocationMarker
                 webViewRef={webViewRef}

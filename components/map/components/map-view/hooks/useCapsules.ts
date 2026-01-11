@@ -24,6 +24,7 @@ export interface UseCapsulesParams {
   limit?: number; // 기본 50, ≤200
   include_locationless?: boolean;
   include_consumed?: boolean;
+  enabled?: boolean; // ✅ 조건부 활성화 옵션
 }
 
 export interface UseCapsulesReturn {
@@ -74,7 +75,12 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
       const response = await apiClient.get<CapsulesResponse>(endpoint);
       return response.data;
     },
-    enabled: !!accessToken && !authLoading && !!params.lat && !!params.lng,
+    enabled:
+      params.enabled !== false && // ✅ 외부에서 비활성화 가능
+      !!accessToken &&
+      !authLoading &&
+      !!params.lat &&
+      !!params.lng,
     staleTime: 60 * 1000, // 1분
     gcTime: 5 * 60 * 1000, // 5분
   });

@@ -116,6 +116,7 @@ export function useMapView({
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
   const [isWebViewReady, setIsWebViewReady] = useState(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
+  const [isWebViewLoaded, setIsWebViewLoaded] = useState(false); // ✅ iOS: HTML 로드 완료 추적
 
   const kakaoMapApiKey = useMemo(() => getKakaoMapApiKey(), []);
 
@@ -152,8 +153,9 @@ export function useMapView({
     }));
   }, [capsules]);
 
+  // ✅ iOS 대응: WebView HTML 로드 완료 후에만 INIT 메시지 전송
   useEffect(() => {
-    if (!kakaoMapApiKey) return;
+    if (!kakaoMapApiKey || !isWebViewLoaded) return;
 
     // WebView 초기화 시 ready 상태 리셋
     setIsWebViewReady(false);
@@ -166,7 +168,7 @@ export function useMapView({
     }, WEBVIEW_INIT_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, [kakaoMapApiKey, initialMapConfig]);
+  }, [kakaoMapApiKey, initialMapConfig, isWebViewLoaded]);
 
   // 줌 레벨 변경 시 WebView에 전달
   useEffect(() => {
@@ -188,26 +190,24 @@ export function useMapView({
     });
   }, [resetZoom]);
 
-  // 초기 로딩 완료 처리 - 최대 3초 후 무조건 로딩 완료
+  // ✅ 최대 대기 시간 (3초) - mount 1회만 실행하여 스피너 무한 방지
   useEffect(() => {
-    // 최대 대기 시간 (3초)
     const maxWaitTimer = setTimeout(() => {
       setIsInitialLoadComplete(true);
     }, 3000);
 
-    // 모든 데이터가 준비되면 즉시 로딩 완료
+    return () => clearTimeout(maxWaitTimer);
+  }, []); // 빈 의존성 배열로 mount 시 1회만 실행
+
+  // ✅ 모든 데이터가 준비되면 더 빨리 로딩 완료
+  useEffect(() => {
     if (isWebViewReady && !locationLoading && !capsulesLoading) {
       const timer = setTimeout(() => {
         setIsInitialLoadComplete(true);
       }, WEBVIEW_MARKER_DELAY_MS);
 
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(maxWaitTimer);
-      };
+      return () => clearTimeout(timer);
     }
-
-    return () => clearTimeout(maxWaitTimer);
   }, [isWebViewReady, locationLoading, capsulesLoading]);
 
   // 마커 전송 (초기 로딩과 별개)
@@ -284,6 +284,11 @@ export function useMapView({
     [capsuleMarkers],
   );
 
+  // ✅ iOS: WebView HTML 로드 완료 콜백
+  const handleWebViewLoad = useCallback(() => {
+    setIsWebViewLoaded(true);
+  }, []);
+
   return {
     webViewRef,
     kakaoMapApiKey,
@@ -295,6 +300,7 @@ export function useMapView({
     markersForWeb,
     handleMessage,
     handleMessageCommon,
+    handleWebViewLoad, // ✅ iOS 대응
     isWebViewReady,
     isInitialLoadComplete,
     // 줌 제어
