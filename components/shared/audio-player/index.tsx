@@ -19,8 +19,15 @@ import type { AudioPlayerProps } from './types';
 
 export const AudioPlayer: React.FC<AudioPlayerProps> = (props) => {
   // 비즈니스 로직은 hook에서 처리
-  const { isLoading, isPlaying, currentTime, progressValue, hasAudio, handleTogglePlay } =
-    useAudioPlayer(props);
+  const {
+    isLoading,
+    isPlaying,
+    currentTime,
+    progressValue,
+    hasAudio,
+    error,
+    handleTogglePlay,
+  } = useAudioPlayer(props);
 
   // 동적 width를 위한 animated style
   const progressBarStyle = useAnimatedStyle(() => ({
@@ -37,6 +44,18 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = (props) => {
   // mediaId가 없거나 로딩 중이면 렌더링하지 않음
   if (!hasAudio) {
     return null;
+  }
+
+  // 에러 발생 시 에러 UI 표시
+  if (error) {
+    return (
+      <View style={styles.audioErrorContainer}>
+        <View style={styles.audioErrorIconContainer}>
+          <Icon name="error-warning-line" size={20} color={Colors.grey[500]} />
+        </View>
+        <Text style={styles.audioErrorText}>오디오 파일을 재생할 수 없습니다</Text>
+      </View>
+    );
   }
 
   return (

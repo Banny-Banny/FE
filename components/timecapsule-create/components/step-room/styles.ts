@@ -169,19 +169,17 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[100],
   },
 
-  participantCardActive: {
-    borderColor: Colors.black.darker,
-    shadowColor: Colors.black.darker,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0,
-    shadowRadius: 6,
-    elevation: 4,
+  participantCardMe: {
+    borderWidth: 1,
+    borderColor: Colors.black[500],
+    borderRadius: 16,
   },
 
-  participantCardInactive: {
+  participantCardOther: {
     backgroundColor: Colors.whiteGrey[200],
     borderRadius: 16,
   },
+
 
   participantInfo: {
     flexDirection: 'row',
@@ -198,19 +196,11 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[100],
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
 
   avatarActive: {
     borderColor: Colors.lightBlack[500],
-  },
-
-  avatarEmoji: {
-    fontSize: 24,
-  },
-
-  avatarEmojiDisabled: {
-    backgroundColor: Colors.grey[100],
-    borderColor: Colors.whiteGrey[500],
   },
 
   participantDetails: {
@@ -256,12 +246,15 @@ export const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 9999,
+    borderRadius: 12,
+    backgroundColor: Colors.white[50],
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   checkboxActive: {
-    borderColor: Colors.grey[400],
+    borderColor: Colors.darkGrey[500],
   },
 
   checkboxInactive: {
@@ -269,8 +262,18 @@ export const styles = StyleSheet.create({
   },
 
   checkboxChecked: {
-    width: 24,
-    height: 24,
+    backgroundColor: Colors.white[50],
+    borderColor: Colors.darkGrey[500],
+    borderWidth: 1,
+  },
+
+  checkboxCheckmark: {
+    fontFamily: 'Pretendard Variable',
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: '700',
+    color: Colors.green[500],
+    includeFontPadding: false,
   },
 
   // 하단 정보 영역

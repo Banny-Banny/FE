@@ -66,5 +66,37 @@ export const styles = StyleSheet.create({
     ...Typography.body.body8,
     color: Colors.grey[600],
   },
+
+  // 오디오 에러 컨테이너
+  audioErrorContainer: {
+    width: '100%',
+    paddingVertical: Spacing.lg, // 24px
+    paddingHorizontal: Spacing.md, // 16px
+    backgroundColor: Colors.whiteGrey[100],
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    borderColor: Colors.whiteGrey[300],
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm, // 8px
+    minHeight: 83, // 플레이어와 동일한 높이
+  },
+
+  // 오디오 에러 아이콘 컨테이너
+  audioErrorIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.whiteGrey[200],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // 오디오 에러 텍스트
+  audioErrorText: {
+    ...Typography.body.body11,
+    color: Colors.grey[600],
+    textAlign: 'center',
+  },
 });
 

@@ -22,7 +22,7 @@ import { formatTime, formatTimeFromMillis } from '@/utils/format';
 import { getMimeTypes } from '@/utils';
 import * as DocumentPicker from 'expo-document-picker';
 import React, { useEffect, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { useAudioPreview } from './hooks/useAudioPreview';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
@@ -51,14 +51,18 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
   const [selectedAudioUri, setSelectedAudioUri] = useState<string | null>(null);
   const [selectedAudioName, setSelectedAudioName] = useState<string>('');
 
-  // 녹음 Hook
+  // 녹음 Hook (플랫폼별 분기)
+  // 웹: useWebAudioRecorder (MP3), 네이티브: useAudioRecorder (m4a)
+  const nativeRecorder = useAudioRecorder();
+  const webRecorder = Platform.OS === 'web' ? require('./hooks/useWebAudioRecorder').useWebAudioRecorder() : null;
+  
   const {
     isRecording,
     recordingDuration,
     startRecording,
     stopRecording: stopRecordingHook,
     resetRecording,
-  } = useAudioRecorder();
+  } = Platform.OS === 'web' ? webRecorder : nativeRecorder;
 
   // 미리보기 Hook
   const {
@@ -91,8 +95,19 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
   const handleStopRecording = async () => {
     const uri = await stopRecordingHook();
     if (uri) {
+      // 플랫폼별 확장자 설정
+      // 웹: mp3 (vmsg 사용), 네이티브: m4a (expo-audio 사용)
+      const extension = Platform.OS === 'web' ? 'mp3' : 'm4a';
+      
+      if (__DEV__) {
+        console.log('[AudioAttachment] 녹음 파일 정보:');
+        console.log('  - Platform:', Platform.OS);
+        console.log('  - URI:', uri);
+        console.log('  - 형식:', extension);
+      }
+      
       setSelectedAudioUri(uri);
-      setSelectedAudioName(`recording_${Date.now()}.m4a`);
+      setSelectedAudioName(`recording_${Date.now()}.${extension}`);
     }
   };
 

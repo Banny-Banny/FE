@@ -17,7 +17,7 @@ export const TABS_SETTINGS = {
     backgroundColor: Colors.white[50],
     borderTopWidth: 1,
     borderTopColor: Colors.grey[200],
-    height: 68,
+    height: 84,
     paddingBottom: 12,
     paddingTop: 12,
   },

@@ -183,9 +183,8 @@ const transformFoundEggItem = (
   item: FoundEggItem,
   addressMap: Map<string, string>,
 ): EasterEggItem => {
-  // foundDate를 포맷팅하여 "발견한 날: YYYY-MM-DD" 형식으로 변환
+  // foundDate를 포맷팅하여 YYYY-MM-DD 형식으로 변환
   const formattedDate = formatDate(item.foundDate);
-  const dateWithLabel = `발견한 날: ${formattedDate}`;
 
   const itemKey = `${item.eggId}-location`;
   // addressMap에 변환된 주소가 있으면 사용
@@ -206,7 +205,7 @@ const transformFoundEggItem = (
     title: item.title,
     description: item.content || '',
     location,
-    date: dateWithLabel,
+    date: formattedDate,
     eggIcon: require('@/assets/images/filled_egg.svg'),
     hasImage: item.hasImage,
     hasAudio: item.hasAudio,

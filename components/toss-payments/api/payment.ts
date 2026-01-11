@@ -313,12 +313,30 @@ export const getMyPayments = async ({
   status = 'ALL',
 }: GetMyPaymentsParams = {}): Promise<PaymentListResponse> => {
   try {
+    console.log('🌐 [getMyPayments] API 호출 시작');
+    console.log('  - Endpoint:', `/${API_ENDPOINTS.PAYMENT.TOSS_MY_PAYMENTS}`);
+    console.log('  - Method: GET');
+    console.log('  - Params:', { page, limit, status });
+    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
+
     const response = await apiClient.get<PaymentListResponse>(
       `/${API_ENDPOINTS.PAYMENT.TOSS_MY_PAYMENTS}`,
       {
         params: { page, limit, status },
       },
     );
+
+    console.log('✅ [getMyPayments] API 호출 성공');
+    console.log('  - Status:', response.status);
+    console.log('  - Response Data (상세):', JSON.stringify(response.data, null, 2));
+    console.log('  - 요약:', {
+      paymentsCount: response.data.payments?.length || 0,
+      total: response.data.total,
+      page: response.data.page,
+      limit: response.data.limit,
+    });
+    console.log('  - Payments 배열:', response.data.payments);
+
     return response.data;
   } catch (error: any) {
     const statusCode = error.response?.status || 0;
