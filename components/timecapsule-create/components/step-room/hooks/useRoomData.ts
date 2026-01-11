@@ -225,18 +225,29 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
    * 최종 제출 가능 여부 확인
    *
    * 조건:
-   * - 모든 참여자(name이 있는)가 완료 상태인지 확인
-   * - 진행률이 100%일 때만 true
+   * 1. 모든 슬롯이 채워져야 함 (max_participants만큼 참여자 입장)
+   * 2. 모든 참여자가 작성 완료해야 함 (status === 'completed')
    *
    * @param {Participant[]} participants 참여자 목록
    * @returns {boolean} 제출 가능 여부
    */
   const canSubmit = useMemo(() => {
     return (participants: Participant[]): boolean => {
-      const progress = calculateProgress(participants);
-      return progress.percentage === 100;
+      // ⭐ 1. 실제 참여한 인원 (name이 있는 참여자)
+      const assignedParticipants = participants.filter((p) => p.name !== '');
+
+      // ⭐ 2. 모든 슬롯이 채워졌는지 확인 (max_participants와 비교)
+      const maxParticipants = roomSettings?.max_participants || 4;
+      const allSlotsFilled = assignedParticipants.length === maxParticipants;
+
+      // ⭐ 3. 모든 참여자가 작성 완료했는지 확인
+      const allCompleted = assignedParticipants.length > 0 &&
+                          assignedParticipants.every((p) => p.status === 'completed');
+
+      // ⭐ 4. 두 조건 모두 만족해야 제출 가능
+      return allSlotsFilled && allCompleted;
     };
-  }, [calculateProgress]);
+  }, [calculateProgress, roomSettings]);
 
   // ============================================
   // 반환

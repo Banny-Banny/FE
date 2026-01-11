@@ -20,7 +20,7 @@ import { Colors } from '@/commons/constants';
 import { AudioAttachment } from '@/components/shared/audio-attachment';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import { Image, Pressable, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
@@ -51,6 +51,9 @@ export default function UserBottomSheet({
   // ⭐ 콘텐츠 제출 완료 여부 (서버 status 기반)
   const [hasSubmitted, setHasSubmitted] = React.useState(false);
 
+  // ⭐ 이미 한 번 콘텐츠를 불러왔는지 여부 (캡슐 ID별로 추적)
+  const hasLoadedRef = React.useRef<string | null>(null);
+
   // react-hook-form 설정
   const {
     control,
@@ -69,10 +72,16 @@ export default function UserBottomSheet({
     },
   });
 
-  // ⭐ 바텀시트가 열릴 때 서버에서 최신 콘텐츠 불러오기
+  // ⭐ 바텀시트가 열릴 때 서버에서 최신 콘텐츠 불러오기 (한 번만)
   React.useEffect(() => {
     async function loadContent() {
       if (!isVisible || !capsuleId) {
+        return;
+      }
+
+      // ⭐ 이미 이 캡슐의 콘텐츠를 불러왔다면 건너뛰기 (404 방지)
+      if (hasLoadedRef.current === capsuleId) {
+        console.log('ℹ️ [UserBottomSheet] 이미 불러온 콘텐츠 - API 호출 건너뜀');
         return;
       }
 
@@ -104,6 +113,9 @@ export default function UserBottomSheet({
           } else {
             setHasSubmitted(false);
           }
+
+          // ⭐ 불러오기 완료 표시
+          hasLoadedRef.current = capsuleId;
         }
       } catch (err: any) {
         // 404는 정상 (아직 작성 안 함)
@@ -127,6 +139,9 @@ export default function UserBottomSheet({
             music: null,
             video: null,
           });
+
+          // ⭐ 404도 불러오기 시도 완료로 표시 (다음에 다시 시도 안 함)
+          hasLoadedRef.current = capsuleId;
         } else {
           console.error('❌ [UserBottomSheet] 콘텐츠 불러오기 실패:', err);
           // 에러 발생 시에도 빈 폼으로 초기화 (서버를 신뢰)
@@ -138,6 +153,7 @@ export default function UserBottomSheet({
             music: null,
             video: null,
           });
+          // ⭐ 에러 발생 시에는 다음에 다시 시도할 수 있도록 hasLoadedRef 업데이트 안 함
         }
       } finally {
         setIsLoadingContent(false);
@@ -207,15 +223,51 @@ export default function UserBottomSheet({
   const handleAddMusic = () => {
     // 이미 음악이 있으면 교체 확인
     if (currentMusic) {
-      Alert.alert('음악 교체', '이미 음악이 있습니다. 교체하시겠습니까?', [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '교체',
-          onPress: () => {
-            setIsAudioAttachmentVisible(true);
-          },
-        },
-      ]);
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="question-line" size={64} color={Colors.blue[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              음악 교체
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              이미 음악이 있습니다. 교체하시겠습니까?
+            </Text>
+
+            {/* 버튼 */}
+            <DualButton
+              cancelLabel="취소"
+              confirmLabel="교체"
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={() => {
+                closeModal();
+                setIsAudioAttachmentVisible(true);
+              }}
+            />
+          </View>
+        ),
+      });
       return;
     }
 
@@ -231,9 +283,41 @@ export default function UserBottomSheet({
   // 에러 발생 시 알림 표시
   React.useEffect(() => {
     if (error) {
-      Alert.alert('오류', error);
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 에러 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              오류
+            </Text>
+
+            {/* 에러 메시지 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {error}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
     }
-  }, [error]);
+  }, [error, openModal, closeModal]);
 
   // ⭐ 바텀시트가 닫혔다가 다시 열릴 때 저장 상태 초기화
   React.useEffect(() => {
@@ -247,7 +331,39 @@ export default function UserBottomSheet({
     // ⭐ 이미 제출 완료된 경우 저장 방지
     if (hasSubmitted || isReadOnly) {
       console.log('⚠️ [UserBottomSheet] 이미 제출 완료된 콘텐츠입니다. 저장 불가.');
-      Alert.alert('저장 불가', '이미 제출 완료된 콘텐츠는 수정할 수 없습니다.');
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 경고 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 불가
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
       return;
     }
 
@@ -263,7 +379,50 @@ export default function UserBottomSheet({
     try {
       // ⭐ text_message 필수 검증
       if (!data.textContent || data.textContent.trim().length === 0) {
-        Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              {/* 경고 아이콘 */}
+              <View style={{ marginBottom: 16 }}>
+                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              </View>
+
+              {/* 타이틀 */}
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                검증 실패
+              </Text>
+
+              {/* 설명 */}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  marginBottom: 24,
+                  textAlign: 'center',
+                }}>
+                텍스트 메시지는 필수입니다.
+              </Text>
+
+              {/* 확인 버튼 */}
+              <Button
+                label="확인"
+                variant="primary"
+                size="S"
+                fullWidth={true}
+                onPress={closeModal}
+              />
+            </View>
+          ),
+        });
         setIsSaving(false);
         return;
       }
@@ -271,7 +430,50 @@ export default function UserBottomSheet({
       // 제출 전 검증
       const validation = validateContent(data);
       if (!validation.isValid) {
-        Alert.alert('검증 실패', validation.message);
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              {/* 경고 아이콘 */}
+              <View style={{ marginBottom: 16 }}>
+                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              </View>
+
+              {/* 타이틀 */}
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                검증 실패
+              </Text>
+
+              {/* 설명 */}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  marginBottom: 24,
+                  textAlign: 'center',
+                }}>
+                {validation.message}
+              </Text>
+
+              {/* 확인 버튼 */}
+              <Button
+                label="확인"
+                variant="primary"
+                size="S"
+                fullWidth={true}
+                onPress={closeModal}
+              />
+            </View>
+          ),
+        });
         setIsSaving(false);
         return;
       }
@@ -302,6 +504,8 @@ export default function UserBottomSheet({
       console.log('🎉 [UserBottomSheet] 저장 성공!');
       // ⭐ 저장 성공 시 제출 완료 상태로 설정 (영구적으로 재수정 불가)
       setHasSubmitted(true);
+      // ⭐ 저장 성공 시 다음에 다시 열 때 최신 데이터를 불러올 수 있도록 초기화
+      hasLoadedRef.current = null;
       openModal({
         width: 344,
         height: 'auto',
@@ -401,38 +605,138 @@ export default function UserBottomSheet({
   const handleSave = () => {
     // ⭐ 이미 제출 완료된 경우 또는 읽기 전용 모드인 경우 저장 불가
     if (hasSubmitted || isReadOnly) {
-      Alert.alert('저장 불가', '이미 제출 완료된 콘텐츠는 수정할 수 없습니다.');
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 경고 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 불가
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
       return;
     }
 
-    // 저장 확인 Alert 표시 (BottomSheet 위에서도 보이도록)
-    Alert.alert(
-      '저장하시겠어요?',
-      '한번 저장한 내용은 수정할 수 없어요',
-      [
-        {
-          text: '취소',
-          style: 'cancel',
-        },
-        {
-          text: '저장하기',
-          style: 'default',
-          onPress: () => {
-            handleFormSubmit();
-          },
-        },
-      ],
-      { cancelable: true }
-    );
+    // 저장 확인 모달 표시
+    openModal({
+      width: 344,
+      height: 'auto',
+      closeOnBackdropPress: true,
+      children: (
+        <View style={{ padding: 24, alignItems: 'center' }}>
+          {/* 아이콘 */}
+          <View style={{ marginBottom: 16 }}>
+            <Icon name="save-line" size={64} color={Colors.blue[500]} />
+          </View>
+
+          {/* 타이틀 */}
+          <Text
+            style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+            저장하시겠어요?
+          </Text>
+
+          {/* 설명 */}
+          <Text
+            style={{
+              fontSize: 14,
+              color: Colors.grey[600],
+              marginBottom: 24,
+              textAlign: 'center',
+            }}>
+            한번 저장한 내용은 수정할 수 없어요
+          </Text>
+
+          {/* 버튼 */}
+          <DualButton
+            cancelLabel="취소"
+            confirmLabel="저장하기"
+            size="S"
+            cancelVariant="outline"
+            confirmVariant="primary"
+            fullWidth={true}
+            onCancelPress={closeModal}
+            onConfirmPress={() => {
+              closeModal();
+              handleFormSubmit();
+            }}
+          />
+        </View>
+      ),
+    });
   };
 
   // 취소 버튼 핸들러
   const handleCancel = () => {
     if (isDirty) {
-      Alert.alert('작성 취소', '작성 중인 내용이 있습니다. 취소하시겠습니까?', [
-        { text: '계속 작성', style: 'cancel' },
-        { text: '취소', onPress: onClose },
-      ]);
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="question-line" size={64} color={Colors.blue[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              작성 취소
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              작성 중인 내용이 있습니다. 취소하시겠습니까?
+            </Text>
+
+            {/* 버튼 */}
+            <DualButton
+              cancelLabel="계속 작성"
+              confirmLabel="취소"
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={() => {
+                closeModal();
+                onClose();
+              }}
+            />
+          </View>
+        ),
+      });
     } else {
       onClose();
     }

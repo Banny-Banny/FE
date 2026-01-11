@@ -604,15 +604,27 @@ export function useParticipants({
             const fileName = getFileName(imageUri, `photo_${Date.now()}_${i}.jpg`);
             const mimeType = getMimeType(imageUri, 'image');
 
-            formData.append('images', {
-              uri: imageUri,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log(
-              `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} FormData에 추가 완료`,
-            );
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(imageUri);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('images', file);
+              console.log(
+                `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('images', {
+                uri: imageUri,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log(
+                `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} FormData에 추가 완료`,
+              );
+            }
           }
         }
 
@@ -624,13 +636,25 @@ export function useParticipants({
             const fileName = getFileName(content.voiceRecording, `music_${Date.now()}.mp3`);
             const mimeType = getMimeType(content.voiceRecording, 'audio');
 
-            formData.append('music', {
-              uri: content.voiceRecording,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(content.voiceRecording);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('music', file);
+              console.log(
+                `✅ [useParticipants] 음악 파일 File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('music', {
+                uri: content.voiceRecording,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+            }
           } else {
             console.log('  ⏭️  음악: 이미 업로드된 파일이므로 건너뜀 - ', content.voiceRecording);
           }
@@ -644,13 +668,25 @@ export function useParticipants({
             const fileName = getFileName(content.video, `video_${Date.now()}.mp4`);
             const mimeType = getMimeType(content.video, 'video');
 
-            formData.append('video', {
-              uri: content.video,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(content.video);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('video', file);
+              console.log(
+                `✅ [useParticipants] 비디오 파일 File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('video', {
+                uri: content.video,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+            }
           } else {
             console.log('  ⏭️  비디오: 이미 업로드된 파일이므로 건너뜀 - ', content.video);
           }

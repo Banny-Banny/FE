@@ -54,11 +54,19 @@ export function useMediaPicker(
   const getFileSize = async (uri: string): Promise<number> => {
     if (Platform.OS === 'web') {
       try {
+        console.log(`🔍 [getFileSize] 웹에서 파일 크기 확인 중: ${uri.substring(0, 50)}...`);
         const response = await fetch(uri);
+        if (!response.ok) {
+          throw new Error(`fetch 실패: ${response.status} ${response.statusText}`);
+        }
         const blob = await response.blob();
+        console.log(`✅ [getFileSize] 파일 크기: ${blob.size} bytes`);
         return blob.size;
       } catch (error) {
-        console.error('웹에서 파일 크기 가져오기 실패:', error);
+        console.error('❌ [getFileSize] 웹에서 파일 크기 가져오기 실패:', error);
+        if (error instanceof TypeError) {
+          console.error('  TypeError: CORS 또는 네트워크 문제일 수 있습니다');
+        }
         throw new Error('파일 크기를 확인할 수 없습니다.');
       }
     } else {
@@ -113,6 +121,13 @@ export function useMediaPicker(
       if (error instanceof Error && error.message.includes('크기가 너무 큽니다')) {
         throw error;
       }
+      // ⭐ 웹 환경에서 파일 크기 확인 실패 시 경고만 하고 계속 진행
+      if (Platform.OS === 'web') {
+        console.warn(
+          `⚠️ [validateMediaFile] 웹에서 파일 크기 검증 실패, 계속 진행: ${extractedFilename}`,
+        );
+        return; // 검증 실패해도 계속 진행
+      }
       throw new Error('파일 크기를 확인할 수 없습니다.');
     }
   };
@@ -158,12 +173,19 @@ export function useMediaPicker(
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        console.log(`🔍 [pickImage] 이미지 선택 완료: ${result.assets.length}개`);
+
         // 선택된 이미지 URI 추출
         const selectedUris: string[] = [];
         const validatedAssets = result.assets.map((asset) => ({
           uri: asset.uri,
           filename: asset.fileName || asset.uri.split('/').pop() || '',
         }));
+
+        console.log(
+          '📝 [pickImage] 선택된 파일:',
+          validatedAssets.map((a) => `${a.filename} (${a.uri.substring(0, 50)}...)`),
+        );
 
         // 최대 개수 재확인
         if (currentPhotosCount + validatedAssets.length > maxImagesPerPerson) {
@@ -177,11 +199,14 @@ export function useMediaPicker(
         // 각 파일 검증 (타입 및 크기)
         for (const asset of validatedAssets) {
           try {
+            console.log(`🔍 [pickImage] 파일 검증 중: ${asset.filename}`);
             await validateMediaFile(asset.uri, 'IMAGE', asset.filename);
             selectedUris.push(asset.uri);
+            console.log(`✅ [pickImage] 파일 검증 성공: ${asset.filename}`);
           } catch (validationError) {
             const errorMessage =
               validationError instanceof Error ? validationError.message : '파일 검증 실패';
+            console.error(`❌ [pickImage] 파일 검증 실패: ${asset.filename} - ${errorMessage}`);
             Alert.alert('파일 검증 실패', `${asset.filename}\n${errorMessage}`);
             // 검증 실패한 파일은 제외하고 계속 진행
           }
@@ -189,7 +214,10 @@ export function useMediaPicker(
 
         // 검증 통과한 파일만 콜백 호출
         if (selectedUris.length > 0) {
+          console.log(`✅ [pickImage] 총 ${selectedUris.length}개 파일 콜백 호출`);
           onImagesPicked(selectedUris);
+        } else {
+          console.warn('⚠️ [pickImage] 검증 통과한 파일이 없습니다');
         }
       }
     } catch (err) {
@@ -266,13 +294,19 @@ export function useMediaPicker(
       const videoUri = asset.uri;
       const filename = asset.fileName || videoUri.split('/').pop() || '';
 
+      console.log(`🔍 [pickVideo] 비디오 선택 완료: ${filename}`);
+      console.log(`  URI: ${videoUri.substring(0, 80)}...`);
+
       try {
         // 파일 검증 (타입 및 크기)
+        console.log(`🔍 [pickVideo] 파일 검증 중: ${filename}`);
         await validateMediaFile(videoUri, 'VIDEO', filename);
+        console.log(`✅ [pickVideo] 파일 검증 성공: ${filename}`);
         onVideoPicked(videoUri);
       } catch (validationError) {
         const errorMessage =
           validationError instanceof Error ? validationError.message : '파일 검증 실패';
+        console.error(`❌ [pickVideo] 파일 검증 실패: ${filename} - ${errorMessage}`);
         Alert.alert('파일 검증 실패', `${filename}\n${errorMessage}`);
       }
     }

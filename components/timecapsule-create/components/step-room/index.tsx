@@ -316,7 +316,7 @@ export default function StepRoom({
         key={participant.id}
         style={[
           styles.participantCard,
-          isActive ? styles.participantCardActive : styles.participantCardInactive,
+          isMyContent ? styles.participantCardMe : styles.participantCardOther,
         ]}
         onPress={() => {
           // ⭐ 본인의 콘텐츠만 클릭 가능 (작성 완료 후에도 조회 가능)
@@ -333,13 +333,8 @@ export default function StepRoom({
         <View style={styles.participantInfo}>
           {/* 아바타 */}
           <View style={[styles.avatar, isActive && styles.avatarActive]}>
-            <Text
-              style={[
-                styles.avatarEmoji,
-                participant.status === 'waiting' && styles.avatarEmojiDisabled,
-              ]}>
-              {participant.emoji}
-            </Text>
+            {/* TODO: 프로필 이미지 URL 추가 시 Image 컴포넌트로 표시 */}
+            <Icon name="user-line" size={24} color={Colors.grey[400]} />
           </View>
 
           {/* 참여자 정보 */}
@@ -348,7 +343,6 @@ export default function StepRoom({
               <>
                 <View style={styles.participantNameRow}>
                   <Text style={styles.participantName}>{participant.name}</Text>
-                  {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
                 </View>
                 <Text
                   style={[
@@ -359,7 +353,8 @@ export default function StepRoom({
                   ]}>
                   {/* ⭐ 본인: 클릭 유도 메시지, 다른 사람: 작성 여부만 표시 */}
                   {participant.status === 'completed' && '작성 완료'}
-                  {participant.status === 'pending' && (isMyContent ? '클릭하여 작성하기' : '작성 대기 중')}
+                  {participant.status === 'pending' &&
+                    (isMyContent ? '클릭하여 작성하기' : '작성 대기 중')}
                   {participant.status === 'waiting' && '아직 작성하지 않았어요'}
                 </Text>
               </>
@@ -373,9 +368,16 @@ export default function StepRoom({
         {participant.name ? (
           showCheckbox && (
             <View
-              style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
+              style={[
+                styles.checkbox,
+                participant.status === 'completed'
+                  ? styles.checkboxChecked
+                  : isActive
+                  ? styles.checkboxActive
+                  : styles.checkboxInactive,
+              ]}>
               {participant.status === 'completed' && (
-                <Icon name="checkbox-circle-fill" size={20} color={Colors.green[500]} />
+                <Text style={styles.checkboxCheckmark}>✓</Text>
               )}
             </View>
           )
