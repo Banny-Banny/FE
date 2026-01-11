@@ -60,7 +60,7 @@ export function NotificationItem({
           )}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

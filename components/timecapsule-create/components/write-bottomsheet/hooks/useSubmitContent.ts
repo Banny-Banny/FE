@@ -361,30 +361,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
             } as any);
             console.log(`✅ [useSubmitContent] [앱] 음악 파일 추가 완료: ${fileName} (${mimeType})`);
           }
-
-          // MIME 타입 추론
-          const extension = getFileExtension(filename);
-          const mimeType =
-            extension === 'mp3' || extension === 'mpeg'
-              ? 'audio/mpeg'
-              : extension === 'm4a' || extension === 'x-m4a'
-              ? 'audio/x-m4a'
-              : extension === 'aac' || extension === 'x-aac'
-              ? 'audio/aac'
-              : extension === 'mp4'
-              ? 'audio/mp4'
-              : 'audio/mpeg';
-
-          console.log(`  MIME 타입: ${mimeType}, 확장자: ${extension}`);
-
-          const fileName = generateFileName(data.music, 'music', extension || 'mp3');
-          console.log(`  생성된 파일명: ${fileName}`);
-
-          const musicFile = await uriToFile(data.music, fileName, mimeType);
-          console.log(`  File 객체 생성 완료: ${musicFile.size} bytes`);
-
-          formData.append('music', musicFile);
-          console.log(`✅ [useSubmitContent] 음악 파일 변환 완료: ${fileName}`);
         } else {
           // HTTP/HTTPS URL: 이미 업로드된 파일
           console.log('  ⏭️  음악: 이미 업로드된 파일 URL 전송 - ', data.music);
