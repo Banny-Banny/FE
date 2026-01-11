@@ -119,6 +119,8 @@ export interface UserBottomSheetProps {
   onSave?: (content: any) => Promise<void>;
   /** 대기실 설정값 (옵션, 없으면 기본값 사용) */
   roomSettings?: RoomSettingsResponse | null;
+  /** 읽기 전용 모드 (제출 완료된 참여자용) */
+  isReadOnly?: boolean;
 }
 
 /**

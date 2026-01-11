@@ -12,7 +12,7 @@
  * - 닫기 버튼: 오른쪽 상단
  */
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import Icon from 'react-native-remix-icon';
@@ -20,6 +20,10 @@ import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants/color';
 import { styles } from './styles';
 import { useOpenedCapsuleDetail } from '../../hooks/useOpenedCapsuleDetail';
+import { getMediaUrl } from '@/utils/mediaUrl';
+import { AudioPlayer } from '@/components/shared/audio-player';
+import { VideoPlayer } from '@/components/shared/video-player';
+import type { ImageMedia, VideoMedia, AudioMedia } from '../../types';
 
 interface UnlockedCapsuleDetailProps {
   /** 모달 표시 여부 */
@@ -46,10 +50,46 @@ export default function UnlockedCapsuleDetail({
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  // 미디어 URL 상태 (이미지만 관리, 비디오/오디오는 AudioPlayer/VideoPlayer에서 처리)
+  const [imageUrls, setImageUrls] = useState<Map<string, string>>(new Map());
 
   // 선택된 슬롯
   const selectedSlot = writtenSlots[selectedSlotIndex];
   const imageCount = selectedSlot?.content?.images?.length || 0;
+
+  // 이미지 URL 가져오기 (선택된 슬롯이 변경될 때마다)
+  // 비디오와 오디오는 AudioPlayer/VideoPlayer 컴포넌트에서 자동으로 처리
+  useEffect(() => {
+    if (!selectedSlot?.content?.images) {
+      setImageUrls(new Map());
+      return;
+    }
+
+    const loadImageUrls = async () => {
+      const newImageUrls = new Map<string, string>();
+
+      // 이미지 URL 가져오기
+      for (const image of selectedSlot.content.images || []) {
+        if (image.url && image.url.trim() !== '') {
+          // 이미 URL이 있으면 사용
+          newImageUrls.set(image.id, image.url);
+        } else if (image.id) {
+          // media_id로 URL 가져오기
+          try {
+            const url = await getMediaUrl(image.id);
+            newImageUrls.set(image.id, url);
+          } catch (err) {
+            console.error('Failed to load image URL:', err);
+          }
+        }
+      }
+
+      setImageUrls(newImageUrls);
+    };
+
+    loadImageUrls();
+  }, [selectedSlotIndex, selectedSlot]);
 
   const handleUserSelect = (index: number) => {
     setSelectedSlotIndex(index);
@@ -109,6 +149,15 @@ export default function UnlockedCapsuleDetail({
   }
 
   const currentContent = selectedSlot.content;
+  
+  // URL이 포함된 콘텐츠 생성 (이미지만 URL 변환, 비디오/오디오는 컴포넌트에서 처리)
+  const enrichedContent = currentContent ? {
+    ...currentContent,
+    images: currentContent.images?.map((img) => ({
+      ...img,
+      url: imageUrls.get(img.id) || img.url || '',
+    })),
+  } : undefined;
 
   return (
     <Modal
@@ -149,7 +198,15 @@ export default function UnlockedCapsuleDetail({
                         : styles.userAvatarBorder
                     }>
                     <View style={styles.userAvatarInner}>
-                      <Text style={styles.userAvatarEmoji}>{slot.author.emoji}</Text>
+                      {slot.author.profileImg ? (
+                        <Image
+                          source={{ uri: slot.author.profileImg }}
+                          style={{ width: '100%', height: '100%', borderRadius: 50 }}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <Text style={styles.userAvatarEmoji}>{slot.author.emoji}</Text>
+                      )}
                     </View>
                   </View>
                   <Text
@@ -172,16 +229,16 @@ export default function UnlockedCapsuleDetail({
           contentContainerStyle={styles.contentScrollContainer}
           showsVerticalScrollIndicator={false}>
           {/* 텍스트 메시지 - API 데이터 */}
-          {currentContent?.text && (
+          {enrichedContent?.text && (
             <View style={styles.textMessagesContainer}>
               <View style={styles.textMessageCard}>
-                <Text style={styles.textMessageText}>{currentContent.text}</Text>
+                <Text style={styles.textMessageText}>{enrichedContent.text}</Text>
               </View>
             </View>
           )}
 
           {/* 이미지 캐러셀 섹션 - API 데이터 */}
-          {imageCount > 0 && (
+          {enrichedContent?.images && enrichedContent.images.length > 0 && (
             <View style={styles.imageSection}>
               <View style={styles.imageContainer}>
                 <ScrollView
@@ -191,29 +248,35 @@ export default function UnlockedCapsuleDetail({
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={handleImageScroll}
                   style={styles.imageScrollView}>
-                  {currentContent.images!.map((image) => (
+                  {enrichedContent.images.map((image) => (
                     <View key={image.id} style={styles.imageItem}>
-                      <Image
-                        source={{ uri: image.url }}
-                        style={styles.imagePlaceholder}
-                        contentFit="cover"
-                      />
+                      {image.url ? (
+                        <Image
+                          source={{ uri: image.url }}
+                          style={styles.imagePlaceholder}
+                          contentFit="cover"
+                        />
+                      ) : (
+                        <View style={[styles.imagePlaceholder, { backgroundColor: Colors.grey[200], justifyContent: 'center', alignItems: 'center' }]}>
+                          <Text style={{ color: Colors.grey[500] }}>이미지 로딩 중...</Text>
+                        </View>
+                      )}
                     </View>
                   ))}
                 </ScrollView>
                 {/* 이미지 인디케이터 */}
-                {imageCount > 1 && (
+                {enrichedContent.images.length > 1 && (
                   <View style={styles.imageIndicator}>
                     <Text style={styles.imageIndicatorText}>
-                      {currentImageIndex + 1}/{imageCount}
+                      {currentImageIndex + 1}/{enrichedContent.images.length}
                     </Text>
                   </View>
                 )}
               </View>
               {/* 페이지네이션 인디케이터 */}
-              {imageCount > 1 && (
+              {enrichedContent.images.length > 1 && (
                 <View style={styles.paginationContainer}>
-                  {currentContent.images!.map((image, index) => (
+                  {enrichedContent.images.map((image, index) => (
                     <View
                       key={image.id}
                       style={
@@ -228,43 +291,24 @@ export default function UnlockedCapsuleDetail({
             </View>
           )}
 
-          {/* 동영상 섹션 - API 데이터 */}
-          {currentContent?.video && (
+          {/* 동영상 섹션 - VideoPlayer 컴포넌트 사용 */}
+          {currentContent?.video && currentContent.video.id && (
             <View style={styles.videoSection}>
               <View style={styles.videoContainer}>
-                <Image
-                  source={{ uri: currentContent.video.thumbnailUrl }}
-                  style={styles.videoThumbnail}
-                  contentFit="cover"
+                <VideoPlayer
+                  mediaId={currentContent.video.url || currentContent.video.id}
+                  thumbnailUrl={currentContent.video.thumbnailUrl || undefined}
                 />
-                {/* 오버레이 및 재생 버튼 */}
-                <View style={styles.videoOverlay} pointerEvents="box-none">
-                  <TouchableOpacity style={styles.playButton} activeOpacity={0.8}>
-                    <Icon name="ri-play-circle-line" size={24} color={Colors.white[500]} />
-                  </TouchableOpacity>
-                </View>
               </View>
             </View>
           )}
 
-          {/* 오디오 플레이어 섹션 - API 데이터 */}
-          {currentContent?.audio && (
+          {/* 오디오 플레이어 섹션 - AudioPlayer 컴포넌트 사용 */}
+          {currentContent?.audio && currentContent.audio.id && (
             <View style={styles.audioSection}>
-              <View style={styles.audioCard}>
-                <View style={styles.audioContent}>
-                  <View style={styles.audioIconContainer}>
-                    <Icon name="ri-music-line" size={20} color={Colors.black[500]} />
-                  </View>
-                  <View style={styles.audioTitleContainer}>
-                    <Text style={styles.audioTitle} numberOfLines={1}>
-                      {currentContent.audio.title}
-                    </Text>
-                  </View>
-                  <TouchableOpacity style={styles.audioPlayButton} activeOpacity={0.8}>
-                    <Icon name="ri-play-line" size={16} color={Colors.white[500]} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+              <AudioPlayer
+                mediaId={currentContent.audio.url || currentContent.audio.id}
+              />
             </View>
           )}
         </ScrollView>

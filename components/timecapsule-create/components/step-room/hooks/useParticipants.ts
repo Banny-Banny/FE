@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
-import { fetchMyContent, NotFoundError, submitMyContent } from '../../write-bottomsheet/api/content';
+import { fetchMyContent, submitMyContent } from '../../write-bottomsheet/api/content';
 import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
@@ -236,6 +236,8 @@ interface UseParticipantsReturn {
   saveContent: (participantId: string, content: ParticipantContent) => Promise<void>;
   /** 편집 가능 여부 확인 (본인만) */
   canEdit: (participantId: string) => boolean;
+  /** 참여자 목록 새로고침 */
+  refetchParticipants: () => Promise<void>;
 }
 
 /** useParticipants Hook 파라미터 */
@@ -323,89 +325,112 @@ export function useParticipants({
   // 데이터 가져오기 (목데이터)
   // ============================================
 
-  useEffect(() => {
-    /**
-     * 참여자 목록 가져오기
-     * - capsuleId가 있으면 API 호출
-     * - 없으면 대기 (로딩 상태 유지, 목데이터 사용 안 함)
-     */
-    async function fetchParticipants() {
-      // capsuleId가 없으면 아무것도 하지 않음 (로딩 상태 유지)
-      if (!capsuleId) {
-        // capsuleId가 설정될 때까지 대기 (다음 useEffect 실행에서 처리됨)
-        return;
+  /**
+   * 참여자 목록 가져오기 함수
+   * - capsuleId가 있으면 API 호출
+   * - 없으면 대기 (로딩 상태 유지, 목데이터 사용 안 함)
+   */
+  const fetchParticipants = useCallback(async () => {
+    // capsuleId가 없으면 아무것도 하지 않음 (로딩 상태 유지)
+    if (!capsuleId) {
+      // capsuleId가 설정될 때까지 대기 (다음 useEffect 실행에서 처리됨)
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // ⭐ API 호출: 대기실 상세 조회
+      console.log('🔄 [useParticipants] 참여자 슬롯 정보 조회 시작 - capsuleId:', capsuleId);
+      const roomDetail = await getRoomDetail(capsuleId);
+
+      // 현재 사용자 ID 가져오기 (본인 여부 판단용)
+      const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+      const currentUser = token ? getUserFromToken(token) : null;
+      const currentUserId = currentUser?.id || null;
+
+      // slots[] 배열을 Participant[] 형식으로 변환
+      // ⭐ 수정: roomDetail.slots에는 이미 모든 슬롯(빈 슬롯 포함)이 있으므로 그대로 사용
+      const participantsList: Participant[] = [];
+
+      // 모든 슬롯 변환 (배정된 슬롯 + 빈 슬롯 모두 포함)
+      for (const slot of roomDetail.slots) {
+        if (slot.user_id && slot.nickname) {
+          // 배정된 슬롯
+          const isMe = slot.user_id === currentUserId;
+
+          // ⭐ has_content 필드로 작성 완료 여부 판단
+          const participantStatus = slot.has_content
+            ? PARTICIPANT_STATUS.COMPLETED
+            : slot.status === 'ACCEPTED'
+            ? PARTICIPANT_STATUS.PENDING
+            : PARTICIPANT_STATUS.WAITING;
+
+          participantsList.push({
+            id: slot.user_id,
+            name: slot.nickname,
+            emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
+            status: participantStatus,
+            isHost: slot.is_host,
+            isMe,
+          });
+        } else {
+          // 빈 슬롯 (user_id가 null인 경우)
+          participantsList.push({
+            id: `slot-${slot.slot_number}`,
+            name: '',
+            emoji: EMPTY_SLOT_EMOJI,
+            status: PARTICIPANT_STATUS.WAITING,
+          });
+        }
       }
 
-      setIsLoading(true);
-      setError(null);
+      // ⭐ 디버깅: 슬롯 계산 확인
+      console.log(
+        '🔍 [useParticipants] 슬롯 계산:',
+        `roomDetail.slots.length=${roomDetail.slots.length}`,
+        `participantsList.length=${participantsList.length}`,
+        `maxParticipants=${maxParticipants}`,
+      );
+      // ⭐ 디버깅: 배정된 참가자 상세 확인
+      const assignedParticipants = participantsList.filter((p) => p.name !== '');
+      console.log('🔍 [useParticipants] 배정된 참가자 상세:', {
+        배정된참가자수: assignedParticipants.length,
+        참가자목록: assignedParticipants.map((p) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          isMe: p.isMe,
+        })),
+        전체슬롯상세: roomDetail.slots.map((slot) => ({
+          slot_number: slot.slot_number,
+          user_id: slot.user_id,
+          nickname: slot.nickname,
+          has_content: slot.has_content,
+          status: slot.status,
+        })),
+      });
 
-      try {
-        // ⭐ API 호출: 대기실 상세 조회
-        console.log('🔄 [useParticipants] 참여자 슬롯 정보 조회 시작 - capsuleId:', capsuleId);
-        const roomDetail = await getRoomDetail(capsuleId);
-
-        // 현재 사용자 ID 가져오기 (본인 여부 판단용)
-        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-        const currentUser = token ? getUserFromToken(token) : null;
-        const currentUserId = currentUser?.id || null;
-
-        // slots[] 배열을 Participant[] 형식으로 변환
-        // ⭐ 수정: roomDetail.slots에는 이미 모든 슬롯(빈 슬롯 포함)이 있으므로 그대로 사용
-        const participantsList: Participant[] = [];
-
-        // 모든 슬롯 변환 (배정된 슬롯 + 빈 슬롯 모두 포함)
-        for (const slot of roomDetail.slots) {
-          if (slot.user_id && slot.nickname) {
-            // 배정된 슬롯
-            const isMe = slot.user_id === currentUserId;
-            participantsList.push({
-              id: slot.user_id,
-              name: slot.nickname,
-              emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
-              status:
-                slot.status === 'ACCEPTED'
-                  ? PARTICIPANT_STATUS.PENDING
-                  : PARTICIPANT_STATUS.WAITING,
-              isHost: slot.is_host,
-              isMe,
-              // ⭐ 작성 완료 여부는 아래에서 본인 콘텐츠 조회로 확인
-            });
-          } else {
-            // 빈 슬롯 (user_id가 null인 경우)
-            participantsList.push({
-              id: `slot-${slot.slot_number}`,
-              name: '',
-              emoji: EMPTY_SLOT_EMOJI,
-              status: PARTICIPANT_STATUS.WAITING,
-            });
-          }
-        }
-
-        // ⭐ 디버깅: 슬롯 계산 확인
-        console.log(
-          '🔍 [useParticipants] 슬롯 계산:',
-          `roomDetail.slots.length=${roomDetail.slots.length}`,
-          `participantsList.length=${participantsList.length}`,
-          `maxParticipants=${maxParticipants}`,
-        );
-
-        // ⭐ 본인의 콘텐츠 작성 여부 확인
+      // ⭐ 본인이 이미 작성한 경우 콘텐츠 데이터 가져오기 (has_content가 true일 때만)
+      const mySlot = roomDetail.slots.find((slot) => slot.user_id === currentUserId);
+      if (mySlot && mySlot.has_content) {
         try {
-          console.log('🔄 [useParticipants] 본인 콘텐츠 작성 여부 확인 중...');
+          console.log('🔄 [useParticipants] 본인이 작성 완료했으므로 콘텐츠 조회 중...');
           const myContent = await fetchMyContent(capsuleId);
 
-          // 콘텐츠가 존재하면 본인 상태를 COMPLETED로 업데이트 + 콘텐츠 데이터 저장
           if (myContent && myContent.data) {
-            console.log('✅ [useParticipants] 본인이 이미 작성한 콘텐츠 발견!');
+            console.log('✅ [useParticipants] 본인 콘텐츠 조회 성공!');
 
             // API 응답 데이터를 ParticipantContent 형식으로 변환
             const contentData: ParticipantContent = {
-              text: typeof myContent.data.text_message === 'string'
-                ? myContent.data.text_message
-                : JSON.stringify(myContent.data.text_message),
+              text:
+                typeof myContent.data.text_message === 'string'
+                  ? myContent.data.text_message
+                  : JSON.stringify(myContent.data.text_message),
               images: myContent.data.images?.map((img) => img.url) || [],
-              voiceRecording: myContent.data.music?.url || null,
-              video: myContent.data.video?.url || null,
+              voiceRecording: myContent.data.music?.url || undefined,
+              video: myContent.data.video?.url || undefined,
             };
 
             console.log('📦 [useParticipants] 변환된 콘텐츠 데이터:', {
@@ -415,48 +440,41 @@ export function useParticipants({
               hasVideo: !!contentData.video,
             });
 
+            // 본인 참여자에 콘텐츠 데이터 저장
             participantsList.forEach((p) => {
-              if (p.isMe && p.status === PARTICIPANT_STATUS.PENDING) {
-                p.status = PARTICIPANT_STATUS.COMPLETED;
-                p.content = contentData; // ⭐ 서버에서 받은 URL 데이터 저장
-                console.log('✅ [useParticipants] 본인 상태를 COMPLETED로 업데이트 및 콘텐츠 저장:', p.name);
+              if (p.isMe && p.status === PARTICIPANT_STATUS.COMPLETED) {
+                p.content = contentData;
+                console.log('✅ [useParticipants] 본인에게 콘텐츠 데이터 저장:', p.name);
               }
             });
           }
         } catch (err: any) {
-          // 404 에러는 정상 (아직 작성하지 않음)
-          const errorResponse = err?.response || err?.config?.response;
-          const statusCode = errorResponse?.status || err?.statusCode || err?.status;
-          const isNotFoundError =
-            statusCode === 404 ||
-            err instanceof NotFoundError ||
-            err?.name === 'NotFoundError' ||
-            err?.message?.includes('아직 작성하지 않았습니다') ||
-            err?.message?.includes('작성하지 않았습니다') ||
-            err?.message?.includes('CONTENT_NOT_FOUND');
-
-          if (isNotFoundError) {
-            console.log('ℹ️ [useParticipants] 본인이 아직 작성하지 않음 (404) - 정상');
-          } else {
-            console.error('⚠️ [useParticipants] 본인 콘텐츠 조회 실패:', err);
-            // 에러가 발생해도 계속 진행 (상태는 PENDING 유지)
-          }
+          console.error(
+            '⚠️ [useParticipants] 본인 콘텐츠 조회 실패 (has_content=true인데 실패):',
+            err,
+          );
+          // 에러가 발생해도 계속 진행 (상태는 COMPLETED 유지)
         }
-
-        setParticipants(participantsList);
-        console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
-      } catch (err) {
-        console.warn('⚠️ [useParticipants] API 호출 실패, 목데이터 사용:', err);
-        setError(err instanceof Error ? err : new Error('API 호출 실패'));
-        // 목데이터로 폴백
-        setParticipants(mockParticipants);
-      } finally {
-        setIsLoading(false);
+      } else {
+        console.log('ℹ️ [useParticipants] 본인이 아직 작성하지 않음 (has_content=false) - 정상');
       }
-    }
 
-    fetchParticipants();
+      setParticipants(participantsList);
+      console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
+    } catch (err) {
+      console.warn('⚠️ [useParticipants] API 호출 실패, 목데이터 사용:', err);
+      setError(err instanceof Error ? err : new Error('API 호출 실패'));
+      // 목데이터로 폴백
+      setParticipants(mockParticipants);
+    } finally {
+      setIsLoading(false);
+    }
   }, [capsuleId, maxParticipants]);
+
+  // 초기 로드 및 의존성 변경 시 호출
+  useEffect(() => {
+    fetchParticipants();
+  }, [fetchParticipants]);
 
   // ============================================
   // 본인 참여자 정보
@@ -598,15 +616,31 @@ export function useParticipants({
             const fileName = getFileName(imageUri, `photo_${Date.now()}_${i}.jpg`);
             const mimeType = getMimeType(imageUri, 'image');
 
-            formData.append('images', {
-              uri: imageUri,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log(
-              `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} FormData에 추가 완료`,
-            );
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(imageUri);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('images', file);
+              console.log(
+                `✅ [useParticipants] 이미지 ${i + 1}/${
+                  content.images.length
+                } File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('images', {
+                uri: imageUri,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log(
+                `✅ [useParticipants] 이미지 ${i + 1}/${
+                  content.images.length
+                } FormData에 추가 완료`,
+              );
+            }
           }
         }
 
@@ -618,13 +652,25 @@ export function useParticipants({
             const fileName = getFileName(content.voiceRecording, `music_${Date.now()}.mp3`);
             const mimeType = getMimeType(content.voiceRecording, 'audio');
 
-            formData.append('music', {
-              uri: content.voiceRecording,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(content.voiceRecording);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('music', file);
+              console.log(
+                `✅ [useParticipants] 음악 파일 File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('music', {
+                uri: content.voiceRecording,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log('✅ [useParticipants] 음악 파일 FormData에 추가 완료');
+            }
           } else {
             console.log('  ⏭️  음악: 이미 업로드된 파일이므로 건너뜀 - ', content.voiceRecording);
           }
@@ -638,13 +684,25 @@ export function useParticipants({
             const fileName = getFileName(content.video, `video_${Date.now()}.mp4`);
             const mimeType = getMimeType(content.video, 'video');
 
-            formData.append('video', {
-              uri: content.video,
-              type: mimeType,
-              name: fileName,
-            } as any);
-
-            console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+            // ⭐ 웹과 네이티브 플랫폼 구분
+            if (Platform.OS === 'web') {
+              // 웹: File 객체로 변환
+              const response = await fetch(content.video);
+              const blob = await response.blob();
+              const file = new File([blob], fileName, { type: mimeType });
+              formData.append('video', file);
+              console.log(
+                `✅ [useParticipants] 비디오 파일 File 객체로 추가 완료 (${file.size} bytes)`,
+              );
+            } else {
+              // 네이티브: React Native 형식
+              formData.append('video', {
+                uri: content.video,
+                type: mimeType,
+                name: fileName,
+              } as any);
+              console.log('✅ [useParticipants] 비디오 파일 FormData에 추가 완료');
+            }
           } else {
             console.log('  ⏭️  비디오: 이미 업로드된 파일이므로 건너뜀 - ', content.video);
           }
@@ -670,12 +728,13 @@ export function useParticipants({
           if (savedContent && savedContent.data) {
             // API 응답 데이터를 ParticipantContent 형식으로 변환
             const contentData: ParticipantContent = {
-              text: typeof savedContent.data.text_message === 'string'
-                ? savedContent.data.text_message
-                : JSON.stringify(savedContent.data.text_message),
+              text:
+                typeof savedContent.data.text_message === 'string'
+                  ? savedContent.data.text_message
+                  : JSON.stringify(savedContent.data.text_message),
               images: savedContent.data.images?.map((img) => img.url) || [],
-              voiceRecording: savedContent.data.music?.url || null,
-              video: savedContent.data.video?.url || null,
+              voiceRecording: savedContent.data.music?.url || undefined,
+              video: savedContent.data.video?.url || undefined,
             };
 
             console.log('✅ [useParticipants] 서버에서 받은 URL로 콘텐츠 업데이트:', {
@@ -694,10 +753,14 @@ export function useParticipants({
             );
           } else {
             // 폴백: 로컬 데이터로 업데이트 (웹에서는 blob: URI 만료 문제 있음)
-            console.warn('⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용 (웹에서 문제 발생 가능)');
+            console.warn(
+              '⚠️ [useParticipants] 서버 콘텐츠 조회 실패, 로컬 데이터 사용 (웹에서 문제 발생 가능)',
+            );
             setParticipants((prev) =>
               prev.map((p) =>
-                p.id === participantId ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED } : p,
+                p.id === participantId
+                  ? { ...p, content, status: PARTICIPANT_STATUS.COMPLETED }
+                  : p,
               ),
             );
           }
@@ -743,6 +806,20 @@ export function useParticipants({
   );
 
   // ============================================
+  // 참여자 목록 새로고침
+  // ============================================
+
+  /**
+   * 참여자 목록 새로고침
+   * 저장 후 완료 상태를 업데이트하기 위해 사용
+   */
+  const refetchParticipants = useCallback(async () => {
+    console.log('🔄 [useParticipants] 참여자 목록 새로고침 시작...');
+    await fetchParticipants();
+    console.log('✅ [useParticipants] 참여자 목록 새로고침 완료');
+  }, [fetchParticipants]);
+
+  // ============================================
   // 반환
   // ============================================
 
@@ -754,5 +831,6 @@ export function useParticipants({
     updateStatus,
     saveContent,
     canEdit,
+    refetchParticipants,
   };
 }

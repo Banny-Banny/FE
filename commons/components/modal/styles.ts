@@ -103,6 +103,7 @@ export const styles = StyleSheet.create({
    * - 전체 화면 커버
    * - 반투명 검은색 배경
    * - 중앙 정렬
+   * - ⭐ z-index를 높게 설정하여 다른 Modal 위에 표시
    */
   backdrop: {
     position: 'absolute',
@@ -113,6 +114,8 @@ export const styles = StyleSheet.create({
     backgroundColor: MODAL_STYLES.backdropColor,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9999, // ⭐ 매우 높은 z-index
+    elevation: 9999, // ⭐ Android용
   },
 
   /**
@@ -151,9 +154,12 @@ export const styles = StyleSheet.create({
    * 모달 컨테이너 absolute 위치 스타일
    * - Pressable과 분리하여 스크롤 제스처가 정상 작동하도록 함
    * - backdrop의 justifyContent: 'center', alignItems: 'center'와 함께 사용
+   * - ⭐ z-index를 Pressable보다 높게 설정하여 위에 렌더링
    */
   modalContainerAbsolute: {
     position: 'absolute',
     alignSelf: 'center',
+    zIndex: 10000, // ⭐ Backdrop Pressable보다 높게
+    elevation: 10000, // ⭐ Android용
   },
 });
