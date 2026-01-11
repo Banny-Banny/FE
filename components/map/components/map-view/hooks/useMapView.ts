@@ -115,6 +115,7 @@ export function useMapView({
 
   const [mapCenterCoord, setMapCenterCoord] = useState<{ lat: number; lng: number } | null>(null);
   const [isWebViewReady, setIsWebViewReady] = useState(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
   const kakaoMapApiKey = useMemo(() => getKakaoMapApiKey(), []);
 
@@ -187,6 +188,29 @@ export function useMapView({
     });
   }, [resetZoom]);
 
+  // 초기 로딩 완료 처리 - 최대 3초 후 무조건 로딩 완료
+  useEffect(() => {
+    // 최대 대기 시간 (3초)
+    const maxWaitTimer = setTimeout(() => {
+      setIsInitialLoadComplete(true);
+    }, 3000);
+
+    // 모든 데이터가 준비되면 즉시 로딩 완료
+    if (isWebViewReady && !locationLoading && !capsulesLoading) {
+      const timer = setTimeout(() => {
+        setIsInitialLoadComplete(true);
+      }, WEBVIEW_MARKER_DELAY_MS);
+
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(maxWaitTimer);
+      };
+    }
+
+    return () => clearTimeout(maxWaitTimer);
+  }, [isWebViewReady, locationLoading, capsulesLoading]);
+
+  // 마커 전송 (초기 로딩과 별개)
   useEffect(() => {
     if (locationLoading || capsulesLoading || capsuleMarkers.length === 0) return;
 
@@ -272,6 +296,7 @@ export function useMapView({
     handleMessage,
     handleMessageCommon,
     isWebViewReady,
+    isInitialLoadComplete,
     // 줌 제어
     scale,
     zoomLevel,
