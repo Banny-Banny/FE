@@ -10,13 +10,13 @@
  * - 알림 탭 시 화면 이동 처리
  */
 
-import { API_ENDPOINTS, ROUTES } from '@/commons/constants';
-import { apiClient } from '@/utils/apiClient';
-import Constants from 'expo-constants';
-import * as Notifications from 'expo-notifications';
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
+import { API_ENDPOINTS, ROUTES } from '@/commons/constants';
+import { apiClient } from '@/utils/apiClient';
 import { notificationEvents } from '../utils/notificationEvents';
 
 /**
