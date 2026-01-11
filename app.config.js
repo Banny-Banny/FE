@@ -101,6 +101,12 @@ module.exports = {
             '$(PRODUCT_NAME)이(가) 위치 정보를 사용하여 주변 타임캡슐을 찾습니다.',
         },
       ],
+      [
+        'expo-audio',
+        {
+          microphonePermission: 'Allow $(PRODUCT_NAME) to access your microphone.',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

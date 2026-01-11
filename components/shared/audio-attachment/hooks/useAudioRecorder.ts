@@ -4,14 +4,21 @@
  *
  * 생성 시각: 2025-01-XX
  * 규칙 준수 체크리스트:
- * - [x] expo-av 사용
+ * - [x] expo-audio 사용 (expo-av에서 마이그레이션)
  * - [x] API 호출 제외 (로컬 URI만 반환)
  * - [x] 녹음 시간 타이머 구현
  */
 
-import { Audio } from 'expo-av';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorderState,
+  useAudioRecorder as useExpoAudioRecorder,
+  type RecordingOptions,
+} from 'expo-audio';
 import { useEffect, useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 
 interface UseAudioRecorderReturn {
   /** 녹음 중 여부 */
@@ -27,18 +34,49 @@ interface UseAudioRecorderReturn {
 }
 
 /**
+ * 플랫폼별 녹음 설정
+ *
+ * 문제: 백엔드가 audio/webm을 지원하지 않음
+ * 해결:
+ * - iOS/Android: m4a로 녹음 (네이티브 지원)
+ * - 웹: 브라우저가 지원하는 형식으로 녹음 후 서버에서 변환 필요
+ *      또는 mp3로 녹음 시도 (일부 브라우저 지원)
+ */
+const getRecordingOptions = (): RecordingOptions => {
+  if (Platform.OS === 'web') {
+    // 웹에서는 브라우저가 지원하는 형식 사용
+    // 대부분의 브라우저는 webm을 지원하지만, 백엔드가 받지 않음
+    // 일단 HIGH_QUALITY 프리셋 사용 (브라우저가 알아서 선택)
+    if (__DEV__) {
+      console.log('[AudioRecorder] 웹 환경: 브라우저 기본 녹음 형식 사용');
+    }
+    return RecordingPresets.HIGH_QUALITY;
+  }
+
+  // iOS/Android: m4a로 녹음
+  return {
+    ...RecordingPresets.HIGH_QUALITY,
+    extension: '.m4a',
+  };
+};
+
+/**
  * 오디오 녹음 Hook
  * 녹음과 로컬 URI 생성만 담당하고, API 호출은 제외
  */
 export const useAudioRecorder = (): UseAudioRecorderReturn => {
-  const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const isPreparing = useRef(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // expo-audio의 useAudioRecorder hook 사용 (플랫폼별 설정 적용)
+  const recordingOptions = getRecordingOptions();
+  const recorder = useExpoAudioRecorder(recordingOptions);
+  const recorderState = useAudioRecorderState(recorder);
 
   // 녹음 시간 업데이트
   useEffect(() => {
-    if (isRecording) {
+    if (recorderState.isRecording) {
       intervalRef.current = setInterval(() => {
         setRecordingDuration((prev) => prev + 1);
       }, 1000);
@@ -47,6 +85,10 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+      // 녹음이 중지되면 시간 리셋
+      if (!recorderState.isRecording) {
+        setRecordingDuration(0);
+      }
     }
 
     return () => {
@@ -54,57 +96,43 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRecording]);
+  }, [recorderState.isRecording]);
 
   /**
    * 녹음 시작
    */
   const startRecording = async (): Promise<void> => {
-    try {
-      // 이미 녹음 중이면 무시
-      if (isRecording) {
-        console.warn('녹음이 이미 진행 중입니다.');
-        return;
-      }
+    // 중복 호출 방지
+    if (isPreparing.current || recorderState.isRecording) {
+      console.warn('녹음이 이미 진행 중이거나 준비 중입니다.');
+      return;
+    }
+    isPreparing.current = true;
 
-      // 권한 요청
-      const { status } = await Audio.requestPermissionsAsync();
-      if (status !== 'granted') {
+    try {
+      // 권한 확인
+      const { granted } = await requestRecordingPermissionsAsync();
+      if (!granted) {
         Alert.alert('권한 필요', '마이크 접근 권한이 필요합니다.');
         return;
       }
 
-      // 기존 녹음기가 남아있으면 정리 (상태 동기화 문제 방지)
-      if (recording) {
-        try {
-          await recording.stopAndUnloadAsync();
-        } catch (cleanupError) {
-          // 정리 오류는 무시 (이미 정리된 상태일 수 있음)
-          console.warn('기존 녹음기 정리 중 오류 (무시됨):', cleanupError);
-        }
-        setRecording(null);
-      }
-
       // 오디오 모드 설정
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'doNotMix',
       });
 
-      // 녹음 시작
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY,
-      );
-
-      setRecording(newRecording);
-      setIsRecording(true);
-      setRecordingDuration(0);
+      // 녹음 준비 및 시작
+      await recorder.prepareToRecordAsync();
+      recorder.record();
     } catch (error) {
       console.error('녹음 시작 오류:', error);
-      Alert.alert('오류', '녹음을 시작할 수 없습니다.');
-      // 오류 발생 시 상태 리셋
-      setRecording(null);
-      setIsRecording(false);
+      Alert.alert('오류', '녹음을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      isPreparing.current = false;
     }
   };
 
@@ -113,21 +141,26 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
    * S3 업로드는 하지 않고 로컬 URI만 반환
    */
   const stopRecording = async (): Promise<string | null> => {
-    if (!recording) {
-      return null;
-    }
-
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await recorder.stop();
+      const uri = recorder.uri;
 
-      setRecording(null);
-      setIsRecording(false);
+      if (__DEV__ && uri) {
+        console.log('[AudioRecorder] 녹음 완료');
+        console.log('  - URI:', uri);
+        console.log('  - Platform:', Platform.OS);
+
+        // URI에서 확장자 추출
+        const extension = uri.split('.').pop()?.split('?')[0].toLowerCase();
+        console.log('  - 실제 녹음 형식:', extension);
+      }
+
+      // 녹음 종료 후 오디오 모드 복구 (다른 재생 기능에 영향 방지)
+      await setAudioModeAsync({ allowsRecording: false });
 
       return uri || null;
     } catch (error) {
       console.error('녹음 중지 오류:', error);
-      Alert.alert('오류', '녹음을 중지할 수 없습니다.');
       return null;
     }
   };
@@ -136,21 +169,18 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
    * 녹음 리셋
    */
   const resetRecording = async (): Promise<void> => {
-    if (recording) {
-      try {
-        await recording.stopAndUnloadAsync();
-      } catch (error) {
-        // 정리 오류는 무시 (이미 정리된 상태일 수 있음)
-        console.warn('녹음기 정리 중 오류 (무시됨):', error);
+    try {
+      if (recorderState.isRecording) {
+        await recorder.stop();
       }
+    } catch (e) {
+      // 정리 오류는 무시 (이미 정리된 상태일 수 있음)
     }
-    setRecording(null);
-    setIsRecording(false);
     setRecordingDuration(0);
   };
 
   return {
-    isRecording,
+    isRecording: recorderState.isRecording,
     recordingDuration,
     startRecording,
     stopRecording,

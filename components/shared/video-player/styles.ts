@@ -106,4 +106,36 @@ export const styles = StyleSheet.create({
     ...Typography.body.body8,
     color: Colors.grey[600],
   },
+
+  // 비디오 에러 컨테이너
+  videoErrorContainer: {
+    width: '100%',
+    aspectRatio: 16 / 9, // 비디오와 동일한 비율
+    paddingVertical: Spacing.xl, // 32px
+    paddingHorizontal: Spacing.md, // 16px
+    backgroundColor: Colors.whiteGrey[100],
+    borderRadius: BorderRadius.lg,
+    borderWidth: 2,
+    borderColor: Colors.whiteGrey[300],
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm, // 8px
+  },
+
+  // 비디오 에러 아이콘 컨테이너
+  videoErrorIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.whiteGrey[200],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  // 비디오 에러 텍스트
+  videoErrorText: {
+    ...Typography.body.body11,
+    color: Colors.grey[600],
+    textAlign: 'center',
+  },
 });

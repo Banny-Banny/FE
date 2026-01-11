@@ -19,7 +19,6 @@ export const styles = StyleSheet.create({
   scrollViewWrapper: {
     width: '100%',
     maxWidth: '100%', // iOS에서 너비 제한
-    maxHeight: '80%', // 모달 최대 높이 제한
     position: 'relative',
     overflow: 'hidden', // 콘텐츠가 밖으로 나가지 않도록
     alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
@@ -36,10 +35,9 @@ export const styles = StyleSheet.create({
   modalContent: {
     paddingHorizontal: Spacing.xl, // 32px
     paddingTop: Spacing.xl * 1.5, // 48px (상단 패딩 더 추가)
-    paddingBottom: 0, // 하단 패딩 제거 (하얀 부분 제거)
+    paddingBottom: Spacing.xl * 1.5, // 하단 패딩 제거 (하얀 부분 제거)
     width: '100%',
     maxWidth: '100%', // iOS에서 너비 제한
-    flexGrow: 1, // 스크롤을 위해 flexGrow 활성화
     alignItems: 'center',
     gap: Spacing.lg, // 24px - 일관된 간격
     alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
@@ -290,7 +288,6 @@ export const styles = StyleSheet.create({
     lineHeight: 22, // 가독성 향상
   },
 
-
   // 방문자 정보 컨테이너
   viewerInfo: {
     flexDirection: 'row',
@@ -368,14 +365,14 @@ export const styles = StyleSheet.create({
   },
 
   // 발견한 사람 정보 (아바타 + 이름)
-  viewerInfo: {
+  discovererViewerInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.sm, // 8px
   },
 
   // 발견한 사람 아바타
-  viewerAvatar: {
+  discovererViewerAvatar: {
     width: 28,
     height: 28,
     borderRadius: BorderRadius.full,
@@ -388,7 +385,7 @@ export const styles = StyleSheet.create({
   },
 
   // 발견한 사람 아바타 이미지
-  viewerAvatarImage: {
+  discovererViewerAvatarImage: {
     width: 28,
     height: 28,
     borderRadius: BorderRadius.full,
