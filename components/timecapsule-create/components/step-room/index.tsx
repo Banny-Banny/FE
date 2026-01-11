@@ -22,6 +22,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -263,8 +264,17 @@ export default function StepRoom({
   /** 공유 기능 */
   const handleShare = async () => {
     try {
-      const inviteCode = createRoomResponse?.invite_code || '';
+      // ⭐ 초대코드 우선순위:
+      // 1. 방장이 처음 생성한 경우: createRoomResponse.invite_code
+      // 2. 방장이 재진입한 경우: roomSettings.invite_code
+      const inviteCode = createRoomResponse?.invite_code || roomSettings?.invite_code || '';
       const capsuleName = createRoomResponse?.title || roomSettings?.capsule_name || '타임캡슐';
+
+      // 초대코드가 없으면 공유 불가
+      if (!inviteCode) {
+        console.error('❌ [handleShare] 초대코드가 없습니다.');
+        return;
+      }
 
       // 딥링크 URL 생성
       const inviteUrl = `timeegg://room-join?invite_code=${inviteCode}`;

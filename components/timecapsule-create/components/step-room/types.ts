@@ -195,6 +195,8 @@ export interface RoomSettingsResponse {
   has_music: boolean;
   /** 동영상 추가 여부 */
   has_video: boolean;
+  /** 초대 코드 (6자리 영숫자) - 방장이 재진입 시 필요 */
+  invite_code?: string;
 }
 
 /** 대기실 생성 API 실제 응답 타입 (POST /api/capsules/step-rooms/create) */
