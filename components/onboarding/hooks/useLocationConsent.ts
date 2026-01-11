@@ -6,9 +6,8 @@
 import { STORAGE_KEYS } from '@/commons/constants';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 import { completeOnboarding } from '../api/onboarding';
@@ -35,9 +34,6 @@ export function useLocationConsent() {
 
       if (__DEV__) {
         console.log('[LocationConsent] 위치 권한 상태:', status);
-
-      if (status !== 'granted') {
-        // 권한이 거부되어도 동의 완료로 처리 (사용자가 나중에 설정에서 변경 가능)
       }
 
       // 권한이 거부되어도 동의 완료로 처리 (사용자가 나중에 설정에서 변경 가능)
@@ -92,7 +88,10 @@ export function useLocationConsent() {
       // 온보딩 완료 후 초대코드가 있으면 대기실로 이동
       const pendingInviteCode = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_INVITE_CODE);
       if (pendingInviteCode) {
-        console.log('🔗 [LocationConsent] 온보딩 완료 후 초대코드 발견 → 대기실로 이동:', pendingInviteCode);
+        console.log(
+          '🔗 [LocationConsent] 온보딩 완료 후 초대코드 발견 → 대기실로 이동:',
+          pendingInviteCode,
+        );
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
         router.replace(`/room/join?invite_code=${pendingInviteCode}`);
         return;
