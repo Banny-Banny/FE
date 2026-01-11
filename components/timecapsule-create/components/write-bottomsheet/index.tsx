@@ -15,10 +15,12 @@
 import { BottomSheet } from '@/commons/components/bottom-sheet';
 import { Button } from '@/commons/components/button';
 import { DualButton } from '@/commons/components/dual-button';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Pressable, Text, TextInput, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
 import { useMediaPicker, useSubmitContent } from './hooks';
 import { styles } from './styles';
 import type { UserBottomSheetProps, UserContentFormData } from './types';
@@ -32,12 +34,22 @@ export default function UserBottomSheet({
   onSave,
   roomSettings,
 }: UserBottomSheetProps) {
+  // 모달 제어 Hook
+  const { openModal, closeModal } = useModal();
+
+  // ⭐ 로컬 저장 상태 (연타 방지용)
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // ⭐ API 로딩 상태
+  const [isLoadingContent, setIsLoadingContent] = React.useState(false);
+
   // react-hook-form 설정
   const {
     control,
     handleSubmit,
     watch,
     setValue,
+    reset,
     formState: { isDirty },
   } = useForm<UserContentFormData>({
     mode: 'onChange',
@@ -48,6 +60,93 @@ export default function UserBottomSheet({
       video: null,
     },
   });
+
+  // ⭐ 바텀시트가 열릴 때 서버에서 최신 콘텐츠 불러오기
+  React.useEffect(() => {
+    async function loadContent() {
+      if (!isVisible || !capsuleId) {
+        return;
+      }
+
+      setIsLoadingContent(true);
+
+      try {
+        console.log('🔄 [UserBottomSheet] 서버에서 최신 콘텐츠 불러오기 시작...');
+        const { fetchMyContent } = await import('./api/content');
+        const myContent = await fetchMyContent(capsuleId);
+
+        if (myContent && myContent.data) {
+          console.log('✅ [UserBottomSheet] 서버에서 콘텐츠 불러오기 성공');
+          const textContent = typeof myContent.data.text_message === 'string'
+            ? myContent.data.text_message
+            : JSON.stringify(myContent.data.text_message);
+
+          reset({
+            textContent,
+            photos: myContent.data.images?.map((img) => img.url) || [],
+            music: myContent.data.music?.url || null,
+            video: myContent.data.video?.url || null,
+          });
+        }
+      } catch (err: any) {
+        // 404는 정상 (아직 작성 안 함)
+        const { NotFoundError } = await import('./api/content');
+        const errorResponse = err?.response || err?.config?.response;
+        const statusCode = errorResponse?.status || err?.statusCode || err?.status;
+        const isNotFoundError =
+          statusCode === 404 ||
+          err instanceof NotFoundError ||
+          err?.name === 'NotFoundError' ||
+          err?.message?.includes('아직 작성하지 않았습니다');
+
+        if (isNotFoundError) {
+          console.log('ℹ️ [UserBottomSheet] 아직 작성하지 않음 (404) - 빈 폼 표시');
+          // participant.content 폴백 사용
+          if (participant?.content) {
+            console.log('🔄 [UserBottomSheet] participant.content 폴백 사용');
+            reset({
+              textContent: participant.content.text || '',
+              photos: participant.content.images || [],
+              music: participant.content.voiceRecording || null,
+              video: participant.content.video || null,
+            });
+          } else {
+            // 새로 작성하는 경우 빈 값으로 초기화
+            console.log('📝 [UserBottomSheet] 새로운 콘텐츠 작성');
+            reset({
+              textContent: '',
+              photos: [],
+              music: null,
+              video: null,
+            });
+          }
+        } else {
+          console.error('❌ [UserBottomSheet] 콘텐츠 불러오기 실패:', err);
+          // 에러 발생 시 participant.content 폴백
+          if (participant?.content) {
+            console.log('🔄 [UserBottomSheet] 에러 발생, participant.content 폴백 사용');
+            reset({
+              textContent: participant.content.text || '',
+              photos: participant.content.images || [],
+              music: participant.content.voiceRecording || null,
+              video: participant.content.video || null,
+            });
+          } else {
+            reset({
+              textContent: '',
+              photos: [],
+              music: null,
+              video: null,
+            });
+          }
+        }
+      } finally {
+        setIsLoadingContent(false);
+      }
+    }
+
+    loadContent();
+  }, [isVisible, capsuleId, participant, reset]);
 
   // 현재 폼 상태 감시
   const currentPhotos = watch('photos');
@@ -120,12 +219,29 @@ export default function UserBottomSheet({
     }
   }, [error]);
 
+  // ⭐ 바텀시트가 닫혔다가 다시 열릴 때 저장 상태 초기화
+  React.useEffect(() => {
+    if (!isVisible) {
+      setIsSaving(false);
+    }
+  }, [isVisible]);
+
   // 폼 제출 핸들러
   const onFormSubmit = async (data: UserContentFormData) => {
+    // ⭐ 연타 방지: 이미 저장 중이면 즉시 무시
+    if (isSaving || isSubmitting) {
+      console.log('⚠️ [UserBottomSheet] 이미 저장 중입니다. 무시됨.');
+      return;
+    }
+
+    // ⭐ 즉시 저장 상태를 true로 설정 (연타 차단)
+    setIsSaving(true);
+
     try {
       // ⭐ text_message 필수 검증
       if (!data.textContent || data.textContent.trim().length === 0) {
         Alert.alert('검증 실패', '텍스트 메시지는 필수입니다.');
+        setIsSaving(false);
         return;
       }
 
@@ -133,6 +249,7 @@ export default function UserBottomSheet({
       const validation = validateContent(data);
       if (!validation.isValid) {
         Alert.alert('검증 실패', validation.message);
+        setIsSaving(false);
         return;
       }
 
@@ -158,16 +275,50 @@ export default function UserBottomSheet({
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
 
-      // 제출 성공 시 성공 메시지 표시 후 바텀시트 닫기
+      // 제출 성공 시 모달 표시 후 바텀시트 닫기
       console.log('🎉 [UserBottomSheet] 저장 성공!');
-      Alert.alert('저장 완료', '타임캡슐 내용이 저장되었습니다!\n나중에도 수정할 수 있어요', [
-        {
-          text: '확인',
-          onPress: () => {
-            onClose();
-          },
-        },
-      ]);
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="checkbox-circle-fill" size={64} color={Colors.green[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 완료
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              타임캡슐 내용이 저장되었습니다!{'\n'}나중에도 수정할 수 있어요
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button
+              label="확인"
+              variant="primary"
+              size="S"
+              fullWidth={true}
+              onPress={() => {
+                closeModal();
+                setIsSaving(false); // ⭐ 모달 닫을 때 저장 상태 해제
+                onClose();
+              }}
+            />
+          </View>
+        ),
+      });
     } catch (err) {
       // 에러 처리
       console.error('❌ [UserBottomSheet] 제출 중 오류 발생');
@@ -176,7 +327,49 @@ export default function UserBottomSheet({
       if (err instanceof Error && err.stack) {
         console.error('  스택 트레이스:', err.stack);
       }
-      Alert.alert('저장 실패', err instanceof Error ? err.message : '저장에 실패했습니다.');
+
+      // ⭐ 에러 발생 시 저장 상태 해제
+      setIsSaving(false);
+
+      // 에러 모달 표시
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 에러 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              저장 실패
+            </Text>
+
+            {/* 에러 메시지 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {err instanceof Error ? err.message : '저장에 실패했습니다.'}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button
+              label="확인"
+              variant="primary"
+              size="S"
+              fullWidth={true}
+              onPress={closeModal}
+            />
+          </View>
+        ),
+      });
     }
   };
 
@@ -201,14 +394,14 @@ export default function UserBottomSheet({
       <DualButton
         cancelLabel="취소"
         confirmLabel={
-          isSubmitting
+          isSaving || isSubmitting
             ? (uploadProgress || '저장 중...') // ⭐ 업로드 진행 상태 표시
             : '저장'
         }
         size="M"
         cancelVariant="outline"
         confirmVariant="primary"
-        confirmDisabled={isSubmitting}
+        confirmDisabled={isSaving || isSubmitting} // ⭐ 로컬 상태도 체크
         onCancelPress={handleCancel}
         onConfirmPress={handleSave}
       />
@@ -307,7 +500,7 @@ export default function UserBottomSheet({
                         <Pressable
                           style={styles.deleteButton}
                           onPress={() => handleDeletePhoto(index)}>
-                          <Text style={styles.deleteButtonText}>×</Text>
+                          <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                         </Pressable>
                       </View>
                     ))}
@@ -352,7 +545,7 @@ export default function UserBottomSheet({
                 <Pressable
                   style={styles.mediaDeleteButton}
                   onPress={() => setValue('music', null, { shouldDirty: true })}>
-                  <Text style={styles.deleteButtonText}>×</Text>
+                  <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                 </Pressable>
               </View>
             )}
@@ -393,7 +586,7 @@ export default function UserBottomSheet({
                 <Pressable
                   style={styles.mediaDeleteButton}
                   onPress={() => setValue('video', null, { shouldDirty: true })}>
-                  <Text style={styles.deleteButtonText}>×</Text>
+                  <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
                 </Pressable>
               </View>
             )}

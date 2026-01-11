@@ -13,79 +13,48 @@
  * 생성 시각: 2025-01-XX
  */
 
-import { useNavigation } from '@/commons/hooks';
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { View } from 'react-native';
 import { Filter } from './components/filter';
 import { Header } from './components/header';
-import { ItemList, ItemProps } from './components/item-list';
+import { ItemList } from './components/item-list';
+import { EasterEggModal } from './components/modal';
 import { Tab } from './components/tab';
+import { useMyEggList } from './hooks/useMyEggList';
 import { styles } from './styles';
-import { EasterEggItem, FilterOption, TabType } from './types';
 
 interface MyEggListProps {
-  discoveredItems?: EasterEggItem[];
-  plantedItems?: EasterEggItem[];
-  discoveredCount?: number;
-  plantedCount?: number;
-  activeCount?: number;
-  onItemPress?: (item: EasterEggItem, index: number) => void;
+  onItemPress?: (item: { id: string; eggId: number }, index: number) => void;
   onHeaderButtonPress?: () => void;
 }
 
-export default function MyEggList({
-  discoveredItems = [],
-  plantedItems = [],
-  discoveredCount = 5,
-  plantedCount = 5,
-  activeCount = 3,
-  onItemPress,
-  onHeaderButtonPress,
-}: MyEggListProps) {
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState<TabType>('discovered');
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<FilterOption>('latest');
-
-  // EasterEggItem을 ItemProps로 변환
-  const convertToItemProps = (items: EasterEggItem[]): ItemProps[] => {
-    return items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      description: item.description,
-      location: item.location,
-      date: item.date,
-      eggIcon: item.eggIcon,
-      hasImage: item.hasImage,
-      hasAudio: item.hasAudio,
-      viewCount: item.viewCount,
-      status: item.status, // 활성/소멸 상태 포함
-    }));
-  };
-
-  const currentItems = useMemo(() => {
-    const items = activeTab === 'discovered' ? discoveredItems : plantedItems;
-    return convertToItemProps(items);
-  }, [activeTab, discoveredItems, plantedItems]);
-
-  const handleFilterPress = () => {
-    setFilterOpen(!filterOpen);
-  };
-
-  const handleFilterOptionSelect = (option: FilterOption) => {
-    setSelectedFilter(option);
-  };
-
-  // 헤더 X 버튼 클릭 시 마이페이지로 이동
-  // 탭 네비게이션에서는 back()이 제대로 동작하지 않을 수 있으므로 명시적으로 마이페이지로 이동
-  const handleHeaderButtonPress = () => {
-    if (onHeaderButtonPress) {
-      onHeaderButtonPress();
-    } else {
-      // 마이페이지 탭으로 이동
-      navigation.push('/(tabs)/mypage');
-    }
-  };
+export default function MyEggList({ onItemPress, onHeaderButtonPress }: MyEggListProps) {
+  // 모든 비즈니스 로직을 hook에서 가져옴
+  const {
+    // 탭 관련
+    activeTab,
+    setActiveTab,
+    // 필터 관련
+    filterOpen,
+    selectedFilter,
+    handleFilterPress,
+    handleFilterOptionSelect,
+    // 모달 관련
+    modalVisible,
+    selectedEggData,
+    handleItemPress,
+    handleModalClose,
+    // 헤더 관련
+    handleHeaderButtonPress,
+    // 데이터
+    currentItems,
+    discoveredCount,
+    plantedCount,
+    activeCount,
+  } = useMyEggList({
+    onItemPress,
+    onHeaderButtonPress,
+  });
 
   return (
     <View style={styles.container}>
@@ -112,14 +81,15 @@ export default function MyEggList({
         </View>
       )}
       <ItemList
+        key={`item-list-${activeTab}`}
         items={currentItems.length > 0 ? currentItems : undefined}
         tabType={activeTab}
-        onItemPress={(item, index) => {
-          const originalItem =
-            activeTab === 'discovered' ? discoveredItems[index] : plantedItems[index];
-          onItemPress?.(originalItem, index);
-        }}
+        onItemPress={handleItemPress}
       />
+
+      {/* 이스터에그 상세 모달 */}
+      {/* TODO: 상세 API 연동 후 활성화 */}
+      <EasterEggModal visible={modalVisible} onClose={handleModalClose} data={selectedEggData} />
     </View>
   );
 }

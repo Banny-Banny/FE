@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     CREATE: 'api/capsules', // 이스터에그 생성 (POST)
     DETAIL: 'api/capsule', // 이스터에그(캡슐) 조회 (GET) - {id} 파라미터 필요
     LIST: 'api/capsules', // 캡슐 목록 조회 (GET)
+    MY_EGGS: 'api/capsules/my-eggs', // 내 알 목록 조회 (GET) - type, sort 파라미터 필요
     SLOTS: 'api/capsules/slots', // 슬롯 정보 조회 (GET)
     SLOTS_RESET: 'api/capsules/slots/reset', // 이스터에그 슬롯 초기화 (POST)
   },
@@ -44,6 +45,7 @@ export const API_ENDPOINTS = {
     TOSS_CONFIRM: 'api/payments/toss/confirm', // 토스페이먼츠 결제 승인 (POST)
     TOSS_GET_BY_KEY: 'api/payments/toss', // 토스 결제 조회 (paymentKey) (GET) - {paymentKey} 파라미터 필요
     TOSS_GET_BY_ORDER: 'api/payments/toss/orders', // 토스 결제 조회 (orderId) (GET) - {orderNo} 파라미터 필요
+    TOSS_MY_PAYMENTS: 'api/payments/toss/my-payments', // 내 결제 내역 목록 조회 (GET) - 페이지네이션 파라미터: page, limit, status
     TOSS_CANCEL: 'api/payments/toss', // 토스 결제 취소 (POST) - {paymentKey}/cancel 파라미터 필요
     // 토스페이먼츠 결제 리다이렉트 URL
     TOSS_SUCCESS_URL: 'https://timeegg.com/payment/success', // 결제 성공 리다이렉트 URL

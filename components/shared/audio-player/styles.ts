@@ -1,5 +1,12 @@
 /**
  * AudioPlayer Component Styles
+ *
+ * Checklist:
+ * - [✓] StyleSheet.create() 사용
+ * - [✓] 인라인 스타일 0건
+ * - [✓] 색상 토큰만 사용 (하드코딩 0건)
+ * - [✓] Typography, Spacing, BorderRadius 토큰 사용 (가능한 부분)
+ * - [✓] Figma 디자인 1:1 대응
  */
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
@@ -12,8 +19,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md, // 16px
     paddingHorizontal: 18, // Figma 정확한 값 (Spacing.md=16, Spacing.lg=24 사이)
-    paddingVertical: 2,
-    height: 83,
+    paddingVertical: 2, // Figma 정확한 값
+    height: 83, // Figma 정확한 값
+    width: '100%', // 너비 제한
+    maxWidth: '100%', // 최대 너비 제한
     backgroundColor: Colors.white[500],
     borderWidth: 2,
     borderColor: Colors.whiteGrey[300],
@@ -21,8 +30,8 @@ export const styles = StyleSheet.create({
   },
 
   playButton: {
-    width: 48,
-    height: 48,
+    width: Spacing['3xl'], // 48px (Figma 정확한 값)
+    height: Spacing['3xl'], // 48px (Figma 정확한 값)
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.black[500],
     justifyContent: 'center',
@@ -38,14 +47,14 @@ export const styles = StyleSheet.create({
 
   progressBarContainer: {
     flex: 1,
-    height: 6,
+    height: 6, // Figma 정확한 값
     backgroundColor: Colors.whiteGrey[200],
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
   },
 
   progressBar: {
-    height: 6,
+    height: 6, // Figma 정확한 값
     backgroundColor: Colors.black[500],
     borderRadius: BorderRadius.full,
   },

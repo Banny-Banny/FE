@@ -51,6 +51,13 @@ export const queryKeys = {
   eggSlotData: () => ['eggSlotData'] as const,
 
   /**
+   * 내 알 목록 조회
+   * GET /api/capsules/my-eggs?type={type}&sort={sort}
+   */
+  myEggs: (params: { type: 'PLANTED' | 'FOUND'; sort?: 'LATEST' | 'OLDEST' }) =>
+    ['myEggs', params.type, params.sort] as const,
+
+  /**
    * 캡슐 목록 쿼리 무효화용 prefix
    * 모든 캡슐 목록 쿼리를 무효화할 때 사용
    * invalidateQueries에서 prefix 매칭에 사용

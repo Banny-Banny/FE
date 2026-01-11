@@ -1,0 +1,483 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/03-ui.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 새로 생성할 파일들 (toss-payments 내부):
+            - components/toss-payments/components/payment-history/index.tsx
+            - components/toss-payments/components/payment-history/styles.ts
+            - components/toss-payments/components/payment-history/types.ts
+            - components/toss-payments/components/payment-history/hooks/usePaymentHistory.ts
+            - components/toss-payments/components/payment-history/prompts/prompt.101.payment-history.txt (이 파일)
+
+조건-파일경로) 수정할 파일들 (마이페이지):
+            - components/mypage/index.tsx (PaymentHistory 컴포넌트 import 및 추가)
+            - components/mypage/components/menu-list/index.tsx (결제내역 메뉴 항목 추가)
+
+조건-파일경로) 참고할 기존 파일들:
+            - components/toss-payments/api/payment.ts (getTossPaymentByKey, getTossPaymentByOrderNo 함수 활용)
+            - components/toss-payments/api/types/types.ts (TossPaymentResponse 타입 참고)
+            - components/toss-payments/components/order-summary-card/index.tsx (카드 UI 참고)
+            - commons/constants/endpoints.ts (API 엔드포인트 확인)
+
+==============================================
+
+조건-공통컴포넌트) 공통 컴포넌트를 최대한 활용할 것
+조건-공통컴포넌트) 컴포넌트 경로: commons/components/
+조건-공통컴포넌트) 사용 가능한 공통 컴포넌트 목록:
+  1. Button (commons/components/button/)
+     - 단일 버튼: Button 컴포넌트
+     - variant: 'primary' | 'secondary' | 'outline' | 'danger'
+     - size: 'L' (64px) | 'M' (56px) | 'S' (48px)
+     - icon 지원
+     - 사용법: import { Button } from '@/commons/components/button';
+
+  2. Modal (commons/components/modal/)
+     - 모달 컴포넌트
+     - children을 통해 자유로운 컨텐츠 구성
+     - width, height 커스터마이징 가능
+     - closeOnBackdropPress 옵션
+     - 사용법: import { Modal } from '@/commons/components/modal';
+
+  3. BottomSheet (commons/components/bottom-sheet/)
+     - 바텀시트 컴포넌트
+     - 드래그하여 확장/축소 가능
+     - footer 영역 지원
+     - 사용법: import { BottomSheet } from '@/commons/components/bottom-sheet';
+
+조건-공통컴포넌트) 버튼이 필요한 경우 반드시 Button 사용
+조건-공통컴포넌트) 모달이 필요한 경우 반드시 Modal 또는 BottomSheet 사용
+조건-공통컴포넌트) 공통 컴포넌트 직접 수정 금지 (Props만 활용)
+
+==============================================
+
+조건-스타일시스템) React Native StyleSheet 사용할 것
+조건-스타일시스템) StyleSheet.create() 방식으로 styles.ts 작성
+조건-스타일시스템) 인라인 스타일 금지 (style={{...}} 금지)
+조건-스타일시스템) 모든 스타일은 styles.ts에서만 선언하고 index.tsx에서 import하여 사용
+
+조건-색상토큰) globals.css에 명시된 색상 변수 토큰 활용
+조건-색상토큰) commons/constants/color.ts에서 Colors 객체 import하여 사용
+조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+조건-색상토큰) hex, rgb, hsl 직접 입력 금지
+
+조건-타이포그래피) globals.css에 명시된 타이포그래피 변수 토큰 활용
+조건-타이포그래피) commons/constants에서 Typography, FontSize 등 import하여 사용
+조건-타이포그래피) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+
+==============================================
+
+조건-아이콘) 아이콘 라이브러리: react-native-remix-icon만 사용
+조건-아이콘) remix icon으로 찾을 수 없는 경우에만 assets/icons/ 폴더 사용
+조건-아이콘) @expo/vector-icons 사용 금지
+조건-아이콘/이미지) 추가 패키지 설치 금지
+
+==============================================
+
+핵심요구사항) 토스페이먼츠 결제 내역 조회 컴포넌트 구현
+핵심요구사항) components/toss-payments/components/payment-history/ 위치에 구현
+핵심요구사항) 재사용 가능한 독립 컴포넌트로 설계 (마이페이지 외 다른 곳에서도 사용 가능)
+핵심요구사항) 토스페이먼츠 결제 조회 API 2개 중 적절한 것을 사용
+
+==============================================
+
+백엔드 API 스펙
+
+1. 토스 결제 단건 조회 (paymentKey) - GET /api/payments/toss/{paymentKey}
+
+   동작 방식:
+   - 클라이언트가 결제키 paymentKey를 경로 파라미터로, JWT를 헤더로 담아 요청
+   - 서버는 Payment 테이블에서 paymentKey로 결제 정보를 찾음
+   - 취소 이력(payment_cancels)을 함께 로드하여 반환
+   - 결제가 없으면 404(PAYMENT_NOT_FOUND) 반환
+
+   요청:
+   - Method: GET
+   - URL: /api/payments/toss/{paymentKey}
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Path Param: paymentKey (string)
+
+   응답 (200 OK):
+   {
+     payment: {
+       paymentKey: string,
+       orderNo: string,
+       tossStatus: string,        // "DONE", "CANCELED" 등
+       method: string,             // "카드" 등
+       currency: string,           // "KRW"
+       amount: number,             // balance_amount (잔액)
+       approvedAt: string,         // ISO 8601
+       receiptUrl: string
+     },
+     cancels: [
+       {
+         transactionKey: string,
+         cancelAmount: number,
+         cancelReason: string,
+         cancelStatus: string,
+         canceledAt: string
+       }
+     ]
+   }
+
+   에러 응답:
+   - 401: JWT 누락/만료
+   - 404 PAYMENT_NOT_FOUND: 결제 정보를 찾을 수 없음
+
+2. 토스 결제 단건 조회 (orderNo) - GET /api/payments/toss/orders/{orderNo}
+
+   동작 방식:
+   - 클라이언트가 주문번호 orderNo를 경로 파라미터로, JWT를 헤더로 담아 요청
+   - 서버는 Payment 테이블에서 orderNo로 결제 정보를 찾음
+   - 취소 이력(payment_cancels)을 함께 로드하여 반환
+   - 결제가 없으면 404(PAYMENT_NOT_FOUND) 반환
+
+   요청:
+   - Method: GET
+   - URL: /api/payments/toss/orders/{orderNo}
+   - Headers: { Authorization: "Bearer {JWT}" }
+   - Path Param: orderNo (string)
+
+   응답 (200 OK):
+   {
+     payment: {
+       paymentKey: string,
+       orderNo: string,
+       tossStatus: string,        // "DONE", "CANCELED" 등
+       method: string,             // "카드" 등
+       currency: string,           // "KRW"
+       amount: number,             // balance_amount (잔액)
+       approvedAt: string,         // ISO 8601
+       receiptUrl: string
+     },
+     cancels: [
+       {
+         transactionKey: string,
+         cancelAmount: number,
+         cancelReason: string,
+         cancelStatus: string,
+         canceledAt: string
+       }
+     ]
+   }
+
+   에러 응답:
+   - 401: JWT 누락/만료
+   - 404 PAYMENT_NOT_FOUND: 주문 번호에 해당하는 결제를 찾을 수 없음
+
+중요:
+- 이 API들은 내부 DB에서만 조회 (토스 API 호출 없음)
+- 데이터 소스: Payment 테이블 + payment_cancels 관계
+- 인증: JwtAuthGuard (Bearer JWT)
+- 기존 components/toss-payments/api/payment.ts에 getTossPaymentByKey, getTossPaymentByOrderNo 함수가 이미 구현되어 있음
+
+==============================================
+
+구현 요구사항
+
+1. PaymentHistory 컴포넌트 (components/toss-payments/components/payment-history/)
+
+   1-1. index.tsx
+        - 사용자의 결제 내역 목록 표시
+        - 각 결제 항목 클릭 시 상세 정보 모달/바텀시트 표시
+        - 결제 상태별 필터링 기능 (전체/완료/취소)
+        - 로딩 상태 처리
+        - 빈 화면 처리 (결제 내역이 없을 때)
+        - FlatList로 목록 렌더링
+        - Props로 userId 또는 필터 조건 받을 수 있도록 설계
+
+   1-2. styles.ts
+        - StyleSheet.create() 사용
+        - Colors, Typography 토큰 활용
+        - 인라인 스타일 금지
+        - 카드 형태의 결제 항목 디자인
+        - 상태별 색상 구분:
+          * DONE: Colors.green[500] 또는 Colors.success
+          * CANCELED: Colors.gray[500] 또는 Colors.red[500]
+        - order-summary-card 스타일 참고
+
+   1-3. types.ts
+        - PaymentHistoryProps 인터페이스
+        - PaymentItem 인터페이스 (목록 표시용)
+        - PaymentFilterType ('all' | 'done' | 'canceled')
+        - PaymentDetailData 인터페이스
+
+   1-4. hooks/usePaymentHistory.ts
+        - 결제 내역 목록 조회 로직
+        - React Query 사용 (queryKeys.payment 활용)
+        - getTossPaymentByOrderNo 또는 getTossPaymentByKey 함수 활용
+        - 필터링 로직
+        - 에러 처리
+        - 페이지네이션 지원 (향후 확장 고려)
+
+2. 결제 상세 모달/바텀시트
+
+   - BottomSheet 공통 컴포넌트 사용 권장 (모바일 UX에 적합)
+   - 결제 정보 상세 표시:
+     * 주문 번호 (orderNo)
+     * 결제 키 (paymentKey) - 선택적 표시
+     * 결제 상태 (tossStatus) - 뱃지 형태
+     * 결제 수단 (method)
+     * 결제 금액 (amount) - 통화 포맷
+     * 승인 일시 (approvedAt) - 날짜/시간 포맷
+     * 영수증 URL (receiptUrl) - Button 컴포넌트로 "영수증 보기" 버튼
+   - 취소 이력이 있는 경우 취소 정보도 표시:
+     * 취소 금액 (cancelAmount)
+     * 취소 사유 (cancelReason)
+     * 취소 상태 (cancelStatus)
+     * 취소 일시 (canceledAt)
+   - 영수증 URL 클릭 시 외부 브라우저 열기 (Linking.openURL)
+
+3. 마이페이지 통합
+
+   3-1. components/mypage/index.tsx 수정
+        - PaymentHistory 컴포넌트 import
+        - import PaymentHistory from '@/components/toss-payments/components/payment-history';
+        - MenuList에서 "결제내역" 선택 시 PaymentHistory 표시
+        - 또는 별도 섹션으로 추가
+
+   3-2. components/mypage/components/menu-list/index.tsx 수정
+        - "결제내역" 메뉴 항목 추가
+        - 아이콘: RiWalletLine 또는 RiBillLine 사용
+        - 클릭 시 결제내역 화면으로 이동 또는 모달 표시
+
+==============================================
+
+UI/UX 구현 가이드
+
+1. 결제 내역 목록
+   - 카드 형태로 각 결제 항목 표시 (order-summary-card 스타일 참고)
+   - 각 카드에 표시할 정보:
+     * 주문 번호 (orderNo) - 상단에 작은 글씨로
+     * 결제 일시 (approvedAt를 보기 좋게 포맷)
+       예: "2025. 01. 10  14:30"
+     * 결제 금액 (amount) - 크고 강조
+       예: "10,000원"
+     * 결제 수단 (method) - 뱃지 형태
+       예: "카드"
+     * 결제 상태 (tossStatus) - 색상 뱃지
+       예: "완료" (초록), "취소됨" (회색/빨강)
+   - 상태별 색상 구분:
+     * DONE: Colors.green[500] 또는 Colors.success
+     * CANCELED: Colors.gray[500] 또는 Colors.red[500]
+   - 빈 화면:
+     * 아이콘: RiFileListLine 또는 RiInboxLine
+     * 메시지: "결제 내역이 없습니다"
+     * 서브 메시지: "결제한 내역이 없습니다"
+
+2. 필터 탭
+   - 상단에 탭 형태로 배치
+   - 전체 / 완료 / 취소
+   - 선택된 탭 강조 표시 (Colors.primary)
+   - 각 탭에 개수 표시 가능
+
+3. 결제 상세 BottomSheet
+   - BottomSheet 공통 컴포넌트 사용
+   - 초기 높이 60%, 드래그로 확장 가능
+   - 정보는 라벨-값 쌍으로 표시
+     * 라벨: FontSize.sm, Colors.gray[600]
+     * 값: FontSize.md, Colors.gray[900]
+   - 영수증 보기 버튼:
+     * Button 컴포넌트 사용
+     * variant='outline'
+     * icon='RiExternalLinkLine'
+     * 클릭 시 Linking.openURL(receiptUrl)
+   - 취소 이력 섹션 (있는 경우만):
+     * 구분선으로 구분
+     * "취소 내역" 헤더
+     * 취소 정보 표시
+
+4. 로딩 및 에러 처리
+   - 로딩 중: ActivityIndicator 표시 (중앙 정렬)
+   - 에러 발생:
+     * 에러 아이콘 (RiErrorWarningLine)
+     * 에러 메시지 표시
+     * 재시도 Button 제공
+   - 네트워크 에러, 인증 에러 등 구분하여 메시지 표시
+
+5. 반응형 디자인
+   - 카드 간격: Spacing.md
+   - 패딩: Spacing.lg
+   - 카드 내부 여백: Spacing.md
+   - 텍스트 간격: Spacing.xs
+
+==============================================
+
+API 연동 가이드
+
+1. 기존 API 함수 재사용
+   - components/toss-payments/api/payment.ts의 함수들을 import하여 사용
+   - getTossPaymentByKey(paymentKey: string): Promise<TossPaymentResponse>
+   - getTossPaymentByOrderNo(orderNo: string): Promise<TossPaymentResponse>
+
+2. 엔드포인트 확인
+   - commons/constants/endpoints.ts에서 API_ENDPOINTS 확인
+   - PAYMENT.TOSS_GET_BY_KEY = 'api/payments/toss'
+   - PAYMENT.TOSS_GET_BY_ORDER = 'api/payments/toss/orders'
+
+3. React Query 사용
+   - queryKeys.payment 활용
+   - useQuery로 데이터 조회
+   - 캐싱 및 자동 리프레시 설정
+   - 예시:
+     ```typescript
+     const { data, isLoading, error } = useQuery({
+       queryKey: queryKeys.payment.detail(orderNo),
+       queryFn: () => getTossPaymentByOrderNo(orderNo),
+       enabled: !!orderNo,
+     });
+     ```
+
+4. 에러 처리
+   - try-catch로 API 에러 처리
+   - PaymentError 타입 활용 (status, message)
+   - 401: "로그인이 필요합니다" → 로그인 화면으로 이동
+   - 404: "결제 정보를 찾을 수 없습니다"
+   - 500: "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요"
+   - 네트워크 에러: "네트워크 연결을 확인해주세요"
+
+5. 날짜/통화 포맷팅
+   - 날짜: ISO 8601 → "YYYY. MM. DD  HH:mm" 포맷
+   - 금액: number → "10,000원" 포맷
+   - 유틸 함수 작성 또는 기존 유틸 활용
+
+==============================================
+
+주의사항
+
+1. 엔드포인트 선택
+   - getTossPaymentByOrderNo 사용 권장 (주문번호 기반)
+   - 사용자가 주문번호를 더 쉽게 기억하고 확인 가능
+   - 결제키는 내부적으로만 사용
+
+2. 결제 내역 목록 API 부재
+   - 현재 제공된 API는 단건 조회만 가능
+   - 여러 건의 결제 내역을 조회하려면:
+     * 옵션 1: 백엔드에 결제 내역 목록 조회 API 추가 요청 (권장)
+       예: GET /api/payments/toss/my-payments?page=1&limit=10
+     * 옵션 2: 현재는 단건 조회 기능만 구현 (주문번호 입력받아 조회)
+   - 이 프롬프트에서는 옵션 1을 가정하고 구현하되, 목록 API가 없으면 옵션 2로 대체
+   - 구조는 향후 목록 API 추가 시 쉽게 확장 가능하도록 설계
+
+3. 데이터 흐름
+   - (목록 API 있는 경우)
+     * 컴포넌트 마운트 → 결제 내역 목록 조회
+     * 목록에서 항목 클릭 → 상세 정보 BottomSheet 표시
+   - (목록 API 없는 경우)
+     * 주문번호 입력 필드 제공
+     * 주문번호 입력 → 검색 버튼 클릭 → 결제 정보 조회
+     * 결제 정보를 카드 형태로 표시
+
+4. 타입 안전성
+   - TossPaymentResponse 타입 활용
+   - components/toss-payments/api/types/types.ts에 정의된 타입 재사용
+   - 추가 타입이 필요한 경우 payment-history/types.ts에 정의
+
+5. 컴포넌트 재사용성
+   - PaymentHistory 컴포넌트는 마이페이지 외에도 사용 가능하도록 설계
+   - Props로 필터 조건, 표시 방식 등을 받을 수 있도록
+   - 의존성 최소화 (마이페이지 특정 로직 포함 금지)
+
+6. 스타일 일관성
+   - toss-payments 내 다른 컴포넌트들과 일관된 디자인
+   - components/toss-payments/components/order-summary-card 참고
+   - Colors, Typography 토큰 사용으로 전체 테마와 일관성 유지
+
+==============================================
+
+구현 단계
+
+1. 사전 분석
+   - components/toss-payments/api/payment.ts 읽고 API 함수 파악
+   - components/toss-payments/api/types/types.ts 읽고 타입 구조 파악
+   - components/toss-payments/components/order-summary-card 읽고 카드 UI 참고
+   - commons/constants/endpoints.ts 읽고 엔드포인트 확인
+   - commons/constants/queryKeys.ts 읽고 쿼리 키 구조 파악
+
+2. 백엔드 API 확인
+   - 결제 내역 목록 조회 API 존재 여부 확인
+   - 없으면 단건 조회 방식으로 구현 (주문번호 입력)
+
+3. 타입 정의
+   - components/toss-payments/components/payment-history/types.ts 작성
+   - PaymentHistoryProps, PaymentItem, PaymentFilterType, PaymentDetailData 등 정의
+   - TossPaymentResponse 재사용
+
+4. Hook 구현
+   - hooks/usePaymentHistory.ts 작성
+   - React Query로 데이터 조회 로직 구현
+   - 에러 처리 및 로딩 상태 관리
+   - 필터링 로직 구현
+
+5. 스타일 작성
+   - styles.ts 작성
+   - StyleSheet.create() 사용
+   - Colors, Typography 토큰 활용
+   - order-summary-card 스타일 참고하여 일관성 유지
+
+6. 컴포넌트 구현
+   - index.tsx 작성
+   - 결제 내역 목록 UI 구현
+   - 필터 탭 구현 (있는 경우)
+   - 결제 상세 BottomSheet 구현
+   - 빈 화면, 로딩, 에러 화면 구현
+   - 영수증 보기 버튼 구현 (Linking.openURL)
+
+7. 마이페이지 통합
+   - components/mypage/index.tsx 수정
+     * PaymentHistory import
+     * 결제내역 섹션 또는 모달 추가
+   - components/mypage/components/menu-list/index.tsx 수정
+     * "결제내역" 메뉴 항목 추가
+     * RiWalletLine 아이콘 사용
+
+8. 테스트
+   - 결제 내역 조회 기능 테스트
+   - 상세 BottomSheet 표시 테스트
+   - 영수증 보기 버튼 테스트
+   - 에러 케이스 테스트 (401, 404 등)
+   - 빈 화면 테스트
+   - 필터링 테스트
+
+==============================================
+
+최종 체크리스트
+
+- [ ] components/toss-payments/components/payment-history/index.tsx 생성 완료
+- [ ] components/toss-payments/components/payment-history/styles.ts 생성 완료
+- [ ] components/toss-payments/components/payment-history/types.ts 생성 완료
+- [ ] components/toss-payments/components/payment-history/hooks/usePaymentHistory.ts 생성 완료
+- [ ] getTossPaymentByKey 또는 getTossPaymentByOrderNo 함수 활용
+- [ ] TossPaymentResponse 타입 활용
+- [ ] React Query 사용 (queryKeys 활용)
+- [ ] 결제 내역 목록 UI 구현 (목록 API 있으면 FlatList, 없으면 검색 UI)
+- [ ] 결제 상세 BottomSheet 구현
+- [ ] 취소 이력 표시 기능 구현
+- [ ] 영수증 보기 버튼 구현 (Linking.openURL)
+- [ ] BottomSheet 공통 컴포넌트 사용
+- [ ] Button 공통 컴포넌트 사용
+- [ ] Colors, Typography 토큰 사용 (하드코딩 0건)
+- [ ] 인라인 스타일 0건
+- [ ] react-native-remix-icon 아이콘 사용
+- [ ] 로딩 상태 처리 (ActivityIndicator)
+- [ ] 에러 처리 (401, 404, 500, 네트워크 에러)
+- [ ] 빈 화면 처리 (결제 내역 없을 때)
+- [ ] 날짜/통화 포맷팅 구현
+- [ ] components/mypage/index.tsx 수정 완료
+- [ ] components/mypage/components/menu-list/index.tsx 수정 완료
+- [ ] 결제내역 메뉴 추가 완료 (RiWalletLine 아이콘)
+- [ ] 재사용 가능한 컴포넌트로 설계 (Props 활용)
+- [ ] 추가 패키지 설치 0건
+- [ ] toss-payments 내 다른 컴포넌트들과 스타일 일관성 유지
+- [ ] order-summary-card 디자인 참고하여 구현
+- [ ] 타입 안전성 확보
+- [ ] 명시된 파일 외 수정 0건
+
+==============================================

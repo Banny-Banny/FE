@@ -15,7 +15,7 @@
 import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors } from '@/commons/constants/color';
+import { Colors, ROUTES } from '@/commons/constants';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
@@ -64,9 +64,6 @@ export default function StepRoom({
   // Hooks
   // ============================================
 
-  /** 호스트 여부 확인 */
-  const isHost = role === 'host';
-
   /** 라우터 */
   const router = useRouter();
 
@@ -78,14 +75,19 @@ export default function StepRoom({
    * 1. Props로 전달받은 orderId
    * 2. URL 파라미터 (추후 구현 가능)
    * 3. 백엔드 제공 테스트 ID (하드코딩)
+   *
+   * 초기 진입 경로(role)를 기반으로 orderId 설정
+   * ⚠️ propsCapsuleId가 있으면(보관함에서 진입) orderId를 사용하지 않음
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
-  const orderId = isHost ? (propsOrderId || TEST_ORDER_ID) : undefined;
+  const initialIsHost = role === 'host';
+  const orderId = propsCapsuleId ? undefined : (initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined);
 
   /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
     roomSettings,
     createRoomResponse,
+    roomDetailResponse,
     capsuleId,
     isLoading: isRoomLoading,
     error: roomError,
@@ -107,6 +109,26 @@ export default function StepRoom({
     capsuleId,
     maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
   });
+
+  /**
+   * ⭐ 실제 호스트 여부 확인
+   * - 백엔드에서 받은 is_host 값 우선 사용 (myParticipant?.isHost)
+   * - 백엔드 데이터 로딩 전에는 초기 role 값으로 폴백 (initialIsHost)
+   * - 초대링크로 입장해도 백엔드가 방장 여부를 정확하게 판단
+   */
+  const isHost = myParticipant?.isHost ?? initialIsHost;
+
+  // ⭐ 디버깅: 호스트 여부 판단 로그
+  React.useEffect(() => {
+    if (myParticipant) {
+      console.log(
+        '🔍 [StepRoom] 호스트 여부 확인:',
+        `role prop="${role}"`,
+        `myParticipant.isHost=${myParticipant.isHost}`,
+        `최종 isHost=${isHost}`,
+      );
+    }
+  }, [myParticipant, isHost, role]);
 
   // ⭐ 디버깅: maxParticipants 값 확인
   React.useEffect(() => {
@@ -174,31 +196,49 @@ export default function StepRoom({
     };
   });
 
-  /** 작성 마감까지 남은 시간 계산 */
+  /** 실시간 카운트다운을 위한 현재 시간 상태 */
+  const [currentTime, setCurrentTime] = useState(dayjs());
+
+  /** 1초마다 현재 시간 업데이트 (실시간 카운트다운) */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(dayjs());
+    }, 1000); // 1초마다 업데이트
+
+    return () => clearInterval(interval);
+  }, []);
+
+  /** 작성 마감까지 남은 시간 계산 (실시간 초단위) */
   const remainingTime = useMemo(() => {
-    if (!createRoomResponse?.deadline) {
+    // 방장: createRoomResponse.deadline, 게스트: roomDetailResponse.deadline
+    const deadlineStr = createRoomResponse?.deadline || roomDetailResponse?.deadline;
+
+    if (!deadlineStr) {
       return '계산 중...';
     }
 
-    const deadline = dayjs(createRoomResponse.deadline);
-    const now = dayjs();
+    const deadline = dayjs(deadlineStr);
+    const now = currentTime;
 
     if (deadline.isBefore(now)) {
-      return '마감됨';
+      return '마감되어 자동 제출됩니다';
     }
 
     const diffDays = deadline.diff(now, 'day');
     const diffHours = deadline.diff(now, 'hour') % 24;
     const diffMinutes = deadline.diff(now, 'minute') % 60;
+    const diffSeconds = deadline.diff(now, 'second') % 60;
 
     if (diffDays > 0) {
-      return `${diffDays}일 ${diffHours}시간 남음`;
+      return `${diffDays}일 ${diffHours}시간 ${diffMinutes}분 이후 자동 제출됩니다`;
     } else if (diffHours > 0) {
-      return `${diffHours}시간 ${diffMinutes}분 남음`;
+      return `${diffHours}시간 ${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
     } else {
-      return `${diffMinutes}분 남음`;
+      return `${diffSeconds}초 이후 자동 제출됩니다`;
     }
-  }, [createRoomResponse?.deadline]);
+  }, [createRoomResponse?.deadline, roomDetailResponse?.deadline, currentTime]);
 
   // ============================================
   // 이벤트 핸들러
@@ -231,15 +271,26 @@ export default function StepRoom({
 
   /** 바텀시트 저장 핸들러 */
   const handleBottomSheetSave = async (content: any) => {
-    if (!selectedParticipant) return;
+    if (!selectedParticipant) {
+      throw new Error('참여자 정보가 없습니다.');
+    }
 
+    console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
+    console.log('  📝 콘텐츠 정보:', {
+      textLength: content.text?.length || 0,
+      imagesCount: content.images?.length || 0,
+      hasVoice: !!content.voiceRecording,
+      hasVideo: !!content.video,
+    });
+    
     try {
-      console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
       await saveContent(selectedParticipant.id, content);
       console.log('✅ [StepRoom] 바텀시트 저장 성공!');
       setIsBottomSheetVisible(false);
     } catch (err) {
       console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
+      // ⭐ 에러를 다시 throw하여 UserBottomSheet에서 처리할 수 있도록 함
+      throw err;
     }
   };
 
@@ -362,10 +413,34 @@ export default function StepRoom({
   // 렌더링
   // ============================================
 
+  // X 버튼 핸들러: 진입 경로에 따라 다른 동작
+  const handleClose = () => {
+    // 캡슐보관함에서 들어온 경우: 뒤로가기
+    if (propsCapsuleId) {
+      router.back();
+    }
+    // 결제 후 들어온 경우: 메인화면으로
+    else {
+      router.replace(ROUTES.MAIN as any);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <TimeCapsuleHeader title="캡슐 대기실" onBack={() => router.back()} titleAlign="left" />
+      <TimeCapsuleHeader
+        title="캡슐 대기실"
+        onBack={undefined}
+        titleAlign="left"
+        rightIcons={[
+          {
+            icon: 'close-line',
+            size: 44,
+            onPress: handleClose,
+            accessibilityLabel: '닫기',
+          },
+        ]}
+      />
 
       <ScrollView
         style={styles.scrollContent}
@@ -453,8 +528,10 @@ export default function StepRoom({
           </Text>
 
           <View style={styles.deadlineContainer}>
-            <Icon name="time-line" size={16} color={Colors.grey[500]} />
-            <Text style={styles.deadlineText}>작성 마감: {remainingTime || '계산 중...'}</Text>
+            <View style={styles.deadlineContent}>
+              <Icon name="time-line" size={16} color={Colors.grey[500]} />
+              <Text style={styles.deadlineText}>{remainingTime || '계산 중...'}</Text>
+            </View>
           </View>
 
           {/* 타임캡슐 묻기 버튼 (호스트만, 진행률 100%일 때 활성화) */}
@@ -528,6 +605,14 @@ export default function StepRoom({
                                     closeModal();
                                     if (onSubmit) {
                                       onSubmit();
+                                    }
+                                    // ⭐ 진입 경로에 따라 다른 화면으로 이동
+                                    // - 마이페이지(캡슐 보관함)에서 진입한 경우: 캡슐 보관함으로 이동
+                                    // - 결제 후 진입한 경우: 메인 화면으로 이동
+                                    if (propsCapsuleId) {
+                                      router.replace(ROUTES.MY_CAPSULE as any);
+                                    } else {
+                                      router.replace(ROUTES.MAIN as any);
                                     }
                                   }}
                                 />

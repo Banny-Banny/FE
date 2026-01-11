@@ -23,7 +23,7 @@ interface PaymentRequestData {
  * true로 설정하면 토스페이먼츠 결제를 건너뛰고 Mock 데이터로 다음 단계로 진행합니다.
  * ⚠️ 실제 서버에 결제 내역을 저장하려면 false로 설정해야 합니다.
  */
-export const SKIP_PAYMENT = __DEV__ && false;
+export const SKIP_PAYMENT = __DEV__ && true;
 
 // ============================================
 // Hook 반환 타입

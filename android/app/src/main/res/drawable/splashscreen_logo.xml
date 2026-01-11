@@ -1,5 +1,0 @@
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <!-- 임시 splash screen drawable - 나중에 실제 로고 이미지로 교체 가능 -->
-</shape>
-

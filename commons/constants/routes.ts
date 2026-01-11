@@ -10,7 +10,7 @@ export const ROUTES = {
   HOME: '/',
   ALARM: '/alarm',
   CALENDAR: '/calendar',
-  MY_PAGE: '/my-page',
+  MY_PAGE: '/(tabs)/mypage',
 
   // 타임캡슐
   TIMECAPSULE_CREATE: '/timecapsule/create',
@@ -32,6 +32,9 @@ export const ROUTES = {
 
   // 내 알 목록
   MY_EGG_LIST: '/(tabs)/myegglist',
+
+  // 내 캡슐
+  MY_CAPSULE: '/(tabs)/my-capsule',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

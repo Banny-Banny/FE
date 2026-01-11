@@ -1,0 +1,255 @@
+/**
+ * components/my-capsule/api/capsule.ts
+ * 참여중인 타임캡슐 리스트 조회 API
+ */
+
+import { apiClient } from '@/utils/apiClient';
+import type {
+  AudioMedia,
+  Author,
+  CapsuleSlot,
+  CapsuleStats,
+  ImageMedia,
+  MyCapsuleListResponse,
+  OpenedCapsuleDetailResponse,
+  SlotContent,
+  VideoMedia,
+} from '../types';
+
+/**
+ * 참여중인 타임캡슐 리스트 조회 API
+ * @param limit 한 페이지에 표시할 아이템 수 (기본값: 20)
+ * @param offset 건너뛸 아이템 수 (기본값: 0)
+ * @returns 참여중인 타임캡슐 리스트 (camelCase)
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getMyCapsules(
+  limit: number = 20,
+  offset: number = 0,
+): Promise<MyCapsuleListResponse> {
+  try {
+    console.log('🔄 [API] 참여중인 캡슐 리스트 조회 시작 - limit:', limit, 'offset:', offset);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
+    const response = await apiClient.get<MyCapsuleListResponse>('/api/me/capsules', {
+      params: { limit, offset },
+    });
+
+    console.log('✅ [API] 참여중인 캡슐 리스트 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 참여중인 캡슐 리스트 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * API 응답의 snake_case 슬롯을 camelCase로 변환
+ */
+interface ApiSlotResponse {
+  slot_id: string;
+  slot_index: number;
+  user_id: string | null;
+  nickname: string | null;
+  profile_img: string | null;
+  entry_id: string | null;
+  wrote_at: string | null;
+  content: string | null;
+  media_items: Array<{
+    id: string;
+    media_type: 'IMAGE' | 'VIDEO' | 'AUDIO';
+    url: string;
+    thumbnail_url?: string;
+    title?: string;
+  }>;
+}
+
+interface ApiCapsuleDetailResponse {
+  id: string;
+  title: string;
+  description: string | null;
+  open_at: string;
+  is_locked: boolean;
+  headcount: number;
+  product: {
+    id: string;
+    product_type: string;
+    max_media_count: number;
+    media_types: string[];
+  };
+  slots: ApiSlotResponse[];
+  stats?: {
+    total_slots: number;
+    filled_slots: number;
+    empty_slots: number;
+  };
+}
+
+function transformSlotContent(
+  content: string | null,
+  mediaItems: ApiSlotResponse['media_items'],
+): SlotContent | undefined {
+  if (!content && (!mediaItems || mediaItems.length === 0)) {
+    return undefined;
+  }
+
+  const result: SlotContent = {};
+
+  // 텍스트 콘텐츠
+  if (content) {
+    result.text = content;
+  }
+
+  // 미디어 아이템 변환
+  if (mediaItems && mediaItems.length > 0) {
+    const images: ImageMedia[] = [];
+    let video: VideoMedia | undefined;
+    let audio: AudioMedia | undefined;
+
+    for (const item of mediaItems) {
+      if (item.media_type === 'IMAGE') {
+        images.push({
+          id: item.id,
+          url: item.url,
+          thumbnailUrl: item.thumbnail_url,
+        });
+      } else if (item.media_type === 'VIDEO') {
+        if (!video) {
+          video = {
+            id: item.id,
+            url: item.url,
+            thumbnailUrl: item.thumbnail_url || item.url,
+          };
+        }
+      } else if (item.media_type === 'AUDIO') {
+        if (!audio) {
+          audio = {
+            id: item.id,
+            title: item.title || '오디오',
+            url: item.url,
+          };
+        }
+      }
+    }
+
+    if (images.length > 0) result.images = images;
+    if (video) result.video = video;
+    if (audio) result.audio = audio;
+  }
+
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
+function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCapsuleDetailResponse {
+  const isLocked = apiResponse.is_locked;
+
+  const slots: CapsuleSlot[] = apiResponse.slots.map((slot) => {
+    // 작성 여부 판단:
+    // ⭐ entry_id가 있으면 작성된 것으로 간주 (가장 중요!)
+    const hasEntry = slot.entry_id !== null;
+
+    // entry_id가 없어도 content나 media가 있으면 작성된 것으로 간주
+    const hasContent = slot.content !== null && slot.content.trim() !== '';
+    const hasMedia = slot.media_items && slot.media_items.length > 0;
+
+    // 작성 여부: entry_id가 있거나, content/media가 있으면 작성된 것
+    const isWritten = hasEntry || hasContent || hasMedia;
+
+    // 작성자 정보 (user_id가 있으면 작성자가 있는 것)
+    const author: Author = slot.user_id
+      ? {
+          id: slot.user_id,
+          name: slot.nickname || '익명',
+          emoji: '😊', // 기본 이모지 (API에 이모지 필드가 없음)
+        }
+      : {
+          id: '',
+          name: '빈 슬롯',
+          emoji: '🥚',
+        };
+
+    // 🔒 잠긴 상태일 때는 콘텐츠를 숨김
+    // 🔓 열린 상태일 때만 콘텐츠 표시
+    const content = isLocked ? undefined : transformSlotContent(slot.content, slot.media_items);
+
+    return {
+      slotId: slot.slot_id,
+      author,
+      isWritten,
+      content: isWritten && !isLocked ? content : undefined,
+    };
+  });
+
+  // 통계 정보 변환 (있는 경우만)
+  const stats: CapsuleStats | undefined = apiResponse.stats
+    ? {
+        totalSlots: apiResponse.stats.total_slots,
+        filledSlots: apiResponse.stats.filled_slots,
+        emptySlots: apiResponse.stats.empty_slots,
+      }
+    : undefined;
+
+  return {
+    id: apiResponse.id,
+    title: apiResponse.title,
+    headcount: apiResponse.headcount,
+    isLocked,
+    slots,
+    stats,
+  };
+}
+
+/**
+ * 타임캡슐 상세 조회 API
+ * ⭐ 결제 완료된 캡슐만 조회 가능
+ * @param id 캡슐 ID (UUID)
+ * @returns 타임캡슐 상세 정보 (camelCase)
+ * @throws 403: 권한 없음 또는 미결제
+ * @throws 404: 캡슐 미존재
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getOpenedCapsuleDetail(id: string): Promise<OpenedCapsuleDetailResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 상세 조회 시작 - id:', id);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
+    const response = await apiClient.get<ApiCapsuleDetailResponse>(`/api/time-capsules/${id}`);
+
+    console.log('✅ [API] 타임캡슐 상세 조회 성공 (raw):', response.data);
+
+    // snake_case 응답을 camelCase로 변환
+    const transformedData = transformApiResponse(response.data);
+
+    console.log('✅ [API] 타임캡슐 상세 조회 성공 (transformed):', transformedData);
+    return transformedData;
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 권한 없음 또는 미결제 (403)');
+      throw new Error('결제가 완료되지 않았거나 권한이 없습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 캡슐 미존재 (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 상세 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}

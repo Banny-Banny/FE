@@ -2,18 +2,12 @@
  * AudioPlayer Component Types
  */
 
-import type { MediaItem } from '@/components/map/components/shared/types';
-
 export interface AudioPlayerProps {
-  /** 오디오 미디어 아이템 */
-  audio: MediaItem;
-  /** 재생 중 여부 */
-  isPlaying: boolean;
-  /** 현재 재생 시간 (초) */
-  currentTime: number;
-  /** 전체 재생 시간 (초) */
-  duration: number;
-  /** 재생/일시정지 토글 함수 */
-  onTogglePlay: () => void;
+  /** 오디오 미디어 ID 또는 URL (URL인 경우 그대로 사용, ID인 경우 URL로 변환) */
+  mediaId: string | null;
+  /** 재생 상태 변경 시 호출되는 콜백 */
+  onPlayStateChange?: (isPlaying: boolean) => void;
+  /** 에러 발생 시 호출되는 콜백 */
+  onError?: (error: Error) => void;
 }
 

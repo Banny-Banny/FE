@@ -7,5 +7,6 @@ export const STORAGE_KEYS = {
   USER_DATA: '@auth/userData',
   FRIEND_CONSENT: '@onboarding/friendConsent',
   LOCATION_CONSENT: '@onboarding/locationConsent',
+  PENDING_INVITE_CODE: '@auth/pendingInviteCode', // 로그인 전 저장된 초대코드
 } as const;
 

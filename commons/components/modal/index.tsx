@@ -55,21 +55,34 @@ export const Modal: React.FC<ModalProps> = ({
 
   // 모달 컨테이너 스타일 계산 (width, height, padding)
   const modalContainerStyle = useMemo(() => {
-    const dynamicStyle: any = {};
+    const dynamicStyle: any = {
+      // iOS에서 콘텐츠가 밖으로 나가지 않도록 기본 제약 추가
+      overflow: 'hidden',
+      alignSelf: 'center',
+    };
 
     // width 설정
     if (typeof width === 'number') {
       dynamicStyle.width = width;
+      dynamicStyle.maxWidth = width; // iOS에서 명시적 제한
     } else if (typeof width === 'string') {
       dynamicStyle.width = width;
+      // 퍼센트나 'auto'인 경우에도 maxWidth 제한
+      if (width !== 'auto') {
+        dynamicStyle.maxWidth = width;
+      }
     }
 
     // height 설정
     if (height !== 'auto') {
       if (typeof height === 'number') {
         dynamicStyle.height = height;
+        dynamicStyle.maxHeight = height; // iOS에서 명시적 제한
       } else if (typeof height === 'string') {
         dynamicStyle.height = height;
+        if (height !== 'auto') {
+          dynamicStyle.maxHeight = height;
+        }
       }
     }
 
@@ -87,6 +100,11 @@ export const Modal: React.FC<ModalProps> = ({
       onClose();
     }
   };
+
+  // visible이 false일 때 즉시 렌더링하지 않도록 처리
+  if (!visible && shouldDisableAnimation) {
+    return null;
+  }
 
   return (
     <RNModal
@@ -110,16 +128,16 @@ export const Modal: React.FC<ModalProps> = ({
         </View>
       ) : (
         <Animated.View
-          entering={FadeIn.duration(200)}
-          exiting={FadeOut.duration(200)}
+          entering={FadeIn.duration(100)}
+          exiting={FadeOut.duration(100)}
           style={styles.backdrop}
           collapsable={false}>
           {/* Backdrop 영역 - 클릭 시 모달 닫기 */}
           <Pressable style={StyleSheet.absoluteFill} onPress={handleBackdropPress} />
           {/* Modal Container - absolute로 배치하여 Pressable과 분리 */}
           <Animated.View
-            entering={SlideInUp.duration(300).springify()}
-            exiting={SlideOutDown.duration(200)}
+            entering={SlideInUp.duration(150).damping(20).stiffness(90)}
+            exiting={SlideOutDown.duration(100)}
             style={[styles.modalContainer, modalContainerStyle, styles.modalContainerAbsolute]}
             collapsable={false}>
             {/* Modal Content - children을 그대로 렌더링 */}

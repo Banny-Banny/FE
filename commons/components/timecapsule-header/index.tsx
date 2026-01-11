@@ -28,8 +28,9 @@
  */
 
 import { Colors, Typography } from '@/commons/constants';
+import { Image } from 'expo-image';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { ImageSourcePropType, Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { styles } from './styles';
 
@@ -39,8 +40,18 @@ import { styles } from './styles';
 
 /** 오른쪽 아이콘 버튼 타입 */
 export interface RightIcon {
-  icon: string; // react-native-remix-icon 아이콘 이름
+  /** react-native-remix-icon 아이콘 이름 (icon 또는 imageSource 중 하나 필수) */
+  icon?: string;
+  /** 이미지 소스 (icon 또는 imageSource 중 하나 필수) */
+  imageSource?: ImageSourcePropType | string;
+  /** 아이콘 크기 (기본값: 24) */
+  size?: number;
+  /** 아이콘 색상 (기본값: Colors.black[500], imageSource 사용 시 무시) */
+  color?: string;
+  /** 버튼 클릭 핸들러 */
   onPress: () => void;
+  /** 접근성 라벨 */
+  accessibilityLabel?: string;
 }
 
 /** TimeCapsuleHeader Props 타입 */
@@ -73,9 +84,13 @@ export function TimeCapsuleHeader({
 }: TimeCapsuleHeaderProps) {
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <View style={styles.headerContainer}>
+      <View
+        style={[
+          styles.headerContainer,
+          titleAlign === 'left' && !onBack && styles.headerContainerLeft,
+        ]}>
         {/* 왼쪽: 뒤로가기 버튼 */}
-        {onBack ? (
+        {onBack && (
           <Pressable
             style={styles.backButton}
             onPress={onBack}
@@ -83,8 +98,6 @@ export function TimeCapsuleHeader({
             accessibilityLabel="뒤로가기">
             <Icon name="arrow-left-line" size={24} color={Colors.black[500]} />
           </Pressable>
-        ) : (
-          <View style={styles.backButtonPlaceholder} />
         )}
 
         {/* 제목 */}
@@ -105,16 +118,35 @@ export function TimeCapsuleHeader({
         {/* 오른쪽: 아이콘 버튼들 */}
         {rightIcons && rightIcons.length > 0 ? (
           <View style={styles.headerRight}>
-            {rightIcons.map((rightIcon, index) => (
-              <Pressable
-                key={index}
-                style={styles.iconButton}
-                onPress={rightIcon.onPress}
-                accessibilityRole="button"
-                accessibilityLabel={`${rightIcon.icon} 버튼`}>
-                <Icon name={rightIcon.icon} size={24} color={Colors.black[500]} />
-              </Pressable>
-            ))}
+            {rightIcons.map((rightIcon, index) => {
+              const iconSize = rightIcon.size || 24;
+              const iconColor = rightIcon.color || Colors.black[500];
+              const accessibilityLabel =
+                rightIcon.accessibilityLabel || `${rightIcon.icon || '아이콘'} 버튼`;
+
+              return (
+                <Pressable
+                  key={index}
+                  style={[styles.iconButton, { width: iconSize, height: iconSize }]}
+                  onPress={rightIcon.onPress}
+                  accessibilityRole="button"
+                  accessibilityLabel={accessibilityLabel}>
+                  {rightIcon.imageSource ? (
+                    <Image
+                      source={
+                        typeof rightIcon.imageSource === 'string'
+                          ? rightIcon.imageSource
+                          : rightIcon.imageSource
+                      }
+                      style={{ width: iconSize, height: iconSize }}
+                      contentFit="contain"
+                    />
+                  ) : rightIcon.icon ? (
+                    <Icon name={rightIcon.icon} size={iconSize} color={iconColor} />
+                  ) : null}
+                </Pressable>
+              );
+            })}
           </View>
         ) : (
           <View style={styles.headerRightPlaceholder} />

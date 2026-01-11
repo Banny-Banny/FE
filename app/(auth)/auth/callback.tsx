@@ -88,11 +88,22 @@ export default function AuthCallback() {
           }
           router.replace(ROUTES.AUTH_ONBOARDING as any);
         } else {
-          // 온보딩 완료 → 메인 페이지로
-          if (__DEV__) {
-            console.log('[AuthCallback] 온보딩 완료 → 메인 페이지로 이동');
+          // 온보딩 완료 → 저장된 초대 코드 확인 후 리다이렉트
+          const pendingInviteCode = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_INVITE_CODE);
+          if (pendingInviteCode) {
+            // 초대 코드 있음 → 대기실로 이동 후 삭제
+            if (__DEV__) {
+              console.log('[AuthCallback] 저장된 초대 코드 발견 → 대기실로 이동:', pendingInviteCode);
+            }
+            await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
+            router.replace(`/room/join?invite_code=${pendingInviteCode}` as any);
+          } else {
+            // 초대 코드 없음 → 메인 페이지로
+            if (__DEV__) {
+              console.log('[AuthCallback] 온보딩 완료 → 메인 페이지로 이동');
+            }
+            router.replace(ROUTES.MAIN as any);
           }
-          router.replace(ROUTES.MAIN as any);
         }
       } catch (error) {
         if (__DEV__) {

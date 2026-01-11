@@ -5,7 +5,8 @@
 
 import { useNavigation } from '@/commons/hooks';
 import TossPayment from '@/components/toss-payments';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import StepInfo from './components/step-info';
 import { CreateOrderResponse } from './components/step-info/api/types/order';
@@ -22,30 +23,27 @@ const STORAGE_KEYS = {
 export default function TimeCapsuleCreate() {
   const navigation = useNavigation();
 
-  // 웹 환경에서는 sessionStorage에서 복원
-  const [step, setStep] = useState<number>(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(STORAGE_KEYS.STEP);
-      return saved ? parseInt(saved, 10) : 1;
-    }
-    return 1;
-  });
+  // 항상 초기 상태로 시작 (sessionStorage 복원 제거)
+  const [step, setStep] = useState<number>(1);
+  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(null);
+  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
 
-  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(STORAGE_KEYS.STEP_INFO_DATA);
-      return saved ? JSON.parse(saved) : null;
-    }
-    return null;
-  });
+  // 화면이 포커스를 받을 때마다 state 초기화 (타임캡슐 만들기는 항상 새로 시작)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - state 초기화 (항상 새로 시작)');
+      setStep(1);
+      setStepInfoData(null);
+      setOrderData(null);
 
-  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem(STORAGE_KEYS.ORDER_DATA);
-      return saved ? JSON.parse(saved) : null;
-    }
-    return null;
-  });
+      // sessionStorage도 클리어
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        sessionStorage.removeItem(STORAGE_KEYS.STEP);
+        sessionStorage.removeItem(STORAGE_KEYS.STEP_INFO_DATA);
+        sessionStorage.removeItem(STORAGE_KEYS.ORDER_DATA);
+      }
+    }, [])
+  );
 
   console.log('🎯 TimeCapsuleCreate 렌더링! step:', step);
 

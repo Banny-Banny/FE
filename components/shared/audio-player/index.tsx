@@ -1,52 +1,50 @@
 /**
  * AudioPlayer Component
- * 오디오 플레이어 개별 컴포넌트
+ * 오디오 플레이어 Container Component
+ *
+ * 비즈니스 로직은 hooks/useAudioPlayer에서 처리하고,
+ * 이 컴포넌트는 UI 렌더링만 담당합니다.
  */
 
-import React, { useEffect, useMemo } from 'react';
+import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import Icon from 'react-native-remix-icon';
 
 import { Colors } from '@/commons/constants';
 
+import { useAudioPlayer } from './hooks/useAudioPlayer';
 import { styles } from './styles';
 import type { AudioPlayerProps } from './types';
 
-export const AudioPlayer: React.FC<AudioPlayerProps> = ({
-  audio,
-  isPlaying,
-  currentTime,
-  duration,
-  onTogglePlay,
-}) => {
-  const progress = useMemo(
-    () => (duration > 0 ? currentTime / duration : 0),
-    [currentTime, duration],
-  );
-  const progressValue = useSharedValue(progress);
-
-  // progress 값이 변경될 때마다 업데이트
-  useEffect(() => {
-    progressValue.value = progress;
-  }, [progress, progressValue]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+export const AudioPlayer: React.FC<AudioPlayerProps> = (props) => {
+  // 비즈니스 로직은 hook에서 처리
+  const { isLoading, isPlaying, currentTime, progressValue, hasAudio, handleTogglePlay } =
+    useAudioPlayer(props);
 
   // 동적 width를 위한 animated style
   const progressBarStyle = useAnimatedStyle(() => ({
     width: `${progressValue.value * 100}%`,
   }));
 
+  // 시간 포맷팅 함수 (순수 함수)
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // mediaId가 없거나 로딩 중이면 렌더링하지 않음
+  if (!hasAudio) {
+    return null;
+  }
+
   return (
     <View style={styles.audioPlayerContainer}>
       <Pressable
         style={styles.playButton}
-        onPress={onTogglePlay}
+        onPress={handleTogglePlay}
+        disabled={isLoading}
         accessibilityLabel="재생/일시정지">
         <Icon
           key={isPlaying ? 'pause' : 'play'}
@@ -56,7 +54,6 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
         />
       </Pressable>
       <View style={styles.audioControls}>
-        <Icon name="music-2-line" size={20} color={Colors.grey[600]} />
         <View style={styles.progressBarContainer}>
           <Animated.View style={[styles.progressBar, progressBarStyle]} />
         </View>

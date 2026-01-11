@@ -143,6 +143,8 @@ export const styles = StyleSheet.create({
     // 최대 너비 제한 (화면보다 크지 않게)
     maxWidth: '90%',
     maxHeight: '90%',
+    // iOS에서 콘텐츠가 밖으로 나가지 않도록
+    overflow: 'hidden',
   },
 
   /**

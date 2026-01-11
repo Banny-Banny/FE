@@ -7,7 +7,7 @@
  * - [✓] UseMediaPickerReturn 타입 정의
  */
 
-import type { RoomSettingsResponse } from '../step-room/types';
+import type { Participant, RoomSettingsResponse } from '../step-room/types';
 
 /**
  * 미디어 파일 타입 정의
@@ -106,16 +106,6 @@ export interface UserContentFormData {
 /**
  * UserBottomSheet Props 인터페이스
  */
-
-/** 참여자 타입 */
-export interface Participant {
-  id: string;
-  name: string;
-  emoji: string;
-  status: 'completed' | 'pending' | 'waiting';
-  isHost?: boolean;
-  isMe?: boolean;
-}
 
 /** UserBottomSheet Props */
 export interface UserBottomSheetProps {
@@ -220,4 +210,41 @@ export interface ContentSubmitErrorResponse {
   error: string;
   /** 에러 메시지 */
   message: string;
+}
+
+/**
+ * ========================================
+ * 본인 작성 콘텐츠 조회 API 타입 정의
+ * ========================================
+ */
+
+/**
+ * 본인 작성 콘텐츠 조회 API 응답 타입
+ */
+export interface MyContentResponse {
+  success: boolean;
+  data: {
+    slot_id: string;
+    user_id: string;
+    /** 텍스트 메시지 (문자열 또는 객체) - 실제 API 응답에 따라 다를 수 있음 */
+    text_message: string | Record<string, any>;
+    status: 'COMPLETED' | 'PENDING' | 'WAITING';
+    images: Array<{
+      media_id: string;
+      url: string;
+      order: number;
+    }>;
+    music: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    video: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    created_at: string;
+    updated_at: string;
+  };
 }

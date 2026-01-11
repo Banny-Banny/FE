@@ -23,7 +23,7 @@ interface UseAudioRecorderReturn {
   /** 녹음 중지 및 로컬 URI 반환 */
   stopRecording: () => Promise<string | null>;
   /** 녹음 리셋 */
-  resetRecording: () => void;
+  resetRecording: () => Promise<void>;
 }
 
 /**
@@ -61,11 +61,28 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
    */
   const startRecording = async (): Promise<void> => {
     try {
+      // 이미 녹음 중이면 무시
+      if (isRecording) {
+        console.warn('녹음이 이미 진행 중입니다.');
+        return;
+      }
+
       // 권한 요청
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('권한 필요', '마이크 접근 권한이 필요합니다.');
         return;
+      }
+
+      // 기존 녹음기가 남아있으면 정리 (상태 동기화 문제 방지)
+      if (recording) {
+        try {
+          await recording.stopAndUnloadAsync();
+        } catch (cleanupError) {
+          // 정리 오류는 무시 (이미 정리된 상태일 수 있음)
+          console.warn('기존 녹음기 정리 중 오류 (무시됨):', cleanupError);
+        }
+        setRecording(null);
       }
 
       // 오디오 모드 설정
@@ -85,6 +102,9 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
     } catch (error) {
       console.error('녹음 시작 오류:', error);
       Alert.alert('오류', '녹음을 시작할 수 없습니다.');
+      // 오류 발생 시 상태 리셋
+      setRecording(null);
+      setIsRecording(false);
     }
   };
 
@@ -115,9 +135,14 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   /**
    * 녹음 리셋
    */
-  const resetRecording = (): void => {
+  const resetRecording = async (): Promise<void> => {
     if (recording) {
-      recording.stopAndUnloadAsync().catch(console.error);
+      try {
+        await recording.stopAndUnloadAsync();
+      } catch (error) {
+        // 정리 오류는 무시 (이미 정리된 상태일 수 있음)
+        console.warn('녹음기 정리 중 오류 (무시됨):', error);
+      }
     }
     setRecording(null);
     setIsRecording(false);

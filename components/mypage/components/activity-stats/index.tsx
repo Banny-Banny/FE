@@ -44,6 +44,13 @@ export function ActivityStats() {
   const { friends, isRefreshing, refreshFriends, toggleBlock } = useFriends();
 
   // ============================================
+  // 캡슐 목록으로 이동
+  // ============================================
+  const handleCapsulePress = () => {
+    navigation.push(ROUTES.MY_CAPSULE);
+  };
+
+  // ============================================
   // 이스터에그 목록으로 이동
   // ============================================
   const handleEasterEggPress = () => {
@@ -54,14 +61,14 @@ export function ActivityStats() {
     <>
       <View style={styles.container}>
         {/* 캡슐 통계 */}
-        <View style={styles.statItem}>
+        <Pressable style={styles.statItem} onPress={handleCapsulePress}>
           <View style={styles.statValueContainer}>
             <Text style={styles.statValue}>{summary.capsuleCount}</Text>
           </View>
           <View style={styles.statLabelContainer}>
             <Text style={styles.statLabel}>캡슐</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* 구분선 */}
         <View style={styles.divider} />

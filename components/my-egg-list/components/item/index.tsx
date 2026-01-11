@@ -14,11 +14,11 @@
  * 생성 시각: 2025-01-XX
  */
 
+import { Colors } from '@/commons/constants';
+import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Image } from 'expo-image';
 import Icon, { IconName } from 'react-native-remix-icon';
-import { Colors } from '@/commons/constants';
 import { styles } from './styles';
 
 // 소멸된 알 이미지
@@ -28,11 +28,12 @@ export interface ItemProps {
   id?: string;
   title: string;
   description: string;
-  location: string;
+  location?: string; // latitude/longitude 기반으로 계산되며, 없을 수 있음
   date: string;
   eggIcon?: string | number; // Image source
   hasImage?: boolean;
   hasAudio?: boolean;
+  hasVideo?: boolean;
   viewCount?: number; // 조회수 (심은 알에서 사용)
   showViewCount?: boolean; // 조회수 표시 여부 (심은 알에서 true)
   status?: 'ACTIVE' | 'EXPIRED'; // 활성/소멸 상태 (심은 알에서 사용)
@@ -47,13 +48,14 @@ export function Item({
   eggIcon,
   hasImage,
   hasAudio,
+  hasVideo,
   viewCount,
   showViewCount = false, // 기본값은 false
   status,
   onPress,
 }: ItemProps) {
   const isExpired = status === 'EXPIRED';
-  
+
   // 소멸된 알이면 broken_egg.svg 사용, 아니면 기존 eggIcon 사용
   const displayIcon = isExpired ? BROKEN_EGG_ICON : eggIcon;
 
@@ -94,13 +96,21 @@ export function Item({
         </View>
         <View style={styles.footerRow}>
           <View style={styles.metaContainer}>
-            <View style={styles.locationContainer}>
-              <View style={styles.locationIconContainer}>
-                <Icon name={'ri-map-pin-line' as IconName} size={13} color={Colors.darkGrey[600]} />
-              </View>
-              <Text style={styles.metaText}>{location}</Text>
-            </View>
-            <View style={styles.divider} />
+            {location && (
+              <>
+                <View style={styles.locationContainer}>
+                  <View style={styles.locationIconContainer}>
+                    <Icon
+                      name={'ri-map-pin-line' as IconName}
+                      size={13}
+                      color={Colors.darkGrey[600]}
+                    />
+                  </View>
+                  <Text style={styles.metaText}>{location}</Text>
+                </View>
+                <View style={styles.divider} />
+              </>
+            )}
             <Text style={styles.metaText}>{date}</Text>
           </View>
           <View style={styles.actionContainer}>
@@ -112,6 +122,11 @@ export function Item({
             {hasAudio && (
               <View style={styles.actionButton}>
                 <Icon name={'ri-mic-line' as IconName} size={16} color={Colors.darkGrey[700]} />
+              </View>
+            )}
+            {hasVideo && (
+              <View style={styles.actionButton}>
+                <Icon name={'ri-vidicon-line' as IconName} size={16} color={Colors.darkGrey[700]} />
               </View>
             )}
           </View>

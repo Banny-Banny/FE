@@ -12,6 +12,7 @@
 
 import * as Haptics from 'expo-haptics';
 import { useEffect, useRef, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { calculateDistance } from '@/utils/coordinate';
 
@@ -108,8 +109,14 @@ export function useEggDiscovery({
     // 이미 활성화된 캡슐이면 무시
     if (activeCapsuleId === nearestEgg.id) return;
 
-    // 진동 피드백
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // 진동 피드백 (웹에서는 사용자 상호작용 없이 호출 불가하므로 네이티브에서만 실행)
+    if (Platform.OS !== 'web') {
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } catch (error) {
+        // 햅틱 피드백 실패 시 무시 (일부 기기에서 지원하지 않을 수 있음)
+      }
+    }
 
     // 발견된 캡슐 설정
     setActiveCapsuleId(nearestEgg.id);
