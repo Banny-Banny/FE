@@ -235,6 +235,8 @@ export interface Slot {
   status: 'ACCEPTED' | 'PENDING';
   /** 참여자 닉네임 (null이면 아직 배정되지 않음) */
   nickname: string | null;
+  /** 콘텐츠 작성 여부 (백엔드 신규 추가) */
+  has_content: boolean;
 }
 
 /** 대기실 상세 조회 API 응답 타입 (GET /api/capsules/step-rooms/:capsuleId) */

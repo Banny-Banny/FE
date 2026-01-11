@@ -29,11 +29,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import Icon from 'react-native-remix-icon';
 import SubmitCompleteModal from '../../modals/submit-complete-modal';
 import SubmitConfirmModal from '../../modals/submit-confirm-modal';
@@ -58,7 +54,7 @@ export default function StepRoom({
   orderId: propsOrderId,
   capsuleId: propsCapsuleId,
   inviteCode: propsInviteCode,
-  onSubmit
+  onSubmit,
 }: StepRoomProps) {
   // ============================================
   // Hooks
@@ -81,7 +77,11 @@ export default function StepRoom({
    */
   const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
   const initialIsHost = role === 'host';
-  const orderId = propsCapsuleId ? undefined : (initialIsHost ? (propsOrderId || TEST_ORDER_ID) : undefined);
+  const orderId = propsCapsuleId
+    ? undefined
+    : initialIsHost
+    ? propsOrderId || TEST_ORDER_ID
+    : undefined;
 
   /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
   const {
@@ -105,6 +105,7 @@ export default function StepRoom({
     error: participantsError,
     saveContent,
     canEdit,
+    refetchParticipants,
   } = useParticipants({
     capsuleId,
     maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
@@ -165,7 +166,22 @@ export default function StepRoom({
 
   /** 진행 상황 계산 (완료 인원 / 전체 인원) */
   const progress = useMemo(() => {
-    return calculateProgress(participants);
+    // ⭐ 디버깅: 참가자 목록 확인
+    console.log('🔍 [StepRoom] 진행 상황 계산 - 참가자 목록:', {
+      전체참가자수: participants.length,
+      참가자상세: participants.map((p) => ({
+        id: p.id,
+        name: p.name || '(빈 슬롯)',
+        status: p.status,
+        isMe: p.isMe,
+      })),
+    });
+
+    const result = calculateProgress(participants);
+
+    console.log('🔍 [StepRoom] 진행 상황 계산 결과:', result);
+
+    return result;
   }, [calculateProgress, participants]);
 
   /** 최종 제출 가능 여부 (진행률 100%) */
@@ -282,10 +298,16 @@ export default function StepRoom({
       hasVoice: !!content.voiceRecording,
       hasVideo: !!content.video,
     });
-    
+
     try {
       await saveContent(selectedParticipant.id, content);
       console.log('✅ [StepRoom] 바텀시트 저장 성공!');
+
+      // ⭐ 저장 성공 후 참여자 목록 새로고침 (다른 참가자들의 완료 상태 업데이트)
+      console.log('🔄 [StepRoom] 참여자 목록 새로고침 시작...');
+      await refetchParticipants();
+      console.log('✅ [StepRoom] 참여자 목록 새로고침 완료');
+
       setIsBottomSheetVisible(false);
     } catch (err) {
       console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
@@ -302,34 +324,32 @@ export default function StepRoom({
     const isActive = participant.isMe || participant.status === 'completed';
     const showCheckbox = participant.name !== '';
     const isEditable = canEdit(participant.id);
+    const isMyContent = participant.isMe; // 본인의 콘텐츠인지
 
     return (
       <Pressable
         key={participant.id}
         style={[
           styles.participantCard,
-          isActive ? styles.participantCardActive : styles.participantCardInactive,
+          isMyContent ? styles.participantCardMe : styles.participantCardOther,
         ]}
         onPress={() => {
-          // 프라이버시 체크: 본인 것만 클릭 가능
-          if (participant.name && isEditable) {
-            console.log('📝 [StepRoom] 참여자 카드 클릭:', participant.name);
+          // ⭐ 본인의 콘텐츠만 클릭 가능 (작성 완료 후에도 조회 가능)
+          if (participant.name && isMyContent) {
+            console.log('📝 [StepRoom] 본인 카드 클릭:', participant.name);
+            console.log('  - 상태:', participant.status);
+            console.log('  - 읽기 전용:', participant.status === 'completed');
             setSelectedParticipant(participant);
             setIsBottomSheetVisible(true);
-          } else if (participant.name && !isEditable) {
+          } else if (participant.name && !isMyContent) {
             console.log('🚫 [StepRoom] 다른 사람 카드 클릭 차단:', participant.name);
           }
         }}>
         <View style={styles.participantInfo}>
           {/* 아바타 */}
           <View style={[styles.avatar, isActive && styles.avatarActive]}>
-            <Text
-              style={[
-                styles.avatarEmoji,
-                participant.status === 'waiting' && styles.avatarEmojiDisabled,
-              ]}>
-              {participant.emoji}
-            </Text>
+            {/* TODO: 프로필 이미지 URL 추가 시 Image 컴포넌트로 표시 */}
+            <Icon name="user-line" size={24} color={Colors.grey[400]} />
           </View>
 
           {/* 참여자 정보 */}
@@ -338,7 +358,6 @@ export default function StepRoom({
               <>
                 <View style={styles.participantNameRow}>
                   <Text style={styles.participantName}>{participant.name}</Text>
-                  {participant.isHost && <Text style={styles.crownEmoji}>👑</Text>}
                 </View>
                 <Text
                   style={[
@@ -347,8 +366,10 @@ export default function StepRoom({
                     participant.status === 'pending' && styles.statusPending,
                     participant.status === 'waiting' && styles.statusWaiting,
                   ]}>
+                  {/* ⭐ 본인: 클릭 유도 메시지, 다른 사람: 작성 여부만 표시 */}
                   {participant.status === 'completed' && '작성 완료'}
-                  {participant.status === 'pending' && '클릭하여 작성하기'}
+                  {participant.status === 'pending' &&
+                    (isMyContent ? '클릭하여 작성하기' : '작성 대기 중')}
                   {participant.status === 'waiting' && '아직 작성하지 않았어요'}
                 </Text>
               </>
@@ -362,9 +383,16 @@ export default function StepRoom({
         {participant.name ? (
           showCheckbox && (
             <View
-              style={[styles.checkbox, isActive ? styles.checkboxActive : styles.checkboxInactive]}>
+              style={[
+                styles.checkbox,
+                participant.status === 'completed'
+                  ? styles.checkboxChecked
+                  : isActive
+                  ? styles.checkboxActive
+                  : styles.checkboxInactive,
+              ]}>
               {participant.status === 'completed' && (
-                <Icon name="checkbox-circle-fill" size={20} color={Colors.green[500]} />
+                <Text style={styles.checkboxCheckmark}>✓</Text>
               )}
             </View>
           )
@@ -521,12 +549,6 @@ export default function StepRoom({
 
         {/* 하단 정보 */}
         <View style={styles.bottomSection}>
-          <Text style={styles.infoText}>
-            {isHost
-              ? '내 글은 방장이 최종 제출하기 전까지 수정할 수 있어요'
-              : '방장이 최종 제출하기 전까지 수정할 수 있어요'}
-          </Text>
-
           <View style={styles.deadlineContainer}>
             <View style={styles.deadlineContent}>
               <Icon name="time-line" size={16} color={Colors.grey[500]} />
@@ -687,6 +709,7 @@ export default function StepRoom({
             inviteCode={propsInviteCode} // 게스트용 (처음 참여 시 필요)
             onSave={handleBottomSheetSave}
             roomSettings={roomSettings}
+            isReadOnly={selectedParticipant.status === 'completed'}
           />
         )}
       </ScrollView>

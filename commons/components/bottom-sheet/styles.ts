@@ -80,5 +80,6 @@ export const styles = StyleSheet.create({
     gap: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.white[200],
+    zIndex: 10, // 웹에서 클릭 가능하도록 z-index 추가
   },
 });

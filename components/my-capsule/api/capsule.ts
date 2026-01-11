@@ -64,13 +64,18 @@ interface ApiSlotResponse {
   entry_id: string | null;
   wrote_at: string | null;
   content: string | null;
-  media_items: Array<{
-    id: string;
-    media_type: 'IMAGE' | 'VIDEO' | 'AUDIO';
-    url: string;
-    thumbnail_url?: string;
-    title?: string;
-  }>;
+  images_ids: Array<{
+    media_id: string;
+    object_key: string;
+  }> | null;
+  audio_id: {
+    media_id: string;
+    object_key: string;
+  } | null;
+  video_id: {
+    media_id: string;
+    object_key: string;
+  } | null;
 }
 
 interface ApiCapsuleDetailResponse {
@@ -96,9 +101,11 @@ interface ApiCapsuleDetailResponse {
 
 function transformSlotContent(
   content: string | null,
-  mediaItems: ApiSlotResponse['media_items'],
+  imagesIds: ApiSlotResponse['images_ids'],
+  audioId: ApiSlotResponse['audio_id'],
+  videoId: ApiSlotResponse['video_id'],
 ): SlotContent | undefined {
-  if (!content && (!mediaItems || mediaItems.length === 0)) {
+  if (!content && (!imagesIds || imagesIds.length === 0) && !audioId && !videoId) {
     return undefined;
   }
 
@@ -109,41 +116,33 @@ function transformSlotContent(
     result.text = content;
   }
 
-  // 미디어 아이템 변환
-  if (mediaItems && mediaItems.length > 0) {
-    const images: ImageMedia[] = [];
-    let video: VideoMedia | undefined;
-    let audio: AudioMedia | undefined;
+  // 이미지 변환 - media_id만 저장 (URL은 컴포넌트에서 가져옴)
+  if (imagesIds && imagesIds.length > 0) {
+    result.images = imagesIds.map((img) => ({
+      id: img.media_id,
+      url: '', // 컴포넌트에서 getMediaUrl로 가져옴
+      objectKey: img.object_key, // object_key도 저장해두기
+    }));
+  }
 
-    for (const item of mediaItems) {
-      if (item.media_type === 'IMAGE') {
-        images.push({
-          id: item.id,
-          url: item.url,
-          thumbnailUrl: item.thumbnail_url,
-        });
-      } else if (item.media_type === 'VIDEO') {
-        if (!video) {
-          video = {
-            id: item.id,
-            url: item.url,
-            thumbnailUrl: item.thumbnail_url || item.url,
-          };
-        }
-      } else if (item.media_type === 'AUDIO') {
-        if (!audio) {
-          audio = {
-            id: item.id,
-            title: item.title || '오디오',
-            url: item.url,
-          };
-        }
-      }
-    }
+  // 비디오 변환
+  if (videoId) {
+    result.video = {
+      id: videoId.media_id,
+      url: '', // 컴포넌트에서 getMediaUrl로 가져옴
+      thumbnailUrl: '', // 컴포넌트에서 처리
+      objectKey: videoId.object_key,
+    };
+  }
 
-    if (images.length > 0) result.images = images;
-    if (video) result.video = video;
-    if (audio) result.audio = audio;
+  // 오디오 변환
+  if (audioId) {
+    result.audio = {
+      id: audioId.media_id,
+      title: '오디오',
+      url: '', // 컴포넌트에서 getMediaUrl로 가져옴
+      objectKey: audioId.object_key,
+    };
   }
 
   return Object.keys(result).length > 0 ? result : undefined;
@@ -159,7 +158,10 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
 
     // entry_id가 없어도 content나 media가 있으면 작성된 것으로 간주
     const hasContent = slot.content !== null && slot.content.trim() !== '';
-    const hasMedia = slot.media_items && slot.media_items.length > 0;
+    const hasImages = slot.images_ids && slot.images_ids.length > 0;
+    const hasAudio = slot.audio_id !== null;
+    const hasVideo = slot.video_id !== null;
+    const hasMedia = hasImages || hasAudio || hasVideo;
 
     // 작성 여부: entry_id가 있거나, content/media가 있으면 작성된 것
     const isWritten = hasEntry || hasContent || hasMedia;
@@ -170,6 +172,7 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
           id: slot.user_id,
           name: slot.nickname || '익명',
           emoji: '😊', // 기본 이모지 (API에 이모지 필드가 없음)
+          profileImg: slot.profile_img || undefined,
         }
       : {
           id: '',
@@ -179,7 +182,9 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
 
     // 🔒 잠긴 상태일 때는 콘텐츠를 숨김
     // 🔓 열린 상태일 때만 콘텐츠 표시
-    const content = isLocked ? undefined : transformSlotContent(slot.content, slot.media_items);
+    const content = isLocked
+      ? undefined
+      : transformSlotContent(slot.content, slot.images_ids, slot.audio_id, slot.video_id);
 
     return {
       slotId: slot.slot_id,
