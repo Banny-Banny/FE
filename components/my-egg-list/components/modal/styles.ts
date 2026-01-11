@@ -18,7 +18,6 @@ export const styles = StyleSheet.create({
   // ScrollView를 감싸는 래퍼 (Modal 내부 높이 확보용)
   scrollViewWrapper: {
     width: '100%',
-    height: '100%', // Modal의 높이를 모두 사용
     maxWidth: '100%', // iOS에서 너비 제한
     position: 'relative',
     overflow: 'hidden', // 콘텐츠가 밖으로 나가지 않도록
@@ -28,7 +27,6 @@ export const styles = StyleSheet.create({
   // ScrollView 컨테이너
   scrollView: {
     width: '100%',
-    height: '100%', // 부모 높이를 모두 사용
     maxWidth: '100%', // iOS에서 너비 제한
     alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤
   },
@@ -40,7 +38,6 @@ export const styles = StyleSheet.create({
     paddingBottom: Spacing.xl * 1.5, // 하단 패딩 제거 (하얀 부분 제거)
     width: '100%',
     maxWidth: '100%', // iOS에서 너비 제한
-    flexGrow: 1, // 스크롤을 위해 flexGrow 활성화
     alignItems: 'center',
     gap: Spacing.lg, // 24px - 일관된 간격
     alignSelf: 'stretch', // iOS에서 부모 너비에 맞춤

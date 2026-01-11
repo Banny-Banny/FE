@@ -17,8 +17,8 @@
  */
 
 import { Image } from 'expo-image';
-import React from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Dimensions, Pressable, ScrollView, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 
 import { Modal } from '@/commons/components/modal';
@@ -58,6 +58,12 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
     getCurrentUserViewedAt,
   } = useEasterEggModal({ data });
 
+  // 화면 높이의 90%를 계산하여 최대 높이 제한
+  const maxHeight = useMemo(() => {
+    const screenHeight = Dimensions.get('window').height;
+    return screenHeight * 0.8;
+  }, []);
+
   // 데이터가 없으면 빈 모달 반환 (항상 같은 구조 유지)
   if (!data) {
     return (
@@ -68,7 +74,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         height="100%"
         padding={0}
         closeOnBackdropPress>
-        <View style={styles.scrollViewWrapper}>
+        <View style={[styles.scrollViewWrapper, { maxHeight }]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Icon name="close-line" size={20} color={Colors.black[500]} />
           </Pressable>
@@ -119,11 +125,11 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
       visible={visible}
       onClose={onClose}
       width={340}
-      height="80%"
+      height="auto"
       padding={0}
       closeOnBackdropPress
       disableAnimation={false}>
-      <View style={styles.scrollViewWrapper}>
+      <View style={[styles.scrollViewWrapper, { maxHeight }]}>
         {/* 닫기 버튼 (우측 상단) */}
         <Pressable style={styles.closeButton} onPress={onClose}>
           <Icon name="close-line" size={20} color={Colors.black[500]} />
