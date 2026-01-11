@@ -23,14 +23,61 @@ const STORAGE_KEYS = {
 export default function TimeCapsuleCreate() {
   const navigation = useNavigation();
 
-  // 항상 초기 상태로 시작 (sessionStorage 복원 제거)
-  const [step, setStep] = useState<number>(1);
-  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(null);
-  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
+  // 웹 환경에서 sessionStorage에서 복원 (결제 리다이렉트 대응)
+  const getInitialStep = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const savedStep = sessionStorage.getItem(STORAGE_KEYS.STEP);
+      if (savedStep) {
+        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 step 복원:', savedStep);
+        return parseInt(savedStep, 10);
+      }
+    }
+    return 1;
+  };
+
+  const getInitialStepInfoData = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(STORAGE_KEYS.STEP_INFO_DATA);
+      if (saved) {
+        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 stepInfoData 복원');
+        return JSON.parse(saved);
+      }
+    }
+    return null;
+  };
+
+  const getInitialOrderData = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem(STORAGE_KEYS.ORDER_DATA);
+      if (saved) {
+        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 orderData 복원');
+        return JSON.parse(saved);
+      }
+    }
+    return null;
+  };
+
+  const [step, setStep] = useState<number>(getInitialStep);
+  const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(getInitialStepInfoData);
+  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(getInitialOrderData);
 
   // 화면이 포커스를 받을 때마다 state 초기화 (타임캡슐 만들기는 항상 새로 시작)
+  // ⚠️ 단, step이 2 이상일 때는 초기화하지 않음 (결제 진행 중이거나 완료된 경우)
+  const stepRef = React.useRef(step);
+
+  // step 변경 시 ref 업데이트
+  React.useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
   useFocusEffect(
     useCallback(() => {
+      // step이 2 이상이면 결제 진행 중이거나 완료된 상태이므로 초기화하지 않음
+      if (stepRef.current >= 2) {
+        console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - 결제 진행 중이므로 초기화 스킵 (step:', stepRef.current, ')');
+        return;
+      }
+
       console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - state 초기화 (항상 새로 시작)');
       setStep(1);
       setStepInfoData(null);
@@ -42,7 +89,7 @@ export default function TimeCapsuleCreate() {
         sessionStorage.removeItem(STORAGE_KEYS.STEP_INFO_DATA);
         sessionStorage.removeItem(STORAGE_KEYS.ORDER_DATA);
       }
-    }, [])
+    }, []) // 의존성 배열 비우기 - 포커스 변경 시에만 실행
   );
 
   console.log('🎯 TimeCapsuleCreate 렌더링! step:', step);

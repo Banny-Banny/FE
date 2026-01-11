@@ -23,6 +23,7 @@ import { useOpenedCapsuleDetail } from '../../hooks/useOpenedCapsuleDetail';
 import { getMediaUrl } from '@/utils/mediaUrl';
 import { AudioPlayer } from '@/components/shared/audio-player';
 import { VideoPlayer } from '@/components/shared/video-player';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import type { ImageMedia, VideoMedia, AudioMedia } from '../../types';
 
 interface UnlockedCapsuleDetailProps {
@@ -44,8 +45,11 @@ export default function UnlockedCapsuleDetail({
   onClose,
   capsuleId
 }: UnlockedCapsuleDetailProps) {
-  // API 데이터 로드
-  const { data, writtenSlots, isLoading, error } = useOpenedCapsuleDetail(capsuleId);
+  // 사용자 정보 가져오기
+  const { user } = useAuth();
+
+  // API 데이터 로드 - userId 전달
+  const { data, writtenSlots, isLoading, error } = useOpenedCapsuleDetail(capsuleId, user?.id || null);
 
   const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -70,7 +74,7 @@ export default function UnlockedCapsuleDetail({
       const newImageUrls = new Map<string, string>();
 
       // 이미지 URL 가져오기
-      for (const image of selectedSlot.content.images || []) {
+      for (const image of selectedSlot.content!.images || []) {
         if (image.url && image.url.trim() !== '') {
           // 이미 URL이 있으면 사용
           newImageUrls.set(image.id, image.url);

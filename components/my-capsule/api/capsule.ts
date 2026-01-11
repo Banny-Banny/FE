@@ -217,18 +217,24 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
  * 타임캡슐 상세 조회 API
  * ⭐ 결제 완료된 캡슐만 조회 가능
  * @param id 캡슐 ID (UUID)
+ * @param userId 사용자 ID (UUID) - 다른 사람 게시물을 보기 위해 필요
  * @returns 타임캡슐 상세 정보 (camelCase)
  * @throws 403: 권한 없음 또는 미결제
  * @throws 404: 캡슐 미존재
  * @throws 401: JWT 토큰 없음 또는 유효하지 않음
  * @throws 500: 서버 내부 오류
  */
-export async function getOpenedCapsuleDetail(id: string): Promise<OpenedCapsuleDetailResponse> {
+export async function getOpenedCapsuleDetail(
+  id: string,
+  userId: string,
+): Promise<OpenedCapsuleDetailResponse> {
   try {
-    console.log('🔄 [API] 타임캡슐 상세 조회 시작 - id:', id);
+    console.log('🔄 [API] 타임캡슐 상세 조회 시작 - id:', id, 'userId:', userId);
 
     // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
-    const response = await apiClient.get<ApiCapsuleDetailResponse>(`/api/time-capsules/${id}`);
+    const response = await apiClient.get<ApiCapsuleDetailResponse>(`/api/timecapsules/${id}`, {
+      params: { user_id: userId },
+    });
 
     console.log('✅ [API] 타임캡슐 상세 조회 성공 (raw):', response.data);
 

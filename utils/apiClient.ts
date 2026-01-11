@@ -91,8 +91,10 @@ apiClient.interceptors.request.use(
       if (config.headers) {
         delete config.headers['Content-Type'];
       }
+      // ⭐ 파일 업로드는 시간이 오래 걸릴 수 있으므로 타임아웃 60초로 연장
+      config.timeout = 60000;
       if (__DEV__) {
-        console.log('[API] FormData 감지: Content-Type 헤더 제거됨 (axios가 자동 설정)');
+        console.log('[API] FormData 감지: Content-Type 헤더 제거됨, 타임아웃 60초로 설정');
       }
     }
 

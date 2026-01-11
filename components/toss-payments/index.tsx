@@ -91,13 +91,6 @@ export default function TossPayment({
   // ============================================
   // 핸들러
   // ============================================
-  const handlePaymentCompleteConfirm = useCallback(() => {
-    closeModal();
-    if (onSubmit) {
-      onSubmit(orderSummary);
-    }
-  }, [closeModal, onSubmit, orderSummary]);
-
   const handlePaymentSuccess = useCallback(
     async (paymentKey: string, orderId: string, amount: number) => {
       try {
@@ -248,13 +241,21 @@ export default function TossPayment({
           console.warn('⚠️ [TossPayment] 주문 상태 변경 실패했지만 결제는 완료되었습니다.');
         }
 
+        // ⚠️ 먼저 step 3으로 이동 (대기실)
+        console.log('✅ [TossPayment] step 3으로 이동 (대기실)');
+        if (onSubmit) {
+          onSubmit(orderSummary);
+        }
+
         // 결제 완료 모달 표시 (웹/모바일 공통)
         console.log('✅ [TossPayment] 결제 완료 모달 표시');
         openModal({
           width: 344,
           height: 242,
           closeOnBackdropPress: true,
-          children: <PaymentCompleteModal onConfirm={handlePaymentCompleteConfirm} />,
+          children: <PaymentCompleteModal onConfirm={() => {
+            closeModal();
+          }} />,
         });
 
         if (onPaymentSuccess) {
@@ -272,10 +273,12 @@ export default function TossPayment({
     [
       confirmPayment,
       openModal,
+      closeModal,
+      onSubmit,
       onPaymentSuccess,
       orderData.order_id,
       orderData.total_amount,
-      handlePaymentCompleteConfirm,
+      orderSummary,
       setShowPaymentWebView,
     ],
   );
