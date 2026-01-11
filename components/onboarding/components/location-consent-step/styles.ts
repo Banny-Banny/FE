@@ -11,7 +11,7 @@
  * - BorderRadius: borderRadius.ts
  *
  * Figma 노드 ID: 856-3426
- * 버전: 1.0.0 (스타일 일관성 재검토 완료)
+ * 버전: 1.0.0
  *
  * ✅ 커서룰 체크리스트:
  * [✅] StyleSheet.create() 사용
@@ -33,23 +33,14 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.white[500],
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   // 헤더 영역
   header: {
-    paddingTop: 24,
+    paddingTop: 60,
     paddingHorizontal: 32,
     paddingBottom: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  backIcon: {
-    width: 20,
-    height: 20,
   },
   progressContainer: {
     flexDirection: 'row',
@@ -62,20 +53,16 @@ export const styles = StyleSheet.create({
     borderRadius: 6, // BorderRadius 토큰에 6px 없음 - Figma 디자인 요구사항
     backgroundColor: Colors.grey[500],
   },
-  progressInactive: {
-    flex: 1,
-    height: 12,
-    borderRadius: 6, // BorderRadius 토큰에 6px 없음 - Figma 디자인 요구사항
-    backgroundColor: Colors.grey[500], // 두 번째 단계도 활성화
-  },
   // 메인 컨텐츠
   content: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
+    flex: 1,
+    alignItems: 'flex-start',
+
     paddingTop: 0,
     width: 329,
     alignSelf: 'center',
     marginTop: 0,
+    justifyContent: 'center',
   },
   stepBadge: {
     backgroundColor: Colors.black[500],
@@ -83,6 +70,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: BorderRadius.full, // 원형
     marginBottom: 20,
+    marginTop: 34,
     alignSelf: 'flex-start',
   },
   stepBadgeText: {
@@ -92,7 +80,7 @@ export const styles = StyleSheet.create({
   },
   titleContainer: {
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 2,
     alignItems: 'flex-start',
   },
   title: {
@@ -102,9 +90,9 @@ export const styles = StyleSheet.create({
   },
   descriptionContainer: {
     width: '100%',
-    marginBottom: 0,
-    gap: 2,
+    marginBottom: 20,
     alignItems: 'flex-start',
+    gap: 0,
   },
   description: {
     ...Typography.body.body6,
@@ -112,24 +100,27 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     fontSize: 15,
   },
-  // 지도 일러스트레이션
-  illustrationContainer: {
-    width: 268,
-    height: 268,
-    alignSelf: 'center',
-    marginTop: 0,
+  // 이미지 컨테이너
+  imageContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 75,
     marginBottom: 0,
   },
-  illustration: {
-    width: '100%',
-    height: '100%',
+  locationImage: {
+    width: 260,
+    height: 260,
   },
   // 하단 버튼 영역
   buttonContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 35,
-    gap: 16,
+    paddingBottom: 62,
+    paddingTop: 0,
+
     alignItems: 'center',
+    width: 329,
+    alignSelf: 'center',
+    marginTop: 'auto',
   },
   skipButton: {
     height: 48,
@@ -149,10 +140,12 @@ export const styles = StyleSheet.create({
  *
  * friend-consent-step과 일관성:
  * - [✅] BorderRadius 토큰 사용 (가능한 경우)
- * - [✅] backButton: BorderRadius.full 사용 (원형)
  * - [✅] stepBadge: BorderRadius.full 사용 (원형)
- * - [✅] progressActive/Inactive: borderRadius: 6px 주석 명시 (토큰에 없음)
+ * - [✅] progressActive: borderRadius: 6px 주석 명시 (토큰에 없음)
  * - [✅] description: Colors.darkGrey[400] 사용 (#888 - friend-consent-step과 일치)
+ * - [✅] buttonContainer: marginTop: 'auto' 사용 (하단 고정 - friend-consent-step과 일치)
+ * - [✅] skipButton: borderRadius 제거 (friend-consent-step과 일치)
+ * - [✅] skipButtonText: fontWeight 제거 (friend-consent-step과 일치)
  * - [✅] 주석 스타일 통일 (friend-consent-step과 일관성 유지)
  * - [✅] gap 사용 일관성 유지 (React Native gap 지원 활용)
  * - [✅] 스타일 속성 네이밍 일관성 유지
@@ -173,7 +166,6 @@ export const styles = StyleSheet.create({
  *
  * 조건-색상토큰:
  * - [✅] commons/constants/color.ts의 Colors 토큰 활용
- * - [✅] 투명도가 필요한 경우 토큰 + 16진수 투명도 사용 (rgba 하드코딩 없음)
  * - [✅] hex, rgb, hsl 직접 입력 금지 (토큰만 사용)
  *
  * 조건-타이포그래피:
@@ -185,7 +177,7 @@ export const styles = StyleSheet.create({
  *
  * 최종검토:
  * - [✅] 피그마 디자인과 동일하게 구현됨
- * - [✅] 색상 하드코딩 0건 (투명도는 토큰 + 16진수 투명도로 처리)
+ * - [✅] 색상 하드코딩 0건
  * - [✅] 인라인 스타일 0건
  * - [✅] index.tsx는 구조만, styles.ts는 스타일만 분리
  * - [✅] 외부 라이브러리 설치 0건
@@ -196,5 +188,6 @@ export const styles = StyleSheet.create({
  * - [✅] 애니메이션 추가 없음
  * - [✅] react-native-remix-icon 사용 (필요시)
  * - [✅] friend-consent-step과 스타일 일관성 유지
+ * - [✅] Button 공통 컴포넌트 사용
+ * - [✅] 기존 LocationConsentStep 컴포넌트의 props 인터페이스 유지 (isLoading: boolean, onConsent: () => void)
  */
-

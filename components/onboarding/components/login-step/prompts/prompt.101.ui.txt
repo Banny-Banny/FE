@@ -11,11 +11,10 @@
 ==============================================
 
 조건-피그마) 활용할MCP: Figma Desktop MCP
-조건-Figma Desktop MCP 링크) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=1013-2463&t=d8xuRXwszfWz3b35-4
-
-조건-파일경로) 구현될 TSX 파일경로: app/(mypage)/profile/edit.tsx
-조건-파일경로) 구현될 CSS 파일경로: components/mypage/components/profile-edit/styles.ts
-조건-파일경로) 구현될 컴포넌트 파일경로: components/mypage/components/profile-edit/index.tsx
+조건-Figma Desktop MCP 링크)https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=1013-2463&t=vsnzJY1TqZ8xafZz-4
+조건-파일경로) 수정할 TSX 파일경로: components/mypage/components/profile-edit/index.tsx
+조건-파일경로) 수정할 CSS 파일경로: components/mypage/components/profile-edit/styles.ts
+조건-파일경로) 프로필 편집은 모달로 구현되어 있으며, ProfileSection에서 openModal로 호출됨
 
 ==============================================
 
@@ -61,14 +60,17 @@
 기존히스토리-참고만) 피그마에 표시된 사이즈, 간격, 색상 그대로 적용
 기존히스토리-참고만) 추가적인 기능이나 애니메이션 넣지 말고 디자인만 완벽히 구현
 기존히스토리-참고만) **소수점 값 반올림 필수**: 피그마에서 추출한 모든 소수점이 포함된 수치 값(width, height, padding, margin, borderWidth, lineHeight, letterSpacing, opacity, shadowOpacity 등)은 반드시 반올림하여 정수로 변환해야 함. 예: 1.111 → 1, 26.198 → 26, 0.7 → 1, 0.3 → 0
+기존히스토리-참고만) 프로필 편집 화면은 모달로 구현됨 (ProfileSection에서 openModal로 호출)
+기존히스토리-참고만) 마이페이지 프로필 섹션의 카메라 아이콘 클릭 시 모달로 표시되도록 이미 구현됨
+기존히스토리-참고만) @prompt.101.ui.txt (67-71)
 
 ==============================================
 
 핵심요구사항) MCP를 연동하여 피그마의 디자인을 그대로 구현할 것.
 핵심요구사항) 피그마에 표시된 사이즈, 간격, 색상 그대로 적용
 핵심요구사항) 추가적인 기능이나 애니메이션 넣지 말고 디자인만 완벽히 구현
-핵심요구사항) 프로필 편집 화면은 라우트 /profile/edit로 접근 가능해야 함
-핵심요구사항) 마이페이지 프로필 섹션의 카메라 아이콘 클릭 시 이 화면으로 이동하도록 이미 구현됨
+핵심요구사항) 프로필 편집 화면은 모달로 구현되어 있으며, ProfileSection에서 openModal로 호출됨
+핵심요구사항) 피그마 디자인 수정 사항을 반영하여 UI를 업데이트할 것
 
 ==============================================
 
@@ -105,9 +107,10 @@
 5. react-native-remix-icon의 Icon 컴포넌트 사용 (필요시)
 6. **소수점 값 반올림**: 모든 스타일 속성의 소수점 값은 반올림하여 정수로 변환
 7. 버튼이 필요한 경우 Button 또는 DualButton 공통 컴포넌트 사용 (직접 구현 금지)
-8. app/(mypage)/profile/edit.tsx에 컴포넌트 import 및 렌더링
-9. Colors, Typography는 @/commons/constants에서 import하여 사용
-10. Button, DualButton은 @/commons/components/button, @/commons/components/dual-button에서 import하여 사용
+8. Colors, Typography는 @/commons/constants에서 import하여 사용
+9. Button, DualButton은 @/commons/components/button, @/commons/components/dual-button에서 import하여 사용
+10. 기존 기능 로직은 절대 수정하지 말 것 (useState, useUserInfo, handleSave, handleCancel 등 유지)
+11. 오직 UI/스타일만 수정
 
 ==============================================
 
@@ -117,12 +120,12 @@
 - [ ] 인라인 스타일 0건
 - [ ] index.tsx는 구조만, styles.ts는 스타일만 분리
 - [ ] 외부 라이브러리 설치 0건
-- [ ] 명시된 파일(index.tsx, styles.ts, edit.tsx) 외 수정 0건
+- [ ] 명시된 파일(index.tsx, styles.ts) 외 수정 0건
 - [ ] commons/constants/color.ts, typography.ts 수정 0건 (토큰만 사용)
 - [ ] 공통 컴포넌트 재검토 완료 (버튼은 Button/DualButton 사용, 현재는 독립 구현, 향후 공통화 고려)
 - [ ] 버튼이 필요한 경우 Button 또는 DualButton 공통 컴포넌트 사용 확인 (직접 구현하지 않음)
-- [ ] app/(mypage)/profile/edit.tsx에 컴포넌트 import 및 렌더링 확인
-- [ ] 라우트 /profile/edit로 접근 가능한지 확인
+- [ ] 기존 기능 로직 유지 확인 (useState, useUserInfo, handleSave, handleCancel 등)
+- [ ] 오직 UI/스타일만 수정되었는지 확인
 - [ ] **소수점 값 반올림 확인**: 모든 스타일 속성의 소수점 값이 정수로 반올림되었는지 확인
 - [ ] flexbox만 사용 (position-absolute 금지)
 - [ ] 애니메이션 추가 없음 (있는 그대로만 구현)

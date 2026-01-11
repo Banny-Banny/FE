@@ -6,7 +6,12 @@
 /**
  * 알림 타입
  */
-export type NotificationType = 'CAPSULE_OPEN' | 'FRIEND_INVITE' | string;
+export type NotificationType =
+  | 'CAPSULE_OPEN' // 캡슐이 열릴 때
+  | 'FRIEND_INVITE' // 친구 요청
+  | 'FRIEND_ACCEPTED' // 친구 요청 수락
+  | 'EASTER_EGG_VIEWED' // 누군가 내 이스터에그를 봤을 때
+  | string;
 
 /**
  * API 응답 알림 아이템

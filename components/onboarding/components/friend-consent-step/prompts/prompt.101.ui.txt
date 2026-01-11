@@ -11,8 +11,7 @@
 ==============================================
 
 조건-피그마) 활용할MCP: Figma Desktop MCP
-조건-Figma Desktop MCP 링크) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=856-3377&t=d8xuRXwszfWz3b35-4
-
+조건-Figma Desktop MCP 링크) https://www.figma.com/design/k7IWFISJsHIQ4g6FoAZqup/%ED%83%80%EC%9E%84%EC%BA%A1%EC%8A%90---%EC%9D%B4%EC%8A%A4%ED%84%B0%EC%97%90%EA%B7%B8?node-id=856-3377&t=vsnzJY1TqZ8xafZz-4
 조건-파일경로) 구현될 TSX 파일경로: components/onboarding/components/friend-consent-step/index.tsx
 조건-파일경로) 구현될 CSS 파일경로: components/onboarding/components/friend-consent-step/styles.ts
 조건-파일경로) 구현될 컴포넌트 파일경로: components/onboarding/components/friend-consent-step/index.tsx
@@ -59,15 +58,13 @@
 기존히스토리-참고만) MCP를 연동하여 피그마의 디자인을 그대로 구현할 것.
 기존히스토리-참고만) 피그마에 표시된 사이즈, 간격, 색상 그대로 적용
 기존히스토리-참고만) 추가적인 기능이나 애니메이션 넣지 말고 디자인만 완벽히 구현
+기존히스토리-참고만) 친구 연동 동의 화면은 온보딩 플로우 내부에서 자동으로 표시됨 (라우트: /(auth)/onboarding)
+기존히스토리-참고만) 기존 FriendConsentStep 컴포넌트의 props 인터페이스는 유지 (isLoading, onConsent)
 기존히스토리-참고만) **소수점 값 반올림 필수**: 피그마에서 추출한 모든 소수점이 포함된 수치 값(width, height, padding, margin, borderWidth, lineHeight, letterSpacing, opacity, shadowOpacity 등)은 반드시 반올림하여 정수로 변환해야 함. 예: 1.111 → 1, 26.198 → 26, 0.7 → 1, 0.3 → 0
 
 ==============================================
 
-핵심요구사항) MCP를 연동하여 피그마의 디자인을 그대로 구현할 것.
-핵심요구사항) 피그마에 표시된 사이즈, 간격, 색상 그대로 적용
-핵심요구사항) 추가적인 기능이나 애니메이션 넣지 말고 디자인만 완벽히 구현
-핵심요구사항) 친구 연동 동의 화면은 온보딩 플로우 내부에서 자동으로 표시됨 (라우트: /(auth)/onboarding)
-핵심요구사항) 기존 FriendConsentStep 컴포넌트의 props 인터페이스는 유지 (isLoading, onConsent)
+핵심요구사항) 피그마 디자인과 정확히 일치하도록 수정: 헤더 paddingTop 60px, paddingHorizontal 30px, 카드 간격 24px, 카드 패딩 21px, 아이콘 컨테이너 44px, 아이콘 크기 20px, 버튼 크기 M (56px), 버튼 간격 16px
 
 ==============================================
 

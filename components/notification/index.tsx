@@ -39,15 +39,32 @@ export default function NotificationFeature() {
   const navigation = useNavigation();
   const params = useLocalSearchParams<{ from?: string }>();
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
-  const { newNotifications, oldNotifications, isLoading, error, refreshNotifications } =
-    useNotifications();
+  const {
+    newNotifications,
+    oldNotifications,
+    isLoading,
+    error,
+    refreshNotifications,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
 
-  const handleMarkAllAsRead = () => {
-    // TODO: 모든 알림 읽음 처리
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead();
+    } catch (err) {
+      // 에러는 useNotifications 훅에서 이미 처리됨
+      // 필요시 추가 에러 처리 (예: 토스트 메시지)
+    }
   };
 
-  const handleDelete = (id: string) => {
-    // TODO: 알림 삭제 처리
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteNotification(id);
+    } catch (err) {
+      // 에러는 useNotifications 훅에서 이미 처리됨
+      // 필요시 추가 에러 처리 (예: 토스트 메시지)
+    }
   };
 
   const handleToggleNotification = () => {

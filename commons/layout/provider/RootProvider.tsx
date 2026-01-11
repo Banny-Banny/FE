@@ -3,6 +3,7 @@
  * 앱 전체를 감싸는 최상위 Provider
  */
 
+import { usePushNotifications } from '@/components/notification/hooks/usePushNotifications';
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,6 +17,9 @@ interface RootProviderProps {
 }
 
 export const RootProvider: React.FC<RootProviderProps> = ({ children }) => {
+  // 푸시 알림 초기화 (앱 시작 시 자동으로 권한 요청 및 토큰 등록)
+  usePushNotifications();
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>

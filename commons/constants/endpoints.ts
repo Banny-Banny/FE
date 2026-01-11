@@ -16,6 +16,10 @@ export const API_ENDPOINTS = {
     VERIFY: 'api/auth/verify', // 토큰 유효성 검증 (GET)
     FRIENDS: 'api/me/friends', // 친구 목록 조회 (GET) - 페이지네이션 파라미터: limit, offset
     NOTIFICATIONS: 'api/me/notifications', // 알림 목록 조회 (GET) - 페이지네이션 파라미터: limit, offset
+    NOTIFICATIONS_READ_ALL: 'api/me/notifications/read-all', // 모든 알림 읽음 처리 (PATCH)
+    NOTIFICATIONS_DELETE: 'api/me/notifications', // 알림 삭제 (POST) - {notificationId}/delete 파라미터 필요
+    PUSH_TOKEN: 'api/me/push-token', // 푸시 토큰 등록 (POST) - body: { token: string }
+    ONBOARDING_COMPLETE: 'api/onboarding/complete', // 온보딩 완료 (POST)
   },
 
   // 캡슐 (Capsules)

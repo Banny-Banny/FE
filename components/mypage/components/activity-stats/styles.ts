@@ -34,10 +34,11 @@ export const styles = StyleSheet.create({
   // 통계 항목 컨테이너
   statItem: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+    alignItems: 'stretch', // flex-start에서 stretch로 변경하여 자식의 width: 100%가 제대로 작동하도록
     gap: 4,
     height: 48,
     justifyContent: 'flex-start',
+    flex: 1, // 각 항목이 동일한 공간을 차지하도록 추가
   },
 
   // 통계 값 컨테이너

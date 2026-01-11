@@ -23,6 +23,8 @@ export default function RootLayout() {
     'Pretendard-700': require('../assets/fonts/Pretendard-Bold.otf'),
     'Pretendard-800': require('../assets/fonts/Pretendard-ExtraBold.otf'),
     'Pretendard-900': require('../assets/fonts/Pretendard-Black.otf'),
+    // DungGeunMo 폰트 (온보딩 페이지용)
+    DungGeunMo: require('../assets/fonts/DungGeunMo.ttf'),
   });
 
   if (!loaded) {

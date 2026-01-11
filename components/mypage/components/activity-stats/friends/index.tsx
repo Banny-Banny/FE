@@ -15,7 +15,6 @@
 
 import { Modal } from '@/commons/components/modal';
 import { Colors } from '@/commons/constants';
-import { DEFAULT_FRIENDS } from '@/egg/constants/MOCK_DATA';
 import { isValidImageUrl } from '@/utils';
 import { Image } from 'expo-image';
 import React, { useMemo } from 'react';
@@ -29,7 +28,7 @@ import type { Friend, FriendsModalProps } from './types';
 export function FriendsModal({
   visible,
   onClose,
-  friends = DEFAULT_FRIENDS,
+  friends = [],
   onRefresh,
   onToggleBlock,
   isRefreshing = false,

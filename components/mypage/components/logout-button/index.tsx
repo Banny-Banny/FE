@@ -22,7 +22,7 @@ import { LogoutButtonProps } from './types';
 export function LogoutButton({ onPress }: LogoutButtonProps) {
   return (
     <View style={styles.container}>
-      <Button label="로그아웃" variant="disabled" size="M" onPress={onPress} fullWidth={true} />
+      <Button label="로그아웃" variant="danger" size="M" onPress={onPress} fullWidth={true} />
     </View>
   );
 }

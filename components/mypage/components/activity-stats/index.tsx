@@ -32,10 +32,10 @@ export function ActivityStats() {
   // 사용자 통계 정보 (summary만 사용)
   // ============================================
   const { data: userInfo } = useUserInfo();
-  const summary = userInfo?.summary || {
-    capsuleCount: 0,
-    easterEggCount: 0,
-    friendCount: 0,
+  const summary = {
+    capsuleCount: userInfo?.summary?.capsuleCount ?? 0,
+    easterEggCount: userInfo?.summary?.easterEggCount ?? 0,
+    friendCount: userInfo?.summary?.friendCount ?? 0,
   };
 
   // ============================================

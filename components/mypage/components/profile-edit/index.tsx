@@ -2,11 +2,24 @@
  * components/mypage/components/profile-edit/index.tsx
  * 프로필 편집 모달 컴포넌트
  *
+ * 프롬프트: prompt.101.ui.txt
+ * Figma 노드 ID: 1013-2463
+ *
  * 체크리스트:
  * - [✓] JSX 구조만 작성 (View, Text 등 기본 컴포넌트 사용)
  * - [✓] 인라인 스타일 0건
  * - [✓] 모든 스타일은 styles.ts에서 import하여 사용
  * - [✓] 피그마 디자인 1:1 대응
+ * - [✓] 공통 컴포넌트 사용 (DualButton)
+ * - [✓] 기존 기능 로직 유지 (useState, useUserInfo, handleSave, handleCancel)
+ * - [✓] 오직 UI/스타일만 수정
+ *
+ * 공통 컴포넌트 재검토 (recheck.201.optional.ui.component):
+ * - [✓] DualButton 컴포넌트 사용: 취소/저장 버튼에 사용
+ * - [✓] "사진 변경" 버튼: 특수 스타일(84x36, 회색 배경)이 필요하여 독립 구현
+ *   - Button 컴포넌트는 최소 48px 높이(size="S")만 지원하여 36px 높이 구현 불가
+ *   - Button 컴포넌트에 회색 배경 variant가 없음
+ *   - 프로필 편집 전용 UI이므로 독립적으로 구현하되, 향후 공통화 가능하도록 구조 유지
  */
 
 import { DualButton } from '@/commons/components/dual-button';
