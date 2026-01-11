@@ -219,9 +219,9 @@ export default function UserBottomSheet({
     pickVideo();
   };
 
-  // 음악 추가 핸들러 - AudioAttachment 모달 열기
+  // 음성 추가 핸들러 - AudioAttachment 모달 열기
   const handleAddMusic = () => {
-    // 이미 음악이 있으면 교체 확인
+    // 이미 음성이 있으면 교체 확인
     if (currentMusic) {
       openModal({
         width: 344,
@@ -237,7 +237,7 @@ export default function UserBottomSheet({
             {/* 타이틀 */}
             <Text
               style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              음악 교체
+              음성 교체
             </Text>
 
             {/* 설명 */}
@@ -248,7 +248,7 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              이미 음악이 있습니다. 교체하시겠습니까?
+              이미 음성이 있습니다. 교체하시겠습니까?
             </Text>
 
             {/* 버튼 */}
@@ -274,7 +274,7 @@ export default function UserBottomSheet({
     setIsAudioAttachmentVisible(true);
   };
 
-  // AudioAttachment에서 음악 선택 완료 콜백
+  // AudioAttachment에서 음성 선택 완료 콜백
   const handleAudioSelected = (uri: string, name: string) => {
     setValue('music', uri, { shouldDirty: true });
     setIsAudioAttachmentVisible(false);
@@ -495,7 +495,7 @@ export default function UserBottomSheet({
         console.log('  📝 제출 데이터 요약:');
         console.log('    - 텍스트:', data.textContent.trim().substring(0, 30) + '...');
         console.log('    - 이미지:', data.photos.length, '개');
-        console.log('    - 음악:', data.music ? '있음' : '없음');
+        console.log('    - 음성:', data.music ? '있음' : '없음');
         console.log('    - 비디오:', data.video ? '있음' : '없음');
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
@@ -654,8 +654,7 @@ export default function UserBottomSheet({
           </View>
 
           {/* 타이틀 */}
-          <Text
-            style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
             저장하시겠어요?
           </Text>
 
@@ -764,8 +763,8 @@ export default function UserBottomSheet({
           <Text style={styles.hintText}>한번 저장한 내용은 수정할 수 없어요</Text>
         </>
       ) : (
-        <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
-          <Button label="닫기" variant="outline" size="M" fullWidth={true} onPress={onClose} />
+        <View style={{ paddingVertical: 16 }}>
+          <Button label="닫기" variant="primary" size="L" fullWidth={true} onPress={onClose} />
           {hasSubmitted && !isReadOnly && (
             <Text style={[styles.hintText, { marginTop: 8, textAlign: 'center' }]}>
               이미 제출 완료된 콘텐츠입니다
@@ -889,17 +888,17 @@ export default function UserBottomSheet({
           />
         </View>
 
-        {/* 음악 섹션 - hasMusic이 true일 때만 표시 */}
+        {/* 음성 섹션 - hasMusic이 true일 때만 표시 */}
         {hasMusic && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Icon name="music-line" size={20} color={Colors.black[500]} />
-              <Text style={styles.sectionTitle}>음악 ({currentMusic ? 1 : 0}/1)</Text>
+              <Text style={styles.sectionTitle}>음성 ({currentMusic ? 1 : 0}/1)</Text>
             </View>
-            {/* ⭐ 읽기 전용 모드가 아닐 때만 음악 추가/교체 버튼 표시 */}
+            {/* ⭐ 읽기 전용 모드가 아닐 때만 음성 추가/교체 버튼 표시 */}
             {!isReadOnly && !hasSubmitted && (
               <Button
-                label={currentMusic ? '음악 교체' : '음악 추가'}
+                label={currentMusic ? '음성 교체' : '음성 추가'}
                 variant="outline"
                 size="M"
                 icon="ri-add-line"
@@ -908,13 +907,13 @@ export default function UserBottomSheet({
               />
             )}
 
-            {/* 선택된 음악 표시 */}
+            {/* 선택된 음성 표시 */}
             {currentMusic && (
               <View style={styles.mediaFileContainer}>
                 <View style={styles.mediaFileInfo}>
                   <Icon name="music-fill" size={24} color={Colors.black[500]} />
                   <Text style={styles.mediaFileName} numberOfLines={1}>
-                    {currentMusic.split('/').pop() || '음악 파일'}
+                    {currentMusic.split('/').pop() || '음성 파일'}
                   </Text>
                 </View>
                 {!isReadOnly && !hasSubmitted && (

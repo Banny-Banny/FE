@@ -189,7 +189,7 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
    *
    * 계산 로직:
    * - 완료 인원: status === 'completed'인 참여자 수
-   * - 전체 인원: 실제 배정된 참여자 수 (빈 슬롯 제외)
+   * - 전체 인원: max_participants (캡슐보관함 API와 동일하게)
    * - 진행률: (완료 인원 / 전체 인원) × 100
    *
    * @param {Participant[]} participants 참여자 목록
@@ -203,11 +203,26 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
       // 완료한 참여자 수
       const completed = assignedParticipants.filter((p) => p.status === 'completed').length;
 
-      // 전체 참여자 수 (실제 배정된 인원)
-      const total = assignedParticipants.length;
+      // ⭐ 전체 참여자 수: max_participants 사용 (캡슐보관함 API와 동일)
+      const total = roomSettings?.max_participants || assignedParticipants.length;
 
       // 진행률 계산 (0-100)
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      // ⭐ 디버깅: 진행률 계산 로그
+      console.log('🔍 [calculateProgress] 진행률 계산:', {
+        전체참가자수: participants.length,
+        배정된참가자수: assignedParticipants.length,
+        maxParticipants: roomSettings?.max_participants,
+        전체인원수: total,
+        완료한참가자수: completed,
+        진행률: percentage,
+        참가자목록: assignedParticipants.map((p) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+        })),
+      });
 
       return {
         completed,

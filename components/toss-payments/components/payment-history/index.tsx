@@ -56,13 +56,39 @@ export const PaymentHistory: React.FC = () => {
   const [isDetailVisible, setIsDetailVisible] = useState(false);
 
   // API 호출
-  const { data } = useMyPayments({
+  const { data, isLoading, error } = useMyPayments({
     page: 1,
     limit: 100, // 일단 많은 양을 가져옴 (추후 무한스크롤 추가 가능)
     status: 'ALL',
   });
 
   const allPayments = data?.payments || [];
+
+  // 디버깅: API 응답 확인
+  React.useEffect(() => {
+    if (data) {
+      console.log('📊 [PaymentHistory] API 응답 데이터 (상세):', JSON.stringify(data, null, 2));
+      console.log('📊 [PaymentHistory] 요약:', {
+        paymentsCount: data.payments?.length || 0,
+        total: data.total,
+        page: data.page,
+        limit: data.limit,
+      });
+      console.log('📊 [PaymentHistory] Payments 배열:', data.payments);
+
+      // 데이터 불일치 체크
+      if (data.total && data.total !== (data.payments?.length || 0)) {
+        console.warn('⚠️ [PaymentHistory] 데이터 불일치 감지!', {
+          total: data.total,
+          actualCount: data.payments?.length || 0,
+          difference: data.total - (data.payments?.length || 0),
+        });
+      }
+    }
+    if (error) {
+      console.error('❌ [PaymentHistory] API 에러:', JSON.stringify(error, null, 2));
+    }
+  }, [data, error]);
 
   // 헤더 닫기 핸들러
   const handleClose = () => {
@@ -232,7 +258,10 @@ export const PaymentHistory: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Text style={styles.headerTitle}>결제 내역</Text>
-          <Text style={styles.headerSubtitle}>총 {allPayments.length}건의 결제</Text>
+          <Text style={styles.headerSubtitle}>
+            총 {data?.total ?? allPayments.length}건의 결제
+            {data && data.total !== allPayments.length && ` (표시: ${allPayments.length}건)`}
+          </Text>
         </View>
         <Pressable style={styles.headerCloseButton} onPress={handleClose}>
           <Icon name="close-line" size={24} color={Colors.black[500]} />

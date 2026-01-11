@@ -166,7 +166,22 @@ export default function StepRoom({
 
   /** 진행 상황 계산 (완료 인원 / 전체 인원) */
   const progress = useMemo(() => {
-    return calculateProgress(participants);
+    // ⭐ 디버깅: 참가자 목록 확인
+    console.log('🔍 [StepRoom] 진행 상황 계산 - 참가자 목록:', {
+      전체참가자수: participants.length,
+      참가자상세: participants.map((p) => ({
+        id: p.id,
+        name: p.name || '(빈 슬롯)',
+        status: p.status,
+        isMe: p.isMe,
+      })),
+    });
+
+    const result = calculateProgress(participants);
+
+    console.log('🔍 [StepRoom] 진행 상황 계산 결과:', result);
+
+    return result;
   }, [calculateProgress, participants]);
 
   /** 최종 제출 가능 여부 (진행률 100%) */

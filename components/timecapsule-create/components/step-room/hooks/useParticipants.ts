@@ -9,10 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Platform } from 'react-native';
-import {
-  fetchMyContent,
-  submitMyContent,
-} from '../../write-bottomsheet/api/content';
+import { fetchMyContent, submitMyContent } from '../../write-bottomsheet/api/content';
 import { getRoomDetail } from '../api/capsule';
 import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
 import type { Participant, ParticipantContent, ParticipantStatus } from '../types';
@@ -365,7 +362,9 @@ export function useParticipants({
           // ⭐ has_content 필드로 작성 완료 여부 판단
           const participantStatus = slot.has_content
             ? PARTICIPANT_STATUS.COMPLETED
-            : (slot.status === 'ACCEPTED' ? PARTICIPANT_STATUS.PENDING : PARTICIPANT_STATUS.WAITING);
+            : slot.status === 'ACCEPTED'
+            ? PARTICIPANT_STATUS.PENDING
+            : PARTICIPANT_STATUS.WAITING;
 
           participantsList.push({
             id: slot.user_id,
@@ -393,6 +392,24 @@ export function useParticipants({
         `participantsList.length=${participantsList.length}`,
         `maxParticipants=${maxParticipants}`,
       );
+      // ⭐ 디버깅: 배정된 참가자 상세 확인
+      const assignedParticipants = participantsList.filter((p) => p.name !== '');
+      console.log('🔍 [useParticipants] 배정된 참가자 상세:', {
+        배정된참가자수: assignedParticipants.length,
+        참가자목록: assignedParticipants.map((p) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          isMe: p.isMe,
+        })),
+        전체슬롯상세: roomDetail.slots.map((slot) => ({
+          slot_number: slot.slot_number,
+          user_id: slot.user_id,
+          nickname: slot.nickname,
+          has_content: slot.has_content,
+          status: slot.status,
+        })),
+      });
 
       // ⭐ 본인이 이미 작성한 경우 콘텐츠 데이터 가져오기 (has_content가 true일 때만)
       const mySlot = roomDetail.slots.find((slot) => slot.user_id === currentUserId);
@@ -431,7 +448,10 @@ export function useParticipants({
             });
           }
         } catch (err: any) {
-          console.error('⚠️ [useParticipants] 본인 콘텐츠 조회 실패 (has_content=true인데 실패):', err);
+          console.error(
+            '⚠️ [useParticipants] 본인 콘텐츠 조회 실패 (has_content=true인데 실패):',
+            err,
+          );
           // 에러가 발생해도 계속 진행 (상태는 COMPLETED 유지)
         }
       } else {
@@ -612,7 +632,9 @@ export function useParticipants({
               const file = new File([blob], fileName, { type: mimeType });
               formData.append('images', file);
               console.log(
-                `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} File 객체로 추가 완료 (${file.size} bytes)`,
+                `✅ [useParticipants] 이미지 ${i + 1}/${
+                  content.images.length
+                } File 객체로 추가 완료 (${file.size} bytes)`,
               );
             } else {
               // 네이티브: React Native 형식
@@ -622,7 +644,9 @@ export function useParticipants({
                 name: fileName,
               } as any);
               console.log(
-                `✅ [useParticipants] 이미지 ${i + 1}/${content.images.length} FormData에 추가 완료`,
+                `✅ [useParticipants] 이미지 ${i + 1}/${
+                  content.images.length
+                } FormData에 추가 완료`,
               );
             }
           }
@@ -717,8 +741,8 @@ export function useParticipants({
                   ? savedContent.data.text_message
                   : JSON.stringify(savedContent.data.text_message),
               images: savedContent.data.images?.map((img) => img.url) || [],
-              voiceRecording: savedContent.data.music?.url || null,
-              video: savedContent.data.video?.url || null,
+              voiceRecording: savedContent.data.music?.url || undefined,
+              video: savedContent.data.video?.url || undefined,
             };
 
             console.log('✅ [useParticipants] 서버에서 받은 URL로 콘텐츠 업데이트:', {
