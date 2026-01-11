@@ -6,6 +6,8 @@
 export * from './addressFormat';
 export * from './api';
 export * from './apiClient';
+// audioConverter는 웹 전용이므로 동적 import로만 사용
+// export * from './audioConverter';
 export * from './auth';
 export * from './coordinate';
 export * from './date-price';

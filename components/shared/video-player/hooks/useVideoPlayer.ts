@@ -81,6 +81,7 @@ export interface UseVideoPlayerReturn {
   hasVideo: boolean;
   thumbnailUri: string | null;
   showControls: boolean;
+  error: Error | null;
 
   // 핸들러
   handleTogglePlay: () => void;
@@ -102,6 +103,7 @@ export const useVideoPlayer = ({
 }: VideoPlayerProps): UseVideoPlayerReturn => {
   const [url, setUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [thumbnailUri, setThumbnailUri] = useState<string | null>(thumbnailUrl || null);
   const [showControls, setShowControls] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -255,26 +257,31 @@ export const useVideoPlayer = ({
 
     if (!mediaId) {
       setUrl(null);
+      setError(null);
       return;
     }
 
     // 이미 URL이면 그대로 사용
     if (isUrl(mediaId)) {
       setUrl(mediaId);
+      setError(null);
       return;
     }
 
     // ID인 경우 URL로 변환
     const convertMediaId = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const convertedUrl = await getMediaUrl(mediaId);
         setUrl(convertedUrl);
+        setError(null);
       } catch (error) {
         const err = error instanceof Error ? error : new Error('미디어 URL 변환 실패');
         if (__DEV__) {
           console.error('[VideoPlayer] 미디어 URL 변환 실패:', err);
         }
+        setError(err);
         onError?.(err);
         setUrl(null);
       } finally {
@@ -342,10 +349,12 @@ export const useVideoPlayer = ({
         onPlayStateChange?.(true);
       }
     } catch (error) {
+      const err = error instanceof Error ? error : new Error('재생 토글 실패');
       if (__DEV__) {
-        console.error('[VideoPlayer] 재생 토글 오류:', error);
+        console.error('[VideoPlayer] 재생 토글 오류:', err);
       }
-      onError?.(error instanceof Error ? error : new Error('재생 토글 실패'));
+      setError(err);
+      onError?.(err);
     }
   }, [player, url, onError, onPlayStateChange]);
 
@@ -418,6 +427,7 @@ export const useVideoPlayer = ({
     hasVideo,
     thumbnailUri,
     showControls,
+    error,
     handleTogglePlay,
     handleSeek,
     handleToggleControls,

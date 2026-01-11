@@ -166,22 +166,44 @@ export function useSubmitContent(): UseSubmitContentReturn {
         if (isLocalFile(data.music)) {
           setUploadProgress('음악 파일 추가 중...');
           console.log('📤 [useSubmitContent] 음악 파일 추가 중...');
-          const fileName = generateFileName(data.music, 'music', 'mp3');
+          
+          // URI에서 확장자 추출
+          let extension = 'm4a'; // 기본값 (모든 플랫폼에서 m4a로 녹음)
+          const uriParts = data.music.split('.');
+          if (uriParts.length > 1) {
+            const extractedExt = uriParts[uriParts.length - 1].split('?')[0].toLowerCase();
+            // 백엔드 허용 형식만 체크
+            if (['m4a', 'mp3', 'aac', 'mpeg', 'mp4'].includes(extractedExt)) {
+              extension = extractedExt;
+            }
+          }
+          
+          const fileName = generateFileName(data.music, 'music', extension);
+          
+          // 확장자에 따른 MIME 타입 결정 (백엔드 허용 형식만)
+          const mimeTypeMap: Record<string, string> = {
+            'm4a': 'audio/m4a',
+            'mp3': 'audio/mpeg',
+            'mpeg': 'audio/mpeg',
+            'mp4': 'audio/mp4',
+            'aac': 'audio/aac',
+          };
+          const mimeType = mimeTypeMap[extension] || 'audio/m4a';
 
           // ⭐ 플랫폼별 분기 처리
           if (Platform.OS === 'web') {
             // 웹: URI를 Blob으로 변환 후 추가
             const blob = await uriToBlob(data.music);
             formData.append('music', blob, fileName);
-            console.log(`✅ [useSubmitContent] [웹] 음악 파일 추가 완료: ${fileName}`);
+            console.log(`✅ [useSubmitContent] [웹] 음악 파일 추가 완료: ${fileName} (${mimeType})`);
           } else {
             // React Native: { uri, type, name } 형태로 추가
             formData.append('music', {
               uri: data.music,
-              type: 'audio/mpeg',
+              type: mimeType,
               name: fileName,
             } as any);
-            console.log(`✅ [useSubmitContent] [앱] 음악 파일 추가 완료: ${fileName}`);
+            console.log(`✅ [useSubmitContent] [앱] 음악 파일 추가 완료: ${fileName} (${mimeType})`);
           }
         } else {
           console.log('  ⏭️  음악: 이미 업로드된 파일이므로 건너뜀 - ', data.music);

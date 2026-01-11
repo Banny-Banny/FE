@@ -11,7 +11,7 @@
  */
 
 import { API_ENDPOINTS, queryKeys } from '@/commons/constants';
-import { MediaType } from '@/commons/constants/media';
+import { MediaType, MIME_TYPE_MAP } from '@/commons/constants/media';
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import { buildApiUrl, getMimeTypes, normalizeApiBaseUrl } from '@/utils';
@@ -303,30 +303,20 @@ export function useEggForm({ onClose }: UseEggFormProps) {
     return fileName;
   };
 
-  // URI에서 파일 확장자를 추출하여 MIME 타입 반환 (타임캡슐 제출 로직과 동일)
+  // URI에서 파일 확장자를 추출하여 MIME 타입 반환
+  // MIME_TYPE_MAP을 사용하되, 매핑이 없으면 기본값 반환
   const getMimeType = (uri: string, mediaType: MediaType): string => {
     const extension = uri.split('.').pop()?.toLowerCase() || '';
+    const mimeType = MIME_TYPE_MAP[extension];
 
-    if (mediaType === 'IMAGE') {
-      if (extension === 'jpg' || extension === 'jpeg') return 'image/jpeg';
-      if (extension === 'png') return 'image/png';
-      if (extension === 'gif') return 'image/gif';
-      return 'image/jpeg'; // 기본값
+    if (mimeType) {
+      return mimeType;
     }
 
-    if (mediaType === 'AUDIO') {
-      if (extension === 'mp3') return 'audio/mpeg';
-      if (extension === 'm4a') return 'audio/mp4';
-      if (extension === 'wav') return 'audio/wav';
-      return 'audio/mpeg'; // 기본값
-    }
-
-    if (mediaType === 'VIDEO') {
-      if (extension === 'mp4') return 'video/mp4';
-      if (extension === 'mov') return 'video/quicktime';
-      if (extension === 'avi') return 'video/x-msvideo';
-      return 'video/mp4'; // 기본값
-    }
+    // 매핑이 없는 경우 기본값 반환
+    if (mediaType === 'IMAGE') return 'image/jpeg';
+    if (mediaType === 'AUDIO') return 'audio/mpeg';
+    if (mediaType === 'VIDEO') return 'video/mp4';
 
     return 'application/octet-stream';
   };

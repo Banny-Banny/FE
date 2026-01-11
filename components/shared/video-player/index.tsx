@@ -116,6 +116,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
     hasVideo,
     thumbnailUri,
     showControls,
+    error,
     handleTogglePlay,
     handleToggleControls,
     handleSeek,
@@ -132,6 +133,20 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = (props) => {
   // mediaId가 없거나 로딩 중이면 렌더링하지 않음
   if (!hasVideo) {
     return null;
+  }
+
+  // 에러 발생 시 에러 UI 표시
+  if (error) {
+    return (
+      <View style={[styles.videoPlayerContainer, props.containerStyle]}>
+        <View style={styles.videoErrorContainer}>
+          <View style={styles.videoErrorIconContainer}>
+            <Icon name="error-warning-line" size={24} color={Colors.grey[500]} />
+          </View>
+          <Text style={styles.videoErrorText}>비디오 파일을 재생할 수 없습니다</Text>
+        </View>
+      </View>
+    );
   }
 
   return (
