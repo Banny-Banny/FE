@@ -10,7 +10,7 @@
  * - useMapFeature: 비즈니스 로직
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 
 import { EggDetailFind } from './components/egg-detail-find';
@@ -38,16 +38,31 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
     onEasterEggPress,
   });
 
+  // ✅ 지도 렌더링 최우선: 지도가 로드된 후에만 무거운 작업 시작
+  const [isMapReady, setIsMapReady] = useState(false);
+
   // 현재 위치 가져오기
   const { location: currentLocation } = useMapLocation();
 
-  // 캡슐 리스트 가져오기 (진입 감지용) - 현재 위치 기준 반경 300m
-  // 현재 위치가 없을 때만 기본 중심점 사용
+  // ✅ 지도 준비 완료 후 1초 뒤에 캡슐 리스트 로딩 시작 (iOS 성능 개선)
+  const [shouldLoadCapsules, setShouldLoadCapsules] = useState(false);
+
+  useEffect(() => {
+    if (isMapReady) {
+      const timer = setTimeout(() => {
+        setShouldLoadCapsules(true);
+      }, 1000); // 지도 렌더링 후 1초 대기
+      return () => clearTimeout(timer);
+    }
+  }, [isMapReady]);
+
+  // 캡슐 리스트 가져오기 (진입 감지용) - 지도 준비 후에만 로딩
   const { capsules } = useCapsules({
     lat: currentLocation?.lat || mapConfig.center.lat,
     lng: currentLocation?.lng || mapConfig.center.lng,
-    radius_m: 300, // 기본값
-    limit: 50, // 기본값
+    radius_m: 300,
+    limit: 50,
+    enabled: shouldLoadCapsules, // ✅ 조건부 활성화
   });
 
   // 캡슐 상세 바텀시트 상태 관리
@@ -152,6 +167,11 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
   // 현재 위치가 있으면 그것을 중심으로, 없으면 기본 설정 사용
   const mapCenter = currentLocation || mapConfig.center;
 
+  // ✅ 지도 준비 완료 콜백
+  const handleMapReady = useCallback(() => {
+    setIsMapReady(true);
+  }, []);
+
   return (
     <View style={styles.container}>
       <MapView
@@ -159,6 +179,7 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         level={mapConfig.level}
         onCapsuleClick={handleCapsuleClick}
         onEggSlotPress={handleEggSlotPress}
+        onMapReady={handleMapReady}
       />
       <FabButton onEasterEggPress={handleEasterEggPress} onTimeCapsulePress={onTimeCapsulePress} />
       <ResetEggSlot />

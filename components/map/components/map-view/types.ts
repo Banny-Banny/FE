@@ -16,6 +16,7 @@ export interface MapViewProps {
   onMarkerClick?: (id: string) => void;
   onCapsuleClick?: (capsule: CapsuleItem) => void;
   onEggSlotPress?: (slotData: EggSlotDataResponse | null) => void;
+  onMapReady?: () => void; // ✅ 지도 준비 완료 콜백
 }
 
 /**
@@ -60,4 +61,3 @@ export interface CapsuleMarker {
   lng: number;
   data: CapsuleItem; // 마커에 포함될 전체 데이터
 }
-
