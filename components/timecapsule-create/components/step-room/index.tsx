@@ -14,8 +14,7 @@
 
 import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
-import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors, ROUTES } from '@/commons/constants';
+import { Colors, ROUTES, Typography } from '@/commons/constants';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
@@ -466,19 +465,20 @@ export default function StepRoom({
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <TimeCapsuleHeader
-        title="캡슐 대기실"
-        onBack={undefined}
-        titleAlign="left"
-        rightIcons={[
-          {
-            icon: 'ri-close-line',
-            size: 44,
-            onPress: handleClose,
-            accessibilityLabel: '닫기',
-          },
-        ]}
-      />
+      <View style={styles.headerContainer}>
+        <View style={styles.headerInnerContainer}>
+          {/* 제목 */}
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>캡슐 대기실</Text>
+          </View>
+          {/* 닫기 버튼 (캡슐보관함과 동일한 스타일) */}
+          <TouchableOpacity style={styles.headerCloseButton} onPress={handleClose}>
+            <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
+          </TouchableOpacity>
+        </View>
+        {/* 하단 보더 */}
+        <View style={styles.headerBorder} />
+      </View>
 
       <ScrollView
         style={styles.scrollContent}

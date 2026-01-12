@@ -358,4 +358,53 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     marginLeft: 0,
   },
+
+  // 헤더 닫기 버튼 (캡슐보관함과 동일한 스타일)
+  headerCloseButton: {
+    width: 40,
+    height: 40,
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // 헤더 컨테이너
+  headerContainer: {
+    width: '100%',
+  },
+
+  // 헤더 내부 컨테이너
+  headerInnerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
+    minHeight: 84,
+  },
+
+  // 헤더 제목 컨테이너
+  headerTitleContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+
+  // 헤더 제목 텍스트
+  headerTitle: {
+    ...Typography.header.h1,
+    color: Colors.black[500],
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    lineHeight: 26.4,
+  },
+
+  // 헤더 하단 보더
+  headerBorder: {
+    width: '100%',
+    height: 1,
+    backgroundColor: Colors.grey[200],
+  },
 });
