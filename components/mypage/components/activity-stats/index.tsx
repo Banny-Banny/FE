@@ -13,8 +13,9 @@
 
 import { ROUTES } from '@/commons/constants/routes';
 import { useNavigation, useToggle } from '@/commons/hooks';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useMyCapsules } from '@/components/my-capsule/hooks/useMyCapsules';
 import { useUserInfo } from '../../hooks/useUserInfo';
 import { FriendsModal } from './friends';
 import { useFriends } from './friends/hooks/useFriends';
@@ -32,11 +33,30 @@ export function ActivityStats() {
   // 사용자 통계 정보 (summary만 사용)
   // ============================================
   const { data: userInfo } = useUserInfo();
-  const summary = {
-    capsuleCount: userInfo?.summary?.capsuleCount ?? 0,
-    easterEggCount: userInfo?.summary?.easterEggCount ?? 0,
-    friendCount: userInfo?.summary?.friendCount ?? 0,
-  };
+  
+  // ============================================
+  // 캡슐 개수 계산 (API에서 실제 데이터 가져오기)
+  // ============================================
+  const { capsules } = useMyCapsules();
+  
+  // 실제 캡슐 개수 계산 (대기실 + 열린 캡슐 + 잠긴 캡슐 = 전체 캡슐 개수)
+  // API에서 직접 가져온 실제 캡슐 개수를 사용하여 정확한 개수 표시
+  const actualCapsuleCount = useMemo(() => {
+    return (
+      capsules.waitingRooms.length +
+      capsules.openedCapsules.length +
+      capsules.lockedCapsules.length
+    );
+  }, [capsules]);
+  
+  // summary 정보 (캡슐 개수는 실제 API에서 가져온 값 사용)
+  const summary = useMemo(() => {
+    return {
+      capsuleCount: actualCapsuleCount, // 항상 실제 캡슐 개수 사용
+      easterEggCount: userInfo?.summary?.easterEggCount ?? 0,
+      friendCount: userInfo?.summary?.friendCount ?? 0,
+    };
+  }, [actualCapsuleCount, userInfo?.summary]);
 
   // ============================================
   // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)

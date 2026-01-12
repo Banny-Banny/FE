@@ -43,6 +43,7 @@ export default function TossPayment({
   const [selectedAgreementIndex, setSelectedAgreementIndex] = useState<number | null>(null);
   const [showPaymentWebView, setShowPaymentWebView] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('간편결제');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false); // 결제 처리 중 플래그
 
   // ============================================
   // 디버깅: 결제 금액 확인
@@ -93,6 +94,13 @@ export default function TossPayment({
   // ============================================
   const handlePaymentSuccess = useCallback(
     async (paymentKey: string, orderId: string, amount: number) => {
+      // 중복 호출 방지: 이미 처리 중인 경우 무시
+      if (isProcessingPayment) {
+        console.warn('⚠️ [TossPayment] 결제 처리 중 - 중복 호출 방지');
+        return;
+      }
+      setIsProcessingPayment(true); // 플래그 설정
+
       try {
         console.log('🎯 [TossPayment] handlePaymentSuccess 호출됨 (웹/모바일 공통)');
         console.log('  - paymentKey:', paymentKey);
@@ -268,6 +276,9 @@ export default function TossPayment({
             : '결제 승인에 실패했습니다';
         console.error('❌ [TossPayment] 결제 승인 실패:', errorMessage);
         Alert.alert('결제 승인 실패', errorMessage);
+      } finally {
+        // 처리 완료 후 플래그 해제 (성공/실패 관계없이)
+        setIsProcessingPayment(false);
       }
     },
     [
@@ -280,6 +291,7 @@ export default function TossPayment({
       orderData.total_amount,
       orderSummary,
       setShowPaymentWebView,
+      isProcessingPayment,
     ],
   );
 
@@ -405,7 +417,10 @@ export default function TossPayment({
         paymentMethod={selectedPaymentMethod}
         onSuccess={handlePaymentSuccess}
         onFail={handlePaymentFail}
-        onClose={() => setShowPaymentWebView(false)}
+        onClose={() => {
+          setShowPaymentWebView(false);
+          setIsProcessingPayment(false); // 웹뷰 닫을 때 플래그 초기화
+        }}
       />
     </View>
   );

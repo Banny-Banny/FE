@@ -631,7 +631,13 @@ export default function UserBottomSheet({
                 }}>
                 이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
               </Text>
-              <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+              <Button
+                label="확인"
+                variant="primary"
+                size="S"
+                fullWidth={true}
+                onPress={closeModal}
+              />
             </View>
           ),
         });
@@ -655,7 +661,8 @@ export default function UserBottomSheet({
             <View style={{ marginBottom: 16 }}>
               <Icon name="save-line" size={64} color={Colors.blue[500]} />
             </View>
-            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
               저장하시겠어요?
             </Text>
             <Text
@@ -702,7 +709,7 @@ export default function UserBottomSheet({
             },
           },
         ],
-        { cancelable: true }
+        { cancelable: true },
       );
     }
   };

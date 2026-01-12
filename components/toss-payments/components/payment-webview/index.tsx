@@ -62,6 +62,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
   const [isSimulator, setIsSimulator] = useState(false);
   const convertedUrlsRef = useRef<Set<string>>(new Set()); // 이미 변환한 URL 추적
+  const paymentProcessedRef = useRef<boolean>(false); // 결제 처리 완료 플래그 (중복 호출 방지)
 
   if (!clientKey) {
     console.error('[PaymentWebView] 토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
@@ -111,11 +112,13 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 
     if (visible) {
       checkSimulator();
-      // Modal이 열릴 때 변환된 URL 목록 초기화
+      // Modal이 열릴 때 초기화
       convertedUrlsRef.current.clear();
+      paymentProcessedRef.current = false; // 결제 처리 플래그 초기화
     } else {
-      // Modal이 닫힐 때 변환된 URL 목록 초기화
+      // Modal이 닫힐 때 초기화
       convertedUrlsRef.current.clear();
+      paymentProcessedRef.current = false; // 결제 처리 플래그 초기화
     }
   }, [visible]);
 
@@ -383,8 +386,15 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           break;
 
         case 'PAYMENT_SUCCESS':
+          // 중복 호출 방지: 이미 처리된 경우 무시
+          if (paymentProcessedRef.current) {
+            console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 (handleMessage) - 중복 호출 방지');
+            return;
+          }
+          paymentProcessedRef.current = true; // 플래그 설정
+
           const { paymentKey, orderId, amount } = message.data;
-          console.log('✅ [PaymentWebView] 결제 성공:', { paymentKey, orderId, amount });
+          console.log('✅ [PaymentWebView] 결제 성공 (handleMessage):', { paymentKey, orderId, amount });
           onSuccess(paymentKey, orderId, parseInt(amount));
           break;
 
@@ -419,6 +429,61 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
     // 빈 URL이나 about:blank는 무시 (무한 로딩 방지)
     if (!url || url === 'about:blank' || url.trim() === '') {
       console.log('⏭️ [PaymentWebView] 빈 URL 무시');
+      return false;
+    }
+
+    // ⚠️ 성공/실패 URL로의 이동을 차단하고 직접 처리 (404 페이지가 보이지 않도록)
+    if (url.includes('/payment/success') || url.includes('/payment/fail')) {
+      console.log('🚫 [PaymentWebView] 결제 리다이렉트 URL 감지 - 페이지 로드 차단:', url);
+
+      // 성공 URL 처리
+      if (url.includes('/success')) {
+        // 중복 호출 방지
+        if (paymentProcessedRef.current) {
+          console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 - 중복 호출 방지');
+          return false;
+        }
+        paymentProcessedRef.current = true;
+
+        try {
+          const urlObj = new URL(url);
+          const paymentKey = urlObj.searchParams.get('paymentKey');
+          const orderId = urlObj.searchParams.get('orderId');
+          const amount = urlObj.searchParams.get('amount');
+
+          if (paymentKey && orderId && amount) {
+            console.log('✅ [PaymentWebView] 결제 성공 (handleShouldStartLoadWithRequest):', {
+              paymentKey,
+              orderId,
+              amount,
+            });
+            // 비동기 처리를 위해 setTimeout 사용
+            setTimeout(() => {
+              onSuccess(paymentKey, orderId, parseInt(amount));
+            }, 0);
+          }
+        } catch (error) {
+          console.error('❌ [PaymentWebView] 성공 URL 파싱 실패:', error);
+        }
+      }
+      // 실패 URL 처리
+      else if (url.includes('/fail')) {
+        try {
+          const urlObj = new URL(url);
+          const code = urlObj.searchParams.get('code') || 'PAYMENT_FAILED';
+          const message = urlObj.searchParams.get('message') || '결제에 실패했습니다';
+
+          console.log('❌ [PaymentWebView] 결제 실패 (handleShouldStartLoadWithRequest):', { code, message });
+          // 비동기 처리를 위해 setTimeout 사용
+          setTimeout(() => {
+            onFail(code, message);
+          }, 0);
+        } catch (error) {
+          console.error('❌ [PaymentWebView] 실패 URL 파싱 실패:', error);
+        }
+      }
+
+      // 페이지 로드를 차단하여 404 페이지가 보이지 않도록 함
       return false;
     }
 
@@ -671,26 +736,54 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   };
 
   const handleNavigationStateChange = (navState: any) => {
-    const { url } = navState;
+    const { url, loading } = navState;
 
-    // 성공 URL 감지
-    if (url.includes('/success')) {
-      const urlObj = new URL(url);
-      const paymentKey = urlObj.searchParams.get('paymentKey');
-      const orderId = urlObj.searchParams.get('orderId');
-      const amount = urlObj.searchParams.get('amount');
-
-      if (paymentKey && orderId && amount) {
-        onSuccess(paymentKey, orderId, parseInt(amount));
-      }
+    // URL이 없거나 유효하지 않으면 무시
+    if (!url || url === 'about:blank') {
+      return;
     }
-    // 실패 URL 감지
-    else if (url.includes('/fail')) {
-      const urlObj = new URL(url);
-      const code = urlObj.searchParams.get('code') || 'PAYMENT_FAILED';
-      const message = urlObj.searchParams.get('message') || '결제에 실패했습니다';
 
-      onFail(code, message);
+    try {
+      // 성공 URL 감지
+      if (url.includes('/success')) {
+        // 중복 호출 방지: 이미 처리된 경우 무시
+        if (paymentProcessedRef.current) {
+          console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 (handleNavigationStateChange) - 중복 호출 방지');
+          return;
+        }
+        paymentProcessedRef.current = true; // 플래그 설정
+
+        // WebView 로딩 즉시 중단 (404 페이지가 보이지 않도록)
+        if (loading && webViewRef.current) {
+          webViewRef.current.stopLoading();
+        }
+
+        const urlObj = new URL(url);
+        const paymentKey = urlObj.searchParams.get('paymentKey');
+        const orderId = urlObj.searchParams.get('orderId');
+        const amount = urlObj.searchParams.get('amount');
+
+        if (paymentKey && orderId && amount) {
+          console.log('✅ [PaymentWebView] 결제 성공 (handleNavigationStateChange):', { paymentKey, orderId, amount });
+          onSuccess(paymentKey, orderId, parseInt(amount));
+        }
+      }
+      // 실패 URL 감지
+      else if (url.includes('/fail')) {
+        // WebView 로딩 즉시 중단 (404 페이지가 보이지 않도록)
+        if (loading && webViewRef.current) {
+          webViewRef.current.stopLoading();
+        }
+
+        const urlObj = new URL(url);
+        const code = urlObj.searchParams.get('code') || 'PAYMENT_FAILED';
+        const message = urlObj.searchParams.get('message') || '결제에 실패했습니다';
+
+        onFail(code, message);
+      }
+    } catch (error) {
+      // URL 파싱 에러는 무시 (404 페이지 등)
+      console.log('⚠️ [PaymentWebView] URL 파싱 실패 (무시):', url);
     }
   };
 
@@ -760,11 +853,19 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }}
           onHttpError={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.error(
-              '❌ [PaymentWebView] HTTP 에러:',
-              nativeEvent.statusCode,
-              nativeEvent.url,
-            );
+            const { statusCode, url } = nativeEvent;
+
+            // successUrl과 failUrl의 404 에러는 정상 동작 (WebView에서 URL만 감지하면 됨)
+            if (statusCode === 404 && (url.includes('/payment/success') || url.includes('/payment/fail'))) {
+              console.log(
+                '✅ [PaymentWebView] 결제 리다이렉트 URL 감지 (404는 정상):',
+                url.includes('/success') ? 'SUCCESS' : 'FAIL',
+              );
+              return; // 에러 로그 출력하지 않음
+            }
+
+            // 기타 HTTP 에러는 로그 출력
+            console.error('❌ [PaymentWebView] HTTP 에러:', statusCode, url);
           }}
           onLoadStart={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
