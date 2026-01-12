@@ -9,7 +9,7 @@
 import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { router } from 'expo-router';
 import React from 'react';
-import { View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { ActivityStats } from './components/activity-stats';
 import { Header } from './components/header';
 import { LogoutButton } from './components/logout-button';
@@ -30,8 +30,14 @@ export default function MyPageFeature() {
 
   return (
     <View style={styles.container}>
-      <Header />
-      <View style={styles.content}>
+      <View style={styles.headerWrapper}>
+        <Header />
+      </View>
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.profileSection}>
           <ProfileSection />
         </View>
@@ -44,7 +50,7 @@ export default function MyPageFeature() {
         <View style={styles.logoutButton}>
           <LogoutButton onPress={handleLogout} />
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }

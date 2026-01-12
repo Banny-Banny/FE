@@ -27,13 +27,23 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white[500],
-    paddingHorizontal: Spacing.lg, // Figma: 23.99px ≈ 24px
     overflow: 'visible', // Header의 border가 화면 양끝까지 확장될 수 있도록
   },
   
-  // 컴포넌트 간 간격을 위한 래퍼
-  content: {
+  // 헤더 래퍼 (헤더의 borderLine이 패딩을 상쇄하기 위해 필요)
+  headerWrapper: {
+    paddingHorizontal: Spacing.lg, // Figma: 23.99px ≈ 24px
+  },
+  
+  // ScrollView 스타일
+  scrollView: {
     flex: 1,
+  },
+  
+  // ScrollView contentContainerStyle
+  content: {
+    paddingHorizontal: Spacing.lg, // Figma: 23.99px ≈ 24px
+    paddingBottom: Spacing.xl, // 하단 여백 추가
   },
   
   // 프로필 섹션 (활동 통계와 직접 붙어있음)
@@ -56,4 +66,5 @@ export const styles = StyleSheet.create({
     marginBottom: 0,
   },
 });
+
 
