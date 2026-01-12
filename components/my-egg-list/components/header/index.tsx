@@ -44,13 +44,11 @@ export function Header({
           onPress={onButtonPress}
           accessibilityRole="button"
           accessibilityLabel="닫기">
-          <View style={styles.iconContainer}>
-            <Icon
-              name={'ri-close-line' as IconName}
-              size={20}
-              color={Colors.black[500]}
-            />
-          </View>
+          <Icon
+            name={'ri-close-line' as IconName}
+            size={20}
+            color={Colors.black[500]}
+          />
         </Pressable>
       </View>
       <View style={styles.subtitleContainer}>

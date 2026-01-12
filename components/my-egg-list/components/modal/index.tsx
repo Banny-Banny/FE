@@ -76,7 +76,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
         closeOnBackdropPress>
         <View style={[styles.scrollViewWrapper, { maxHeight }]}>
           <Pressable style={styles.closeButton} onPress={onClose}>
-            <Icon name="close-line" size={20} color={Colors.black[500]} />
+            <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
           </Pressable>
         </View>
       </Modal>
@@ -132,7 +132,7 @@ export const EasterEggModal: React.FC<EasterEggModalProps> = ({ visible, onClose
       <View style={[styles.scrollViewWrapper, { maxHeight }]}>
         {/* 닫기 버튼 (우측 상단) */}
         <Pressable style={styles.closeButton} onPress={onClose}>
-          <Icon name="close-line" size={20} color={Colors.black[500]} />
+          <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
         </Pressable>
         <ScrollView
           style={styles.scrollView}
