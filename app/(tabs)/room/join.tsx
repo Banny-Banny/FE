@@ -54,7 +54,16 @@ export default function RoomJoinScreen() {
       setInviteCode(code);
       setRole('guest');
 
-      // 초대 코드로 대기실 조회 및 참여
+      // 토큰 확인 - 없으면 초대 코드 저장 후 온보딩으로 리다이렉트
+      if (!accessToken && !isAuthLoading) {
+        console.log('🔗 [RoomJoin] 토큰 없음 → 초대 코드 저장 후 온보딩으로 이동');
+        AsyncStorage.setItem(STORAGE_KEYS.PENDING_INVITE_CODE, code).then(() => {
+          router.replace(ROUTES.AUTH_ONBOARDING as any);
+        });
+        return;
+      }
+
+      // 토큰이 있으면 초대 코드로 대기실 조회 및 참여
       const joinRoomFlow = async () => {
         try {
           setIsLoading(true);
@@ -87,7 +96,7 @@ export default function RoomJoinScreen() {
     // 파라미터가 없는 경우
     setError('초대 코드 또는 캡슐 ID가 없습니다.');
     setIsLoading(false);
-  }, [params.invite_code, params.capsuleId]);
+  }, [params.invite_code, params.capsuleId, accessToken, isAuthLoading, router]);
 
   // 로딩 중
   if (isLoading) {
