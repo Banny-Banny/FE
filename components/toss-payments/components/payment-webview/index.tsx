@@ -6,7 +6,7 @@
 
 import { API_ENDPOINTS } from '@/commons/constants';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Modal, Platform, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, StatusBar, StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { PaymentWidgetWeb } from '../payment-widget-web';
 import { generatePaymentHtml } from './html-generator';
@@ -795,9 +795,17 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
     }
   }, [visible, orderId, amount, orderName, customerName]);
 
+  // StatusBar 높이 가져오기 (iOS는 동적으로, Android는 StatusBar.currentHeight 사용)
+  const statusBarHeight = Platform.OS === 'ios' ? 44 : StatusBar.currentHeight || 0;
+
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <View style={styles.container}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}
+      presentationStyle="fullScreen"
+    >
+      <View style={[styles.container, { paddingTop: statusBarHeight }]}>
         <WebView
           ref={webViewRef}
           source={{
@@ -902,7 +910,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#000000',
   },
   loadingContainer: {
     position: 'absolute',
