@@ -325,9 +325,9 @@ export function useMediaPicker(
       setIsPickingAudio(true);
       setError(null);
 
-      // 이미 음악이 있으면 교체 확인
+      // 이미 음성이 있으면 교체 확인
       if (hasMusic) {
-        Alert.alert('음악 교체', '이미 음악이 있습니다. 교체하시겠습니까?', [
+        Alert.alert('음성 교체', '이미 음성이 있습니다. 교체하시겠습니까?', [
           { text: '취소', style: 'cancel', onPress: () => setIsPickingAudio(false) },
           {
             text: '교체',
@@ -341,7 +341,7 @@ export function useMediaPicker(
 
       await proceedAudioPick();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '음악 선택 중 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : '음성 선택 중 오류가 발생했습니다.';
       setError(errorMessage);
       Alert.alert('오류', errorMessage);
     } finally {
@@ -359,7 +359,7 @@ export function useMediaPicker(
     if (!permissionResult.granted) {
       Alert.alert(
         '권한 필요',
-        '음악을 선택하려면 갤러리 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
+        '음성을 선택하려면 갤러리 접근 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
         [{ text: '확인' }],
       );
       return;

@@ -74,10 +74,10 @@ export const useOrderSummary = (orderData: CreateOrderResponse): OrderSummary =>
       });
     }
 
-    // 3. 음악 파일 (파일당 고정 금액)
+    // 3. 음성 파일 (파일당 고정 금액)
     if (audio_amount > 0) {
       items.push({
-        label: '음악 파일',
+        label: '음성 파일',
         detail: '',
         price: audio_amount,
       });

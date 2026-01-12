@@ -925,7 +925,7 @@ export default function UserBottomSheet({
         {hasMusic && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Icon name="music-line" size={20} color={Colors.black[500]} />
+              <Icon name="mic-line" size={20} color={Colors.black[500]} />
               <Text style={styles.sectionTitle}>음성 ({currentMusic ? 1 : 0}/1)</Text>
             </View>
             {/* ⭐ 읽기 전용 모드가 아닐 때만 음성 추가/교체 버튼 표시 */}

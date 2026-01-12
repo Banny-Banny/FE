@@ -17,7 +17,7 @@ import { TossPaymentConfirmResponse } from './api/types/types';
  * 주문 항목 타입
  */
 export interface OrderItem {
-  /** 항목 라벨 (예: "텍스트", "사진", "음악", "동영상") */
+  /** 항목 라벨 (예: "텍스트", "사진", "음성", "동영상") */
   label: string;
   /** 상세 계산식 (예: "2명 × 3개 × ₩500") */
   detail: string;

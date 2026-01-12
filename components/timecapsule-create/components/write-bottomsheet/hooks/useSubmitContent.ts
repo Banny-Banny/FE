@@ -133,7 +133,9 @@ async function uriToFile(uri: string, name: string, type: string): Promise<File>
           throw new Error(`파일을 가져올 수 없습니다: ${response.status} ${response.statusText}`);
         }
         const blob = await response.blob();
-        console.log(`✅ [uriToFile] Blob 생성 완료: ${blob.size} bytes, type: ${blob.type || type}`);
+        console.log(
+          `✅ [uriToFile] Blob 생성 완료: ${blob.size} bytes, type: ${blob.type || type}`,
+        );
 
         // Blob의 타입이 비어있으면 전달받은 타입 사용
         const finalType = blob.type || type;
@@ -317,12 +319,12 @@ export function useSubmitContent(): UseSubmitContentReturn {
         }
       }
 
-      // 음악 파일 처리
+      // 음성 파일 처리
       if (data.music) {
         if (isLocalFile(data.music)) {
-          setUploadProgress('음악 파일 추가 중...');
-          console.log('📤 [useSubmitContent] 음악 파일 추가 중...');
-          
+          setUploadProgress('음성 파일 추가 중...');
+          console.log('📤 [useSubmitContent] 음성 파일 추가 중...');
+
           // URI에서 확장자 추출
           let extension = 'm4a'; // 기본값 (모든 플랫폼에서 m4a로 녹음)
           const uriParts = data.music.split('.');
@@ -333,16 +335,16 @@ export function useSubmitContent(): UseSubmitContentReturn {
               extension = extractedExt;
             }
           }
-          
+
           const fileName = generateFileName(data.music, 'music', extension);
-          
+
           // 확장자에 따른 MIME 타입 결정 (백엔드 허용 형식만)
           const mimeTypeMap: Record<string, string> = {
-            'm4a': 'audio/m4a',
-            'mp3': 'audio/mpeg',
-            'mpeg': 'audio/mpeg',
-            'mp4': 'audio/mp4',
-            'aac': 'audio/aac',
+            m4a: 'audio/m4a',
+            mp3: 'audio/mpeg',
+            mpeg: 'audio/mpeg',
+            mp4: 'audio/mp4',
+            aac: 'audio/aac',
           };
           const mimeType = mimeTypeMap[extension] || 'audio/m4a';
 
@@ -351,7 +353,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
             // 웹: URI를 Blob으로 변환 후 추가
             const blob = await uriToBlob(data.music);
             formData.append('music', blob, fileName);
-            console.log(`✅ [useSubmitContent] [웹] 음악 파일 추가 완료: ${fileName} (${mimeType})`);
+            console.log(
+              `✅ [useSubmitContent] [웹] 음성 파일 추가 완료: ${fileName} (${mimeType})`,
+            );
           } else {
             // React Native: { uri, type, name } 형태로 추가
             formData.append('music', {
@@ -359,11 +363,13 @@ export function useSubmitContent(): UseSubmitContentReturn {
               type: mimeType,
               name: fileName,
             } as any);
-            console.log(`✅ [useSubmitContent] [앱] 음악 파일 추가 완료: ${fileName} (${mimeType})`);
+            console.log(
+              `✅ [useSubmitContent] [앱] 음성 파일 추가 완료: ${fileName} (${mimeType})`,
+            );
           }
         } else {
           // HTTP/HTTPS URL: 이미 업로드된 파일
-          console.log('  ⏭️  음악: 이미 업로드된 파일 URL 전송 - ', data.music);
+          console.log('  ⏭️  음성: 이미 업로드된 파일 URL 전송 - ', data.music);
           formData.append('existing_music_url', data.music);
         }
       }
