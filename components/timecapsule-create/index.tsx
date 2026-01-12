@@ -4,9 +4,10 @@
  */
 
 import { Spinner } from '@/commons/components/spinner';
-import { useNavigation } from '@/commons/hooks';
+import { ROUTES } from '@/commons/constants';
 import TossPayment from '@/components/toss-payments';
 import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 import StepInfo from './components/step-info';
@@ -23,7 +24,7 @@ const STORAGE_KEYS = {
 };
 
 export default function TimeCapsuleCreate() {
-  const navigation = useNavigation();
+  const router = useRouter();
 
   // 웹 환경에서 URL 파라미터에 결제 정보가 있는지 확인
   // 결제 완료 후 리다이렉트된 경우 화면 깜빡임 방지를 위해 특별 처리
@@ -275,7 +276,7 @@ export default function TimeCapsuleCreate() {
 
     const handleBack = () => {
       console.log('🔙 메인으로 돌아가기');
-      navigation.back(); // 메인 페이지로 이동
+      router.push(ROUTES.MAIN); // 메인 페이지로 이동
     };
 
     console.log('📤 StepInfo에 onSubmit 전달:', typeof handleSubmit);
@@ -329,7 +330,7 @@ export default function TimeCapsuleCreate() {
         onSubmit={() => {
           console.log('✅ [TimeCapsuleCreate] 타임캡슐 제출 완료!');
           // TODO: 메인 화면으로 이동 또는 완료 페이지로 이동
-          navigation.back();
+          router.push(ROUTES.MAIN);
         }}
       />
     );

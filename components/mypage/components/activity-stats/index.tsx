@@ -37,26 +37,43 @@ export function ActivityStats() {
   // ============================================
   // 캡슐 개수 계산 (API에서 실제 데이터 가져오기)
   // ============================================
-  const { capsules } = useMyCapsules();
+  const { capsules, isLoading: isCapsulesLoading, error: capsulesError } = useMyCapsules();
   
   // 실제 캡슐 개수 계산 (대기실 + 열린 캡슐 + 잠긴 캡슐 = 전체 캡슐 개수)
   // API에서 직접 가져온 실제 캡슐 개수를 사용하여 정확한 개수 표시
   const actualCapsuleCount = useMemo(() => {
-    return (
+    const count = 
       capsules.waitingRooms.length +
       capsules.openedCapsules.length +
-      capsules.lockedCapsules.length
-    );
-  }, [capsules]);
+      capsules.lockedCapsules.length;
+    
+    // 디버깅: 캡슐 개수 계산 결과 로그
+    console.log('📊 [ActivityStats] 캡슐 개수 계산:', {
+      대기실: capsules.waitingRooms.length,
+      열린캡슐: capsules.openedCapsules.length,
+      잠긴캡슐: capsules.lockedCapsules.length,
+      총개수: count,
+      로딩중: isCapsulesLoading,
+      에러: capsulesError,
+    });
+    
+    return count;
+  }, [capsules, isCapsulesLoading, capsulesError]);
   
   // summary 정보 (캡슐 개수는 실제 API에서 가져온 값 사용)
+  // 에러 발생 시 userInfo의 summary에서 fallback 값 사용
   const summary = useMemo(() => {
+    // API 호출 실패 시 userInfo의 summary에서 캡슐 개수 사용 (fallback)
+    const capsuleCount = capsulesError 
+      ? (userInfo?.summary?.capsuleCount ?? 0)
+      : actualCapsuleCount;
+    
     return {
-      capsuleCount: actualCapsuleCount, // 항상 실제 캡슐 개수 사용
+      capsuleCount, // API 성공 시 실제 개수, 실패 시 userInfo의 summary 값
       easterEggCount: userInfo?.summary?.easterEggCount ?? 0,
       friendCount: userInfo?.summary?.friendCount ?? 0,
     };
-  }, [actualCapsuleCount, userInfo?.summary]);
+  }, [actualCapsuleCount, userInfo?.summary, capsulesError]);
 
   // ============================================
   // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)
