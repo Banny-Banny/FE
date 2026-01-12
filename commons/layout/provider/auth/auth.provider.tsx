@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 console.log('[AuthProvider] 저장된 초대 코드 발견 → 대기실로 이동:', pendingInviteCode);
               }
               await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
-              router.replace(`/room/join?invite_code=${pendingInviteCode}` as any);
+              router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}` as any);
             } else {
               // 초대 코드 없음 → 메인으로
               router.replace(ROUTES.MAIN);

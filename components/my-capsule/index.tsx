@@ -111,7 +111,7 @@ export default function MyCapsule() {
 
   const handleWaitingRoomPress = (capsuleId: string) => {
     // 대기실 페이지로 라우팅
-    router.push(`/room/join?capsuleId=${capsuleId}`);
+    router.push(`/(tabs)/room/join?capsuleId=${capsuleId}`);
   };
 
   const handleOpenedCapsulePress = (capsuleId: string) => {
@@ -125,7 +125,7 @@ export default function MyCapsule() {
   };
 
   const handleClose = () => {
-    router.push(ROUTES.MY_PAGE);
+    router.replace(ROUTES.MY_PAGE);
   };
 
   return (

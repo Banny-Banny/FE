@@ -101,20 +101,18 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // 닫기 버튼
+  // 닫기 버튼 (캡슐보관함과 동일한 스타일)
   closeButton: {
     position: 'absolute',
     top: FIGMA_VALUES.closeButtonTop,
     right: 15.99, // 모달 컨테이너 오른쪽에서 15.99px 떨어진 위치
     width: FIGMA_VALUES.closeButtonSize,
     height: FIGMA_VALUES.closeButtonSize,
-    backgroundColor: Colors.whiteGrey[400], // #E9E9E9 → #E8E8E8에 가장 가까움
-    borderRadius: BorderRadius['2xl'],
     borderWidth: 1,
     borderColor: Colors.border.light,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 1.111,
     zIndex: 10,
   },
 
