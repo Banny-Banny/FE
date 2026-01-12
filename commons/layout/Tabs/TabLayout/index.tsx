@@ -38,6 +38,7 @@ const HIDDEN_SCREENS = [
   'myegglist',
   'my-capsule',
   'payment-history',
+  'room/join',
 ] as const;
 
 export interface TabScreenItem {

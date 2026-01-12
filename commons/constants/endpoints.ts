@@ -49,8 +49,10 @@ export const API_ENDPOINTS = {
     TOSS_MY_PAYMENTS: 'api/payments/toss/my-payments', // 내 결제 내역 목록 조회 (GET) - 페이지네이션 파라미터: page, limit, status
     TOSS_CANCEL: 'api/payments/toss', // 토스 결제 취소 (POST) - {paymentKey}/cancel 파라미터 필요
     // 토스페이먼츠 결제 리다이렉트 URL
-    TOSS_SUCCESS_URL: 'https://timeegg.com/payment/success', // 결제 성공 리다이렉트 URL
-    TOSS_FAIL_URL: 'https://timeegg.com/payment/fail', // 결제 실패 리다이렉트 URL
+    // ⚠️ 모바일 앱에서는 WebView의 handleNavigationStateChange에서 이 URL을 감지하여 처리
+    // 실제로 서버에 해당 페이지가 존재하지 않아도 WebView에서 URL만 감지하면 됨
+    TOSS_SUCCESS_URL: 'https://www.timeegg.com/payment/success', // 결제 성공 리다이렉트 URL (WebView에서 감지)
+    TOSS_FAIL_URL: 'https://www.timeegg.com/payment/fail', // 결제 실패 리다이렉트 URL (WebView에서 감지)
   },
 
   // 미디어 (Media/S3)

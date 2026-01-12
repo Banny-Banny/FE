@@ -71,10 +71,9 @@ export const styles = StyleSheet.create({
     height: 40,
     minWidth: 40, // 웹에서 최소 크기 보장
     minHeight: 40,
-    backgroundColor: Colors.whiteGrey[500], // Figma: #e8e8e8
-    borderWidth: 1, // Figma: 1.111px → 1px
-    borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
-    borderRadius: 28, // Figma: 28px
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0, // 웹에서 축소 방지

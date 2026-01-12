@@ -111,6 +111,8 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
               '🔍 [useRoomData] max_images_per_person 확인:',
               settingsData.max_images_per_person,
             );
+            console.log('🔍🔍🔍 [DEBUG] invite_code 확인:', settingsData.invite_code);
+            console.log('🔍🔍🔍 [DEBUG] 전체 응답:', JSON.stringify(settingsData, null, 2));
 
             // CreateRoomResponse의 추가 정보와 병합
             // getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목이므로 우선 사용
@@ -121,6 +123,8 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
               // capsule_name은 getRoomSettings에서 가져온 값 사용 (orders에서 설정한 제목)
               open_date: roomData.open_date.split('T')[0], // ISO 8601에서 YYYY-MM-DD 추출
               max_participants: roomData.max_participants,
+              // ⭐ invite_code 보존 (settingsData에 있으면 사용, 없으면 createRoomResponse에서)
+              invite_code: settingsData.invite_code || roomData.invite_code,
             };
             setRoomSettings(mergedSettings);
 
@@ -140,6 +144,7 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
               max_images_per_person: 3, // 기본값
               has_music: false, // 기본값
               has_video: false, // 기본값
+              invite_code: roomData.invite_code, // ⭐ CreateRoomResponse의 invite_code 사용
             };
             setRoomSettings(fallbackSettings);
           }
@@ -157,6 +162,8 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
           // 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
           const settingsData = await getRoomSettings(guestCapsuleId);
           console.log('✅ [useRoomData] 게스트 모드 - 대기실 설정값 조회 성공:', settingsData);
+          console.log('🔍🔍🔍 [DEBUG] invite_code 확인:', settingsData.invite_code);
+          console.log('🔍🔍🔍 [DEBUG] 전체 응답:', JSON.stringify(settingsData, null, 2));
           setRoomSettings(settingsData);
         }
         // orderId도 capsuleId도 없으면 목데이터 사용

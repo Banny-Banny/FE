@@ -52,7 +52,6 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.whiteGrey[300] + 'F2', // rgba(232,232,232,0.95)
     borderWidth: 1,
     borderColor: Colors.border.light,
     justifyContent: 'center',

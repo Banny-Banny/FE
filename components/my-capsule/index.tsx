@@ -12,15 +12,81 @@
  */
 
 import { Colors, ROUTES } from '@/commons/constants';
+import { useKakaoAddress } from '@/commons/hooks/useKakaoAddress';
+import { formatAdministrativeAddress } from '@/utils/addressFormat';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
+import dayjs from 'dayjs';
 import UnlockedCapsuleDetail from './components/unlocked-capsule-detail';
 import { useMyCapsules } from './hooks/useMyCapsules';
+import type { MyCapsuleItem } from './types';
 import { styles } from './styles';
 
+// 공통 날짜 포맷터
+const formatDate = (dateString: string): string => {
+  return dayjs(dateString).format('YYYY년 MM월 DD일');
+};
+
 // localhost 이미지 URL 제거됨 - 리믹스 아이콘 사용
+
+/**
+ * 열린 캡슐 카드 컴포넌트 (위치 정보 포함)
+ */
+function OpenedCapsuleCard({
+  capsule,
+  onPress,
+}: {
+  capsule: MyCapsuleItem;
+  onPress: () => void;
+}) {
+  // 위치 정보가 있으면 주소로 변환
+  const { addressData } = useKakaoAddress({
+    lat: capsule.location?.latitude ?? null,
+    lng: capsule.location?.longitude ?? null,
+  });
+
+  const locationText = addressData ? formatAdministrativeAddress(addressData) : null;
+
+  const buriedDate = capsule.createdAt ? formatDate(capsule.createdAt) : null;
+  const openedDate = capsule.openDate ? formatDate(capsule.openDate) : null;
+
+  return (
+    <TouchableOpacity style={styles.openedCapsuleCard} onPress={onPress}>
+      <View style={styles.openedCardContent}>
+        <View style={styles.openedCardIcon}>
+          <Text style={styles.openedCardEmoji}>💊</Text>
+        </View>
+        <View style={styles.openedCardInfo}>
+          <View style={styles.openedCardTitleContainer}>
+            <Text style={styles.openedCardTitle}>{capsule.title}</Text>
+          </View>
+          <View style={styles.openedCardDetails}>
+            {locationText && (
+              <View style={styles.openedCardDetailRow}>
+                <Icon name="ri-map-pin-line" size={16} color={Colors.grey[500]} />
+                <Text style={styles.openedCardDetailText}>{locationText}</Text>
+              </View>
+            )}
+            {buriedDate && (
+              <View style={styles.openedCardDetailRow}>
+                <Icon name="ri-calendar-line" size={16} color={Colors.grey[500]} />
+                <Text style={styles.openedCardDetailText}>묻은 날짜: {buriedDate}</Text>
+              </View>
+            )}
+            {openedDate && (
+              <View style={styles.openedCardDetailRow}>
+                <Icon name="ri-calendar-check-line" size={16} color={Colors.grey[500]} />
+                <Text style={styles.openedCardDetailText}>열린 날짜: {openedDate}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
 export default function MyCapsule() {
   const router = useRouter();
@@ -45,7 +111,7 @@ export default function MyCapsule() {
 
   const handleWaitingRoomPress = (capsuleId: string) => {
     // 대기실 페이지로 라우팅
-    router.push(`/room/join?capsuleId=${capsuleId}`);
+    router.push(`/(tabs)/room/join?capsuleId=${capsuleId}`);
   };
 
   const handleOpenedCapsulePress = (capsuleId: string) => {
@@ -59,7 +125,7 @@ export default function MyCapsule() {
   };
 
   const handleClose = () => {
-    router.push(ROUTES.MAIN);
+    router.replace(ROUTES.MY_PAGE);
   };
 
   return (
@@ -161,19 +227,58 @@ export default function MyCapsule() {
                       </View>
                     </View>
 
-                    {/* 알 아이콘 섹션 */}
-                    <View style={styles.cardEggsSection}>
-                      {Array.from({ length: capsule.participantCount }).map((_, index) => (
-                        <View
-                          key={index}
-                          style={
-                            index < capsule.completedCount
-                              ? styles.eggIconGrey
-                              : styles.eggIconWhite
-                          }>
-                          <Text style={styles.eggEmoji}>🥚</Text>
-                        </View>
-                      ))}
+                    {/* 참여자 아이콘 섹션 */}
+                    <View style={styles.cardParticipantsSection}>
+                      {capsule.participantCount <= 10 ? (
+                        // 10명 이하: 아이콘으로 표시
+                        Array.from({ length: capsule.participantCount }).map((_, index) => (
+                          <View
+                            key={index}
+                            style={
+                              index < capsule.completedCount
+                                ? styles.participantIconCompleted
+                                : styles.participantIconPending
+                            }>
+                            <Icon
+                              name="ri-user-line"
+                              size={14}
+                              color={
+                                index < capsule.completedCount
+                                  ? Colors.white[500]
+                                  : Colors.grey[500]
+                              }
+                            />
+                          </View>
+                        ))
+                      ) : (
+                        // 10명 초과: 9개 아이콘 + "+N" 표시
+                        <>
+                          {Array.from({ length: 9 }).map((_, index) => (
+                            <View
+                              key={index}
+                              style={
+                                index < capsule.completedCount
+                                  ? styles.participantIconCompleted
+                                  : styles.participantIconPending
+                              }>
+                              <Icon
+                                name="ri-user-line"
+                                size={14}
+                                color={
+                                  index < capsule.completedCount
+                                    ? Colors.white[500]
+                                    : Colors.grey[500]
+                                }
+                              />
+                            </View>
+                          ))}
+                          <View style={styles.participantMoreContainer}>
+                            <Text style={styles.participantMoreText}>
+                              +{capsule.participantCount - 9}
+                            </Text>
+                          </View>
+                        </>
+                      )}
                     </View>
 
                     {/* 남은 시간 섹션 */}
@@ -223,23 +328,11 @@ export default function MyCapsule() {
         <ScrollView style={styles.lockedCapsulesSection}>
           <View style={styles.lockedCapsulesList}>
             {capsules.openedCapsules.map((capsule) => (
-              <TouchableOpacity
+              <OpenedCapsuleCard
                 key={capsule.id}
-                style={styles.openedCapsuleCard}
-                onPress={() => handleOpenedCapsulePress(capsule.id)}>
-                <View style={styles.openedCardContent}>
-                  <View style={styles.openedCardIcon}>
-                    <Text style={styles.openedCardEmoji}>💊</Text>
-                  </View>
-                  <View style={styles.openedCardInfo}>
-                    <View style={styles.openedCardTitleContainer}>
-                      <Text style={styles.openedCardTitle}>{capsule.title}</Text>
-                    </View>
-                    {/* TODO: 위치, 참여자, 날짜 등 추가 UI 데이터 매핑 */}
-                    {/* 현재 API는 기본 정보만 제공, 추후 API 확장 필요 */}
-                  </View>
-                </View>
-              </TouchableOpacity>
+                capsule={capsule}
+                onPress={() => handleOpenedCapsulePress(capsule.id)}
+              />
             ))}
           </View>
         </ScrollView>
@@ -263,8 +356,20 @@ export default function MyCapsule() {
                       <View style={styles.lockedCardTitleContainer}>
                         <Text style={styles.lockedCardTitle}>{capsule.title}</Text>
                       </View>
-                      {/* TODO: 위치, 참여자, 날짜 등 추가 UI 데이터 매핑 */}
-                      {/* 현재 API는 기본 정보만 제공, 추후 API 확장 필요 */}
+                      <View style={styles.lockedCardDetails}>
+                        <View style={styles.lockedCardDetailRow}>
+                          <Icon name="ri-calendar-line" size={16} color={Colors.grey[500]} />
+                          <Text style={styles.lockedCardDetailTextContent}>
+                            묻은 날짜: {formatDate(capsule.createdAt)}
+                          </Text>
+                        </View>
+                        <View style={styles.lockedCardDetailRow}>
+                          <Icon name="ri-calendar-check-line" size={16} color={Colors.grey[500]} />
+                          <Text style={styles.lockedCardDetailTextContent}>
+                            열리는 날짜: {formatDate(capsule.openDate)}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -281,9 +386,6 @@ export default function MyCapsule() {
                         return diffDays > 0 ? `D-${diffDays}일 남음` : '개봉됨';
                       })()}
                     </Text>
-                  </View>
-                  <View style={styles.lockedBadge}>
-                    <Text style={styles.lockedBadgeText}>잠김</Text>
                   </View>
                 </View>
               </View>

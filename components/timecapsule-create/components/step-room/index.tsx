@@ -14,15 +14,13 @@
 
 import { Button } from '@/commons/components/button';
 import { useModal } from '@/commons/components/modal/hooks/useModal';
-import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
-import { Colors, ROUTES } from '@/commons/constants';
+import { Colors, ROUTES, Typography } from '@/commons/constants';
 import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
 import dayjs from 'dayjs';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -453,32 +451,34 @@ export default function StepRoom({
 
   // X 버튼 핸들러: 진입 경로에 따라 다른 동작
   const handleClose = () => {
-    // 캡슐보관함에서 들어온 경우: 뒤로가기
+    // 캡슐보관함에서 들어온 경우: 캡슐보관함으로 명시적 이동
     if (propsCapsuleId) {
-      router.back();
+      router.replace(ROUTES.MY_CAPSULE);
     }
-    // 결제 후 들어온 경우: 메인화면으로
+    // 결제 후 들어온 경우: 메인화면으로 이동 + 토스트 메시지 표시
     else {
-      router.replace(ROUTES.MAIN as any);
+      // URL 파라미터로 토스트 메시지 표시 여부 전달
+      router.replace(`${ROUTES.MAIN}?showToast=true` as any);
     }
   };
 
   return (
     <View style={styles.container}>
       {/* 헤더 */}
-      <TimeCapsuleHeader
-        title="캡슐 대기실"
-        onBack={undefined}
-        titleAlign="left"
-        rightIcons={[
-          {
-            icon: 'close-line',
-            size: 44,
-            onPress: handleClose,
-            accessibilityLabel: '닫기',
-          },
-        ]}
-      />
+      <View style={styles.headerContainer}>
+        <View style={styles.headerInnerContainer}>
+          {/* 제목 */}
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>캡슐 대기실</Text>
+          </View>
+          {/* 닫기 버튼 (캡슐보관함과 동일한 스타일) */}
+          <TouchableOpacity style={styles.headerCloseButton} onPress={handleClose}>
+            <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
+          </TouchableOpacity>
+        </View>
+        {/* 하단 보더 */}
+        <View style={styles.headerBorder} />
+      </View>
 
       <ScrollView
         style={styles.scrollContent}

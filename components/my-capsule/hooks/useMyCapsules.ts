@@ -51,7 +51,14 @@ export function useMyCapsules() {
         title: capsule.title,
         status: capsule.status,
         openDate: capsule.openDate,
+        deadline: capsule.deadline,
       });
+
+      // 🎯 이스터에그 필터링: openDate와 deadline이 둘 다 null인 경우 제외
+      if (capsule.openDate === null && capsule.deadline === null) {
+        console.log('🥚 [이스터에그 제외]', capsule.id, capsule.title);
+        return; // 이 캡슐은 건너뛰기
+      }
 
       if (capsule.status === 'WAITING') {
         // 대기실 - 작성 대기 중인 캡슐

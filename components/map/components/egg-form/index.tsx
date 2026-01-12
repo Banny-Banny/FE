@@ -165,17 +165,17 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
               )}
             </Pressable>
 
-            {/* 음악 버튼 */}
+            {/* 음성 버튼 */}
             <Pressable
               style={[styles.attachmentButton, styles.musicButton]}
               onPress={() => setIsAudioModalVisible(true)}>
               {musicAttachment ? (
                 <>
-                  {/* 음악 아이콘 */}
+                  {/* 음성 아이콘 */}
                   <View style={styles.attachmentPreviewImagePlaceholder}>
-                    <Icon name="music-line" size={24} color={Colors.blue[500]} />
+                    <Icon name="mic-line" size={24} color={Colors.blue[500]} />
                   </View>
-                  {/* 음악 파일명 텍스트 */}
+                  {/* 음성 파일명 텍스트 */}
                   <View style={styles.attachmentPreviewLabel}>
                     <Text style={styles.attachmentPreviewText} numberOfLines={1}>
                       {musicAttachment.name}
@@ -193,8 +193,8 @@ export const EggForm: React.FC<EggFormProps> = ({ isVisible, onClose }) => {
                 </>
               ) : (
                 <>
-                  <Icon name="music-line" size={24} color={Colors.blue[500]} />
-                  <Text style={styles.attachmentButtonText}>음악</Text>
+                  <Icon name="mic-line" size={24} color={Colors.blue[500]} />
+                  <Text style={styles.attachmentButtonText}>음성</Text>
                 </>
               )}
             </Pressable>

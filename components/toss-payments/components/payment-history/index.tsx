@@ -178,7 +178,7 @@ export const PaymentHistory: React.FC = () => {
         <View style={styles.modalContent}>
           {/* 닫기 버튼 */}
           <Pressable style={styles.modalCloseButton} onPress={() => setIsDetailVisible(false)}>
-            <Icon name="close-line" size={24} color={Colors.black[500]} />
+            <Icon name={'ri-close-line' as any} size={24} color={Colors.black[500]} />
           </Pressable>
 
           {/* 헤더 */}
@@ -264,7 +264,7 @@ export const PaymentHistory: React.FC = () => {
           </Text>
         </View>
         <Pressable style={styles.headerCloseButton} onPress={handleClose}>
-          <Icon name="close-line" size={24} color={Colors.black[500]} />
+          <Icon name={'ri-close-line' as any} size={24} color={Colors.black[500]} />
         </Pressable>
       </View>
 

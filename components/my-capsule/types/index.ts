@@ -17,6 +17,10 @@ export interface MyCapsuleItem {
   myWriteStatus: boolean;                          // 내 작성 여부
   deadline: string;                                // 제출 마감 시간 (ISO 8601)
   createdAt: string;                               // 생성 날짜 (ISO 8601)
+  location?: {                                      // 방장이 제출한 위치 (선택적)
+    latitude: number;                              // 위도
+    longitude: number;                              // 경도
+  };
 }
 
 /**

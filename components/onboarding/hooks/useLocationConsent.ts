@@ -93,7 +93,7 @@ export function useLocationConsent() {
           pendingInviteCode,
         );
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
-        router.replace(`/room/join?invite_code=${pendingInviteCode}`);
+        router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}`);
         return;
       }
 
@@ -176,7 +176,7 @@ export function useLocationConsent() {
           pendingInviteCode,
         );
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
-        router.replace(`/room/join?invite_code=${pendingInviteCode}`);
+        router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}`);
         return;
       }
 

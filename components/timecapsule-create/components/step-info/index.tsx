@@ -74,7 +74,7 @@ const TEXTS = {
   additionalOptions: {
     label: '추가 옵션',
     options: [
-      { title: '음악 파일', price: '+₩1,000' },
+      { title: '음성 파일', price: '+₩1,000' },
       { title: '영상 추가', price: '+₩2,000' },
     ],
   },
@@ -93,7 +93,7 @@ const TEXTS = {
 // 아이콘 이름 (Remix Icon)
 // ============================================
 const ICONS = {
-  music: 'music-2-line' as const,
+  music: 'mic-line' as const,
   // Figma 디자인 기준: 동영상 카메라 아이콘
   video: 'video-on-line' as const,
 };

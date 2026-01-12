@@ -300,7 +300,7 @@ export default function UnlockedCapsuleDetail({
             <View style={styles.videoSection}>
               <View style={styles.videoContainer}>
                 <VideoPlayer
-                  mediaId={currentContent.video.url || currentContent.video.id}
+                  mediaId={currentContent.video.id}
                   thumbnailUrl={currentContent.video.thumbnailUrl || undefined}
                 />
               </View>
@@ -311,7 +311,7 @@ export default function UnlockedCapsuleDetail({
           {currentContent?.audio && currentContent.audio.id && (
             <View style={styles.audioSection}>
               <AudioPlayer
-                mediaId={currentContent.audio.url || currentContent.audio.id}
+                mediaId={currentContent.audio.id}
               />
             </View>
           )}

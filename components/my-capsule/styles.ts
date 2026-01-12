@@ -218,6 +218,8 @@ export const styles = StyleSheet.create({
     width: 218,
     height: 4,
     backgroundColor: Colors.whiteGrey[50],
+    borderWidth: 1,
+    borderColor: Colors.border.light,
     borderRadius: 9999,
   },
 
@@ -291,6 +293,49 @@ export const styles = StyleSheet.create({
     letterSpacing: 0,
     color: Colors.lightBlack[500],
     textAlign: 'center',
+  },
+
+  // 참여자 아이콘 섹션
+  cardParticipantsSection: {
+    width: 218,
+    height: 28,
+    flexDirection: 'row',
+    gap: 4,
+    marginTop: 16,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+
+  participantIconCompleted: {
+    width: 24,
+    height: 24,
+    backgroundColor: Colors.black[500],
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  participantIconPending: {
+    width: 24,
+    height: 24,
+    backgroundColor: Colors.whiteGrey[50],
+    borderWidth: 1,
+    borderColor: Colors.border.light,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  participantMoreContainer: {
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+  },
+
+  participantMoreText: {
+    ...Typography.body.body11,
+    color: Colors.grey[500],
   },
 
   // 남은 시간 섹션
