@@ -4,7 +4,7 @@
  */
 
 import { API_ENDPOINTS, ROUTES } from '@/commons/constants';
-import { buildApiUrl } from '@/utils';
+import { buildApiUrl, normalizeApiBaseUrl } from '@/utils';
 import Constants from 'expo-constants';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -23,7 +23,6 @@ interface KakaoLoginResult {
  */
 export function useKakaoLogin() {
   const [isLoading, setIsLoading] = useState(false);
-  const apiBaseUrl = Constants.expoConfig?.extra?.apiBaseUrl || '';
 
   /**
    * 카카오 로그인 실행 및 결과 반환
@@ -31,6 +30,19 @@ export function useKakaoLogin() {
   const loginWithKakao = useCallback(async (): Promise<KakaoLoginResult | null> => {
     try {
       setIsLoading(true);
+
+      // API Base URL 가져오기 및 정규화 (따옴표 제거 등)
+      const rawApiBaseUrl =
+        Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || '';
+      const apiBaseUrl = normalizeApiBaseUrl(rawApiBaseUrl);
+
+      if (!apiBaseUrl) {
+        Alert.alert(
+          '설정 오류',
+          'API 서버 주소가 설정되지 않았습니다.\n.env 파일에 EXPO_PUBLIC_API_BASE_URL을 설정해주세요.',
+        );
+        return { error: 'NO_API_BASE_URL' };
+      }
 
       // 백엔드 OAuth URL 생성
       const baseLoginUrl = buildApiUrl(apiBaseUrl, API_ENDPOINTS.AUTH.KAKAO);
@@ -136,7 +148,7 @@ export function useKakaoLogin() {
     } finally {
       setIsLoading(false);
     }
-  }, [apiBaseUrl]);
+  }, []);
 
   return {
     isLoading,
