@@ -9,69 +9,19 @@ import { apiClient } from '@/utils/apiClient';
 import dayjs from 'dayjs';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
 
-// ========================================
-// 🔧 테스트 모드 설정
-// ========================================
-// true: Mock 데이터 사용 (백엔드 없이 테스트)
-// false: 실제 API 호출
-const USE_MOCK_DATA = false;
-// ========================================
-
 /**
  * 타임캡슐 주문 생성 API 호출
  */
 export async function createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
-  // Mock 데이터 사용 모드
-  if (USE_MOCK_DATA) {
-    await new Promise((resolve) => setTimeout(resolve, 500)); // 로딩 시뮬레이션
-
-    console.log('🔍 [Mock] capsule_title 확인:', data.capsule_title);
-
-    return {
-      order_id: 'mock-order-' + Date.now(),
-      capsule_id: 'mock-capsule-' + Date.now(),
-      total_amount: 10000,
-      customer_key: 'mock-customer-key',
-      created_at: new Date().toISOString(),
-      image_amount: 0,
-      audio_amount: data.add_music ? 2000 : 0,
-      video_amount: data.add_video ? 3000 : 0,
-      time_option_amount:
-        data.time_option === '1_WEEK' ? 1000 : data.time_option === '1_YEAR' ? 5000 : 0,
-      time_option: data.time_option,
-      custom_open_at: data.custom_open_at || null,
-      headcount: data.headcount,
-      photo_count: data.photo_count || 0,
-      add_music: data.add_music || false,
-      add_video: data.add_video || false,
-      status: 'PENDING_PAYMENT' as const,
-    };
-  }
-
-  // 실제 API 호출 코드
   try {
     // 🔍 요청 데이터 확인 (개발 모드)
     if (__DEV__) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📤 [createOrder] 주문 생성 요청');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📝 캡슐 제목 (capsule_title):', data.capsule_title);
-      console.log('📦 전체 요청 데이터:', JSON.stringify(data, null, 2));
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
 
     // 🔍 응답 데이터 확인 (개발 모드)
     if (__DEV__) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('✅ [createOrder] 주문 생성 성공');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📦 전체 응답 데이터:', JSON.stringify(response.data, null, 2));
-      console.log('🆔 주문 ID (order_id):', response.data.order_id);
-      console.log('🏠 대기실 ID (capsule_id):', response.data.capsule_id);
-      console.log('💰 총 금액 (total_amount):', response.data.total_amount);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     return response.data;
@@ -81,20 +31,10 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
 
     // 개발 모드에서 상세 오류 정보 로깅
     if (__DEV__) {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('❌ [createOrder] 주문 생성 실패');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('📊 HTTP 상태 코드:', status);
-      console.error('📝 에러 메시지:', error.message);
-      console.error('📤 요청 데이터:', JSON.stringify(data, null, 2));
       if (error.response?.data) {
-        console.error('📥 서버 응답 데이터:', JSON.stringify(error.response.data, null, 2));
       }
       if (error.response?.headers) {
-        console.error('📋 응답 헤더:', error.response.headers);
       }
-      console.error('🌐 네트워크 오류 여부:', !error.response);
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     if (status === 400) {

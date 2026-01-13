@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[500],
   },
   scrollContent: {
-    flexGrow: 1,
+    flexGrow: 1, // ScrollView가 화면 전체를 차지하도록 설정
   },
   // 헤더 영역
   header: {
@@ -59,10 +59,12 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
 
     paddingTop: 0,
+    paddingBottom: 0,
     width: 329,
     alignSelf: 'center',
     marginTop: 0,
-    justifyContent: 'center',
+    marginBottom: 0,
+    // justifyContent: 'center', // 제거 - 이미지와 버튼 분리
   },
   stepBadge: {
     backgroundColor: Colors.black[500],
@@ -105,7 +107,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 75,
+    marginTop: 0,
     marginBottom: 0,
   },
   locationImage: {
@@ -115,7 +117,7 @@ export const styles = StyleSheet.create({
   // 하단 버튼 영역
   buttonContainer: {
     paddingBottom: 62,
-    paddingTop: 0,
+    paddingTop: 60,
 
     alignItems: 'center',
     width: 329,

@@ -376,7 +376,6 @@ export function WebMapView({
     } catch (error) {
       // 현재 위치 마커 업데이트 실패 시 에러 로깅
       if (__DEV__) {
-        console.error('[WebMapView] Failed to update current location marker:', error);
       }
     }
   }, [clearCurrentLocationMarker]);

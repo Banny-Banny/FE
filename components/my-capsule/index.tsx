@@ -100,7 +100,6 @@ export default function MyCapsule() {
   // ⭐ 화면이 포커스될 때마다 데이터 리페치 (대기실에서 돌아왔을 때)
   useFocusEffect(
     React.useCallback(() => {
-      console.log('🔄 [MyCapsule] 화면 포커스 - 데이터 리페치');
       refetch();
     }, [refetch])
   );

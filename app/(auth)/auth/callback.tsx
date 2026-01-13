@@ -29,7 +29,6 @@ export default function AuthCallback() {
     // 이미 처리 중이면 무시
     if (isProcessingRef.current) {
       if (__DEV__) {
-        console.log('[AuthCallback] 이미 로그인 처리 중, 스킵');
       }
       return;
     }
@@ -39,29 +38,22 @@ export default function AuthCallback() {
         isProcessingRef.current = true; // 처리 시작
 
         if (__DEV__) {
-          console.log('[AuthCallback] 웹 로그인 시작:', {
-            tokenLength: token.length,
-            tokenPreview: token.substring(0, 20) + '...',
-          });
         }
 
         const userData = getUserFromToken(token);
         if (!userData) {
           if (__DEV__) {
-            console.error('[AuthCallback] 토큰에서 유저 정보 추출 실패');
           }
           Alert.alert('오류', '사용자 정보를 가져올 수 없습니다.');
           return;
         }
 
         if (__DEV__) {
-          console.log('[AuthCallback] 유저 정보 추출 성공:', userData);
         }
 
         await login(token, userData);
 
         if (__DEV__) {
-          console.log('[AuthCallback] 로그인 처리 완료');
         }
 
         // AsyncStorage에서 온보딩 상태 확인
@@ -74,17 +66,12 @@ export default function AuthCallback() {
         const isLocationConsentDone = locationConsent === 'true';
 
         if (__DEV__) {
-          console.log('[AuthCallback] 온보딩 상태:', {
-            isFriendConsentDone,
-            isLocationConsentDone,
-          });
         }
 
         // 온보딩 상태 확인 후 리다이렉트
         if (!isFriendConsentDone || !isLocationConsentDone) {
           // 온보딩 미완료 → 온보딩 페이지로
           if (__DEV__) {
-            console.log('[AuthCallback] 온보딩 미완료 → 온보딩 페이지로 이동');
           }
           router.replace(ROUTES.AUTH_ONBOARDING as any);
         } else {
@@ -93,21 +80,18 @@ export default function AuthCallback() {
           if (pendingInviteCode) {
             // 초대 코드 있음 → 대기실로 이동 후 삭제
             if (__DEV__) {
-              console.log('[AuthCallback] 저장된 초대 코드 발견 → 대기실로 이동:', pendingInviteCode);
             }
             await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
             router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}` as any);
           } else {
             // 초대 코드 없음 → 메인 페이지로
             if (__DEV__) {
-              console.log('[AuthCallback] 온보딩 완료 → 메인 페이지로 이동');
             }
             router.replace(ROUTES.MAIN as any);
           }
         }
       } catch (error) {
         if (__DEV__) {
-          console.error('[AuthCallback] 로그인 처리 중 오류:', error);
         }
         Alert.alert('오류', '로그인 처리 중 오류가 발생했습니다.');
       }

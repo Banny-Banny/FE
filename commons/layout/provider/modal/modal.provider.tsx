@@ -47,16 +47,10 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
    * @param config - 모달 설정 (children, width, height, closeOnBackdropPress, onClose)
    */
   const openModal = useCallback((config: ModalConfig) => {
-    console.log('🔵 [ModalProvider] openModal 호출됨', {
-      width: config.width,
-      height: config.height,
-      hasChildren: !!config.children,
-    });
     setModalState({
       isVisible: true,
       config,
     });
-    console.log('🔵 [ModalProvider] 모달 상태 업데이트 완료');
   }, []);
 
   /**
@@ -87,10 +81,6 @@ export const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
 
   // 모달 상태 변경 감지
   React.useEffect(() => {
-    console.log('🔵 [ModalProvider] 모달 상태 변경:', {
-      isVisible: modalState.isVisible,
-      hasConfig: !!modalState.config,
-    });
   }, [modalState]);
 
   return (

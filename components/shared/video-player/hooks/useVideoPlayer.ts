@@ -33,7 +33,6 @@ const safePause = (player: ReturnType<typeof useExpoVideoPlayer> | null | undefi
     // AbortError는 조용히 무시
     if (!(error instanceof Error && error.name === 'AbortError')) {
       if (__DEV__) {
-        console.error('[VideoPlayer] pause 오류:', error);
       }
     }
   }
@@ -47,7 +46,6 @@ const safePlay = (player: ReturnType<typeof useExpoVideoPlayer> | null | undefin
     // AbortError는 조용히 무시
     if (!(error instanceof Error && error.name === 'AbortError')) {
       if (__DEV__) {
-        console.error('[VideoPlayer] play 오류:', error);
       }
     }
   }
@@ -64,7 +62,6 @@ const safeReplace = (
     // AbortError는 조용히 무시
     if (!(error instanceof Error && error.name === 'AbortError')) {
       if (__DEV__) {
-        console.error('[VideoPlayer] replace 오류:', error);
       }
     }
   }
@@ -160,7 +157,6 @@ export const useVideoPlayer = ({
         }
       } catch (error) {
         if (__DEV__) {
-          console.error('[VideoPlayer] playing 상태 읽기 오류:', error);
         }
       }
     },
@@ -179,7 +175,6 @@ export const useVideoPlayer = ({
       }
     } catch (error) {
       if (__DEV__) {
-        console.error('[VideoPlayer] playing 상태 읽기 오류:', error);
       }
     }
 
@@ -193,7 +188,6 @@ export const useVideoPlayer = ({
         }
       } catch (error) {
         if (__DEV__) {
-          console.error('[VideoPlayer] playing 상태 읽기 오류:', error);
         }
       }
     }, 100);
@@ -233,7 +227,6 @@ export const useVideoPlayer = ({
           }
         } catch (error) {
           if (__DEV__) {
-            console.error('[VideoPlayer] playing 상태 읽기 오류:', error);
           }
         }
       }, delay),
@@ -279,7 +272,6 @@ export const useVideoPlayer = ({
       } catch (error) {
         const err = error instanceof Error ? error : new Error('미디어 URL 변환 실패');
         if (__DEV__) {
-          console.error('[VideoPlayer] 미디어 URL 변환 실패:', err);
         }
         setError(err);
         onError?.(err);
@@ -319,7 +311,6 @@ export const useVideoPlayer = ({
         setThumbnailUri(uri);
       } catch (error) {
         if (__DEV__) {
-          console.error('[VideoPlayer] 썸네일 생성 실패:', error);
         }
         // 썸네일 생성 실패해도 비디오는 재생 가능
         setThumbnailUri(null);
@@ -351,7 +342,6 @@ export const useVideoPlayer = ({
     } catch (error) {
       const err = error instanceof Error ? error : new Error('재생 토글 실패');
       if (__DEV__) {
-        console.error('[VideoPlayer] 재생 토글 오류:', err);
       }
       setError(err);
       onError?.(err);
@@ -365,7 +355,6 @@ export const useVideoPlayer = ({
       // time이 유효하지 않으면 무시
       if (!isFinite(time) || time < 0) {
         if (__DEV__) {
-          console.warn('[VideoPlayer] 유효하지 않은 seek 시간:', time);
         }
         return;
       }
@@ -379,7 +368,6 @@ export const useVideoPlayer = ({
         // 에러 로깅을 안전하게 처리
         if (__DEV__) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error('[VideoPlayer] Seek 오류:', errorMessage);
         }
       }
     },

@@ -41,7 +41,6 @@ export const useWebAudioRecorder = (): UseWebAudioRecorderReturn => {
    */
   const startRecording = async (): Promise<void> => {
     if (isRecording) {
-      console.warn('[WebAudioRecorder] 이미 녹음 중입니다.');
       return;
     }
 
@@ -68,9 +67,7 @@ export const useWebAudioRecorder = (): UseWebAudioRecorderReturn => {
         setRecordingDuration((prev) => prev + 1);
       }, 1000);
 
-      console.log('[WebAudioRecorder] 녹음 시작 (MP3 형식)');
     } catch (error) {
-      console.error('[WebAudioRecorder] 녹음 시작 오류:', error);
       Alert.alert('오류', '마이크 접근 권한이 필요합니다.');
     }
   };
@@ -80,7 +77,6 @@ export const useWebAudioRecorder = (): UseWebAudioRecorderReturn => {
    */
   const stopRecording = async (): Promise<string | null> => {
     if (!isRecording || !recorderRef.current) {
-      console.warn('[WebAudioRecorder] 녹음 중이 아닙니다.');
       return null;
     }
 
@@ -98,14 +94,8 @@ export const useWebAudioRecorder = (): UseWebAudioRecorderReturn => {
       // Blob을 URL로 변환
       const url = URL.createObjectURL(blob);
 
-      console.log('[WebAudioRecorder] 녹음 완료 (MP3)');
-      console.log('  - Blob 크기:', blob.size, 'bytes');
-      console.log('  - MIME 타입:', blob.type);
-      console.log('  - URL:', url);
-
       return url;
     } catch (error) {
-      console.error('[WebAudioRecorder] 녹음 중지 오류:', error);
       setIsRecording(false);
       return null;
     }

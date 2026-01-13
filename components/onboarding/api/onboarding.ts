@@ -30,10 +30,6 @@ export async function completeOnboarding(
 ): Promise<CompleteOnboardingResponse> {
   try {
     if (__DEV__) {
-      console.log('[Onboarding API] 온보딩 완료 요청:', {
-        friend_consent: friendConsent,
-        location_consent: locationConsent,
-      });
     }
 
     const response = await apiClient.post<CompleteOnboardingResponse>(
@@ -45,7 +41,6 @@ export async function completeOnboarding(
     );
 
     if (__DEV__) {
-      console.log('[Onboarding API] 온보딩 완료 성공:', response.data);
     }
 
     return response.data;
@@ -54,10 +49,6 @@ export async function completeOnboarding(
     const errorMessage = error.response?.data?.message || error.message || '온보딩 완료 처리 중 오류가 발생했습니다.';
 
     if (__DEV__) {
-      console.error('[Onboarding API] 온보딩 완료 실패:', {
-        status,
-        error: errorMessage,
-      });
     }
 
     // 에러를 다시 throw하여 호출한 곳에서 처리할 수 있도록 함

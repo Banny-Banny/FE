@@ -121,23 +121,12 @@ export default function StepRoom({
   // ⭐ 디버깅: 호스트 여부 판단 로그
   React.useEffect(() => {
     if (myParticipant) {
-      console.log(
-        '🔍 [StepRoom] 호스트 여부 확인:',
-        `role prop="${role}"`,
-        `myParticipant.isHost=${myParticipant.isHost}`,
-        `최종 isHost=${isHost}`,
-      );
     }
   }, [myParticipant, isHost, role]);
 
   // ⭐ 디버깅: maxParticipants 값 확인
   React.useEffect(() => {
     if (roomSettings) {
-      console.log(
-        '🔍 [StepRoom] maxParticipants 확인:',
-        `roomSettings.max_participants=${roomSettings.max_participants}`,
-        `useParticipants에 전달된 값=${roomSettings?.max_participants || 4}`,
-      );
     }
   }, [roomSettings]);
 
@@ -166,19 +155,7 @@ export default function StepRoom({
   /** 진행 상황 계산 (완료 인원 / 전체 인원) */
   const progress = useMemo(() => {
     // ⭐ 디버깅: 참가자 목록 확인
-    console.log('🔍 [StepRoom] 진행 상황 계산 - 참가자 목록:', {
-      전체참가자수: participants.length,
-      참가자상세: participants.map((p) => ({
-        id: p.id,
-        name: p.name || '(빈 슬롯)',
-        status: p.status,
-        isMe: p.isMe,
-      })),
-    });
-
     const result = calculateProgress(participants);
-
-    console.log('🔍 [StepRoom] 진행 상황 계산 결과:', result);
 
     return result;
   }, [calculateProgress, participants]);
@@ -270,7 +247,6 @@ export default function StepRoom({
 
       // 초대코드가 없으면 공유 불가
       if (!inviteCode) {
-        console.error('❌ [handleShare] 초대코드가 없습니다.');
         return;
       }
 
@@ -289,7 +265,6 @@ export default function StepRoom({
         // 사용자가 취소
       }
     } catch (error) {
-      console.error('공유하기 실패:', error);
     }
   };
 
@@ -299,26 +274,12 @@ export default function StepRoom({
       throw new Error('참여자 정보가 없습니다.');
     }
 
-    console.log('💾 [StepRoom] 바텀시트 저장 시작:', selectedParticipant.id);
-    console.log('  📝 콘텐츠 정보:', {
-      textLength: content.text?.length || 0,
-      imagesCount: content.images?.length || 0,
-      hasVoice: !!content.voiceRecording,
-      hasVideo: !!content.video,
-    });
-
     try {
       await saveContent(selectedParticipant.id, content);
-      console.log('✅ [StepRoom] 바텀시트 저장 성공!');
-
       // ⭐ 저장 성공 후 참여자 목록 새로고침 (다른 참가자들의 완료 상태 업데이트)
-      console.log('🔄 [StepRoom] 참여자 목록 새로고침 시작...');
       await refetchParticipants();
-      console.log('✅ [StepRoom] 참여자 목록 새로고침 완료');
-
       setIsBottomSheetVisible(false);
     } catch (err) {
-      console.error('❌ [StepRoom] 바텀시트 저장 실패:', err);
       // ⭐ 에러를 다시 throw하여 UserBottomSheet에서 처리할 수 있도록 함
       throw err;
     }
@@ -344,13 +305,9 @@ export default function StepRoom({
         onPress={() => {
           // ⭐ 본인의 콘텐츠만 클릭 가능 (작성 완료 후에도 조회 가능)
           if (participant.name && isMyContent) {
-            console.log('📝 [StepRoom] 본인 카드 클릭:', participant.name);
-            console.log('  - 상태:', participant.status);
-            console.log('  - 읽기 전용:', participant.status === 'completed');
             setSelectedParticipant(participant);
             setIsBottomSheetVisible(true);
           } else if (participant.name && !isMyContent) {
-            console.log('🚫 [StepRoom] 다른 사람 카드 클릭 차단:', participant.name);
           }
         }}>
         <View style={styles.participantInfo}>
@@ -581,10 +538,6 @@ export default function StepRoom({
                 size="M"
                 disabled={!isSubmitEnabled || isSubmittingCapsule || isLocationLoading || !location}
                 onPress={() => {
-                  console.log('🎯 [StepRoom] 타임캡슐 묻기 버튼 클릭!');
-                  console.log('📊 [StepRoom] 진행률:', progress.percentage, '%');
-                  console.log('✅ [StepRoom] 제출 가능 여부:', isSubmitEnabled);
-
                   // 1단계: 정말 묻겠습니까?
                   openModal({
                     width: 344,
@@ -594,13 +547,10 @@ export default function StepRoom({
                       <SubmitConfirmModal
                         openDate={roomSettings.open_date}
                         onConfirm={async () => {
-                          console.log('✅ [StepRoom] 타임캡슐 묻기 확인!');
                           closeModal();
 
                           try {
                             // 백엔드로 최종 제출
-                            console.log('📤 [StepRoom] 백엔드로 타임캡슐 제출 시작...');
-
                             // 현재 위치 확인
                             if (!location) {
                               throw new Error(
@@ -611,11 +561,7 @@ export default function StepRoom({
 
                             const latitude = location.lat;
                             const longitude = location.lng;
-                            console.log(`📍 [StepRoom] 매장 위치: (${latitude}, ${longitude})`);
-
                             await submitTimeCapsule(roomSettings.room_id, latitude, longitude);
-                            console.log('✅ [StepRoom] 백엔드 제출 완료!');
-
                             // D-Day 계산
                             const now = dayjs();
                             const openDateObj = dayjs(roomSettings.open_date, 'YYYY-MM-DD');
@@ -633,7 +579,6 @@ export default function StepRoom({
                                   dDay={dDay}
                                   participantCount={progress.total}
                                   onConfirm={() => {
-                                    console.log('✅ [StepRoom] 제출 완료 모달 확인!');
                                     closeModal();
                                     if (onSubmit) {
                                       onSubmit();
@@ -652,7 +597,6 @@ export default function StepRoom({
                             });
                           } catch (err) {
                             // 제출 실패 시 에러 모달 표시
-                            console.error('❌ [StepRoom] 타임캡슐 제출 실패:', err);
                             openModal({
                               width: 344,
                               height: 'auto',
@@ -691,7 +635,6 @@ export default function StepRoom({
                           }
                         }}
                         onCancel={() => {
-                          console.log('❌ [StepRoom] 타임캡슐 묻기 취소!');
                           closeModal();
                         }}
                       />

@@ -67,26 +67,11 @@ export const PaymentHistory: React.FC = () => {
   // 디버깅: API 응답 확인
   React.useEffect(() => {
     if (data) {
-      console.log('📊 [PaymentHistory] API 응답 데이터 (상세):', JSON.stringify(data, null, 2));
-      console.log('📊 [PaymentHistory] 요약:', {
-        paymentsCount: data.payments?.length || 0,
-        total: data.total,
-        page: data.page,
-        limit: data.limit,
-      });
-      console.log('📊 [PaymentHistory] Payments 배열:', data.payments);
-
       // 데이터 불일치 체크
       if (data.total && data.total !== (data.payments?.length || 0)) {
-        console.warn('⚠️ [PaymentHistory] 데이터 불일치 감지!', {
-          total: data.total,
-          actualCount: data.payments?.length || 0,
-          difference: data.total - (data.payments?.length || 0),
-        });
       }
     }
     if (error) {
-      console.error('❌ [PaymentHistory] API 에러:', JSON.stringify(error, null, 2));
     }
   }, [data, error]);
 
@@ -108,10 +93,8 @@ export const PaymentHistory: React.FC = () => {
       if (supported) {
         await Linking.openURL(receiptUrl);
       } else {
-        console.error('[PaymentHistory] 영수증 URL을 열 수 없습니다:', receiptUrl);
       }
     } catch (err) {
-      console.error('[PaymentHistory] 영수증 열기 실패:', err);
     }
   };
 

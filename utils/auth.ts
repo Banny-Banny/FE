@@ -25,7 +25,6 @@ function decodeJWT(token: string): Record<string, unknown> | null {
 
     return JSON.parse(jsonPayload);
   } catch (error) {
-    if (__DEV__) console.error('[Auth] JWT 디코딩 오류:', error);
     return null;
   }
 }

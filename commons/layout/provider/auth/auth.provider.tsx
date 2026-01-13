@@ -101,7 +101,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (pendingInviteCode) {
               // 초대 코드 있음 → 대기실로 이동 후 삭제
               if (__DEV__) {
-                console.log('[AuthProvider] 저장된 초대 코드 발견 → 대기실로 이동:', pendingInviteCode);
               }
               await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
               router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}` as any);
@@ -111,7 +110,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             }
           } catch (error) {
             if (__DEV__) {
-              console.error('[AuthProvider] 초대 코드 확인 중 오류:', error);
             }
             // 오류 발생 시 메인으로 이동
             router.replace(ROUTES.MAIN);

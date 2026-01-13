@@ -32,12 +32,12 @@ export interface MyCapsuleListResponse {
 
 /**
  * 분류된 캡슐 타입
- * - status 값 기준으로 3가지로 분류
+ * - status와 openDate 기준으로 3가지로 분류
  */
 export interface CategorizedCapsules {
   waitingRooms: MyCapsuleItem[];                   // 대기실 (status === "WAITING")
-  openedCapsules: MyCapsuleItem[];                 // 열린 캡슐 (status === "COMPLETED" || status === "EXPIRED")
-  lockedCapsules: MyCapsuleItem[];                 // 잠긴 캡슐 (status === "BURIED")
+  openedCapsules: MyCapsuleItem[];                 // 열린 캡슐 (status !== "WAITING" && openDate <= 현재시각)
+  lockedCapsules: MyCapsuleItem[];                 // 잠긴 캡슐 (status !== "WAITING" && openDate > 현재시각)
 }
 
 /**

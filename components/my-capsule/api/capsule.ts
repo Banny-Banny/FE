@@ -29,25 +29,19 @@ export async function getMyCapsules(
   offset: number = 0,
 ): Promise<MyCapsuleListResponse> {
   try {
-    console.log('🔄 [API] 참여중인 캡슐 리스트 조회 시작 - limit:', limit, 'offset:', offset);
-
     // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
     const response = await apiClient.get<MyCapsuleListResponse>('/api/me/capsules', {
       params: { limit, offset },
     });
 
-    console.log('✅ [API] 참여중인 캡슐 리스트 조회 성공:', response.data);
     return response.data;
   } catch (error: any) {
     if (error.response?.status === 401) {
-      console.error('❌ [API] 인증 실패 (401)');
       throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
     }
     if (error.response?.status === 500) {
-      console.error('❌ [API] 서버 내부 오류 (500)');
       throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-    console.error('❌ [API] 참여중인 캡슐 리스트 조회 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }
@@ -229,38 +223,28 @@ export async function getOpenedCapsuleDetail(
   userId: string,
 ): Promise<OpenedCapsuleDetailResponse> {
   try {
-    console.log('🔄 [API] 타임캡슐 상세 조회 시작 - id:', id, 'userId:', userId);
-
     // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
     const response = await apiClient.get<ApiCapsuleDetailResponse>(`/api/timecapsules/${id}`, {
       params: { user_id: userId },
     });
 
-    console.log('✅ [API] 타임캡슐 상세 조회 성공 (raw):', response.data);
-
     // snake_case 응답을 camelCase로 변환
     const transformedData = transformApiResponse(response.data);
 
-    console.log('✅ [API] 타임캡슐 상세 조회 성공 (transformed):', transformedData);
     return transformedData;
   } catch (error: any) {
     if (error.response?.status === 403) {
-      console.error('❌ [API] 권한 없음 또는 미결제 (403)');
       throw new Error('결제가 완료되지 않았거나 권한이 없습니다.');
     }
     if (error.response?.status === 404) {
-      console.error('❌ [API] 캡슐 미존재 (404)');
       throw new Error('캡슐을 찾을 수 없습니다.');
     }
     if (error.response?.status === 401) {
-      console.error('❌ [API] 인증 실패 (401)');
       throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
     }
     if (error.response?.status === 500) {
-      console.error('❌ [API] 서버 내부 오류 (500)');
       throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-    console.error('❌ [API] 타임캡슐 상세 조회 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }

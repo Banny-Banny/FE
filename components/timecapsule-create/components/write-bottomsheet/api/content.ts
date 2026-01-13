@@ -40,9 +40,6 @@ export async function submitMyContent(
   formData: FormData,
 ): Promise<ContentSubmitResponse> {
   try {
-    console.log('🔄 [API] 타임캡슐 콘텐츠 제출 시작 - capsuleId:', capsuleId);
-    console.log('🔄 [API] 요청 형식: multipart/form-data');
-
     // ⭐ apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
     // ⭐ FormData를 전송하면 apiClient가 자동으로 Content-Type을 multipart/form-data로 설정
     // ⭐ headers에 Content-Type을 명시하지 않음 (apiClient가 자동 처리)
@@ -51,33 +48,26 @@ export async function submitMyContent(
       formData,
     );
 
-    console.log('✅ [API] 타임캡슐 콘텐츠 제출 성공:', response.data);
     return response.data;
   } catch (error: any) {
     // 에러 처리
     if (error.response?.status === 400) {
       const errorMessage = error.response?.data?.message || '유효하지 않은 요청입니다.';
-      console.error('❌ [API] 유효하지 않은 요청 (400):', errorMessage);
       throw new Error(errorMessage);
     }
     if (error.response?.status === 401) {
-      console.error('❌ [API] 인증 실패 (401)');
       throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
     }
     if (error.response?.status === 403) {
       const errorMessage = error.response?.data?.message || '권한이 없습니다.';
-      console.error('❌ [API] 권한 없음 (403):', errorMessage);
       throw new Error(errorMessage);
     }
     if (error.response?.status === 404) {
-      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
       throw new Error('캡슐을 찾을 수 없습니다.');
     }
     if (error.response?.status === 500) {
-      console.error('❌ [API] 서버 내부 오류 (500)');
       throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-    console.error('❌ [API] 타임캡슐 콘텐츠 제출 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }
@@ -94,29 +84,23 @@ export async function fetchMyContent(
   capsuleId: string,
 ): Promise<MyContentResponse> {
   try {
-    console.log('🔄 [API] 본인 작성 콘텐츠 조회 시작 - capsuleId:', capsuleId);
-
     const response = await apiClient.get<MyContentResponse>(
       `/api/capsules/step-rooms/${capsuleId}/my-content`,
     );
 
-    console.log('✅ [API] 본인 작성 콘텐츠 조회 성공:', response.data);
     return response.data;
   } catch (error: any) {
     // 401: 인증 실패
     if (error.response?.status === 401) {
-      console.error('❌ [API] 인증 실패 (401)');
       throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
     }
     // 403: 참여자가 아님
     if (error.response?.status === 403) {
       const errorMessage = error.response?.data?.message || '이 캡슐의 참여자가 아닙니다.';
-      console.error('❌ [API] 참여자 아님 (403):', errorMessage);
       throw new Error(errorMessage);
     }
     // 404: 콘텐츠를 작성하지 않음 (정상적인 경우, NotFoundError로 구분)
     if (error.response?.status === 404) {
-      console.log('ℹ️ [API] 작성한 콘텐츠 없음 (404) - 새로 작성 가능');
       const notFoundError = new NotFoundError('아직 작성하지 않았습니다');
       // 상태 코드 정보를 에러 객체에 포함 (React Native 호환성)
       (notFoundError as any).statusCode = 404;
@@ -125,10 +109,8 @@ export async function fetchMyContent(
     }
     // 500: 서버 내부 오류
     if (error.response?.status === 500) {
-      console.error('❌ [API] 서버 내부 오류 (500)');
       throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
     }
-    console.error('❌ [API] 본인 작성 콘텐츠 조회 실패:', error.message);
     throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
   }
 }

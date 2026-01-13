@@ -58,7 +58,6 @@ export function useCapsules(params: UseCapsulesParams): UseCapsulesReturn {
       // 인증 토큰이 없으면 API 호출하지 않음
       if (!accessToken) {
         if (__DEV__) {
-          console.warn('[useCapsules] 토큰이 없어 API 호출을 건너뜁니다.');
         }
         return { items: [] };
       }

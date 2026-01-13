@@ -7,6 +7,7 @@ import { Button } from '@/commons/components/button';
 import { Colors } from '@/commons/constants';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { IconName } from 'react-native-remix-icon';
 import { styles } from './styles';
 
@@ -23,6 +24,8 @@ interface FriendConsentStepProps {
  * 친구 연동 동의 단계 (UI만 담당)
  */
 export function FriendConsentStep({ isLoading, onConsent, onSkip }: FriendConsentStepProps) {
+  const insets = useSafeAreaInsets();
+
   // 건너뛰기 핸들러 (권한 거부 처리)
   const handleSkip = () => {
     onSkip();
@@ -33,6 +36,7 @@ export function FriendConsentStep({ isLoading, onConsent, onSkip }: FriendConsen
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
         bounces={false}>
         {/* 헤더 영역 */}
         <View style={styles.header}>
@@ -93,7 +97,7 @@ export function FriendConsentStep({ isLoading, onConsent, onSkip }: FriendConsen
         </View>
 
         {/* 하단 버튼 영역 */}
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { paddingBottom: 62 + insets.bottom }]}>
           {/* 친구 연동 허용 버튼 */}
           <Button
             label="친구 연동 허용"

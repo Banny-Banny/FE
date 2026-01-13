@@ -47,7 +47,6 @@ const getFileSizeWeb = async (uri: string): Promise<number> => {
     const blob = await response.blob();
     return blob.size;
   } catch (error) {
-    console.error('웹에서 파일 크기 가져오기 실패:', error);
     throw new Error('파일 크기를 확인할 수 없습니다.');
   }
 };
@@ -167,33 +166,19 @@ const getPresignedUrl = async (
  */
 const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): Promise<void> => {
   try {
-    console.log('📤 S3 업로드 시작...');
-    console.log('📤 업로드 URL:', uploadUrl.substring(0, 100) + '...');
-    console.log('📤 Content-Type:', contentType);
-
     // 파일을 Blob으로 변환
     const response = await fetch(uri);
     if (!response.ok) {
       throw new Error(`파일을 가져올 수 없습니다: ${response.status} ${response.statusText}`);
     }
     const blob = await response.blob();
-    console.log('✅ Blob 생성 완료, 크기:', blob.size, 'bytes');
-
     // Presigned URL 분석: 서명된 헤더 확인
     const signedHeadersMatch = uploadUrl.match(/X-Amz-SignedHeaders=([^&]+)/);
     const signedHeaders = signedHeadersMatch ? decodeURIComponent(signedHeadersMatch[1]) : '';
     const needsContentType = signedHeaders.includes('content-type');
 
-    console.log('📊 업로드 정보:');
-    console.log('  - 실제 파일 크기:', blob.size, 'bytes');
-    console.log('  - Content-Type:', contentType);
-    console.log('  - 서명된 헤더:', signedHeaders);
-    console.log('  - Content-Type 헤더 필요:', needsContentType ? '✅ 예' : '❌ 아니오');
-
     // 웹 환경에서는 fetch를 직접 사용하는 것이 더 안정적
     if (Platform.OS === 'web') {
-      console.log('🌐 웹 환경: fetch로 S3 업로드');
-
       // 중요: X-Amz-SignedHeaders에 content-type이 포함되어 있으면
       // 반드시 Content-Type 헤더를 보내야 합니다.
       // 포함되어 있지 않으면 헤더를 보내면 403 에러가 발생할 수 있습니다.
@@ -208,24 +193,15 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
         uploadOptions.headers = {
           'Content-Type': contentType,
         };
-        console.log('📤 Content-Type 헤더 포함하여 업로드');
       } else {
-        console.log('📤 헤더 없이 업로드 (서명에 Content-Type 미포함)');
       }
 
       const uploadResponse = await fetch(uploadUrl, uploadOptions);
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('❌ S3 업로드 실패:', uploadResponse.status);
-        console.error('❌ 에러 응답:', errorText);
-        console.error('❌ 업로드 URL (일부):', uploadUrl.substring(0, 150));
-        console.error('❌ 서명된 헤더:', signedHeaders);
-        console.error('❌ Content-Type 헤더 사용 여부:', needsContentType);
-
         // 403 에러이고 Content-Type 헤더를 사용하지 않았다면 재시도
         if (uploadResponse.status === 403 && !needsContentType) {
-          console.log('⚠️ 403 발생, Content-Type 헤더 포함하여 재시도...');
           const retryResponse = await fetch(uploadUrl, {
             method: 'PUT',
             body: blob,
@@ -240,7 +216,6 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
               `S3 업로드 실패: ${retryResponse.status} ${retryResponse.statusText}\n에러: ${retryErrorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. 파일 크기 불일치\n3. CORS 설정 문제\n4. 백엔드 presigned URL 생성 오류`,
             );
           }
-          console.log('✅ S3 업로드 성공 (재시도):', retryResponse.status);
           return;
         }
 
@@ -248,11 +223,8 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
           `S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}\n에러: ${errorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. Content-Type 불일치\n3. 파일 크기 불일치\n4. CORS 설정 문제`,
         );
       }
-      console.log('✅ S3 업로드 성공:', uploadResponse.status);
     } else {
       // 네이티브 환경에서도 fetch 사용
-      console.log('📱 네이티브 환경: fetch로 S3 업로드');
-
       const uploadOptions: RequestInit = {
         method: 'PUT',
         body: blob,
@@ -263,24 +235,15 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
         uploadOptions.headers = {
           'Content-Type': contentType,
         };
-        console.log('📤 Content-Type 헤더 포함하여 업로드');
       } else {
-        console.log('📤 헤더 없이 업로드 (서명에 Content-Type 미포함)');
       }
 
       const uploadResponse = await fetch(uploadUrl, uploadOptions);
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('❌ S3 업로드 실패:', uploadResponse.status);
-        console.error('❌ 에러 응답:', errorText);
-        console.error('❌ 업로드 URL (일부):', uploadUrl.substring(0, 150));
-        console.error('❌ 서명된 헤더:', signedHeaders);
-        console.error('❌ Content-Type 헤더 사용 여부:', needsContentType);
-
         // 403 에러이고 Content-Type 헤더를 사용하지 않았다면 재시도
         if (uploadResponse.status === 403 && !needsContentType) {
-          console.log('⚠️ 403 발생, Content-Type 헤더 포함하여 재시도...');
           const retryResponse = await fetch(uploadUrl, {
             method: 'PUT',
             body: blob,
@@ -295,7 +258,6 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
               `S3 업로드 실패: ${retryResponse.status} ${retryResponse.statusText}\n에러: ${retryErrorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. 파일 크기 불일치\n3. CORS 설정 문제\n4. 백엔드 presigned URL 생성 오류`,
             );
           }
-          console.log('✅ S3 업로드 성공 (재시도):', retryResponse.status);
           return;
         }
 
@@ -303,10 +265,8 @@ const uploadToS3 = async (uri: string, uploadUrl: string, contentType: string): 
           `S3 업로드 실패: ${uploadResponse.status} ${uploadResponse.statusText}\n에러: ${errorText}\n\n가능한 원인:\n1. Presigned URL 만료\n2. Content-Type 불일치\n3. 파일 크기 불일치\n4. CORS 설정 문제`,
         );
       }
-      console.log('✅ S3 업로드 성공');
     }
   } catch (error) {
-    console.error('❌ S3 업로드 에러:', error);
     if (error instanceof Error) {
       throw new Error(`S3 업로드 실패: ${error.message}`);
     }
@@ -374,8 +334,6 @@ export const uploadMedia = async (
       }
     }
 
-    console.log(`📝 파일명: ${extractedFilename} (원본: ${filename || 'URI에서 추출'})`);
-
     // Step 1: 전처리 (압축 및 검증)
     let processedUri = uri;
     let processedSize: number;
@@ -408,27 +366,14 @@ export const uploadMedia = async (
     const contentType = inferMimeType(extractedFilename);
 
     // Step 2: Presigned URL 발급
-    console.log('📡 Presigned URL 발급 요청...');
-    console.log('📋 Presigned URL 요청 파라미터:');
-    console.log('  - type:', type);
-    console.log('  - filename:', extractedFilename);
-    console.log('  - content_type:', contentType);
-    console.log('  - size:', processedSize, 'bytes');
-
     const { upload_url, object_key } = await getPresignedUrl(
       type,
       extractedFilename,
       contentType,
       processedSize,
     );
-    console.log('✅ Presigned URL 발급 성공');
-    console.log('📦 Object Key:', object_key);
-
     // Step 3: S3 직접 업로드
-    console.log('📤 S3 업로드 시작...');
     await uploadToS3(processedUri, upload_url, contentType);
-    console.log('✅ S3 업로드 완료');
-
     // Step 4: 업로드 완료 등록
     const mediaId = await completeUpload(object_key, contentType, processedSize);
 

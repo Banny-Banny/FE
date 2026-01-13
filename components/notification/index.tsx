@@ -57,7 +57,6 @@ export default function NotificationFeature() {
       const { status } = await Notifications.getPermissionsAsync();
       setIsNotificationEnabled(status === 'granted');
     } catch (error) {
-      console.error('[NotificationFeature] 권한 확인 실패:', error);
     }
   };
 
@@ -137,7 +136,6 @@ export default function NotificationFeature() {
         }
       }
     } catch (error) {
-      console.error('[NotificationFeature] 알림 토글 실패:', error);
     }
   };
 

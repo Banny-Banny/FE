@@ -93,7 +93,6 @@ export function getCurrentLocationMarkerScript(): string {
       } catch (error) {
         // 개발 환경에서만 에러 로깅
         if (typeof __DEV__ !== 'undefined' && __DEV__) {
-          console.error("[createRadiusCircle] 원 생성 실패:", error);
         }
       }
     }
@@ -161,7 +160,6 @@ export function getCurrentLocationMarkerScript(): string {
       } catch (error) {
         // 개발 환경에서만 에러 로깅
         if (typeof __DEV__ !== 'undefined' && __DEV__) {
-          console.error("[createCurrentLocationMarker] 마커 생성 실패:", error);
         }
       }
     }

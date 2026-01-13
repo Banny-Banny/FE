@@ -31,7 +31,6 @@ export default function OnboardingFeature() {
       const url = event.url;
 
       if (__DEV__) {
-        console.log('[Onboarding] 🔗 딥링크 수신:', url);
       }
 
       /**
@@ -48,29 +47,21 @@ export default function OnboardingFeature() {
         const hasAuthParams = url.includes('token=') || url.includes('code=');
 
         if (__DEV__) {
-          console.log('[Onboarding] 🔍 URL 체크:', {
-            looksLikeAuthCallback,
-            hasAuthParams,
-            willIgnore: !looksLikeAuthCallback && !hasAuthParams,
-          });
         }
 
         if (!looksLikeAuthCallback && !hasAuthParams) {
           if (__DEV__) {
-            console.log('[Onboarding] ❌ Expo 개발 서버 루트 URL → 무시');
           }
           return;
         }
 
         if (__DEV__) {
-          console.log('[Onboarding] ✅ OAuth 콜백 URL → 처리 진행');
         }
       }
 
       // 이미 처리 중이면 무시
       if (isProcessingDeepLink.current) {
         if (__DEV__) {
-          console.log('[Onboarding] 딥링크 처리 중, 스킵');
         }
         return;
       }
@@ -96,23 +87,17 @@ export default function OnboardingFeature() {
 
           if (!token) {
             if (__DEV__) {
-              console.error('[Onboarding] 딥링크에 토큰 없음');
             }
             return;
           }
 
           if (__DEV__) {
-            console.log('[Onboarding] 딥링크에서 토큰 추출 성공:', {
-              tokenLength: token.length,
-              isNewUser,
-            });
           }
 
           // 토큰으로 유저 정보 추출
           const userData = getUserFromToken(token);
           if (!userData) {
             if (__DEV__) {
-              console.error('[Onboarding] 토큰에서 유저 정보 추출 실패');
             }
             return;
           }
@@ -121,12 +106,10 @@ export default function OnboardingFeature() {
           await authLogin(token, userData);
 
           if (__DEV__) {
-            console.log('[Onboarding] 딥링크 로그인 처리 완료');
           }
         }
       } catch (error) {
         if (__DEV__) {
-          console.error('[Onboarding] 딥링크 처리 오류:', error);
         }
       } finally {
         isProcessingDeepLink.current = false;
@@ -156,37 +139,28 @@ export default function OnboardingFeature() {
     // 웹 환경이거나 취소/에러인 경우
     if (!result || !result.token) {
       if (__DEV__) {
-        console.warn('[Onboarding] 로그인 결과 없음 (Android는 정상):', result);
       }
       return;
     }
 
     if (__DEV__) {
-      console.log('[Onboarding] 로그인 토큰 받음:', {
-        tokenLength: result.token.length,
-        tokenPreview: result.token.substring(0, 20) + '...',
-        isNewUser: result.isNewUser,
-      });
     }
 
     // 토큰으로 유저 정보 추출
     const userData = getUserFromToken(result.token);
     if (!userData) {
       if (__DEV__) {
-        console.error('[Onboarding] 토큰에서 유저 정보 추출 실패');
       }
       return;
     }
 
     if (__DEV__) {
-      console.log('[Onboarding] 유저 정보 추출 성공:', userData);
     }
 
     // 로그인 처리 (Provider가 자동으로 다음 단계로 리다이렉트)
     await authLogin(result.token, userData);
 
     if (__DEV__) {
-      console.log('[Onboarding] 로그인 처리 완료');
     }
   };
 

@@ -32,8 +32,6 @@ export function generatePaymentHtml(params: GeneratePaymentHtmlParams): string {
     failUrl,
   } = params;
 
-  console.log('📝 [PaymentWebView] HTML 생성 시작');
-
   const html = `
 <!DOCTYPE html>
 <html lang="ko">
@@ -79,7 +77,6 @@ export function generatePaymentHtml(params: GeneratePaymentHtmlParams): string {
 </html>
   `;
 
-  console.log('✅ [PaymentWebView] HTML 생성 완료, 길이:', html.length);
   return html;
 }
 
@@ -99,13 +96,8 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
   } = params;
 
   return `
-    console.log('🚀 [PaymentWebView] 스크립트 시작');
-    
     const clientKey = "${clientKey}";
-    console.log('🔑 [PaymentWebView] 클라이언트 키:', clientKey ? '설정됨' : '없음');
-    
     if (typeof TossPayments === 'undefined') {
-      console.error('❌ [PaymentWebView] TossPayments SDK가 로드되지 않았습니다');
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'PAYMENT_ERROR',
         data: {
@@ -114,34 +106,18 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
         }
       }));
     } else {
-      console.log('✅ [PaymentWebView] TossPayments SDK 로드 완료');
     }
     
     const tossPayments = TossPayments(clientKey);
-    console.log('✅ [PaymentWebView] TossPayments 초기화 완료');
-
     const button = document.getElementById('payment-button');
     const loading = document.getElementById('loading');
     
-    console.log('🔘 [PaymentWebView] 버튼 요소:', button ? '찾음' : '없음');
-
     if (button) {
       button.addEventListener('click', async function() {
-        console.log('👆 [PaymentWebView] 결제 버튼 클릭됨');
-        
         // 실제 결제 로직
         try {
           loading.style.display = 'block';
           button.disabled = true;
-          console.log('⏳ [PaymentWebView] 결제 요청 시작...');
-          console.log('  - paymentMethod:', '${paymentMethod}');
-          console.log('  - amount:', ${amount});
-          console.log('  - orderId:', "${orderId}");
-          console.log('  - orderName:', "${orderName}");
-          console.log('  - customerName:', "${customerName}");
-          console.log('  - successUrl:', '${successUrl}');
-          console.log('  - failUrl:', '${failUrl}');
-          
           // 결제수단 코드 변환 ('간편결제'는 '카드'로 변환)
           const paymentMethodCode = '${paymentMethod}' === '간편결제' ? '카드' : '${paymentMethod}';
           
@@ -154,17 +130,14 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
             failUrl: '${failUrl}',
           });
           
-          console.log('✅ [PaymentWebView] 결제 요청 완료');
           // successUrl로 리다이렉트되므로 여기서는 처리하지 않음
           // 리다이렉트 후 URL 변경 감지로 처리됨
         } catch (error) {
-          console.error('❌ [PaymentWebView] 결제 요청 오류:', error);
           loading.style.display = 'none';
           button.disabled = false;
           
           // 사용자가 결제를 취소한 경우 (PAY_PROCESS_CANCELED)
           if (error.code === 'PAY_PROCESS_CANCELED') {
-            console.log('⚠️ [PaymentWebView] 사용자가 결제를 취소했습니다');
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'PAYMENT_FAIL',
               data: {
@@ -185,9 +158,7 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
           }));
         }
       });
-      console.log('✅ [PaymentWebView] 버튼 이벤트 리스너 등록 완료');
     } else {
-      console.error('❌ [PaymentWebView] 결제 버튼을 찾을 수 없습니다');
     }
 
     // URL 변경 감지 (성공/실패 처리)
@@ -210,12 +181,6 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
         const amountParam = urlObj.searchParams.get('amount');
         
         if (paymentKey && orderIdParam && amountParam) {
-          console.log('✅ [PaymentWebView] 결제 성공:', {
-            paymentKey,
-            orderId: orderIdParam,
-            amount: parseInt(amountParam)
-          });
-          
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'PAYMENT_SUCCESS',
             data: {
@@ -232,11 +197,6 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
         const message = urlObj.searchParams.get('message');
         
         if (code || message) {
-          console.log('❌ [PaymentWebView] 결제 실패:', {
-            code,
-            message
-          });
-          
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'PAYMENT_FAIL',
             data: {
@@ -246,7 +206,6 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
           }));
         }
       } catch (error) {
-        console.error('❌ [PaymentWebView] URL 변경 처리 오류:', error);
       }
     }
     
@@ -262,6 +221,5 @@ function generatePaymentScript(params: GeneratePaymentHtmlParams): string {
         message: 'WebView 준비 완료'
       }
     }));
-    console.log('✅ [PaymentWebView] WebView 준비 완료');
   `;
 }

@@ -49,7 +49,6 @@ export function useUnreadNotificationCount() {
         err.message ||
         '읽지 않은 알림 개수를 불러오는 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useUnreadNotificationCount] 읽지 않은 알림 개수 조회 실패:', err);
       // 에러 발생 시에도 0으로 설정하여 UI가 깨지지 않도록 함
       setCount(0);
     } finally {

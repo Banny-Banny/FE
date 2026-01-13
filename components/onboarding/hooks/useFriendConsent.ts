@@ -37,10 +37,6 @@ export function useFriendConsent() {
       const locationConsent = (await AsyncStorage.getItem(STORAGE_KEYS.LOCATION_CONSENT)) === 'true';
 
       if (__DEV__) {
-        console.log('[FriendConsent] 동의 상태 확인:', {
-          friendConsent,
-          locationConsent,
-        });
       }
 
       // 모든 동의가 완료되었는지 확인
@@ -50,7 +46,6 @@ export function useFriendConsent() {
           await completeOnboarding(friendConsent, locationConsent);
 
           if (__DEV__) {
-            console.log('[FriendConsent] 온보딩 완료 API 호출 성공');
           }
         } catch (apiError) {
           // API 호출 실패 시 사용자에게 알림
@@ -66,14 +61,12 @@ export function useFriendConsent() {
           );
 
           if (__DEV__) {
-            console.error('[FriendConsent] 온보딩 완료 API 호출 실패:', apiError);
           }
           // API 실패해도 로컬 저장은 완료되었으므로 계속 진행
         }
       } else {
         // 위치 동의가 아직 완료되지 않은 경우 (정상적인 플로우)
         if (__DEV__) {
-          console.log('[FriendConsent] 위치 동의가 아직 완료되지 않음 - 다음 단계로 진행');
         }
       }
 
@@ -81,7 +74,6 @@ export function useFriendConsent() {
     } catch (error) {
       // 동의 처리 오류 처리
       if (__DEV__) {
-        console.error('[FriendConsent] 친구 동의 처리 중 오류:', error);
       }
       Alert.alert('오류', '처리 중 오류가 발생했습니다.');
     } finally {
@@ -106,7 +98,6 @@ export function useFriendConsent() {
           await completeOnboarding(false, locationConsent);
 
           if (__DEV__) {
-            console.log('[FriendConsent] 온보딩 완료 API 호출 성공 (건너뛰기)');
           }
         } catch (apiError) {
           const errorMessage =
@@ -121,7 +112,6 @@ export function useFriendConsent() {
           );
 
           if (__DEV__) {
-            console.error('[FriendConsent] 온보딩 완료 API 호출 실패:', apiError);
           }
         }
       }
@@ -130,7 +120,6 @@ export function useFriendConsent() {
       await completeFriendConsent();
     } catch (error) {
       if (__DEV__) {
-        console.error('[FriendConsent] 건너뛰기 처리 중 오류:', error);
       }
       Alert.alert('오류', '처리 중 오류가 발생했습니다.');
     } finally {

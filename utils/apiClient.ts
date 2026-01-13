@@ -16,13 +16,6 @@ const getBaseUrl = (): string | null => {
 
   if (!url || url === 'your_api_url' || url.includes('your_api')) {
     if (__DEV__) {
-      console.error(
-        '[API Client] ⚠️ API Base URL이 설정되지 않았습니다!\n' +
-          '다음 중 하나를 수행하세요:\n' +
-          '1. 프로젝트 루트에 .env 파일 생성\n' +
-          '2. EXPO_PUBLIC_API_BASE_URL=http://your-server:3000 추가\n' +
-          '3. 개발 서버 재시작 (npm start)',
-      );
     }
     return null;
   }
@@ -35,9 +28,7 @@ const BASE_URL = getBaseUrl();
 
 if (__DEV__) {
   if (BASE_URL) {
-    console.log('[API Client] ✅ Base URL:', BASE_URL);
   } else {
-    console.error('[API Client] ❌ Base URL이 설정되지 않았습니다!');
   }
 }
 
@@ -78,10 +69,8 @@ apiClient.interceptors.request.use(
       if (__DEV__) {
         // 토큰이 제대로 전달되는지 확인 (처음 20자만 로깅)
         const tokenPreview = token.length > 20 ? `${token.substring(0, 20)}...` : token;
-        console.log(`[API] 🔑 토큰 전달: ${tokenPreview}`);
       }
     } else if (__DEV__) {
-      console.warn('[API] ⚠️ 토큰이 없습니다. 인증이 필요한 API 호출입니다.');
     }
 
     // ⭐ FormData를 보낼 때는 Content-Type 헤더 제거 (axios가 자동으로 boundary 포함하여 설정)
@@ -94,12 +83,10 @@ apiClient.interceptors.request.use(
       // ⭐ 파일 업로드는 시간이 오래 걸릴 수 있으므로 타임아웃 60초로 연장
       config.timeout = 60000;
       if (__DEV__) {
-        console.log('[API] FormData 감지: Content-Type 헤더 제거됨, 타임아웃 60초로 설정');
       }
     }
 
     if (__DEV__) {
-      console.log(`[API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
     }
 
     return config;
@@ -111,7 +98,6 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => {
     if (__DEV__) {
-      console.log(`[API] ✅ ${response.status} ${response.config.url}`);
     }
     return response;
   },
@@ -133,23 +119,7 @@ apiClient.interceptors.response.use(
           errorMessage.includes('작성하지 않았습니다'));
 
       if (isExpectedConflict || isExpectedNotFound) {
-        console.log(
-          `[API] ℹ️ ${statusCode} ${url}`,
-          {
-            statusCode: errorData?.statusCode || statusCode,
-            message: errorMessage,
-            data: errorData,
-          },
-        );
       } else {
-        console.error(
-          `[API] ❌ ${statusCode} ${url}`,
-          {
-            statusCode: errorData?.statusCode || statusCode,
-            message: errorMessage,
-            data: errorData,
-          },
-        );
       }
     }
 
@@ -168,12 +138,6 @@ apiClient.interceptors.response.use(
             }
           : { exists: false };
         
-        console.error(`[API] 401 인증 실패: ${errorMessage}`, {
-          url: error.config?.url,
-          method: error.config?.method,
-          tokenInfo,
-          responseData: error.response?.data,
-        });
       }
       
       await AsyncStorage.multiRemove([STORAGE_KEYS.ACCESS_TOKEN, STORAGE_KEYS.USER_DATA]);
@@ -212,8 +176,6 @@ publicApiClient.interceptors.request.use(
     }
 
     if (__DEV__) {
-      console.log(`[Public API] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-      console.log('[Public API] 🌐 인증 없이 요청 (Public API)');
     }
 
     return config;
@@ -225,7 +187,6 @@ publicApiClient.interceptors.request.use(
 publicApiClient.interceptors.response.use(
   (response) => {
     if (__DEV__) {
-      console.log(`[Public API] ✅ ${response.status} ${response.config.url}`);
     }
     return response;
   },
@@ -236,14 +197,6 @@ publicApiClient.interceptors.response.use(
       const errorData = error.response?.data;
       const errorMessage = errorData?.message || error.message || '알 수 없는 오류';
 
-      console.error(
-        `[Public API] ❌ ${statusCode} ${url}`,
-        {
-          statusCode: errorData?.statusCode || statusCode,
-          message: errorMessage,
-          data: errorData,
-        },
-      );
     }
     return Promise.reject(error);
   },

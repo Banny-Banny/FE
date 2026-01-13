@@ -75,14 +75,12 @@ const checkAudioCompatibility = async (url: string): Promise<boolean> => {
     const isUnsupported = unsupportedTypes.some((type) => contentType.toLowerCase().includes(type));
 
     if (__DEV__) {
-      console.log('[AudioPlayer] Content-Type:', contentType, 'iOS 호환:', !isUnsupported);
     }
 
     return !isUnsupported;
   } catch (error) {
     // 네트워크 오류 등의 경우 일단 시도해보도록 true 반환
     if (__DEV__) {
-      console.warn('[AudioPlayer] Content-Type 확인 실패, 재생 시도:', error);
     }
     return true;
   }
@@ -119,7 +117,6 @@ const saveBase64ToLocalFile = async (base64String: string): Promise<string> => {
   });
 
   if (__DEV__) {
-    console.log('[AudioPlayer] Base64를 로컬 파일로 저장 완료:', fileUri);
   }
 
   return fileUri;
@@ -183,7 +180,6 @@ export const useAudioPlayer = ({
       } catch (error) {
         const err = error instanceof Error ? error : new Error('미디어 URL 변환 실패');
         if (__DEV__) {
-          console.error('[AudioPlayer] 미디어 URL 변환 실패:', err);
         }
         setError(err);
         onError?.(err);
@@ -208,7 +204,6 @@ export const useAudioPlayer = ({
         });
       } catch (error) {
         if (__DEV__) {
-          console.error('[AudioPlayer] 오디오 모드 설정 실패:', error);
         }
       }
     };
@@ -223,7 +218,7 @@ export const useAudioPlayer = ({
       setAudioSource(null);
       // 로컬 파일 정리
       if (localFileUriRef.current) {
-        FileSystem.deleteAsync(localFileUriRef.current, { idempotent: true }).catch(console.error);
+        FileSystem.deleteAsync(localFileUriRef.current, { idempotent: true }).catch(() => {});
         localFileUriRef.current = null;
       }
       return;
@@ -240,7 +235,6 @@ export const useAudioPlayer = ({
             'iOS에서 지원하지 않는 오디오 형식입니다. 웹에서 녹음된 파일은 iOS에서 재생할 수 없습니다.',
           );
           if (__DEV__) {
-            console.error('[AudioPlayer] iOS 미지원 형식 (URL 확장자):', url);
           }
           setError(unsupportedError);
           onError?.(unsupportedError);
@@ -257,7 +251,6 @@ export const useAudioPlayer = ({
               'iOS에서 지원하지 않는 오디오 형식입니다. 웹에서 녹음된 파일은 iOS에서 재생할 수 없습니다.',
             );
             if (__DEV__) {
-              console.error('[AudioPlayer] iOS 미지원 형식 (Content-Type):', url);
             }
             setError(unsupportedError);
             onError?.(unsupportedError);
@@ -271,7 +264,6 @@ export const useAudioPlayer = ({
         let finalUrl = url;
         if (isBase64DataUri(url) && Platform.OS === 'ios') {
           if (__DEV__) {
-            console.log('[AudioPlayer] iOS: Base64 문자열 감지, 로컬 파일로 변환 중...');
           }
           finalUrl = await saveBase64ToLocalFile(url);
           localFileUriRef.current = finalUrl; // 나중에 정리하기 위해 저장
@@ -281,7 +273,6 @@ export const useAudioPlayer = ({
       } catch (error) {
         const err = error instanceof Error ? error : new Error('오디오 URL 처리 실패');
         if (__DEV__) {
-          console.error('[AudioPlayer] 오디오 URL 처리 오류:', error);
         }
         setError(err);
         onError?.(err);
@@ -307,10 +298,6 @@ export const useAudioPlayer = ({
     if (!status.isLoaded) {
       // 로딩 중이거나 에러 상태
       if (__DEV__) {
-        console.log('[AudioPlayer] 상태:', {
-          isLoaded: status.isLoaded,
-          isBuffering: status.isBuffering,
-        });
       }
       return;
     }
@@ -341,7 +328,6 @@ export const useAudioPlayer = ({
     } catch (error) {
       const err = error instanceof Error ? error : new Error('재생 토글 실패');
       if (__DEV__) {
-        console.error('[AudioPlayer] 재생 토글 오류:', err);
       }
       setError(err);
       onError?.(err);
@@ -388,7 +374,7 @@ export const useAudioPlayer = ({
     return () => {
       // 로컬 파일 정리
       if (localFileUriRef.current) {
-        FileSystem.deleteAsync(localFileUriRef.current, { idempotent: true }).catch(console.error);
+        FileSystem.deleteAsync(localFileUriRef.current, { idempotent: true }).catch(() => {});
         localFileUriRef.current = null;
       }
     };

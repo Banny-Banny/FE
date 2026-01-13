@@ -59,10 +59,6 @@ export function useMapLocation(): UseMapLocationReturn {
         });
         setIsLoading(false);
         if (__DEV__) {
-          console.warn(
-            '[useMapLocation] Location module not available, using default location:',
-            DEFAULT_MAP_CENTER,
-          );
         }
         return;
       }
@@ -81,10 +77,6 @@ export function useMapLocation(): UseMapLocationReturn {
           });
           setIsLoading(false);
           if (__DEV__) {
-            console.warn(
-              '[useMapLocation] Location services are disabled, using default location:',
-              DEFAULT_MAP_CENTER,
-            );
           }
           return;
         }
@@ -94,7 +86,6 @@ export function useMapLocation(): UseMapLocationReturn {
       const { status } = await Location.requestForegroundPermissionsAsync();
 
       if (__DEV__) {
-        console.log('[useMapLocation] Permission status:', status);
       }
 
       if (status !== 'granted') {
@@ -107,10 +98,6 @@ export function useMapLocation(): UseMapLocationReturn {
         });
         setIsLoading(false);
         if (__DEV__) {
-          console.warn(
-            '[useMapLocation] Location permission denied, using default location:',
-            DEFAULT_MAP_CENTER,
-          );
         }
         return;
       }
@@ -127,10 +114,6 @@ export function useMapLocation(): UseMapLocationReturn {
       const currentLocation = await Promise.race([locationPromise, timeoutPromise]);
 
       if (__DEV__) {
-        console.log('[useMapLocation] Location obtained:', {
-          lat: currentLocation.coords.latitude,
-          lng: currentLocation.coords.longitude,
-        });
       }
 
       setLocation({
@@ -149,11 +132,6 @@ export function useMapLocation(): UseMapLocationReturn {
       });
       setIsLoading(false);
       if (__DEV__) {
-        console.warn(
-          '[useMapLocation] Error getting location, using default location:',
-          DEFAULT_MAP_CENTER,
-          err,
-        );
       }
     }
   };

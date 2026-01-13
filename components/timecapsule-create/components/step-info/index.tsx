@@ -341,16 +341,9 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
   const onFormSubmit = useCallback(
     async (data: StepInfoFormData) => {
       try {
-        console.log('🚀 [StepInfo] 주문 생성 시작!');
-        console.log('📦 [StepInfo] 폼 데이터:', data);
-
         // 1단계: 백엔드 API 호출하여 주문 생성
         // ⚠️ 중요: 여기서 백엔드가 실제 결제 금액을 계산합니다!
         const orderData = await submitOrder(data);
-
-        console.log('✅ [StepInfo] 주문 생성 성공!');
-        console.log('📦 [StepInfo] 주문 데이터:', orderData);
-        console.log('💰 [StepInfo] 백엔드 계산 금액:', orderData.total_amount);
 
         // 2단계: 부모 컴포넌트로 전달 (폼 데이터 + 백엔드 응답)
         // ⚠️ 실제 결제 금액은 orderData.total_amount를 사용합니다 (백엔드 계산).
@@ -362,8 +355,6 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
           });
         }
       } catch (err) {
-        console.error('❌ [StepInfo] 주문 생성 실패:', err);
-
         // 에러 메시지 표시
         const errorMessage = err instanceof Error ? err.message : '주문 생성에 실패했습니다';
         Alert.alert('주문 생성 실패', errorMessage);

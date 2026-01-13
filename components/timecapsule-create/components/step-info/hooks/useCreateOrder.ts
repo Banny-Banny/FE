@@ -45,8 +45,6 @@ export const useCreateOrder = (): UseCreateOrderReturn => {
         // 개발 모드: 인증 체크 우회
         // ============================================
         if (SKIP_AUTH_CHECK) {
-          console.log('🔧 [개발 모드] 인증 체크 우회 - Mock 데이터 사용');
-
           // Mock 데이터 반환 (실제 백엔드 응답 형식과 동일하게)
           const mockResponse: CreateOrderResponse = {
             order_id: 'mock-order-' + Date.now(),

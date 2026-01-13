@@ -62,7 +62,6 @@ export function useResetEggSlot(): UseResetEggSlotReturn {
     },
     onError: (error: unknown) => {
       if (__DEV__) {
-        console.error('❌ 이스터에그 슬롯 초기화 실패:', error);
       }
       const axiosError = error as AxiosError<{ message?: string }>;
       const errorMessage =

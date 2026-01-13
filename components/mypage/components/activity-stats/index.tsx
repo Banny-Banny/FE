@@ -48,15 +48,6 @@ export function ActivityStats() {
       capsules.lockedCapsules.length;
     
     // 디버깅: 캡슐 개수 계산 결과 로그
-    console.log('📊 [ActivityStats] 캡슐 개수 계산:', {
-      대기실: capsules.waitingRooms.length,
-      열린캡슐: capsules.openedCapsules.length,
-      잠긴캡슐: capsules.lockedCapsules.length,
-      총개수: count,
-      로딩중: isCapsulesLoading,
-      에러: capsulesError,
-    });
-    
     return count;
   }, [capsules, isCapsulesLoading, capsulesError]);
   

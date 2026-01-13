@@ -27,7 +27,6 @@ export const getMediaUrl = async (mediaId: string): Promise<string> => {
   // 응답에서 url 필드 추출
   if (!response.data || !response.data.url) {
     if (__DEV__) {
-      console.error('[getMediaUrl] 응답 데이터 구조 오류:', response.data);
     }
     throw new Error('미디어 URL을 가져올 수 없습니다. 응답 형식이 올바르지 않습니다.');
   }

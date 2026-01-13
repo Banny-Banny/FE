@@ -81,19 +81,16 @@ export default function UserBottomSheet({
 
       // ⭐ 이미 이 캡슐의 콘텐츠를 불러왔다면 건너뛰기 (404 방지)
       if (hasLoadedRef.current === capsuleId) {
-        console.log('ℹ️ [UserBottomSheet] 이미 불러온 콘텐츠 - API 호출 건너뜀');
         return;
       }
 
       setIsLoadingContent(true);
 
       try {
-        console.log('🔄 [UserBottomSheet] 서버에서 최신 콘텐츠 불러오기 시작...');
         const { fetchMyContent } = await import('./api/content');
         const myContent = await fetchMyContent(capsuleId);
 
         if (myContent && myContent.data) {
-          console.log('✅ [UserBottomSheet] 서버에서 콘텐츠 불러오기 성공');
           const textContent =
             typeof myContent.data.text_message === 'string'
               ? myContent.data.text_message
@@ -108,7 +105,6 @@ export default function UserBottomSheet({
 
           // ⭐ 서버 status가 COMPLETED이면 이미 제출 완료 상태로 설정
           if (myContent.data.status === 'COMPLETED') {
-            console.log('ℹ️ [UserBottomSheet] 이미 제출 완료된 콘텐츠입니다.');
             setHasSubmitted(true);
           } else {
             setHasSubmitted(false);
@@ -129,10 +125,8 @@ export default function UserBottomSheet({
           err?.message?.includes('아직 작성하지 않았습니다');
 
         if (isNotFoundError) {
-          console.log('ℹ️ [UserBottomSheet] 아직 작성하지 않음 (404) - 빈 폼 표시');
           setHasSubmitted(false); // ⭐ 아직 제출 안 함
           // participant.content 폴백 사용 안 함 - 서버가 소스 오브 트루스
-          console.log('📝 [UserBottomSheet] 새로운 콘텐츠 작성 (서버에 데이터 없음)');
           reset({
             textContent: '',
             photos: [],
@@ -143,9 +137,7 @@ export default function UserBottomSheet({
           // ⭐ 404도 불러오기 시도 완료로 표시 (다음에 다시 시도 안 함)
           hasLoadedRef.current = capsuleId;
         } else {
-          console.error('❌ [UserBottomSheet] 콘텐츠 불러오기 실패:', err);
           // 에러 발생 시에도 빈 폼으로 초기화 (서버를 신뢰)
-          console.log('⚠️ [UserBottomSheet] 에러 발생, 빈 폼으로 초기화');
           setHasSubmitted(false);
           reset({
             textContent: '',
@@ -330,7 +322,6 @@ export default function UserBottomSheet({
   const onFormSubmit = async (data: UserContentFormData) => {
     // ⭐ 이미 제출 완료된 경우 저장 방지
     if (hasSubmitted || isReadOnly) {
-      console.log('⚠️ [UserBottomSheet] 이미 제출 완료된 콘텐츠입니다. 저장 불가.');
       openModal({
         width: 344,
         height: 'auto',
@@ -369,7 +360,6 @@ export default function UserBottomSheet({
 
     // ⭐ 연타 방지: 이미 저장 중이면 즉시 무시
     if (isSaving || isSubmitting) {
-      console.log('⚠️ [UserBottomSheet] 이미 저장 중입니다. 무시됨.');
       return;
     }
 
@@ -480,7 +470,6 @@ export default function UserBottomSheet({
 
       // 부모 컴포넌트의 onSave가 있으면 호출 (우선순위 높음)
       if (onSave) {
-        console.log('💾 [UserBottomSheet] 부모 컴포넌트 저장 호출');
         await onSave({
           text: data.textContent,
           images: data.photos,
@@ -489,19 +478,10 @@ export default function UserBottomSheet({
         });
       } else {
         // ⭐ capsuleId 및 inviteCode 전달
-        console.log('💾 [UserBottomSheet] useSubmitContent Hook 호출');
-        console.log('  🆔 capsuleId:', capsuleId);
-        console.log('  🔑 inviteCode:', inviteCode || '(없음)');
-        console.log('  📝 제출 데이터 요약:');
-        console.log('    - 텍스트:', data.textContent.trim().substring(0, 30) + '...');
-        console.log('    - 이미지:', data.photos.length, '개');
-        console.log('    - 음성:', data.music ? '있음' : '없음');
-        console.log('    - 비디오:', data.video ? '있음' : '없음');
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
 
       // 제출 성공 시 모달 표시 후 바텀시트 닫기
-      console.log('🎉 [UserBottomSheet] 저장 성공!');
       // ⭐ 저장 성공 시 제출 완료 상태로 설정 (영구적으로 재수정 불가)
       setHasSubmitted(true);
       // ⭐ 저장 성공 시 다음에 다시 열 때 최신 데이터를 불러올 수 있도록 초기화
@@ -551,11 +531,7 @@ export default function UserBottomSheet({
       });
     } catch (err) {
       // 에러 처리
-      console.error('❌ [UserBottomSheet] 제출 중 오류 발생');
-      console.error('  에러 타입:', err instanceof Error ? err.constructor.name : typeof err);
-      console.error('  에러 메시지:', err instanceof Error ? err.message : String(err));
       if (err instanceof Error && err.stack) {
-        console.error('  스택 트레이스:', err.stack);
       }
 
       // ⭐ 에러 발생 시 저장 상태 해제
@@ -603,9 +579,6 @@ export default function UserBottomSheet({
 
   // 저장 버튼 핸들러 (플랫폼별 분기: 웹=Modal, 앱=Alert)
   const handleSave = () => {
-    console.log('🟢 [handleSave] 저장 버튼 클릭됨!');
-    console.log('  - Platform:', Platform.OS);
-
     // ⭐ 이미 제출 완료된 경우 또는 읽기 전용 모드인 경우 저장 불가
     if (hasSubmitted || isReadOnly) {
       if (Platform.OS === 'web') {
@@ -784,12 +757,9 @@ export default function UserBottomSheet({
             confirmVariant="primary"
             confirmDisabled={isSaving || isSubmitting || hasSubmitted} // ⭐ 제출 완료 시에도 비활성화
             onCancelPress={() => {
-              console.log('🔴 [DualButton] 취소 버튼 클릭됨');
               handleCancel();
             }}
             onConfirmPress={() => {
-              console.log('🟢 [DualButton] 저장 버튼 클릭 시도');
-              console.log('  - disabled 상태:', isSaving || isSubmitting || hasSubmitted);
               handleSave();
             }}
           />
