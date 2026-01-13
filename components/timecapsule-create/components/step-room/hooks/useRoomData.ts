@@ -5,7 +5,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createRoomAndGetSettings, getRoomDetail, getRoomSettings } from '../api/capsule';
-import { mockRoomData } from '../constants';
 import type { CreateRoomResponse, Participant, Progress, RoomDetailResponse, RoomSettingsResponse } from '../types';
 
 // ============================================
@@ -166,19 +165,14 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
           console.log('🔍🔍🔍 [DEBUG] 전체 응답:', JSON.stringify(settingsData, null, 2));
           setRoomSettings(settingsData);
         }
-        // orderId도 capsuleId도 없으면 목데이터 사용
+        // orderId도 capsuleId도 없으면 에러 처리
         else {
-          console.log('ℹ️ [useRoomData] orderId/capsuleId 없음, 목데이터 사용');
-          await new Promise((resolve) => setTimeout(resolve, 300)); // 로딩 시뮬레이션
-          setRoomSettings(mockRoomData);
-          setCapsuleId(mockRoomData.room_id);
+          console.error('ℹ️ [useRoomData] orderId/capsuleId 없음 - 에러 처리');
+          setError(new Error('대기실 정보를 불러올 수 없습니다'));
         }
       } catch (err) {
-        console.warn('⚠️ [useRoomData] API 호출 실패, 목데이터 사용:', err);
+        console.warn('⚠️ [useRoomData] API 호출 실패:', err);
         setError(err instanceof Error ? err : new Error('API 호출 실패'));
-        // 목데이터로 폴백 (snake_case)
-        setRoomSettings(mockRoomData);
-        setCapsuleId(mockRoomData.room_id);
       } finally {
         setIsLoading(false);
       }

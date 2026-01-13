@@ -9,46 +9,10 @@ import { apiClient } from '@/utils/apiClient';
 import dayjs from 'dayjs';
 import type { CreateOrderRequest, CreateOrderResponse, TimeOption } from './types/order';
 
-// ========================================
-// 🔧 테스트 모드 설정
-// ========================================
-// true: Mock 데이터 사용 (백엔드 없이 테스트)
-// false: 실제 API 호출
-const USE_MOCK_DATA = false;
-// ========================================
-
 /**
  * 타임캡슐 주문 생성 API 호출
  */
 export async function createOrder(data: CreateOrderRequest): Promise<CreateOrderResponse> {
-  // Mock 데이터 사용 모드
-  if (USE_MOCK_DATA) {
-    await new Promise((resolve) => setTimeout(resolve, 500)); // 로딩 시뮬레이션
-
-    console.log('🔍 [Mock] capsule_title 확인:', data.capsule_title);
-
-    return {
-      order_id: 'mock-order-' + Date.now(),
-      capsule_id: 'mock-capsule-' + Date.now(),
-      total_amount: 10000,
-      customer_key: 'mock-customer-key',
-      created_at: new Date().toISOString(),
-      image_amount: 0,
-      audio_amount: data.add_music ? 2000 : 0,
-      video_amount: data.add_video ? 3000 : 0,
-      time_option_amount:
-        data.time_option === '1_WEEK' ? 1000 : data.time_option === '1_YEAR' ? 5000 : 0,
-      time_option: data.time_option,
-      custom_open_at: data.custom_open_at || null,
-      headcount: data.headcount,
-      photo_count: data.photo_count || 0,
-      add_music: data.add_music || false,
-      add_video: data.add_video || false,
-      status: 'PENDING_PAYMENT' as const,
-    };
-  }
-
-  // 실제 API 호출 코드
   try {
     // 🔍 요청 데이터 확인 (개발 모드)
     if (__DEV__) {
