@@ -80,7 +80,6 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
       try {
         // ⭐ 방장 모드: orderId로 대기실 생성
         if (orderId) {
-          console.log('🔄 [useRoomData] 방장 모드 - 대기실 생성 시작, orderId:', orderId);
           const roomData = await createRoomAndGetSettings(orderId);
 
           // 실제 API 응답 저장
@@ -88,31 +87,12 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
           const extractedCapsuleId = roomData.capsule_id;
           setCapsuleId(extractedCapsuleId);
 
-          console.log('✅ [useRoomData] 대기실 생성 성공, capsuleId:', extractedCapsuleId);
-
           // 🔍 백엔드 변경사항 확인용 상세 로그
-          console.log('🔍 [useRoomData] capsule_title 확인:', (roomData as any).capsule_title || roomData.title);
-          console.log('🔍 [useRoomData] invite_code 확인:', roomData.invite_code);
-          console.log('🔍 [useRoomData] 딥링크 확인:', (roomData as any).deep_link || `timeegg://room/join?invite_code=${roomData.invite_code}`);
-          console.log('🔍 [useRoomData] 전체 응답 데이터:', JSON.stringify(roomData, null, 2));
-
           // ⭐ 2단계: 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
           try {
-            console.log(
-              '🔄 [useRoomData] 대기실 설정값 조회 시작 - capsuleId:',
-              extractedCapsuleId,
-            );
             const settingsData = await getRoomSettings(extractedCapsuleId);
 
             // ⭐ 디버깅: 백엔드가 반환한 설정값 확인
-            console.log('🔍 [useRoomData] 백엔드 반환 설정값:', settingsData);
-            console.log(
-              '🔍 [useRoomData] max_images_per_person 확인:',
-              settingsData.max_images_per_person,
-            );
-            console.log('🔍🔍🔍 [DEBUG] invite_code 확인:', settingsData.invite_code);
-            console.log('🔍🔍🔍 [DEBUG] 전체 응답:', JSON.stringify(settingsData, null, 2));
-
             // CreateRoomResponse의 추가 정보와 병합
             // getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목이므로 우선 사용
             const mergedSettings: RoomSettingsResponse = {
@@ -127,12 +107,7 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
             };
             setRoomSettings(mergedSettings);
 
-            console.log('✅ [useRoomData] 대기실 설정값 조회 성공:', mergedSettings);
-            console.log(
-              '⚠️ [useRoomData] 주의: max_images_per_person이 orders의 photo_count와 일치하는지 확인 필요',
-            );
           } catch (settingsError) {
-            console.warn('⚠️ [useRoomData] 설정값 조회 실패, 기본값 사용:', settingsError);
             // 설정값 조회 실패 시 CreateRoomResponse만으로 구성
             // title을 capsule_name으로 사용 (fallback)
             const fallbackSettings: RoomSettingsResponse = {
@@ -150,28 +125,21 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
         }
         // ⭐ 게스트 모드: capsuleId로 대기실 상세 정보 조회
         else if (guestCapsuleId) {
-          console.log('🔄 [useRoomData] 게스트 모드 - 대기실 조회 시작, capsuleId:', guestCapsuleId);
           setCapsuleId(guestCapsuleId);
 
           // 대기실 상세 정보 조회 (deadline 포함)
           const detailData = await getRoomDetail(guestCapsuleId);
-          console.log('✅ [useRoomData] 게스트 모드 - 대기실 상세 조회 성공:', detailData);
           setRoomDetailResponse(detailData);
 
           // 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
           const settingsData = await getRoomSettings(guestCapsuleId);
-          console.log('✅ [useRoomData] 게스트 모드 - 대기실 설정값 조회 성공:', settingsData);
-          console.log('🔍🔍🔍 [DEBUG] invite_code 확인:', settingsData.invite_code);
-          console.log('🔍🔍🔍 [DEBUG] 전체 응답:', JSON.stringify(settingsData, null, 2));
           setRoomSettings(settingsData);
         }
         // orderId도 capsuleId도 없으면 에러 처리
         else {
-          console.error('ℹ️ [useRoomData] orderId/capsuleId 없음 - 에러 처리');
           setError(new Error('대기실 정보를 불러올 수 없습니다'));
         }
       } catch (err) {
-        console.warn('⚠️ [useRoomData] API 호출 실패:', err);
         setError(err instanceof Error ? err : new Error('API 호출 실패'));
       } finally {
         setIsLoading(false);
@@ -211,20 +179,6 @@ export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomD
       const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
       // ⭐ 디버깅: 진행률 계산 로그
-      console.log('🔍 [calculateProgress] 진행률 계산:', {
-        전체참가자수: participants.length,
-        배정된참가자수: assignedParticipants.length,
-        maxParticipants: roomSettings?.max_participants,
-        전체인원수: total,
-        완료한참가자수: completed,
-        진행률: percentage,
-        참가자목록: assignedParticipants.map((p) => ({
-          id: p.id,
-          name: p.name,
-          status: p.status,
-        })),
-      });
-
       return {
         completed,
         total,

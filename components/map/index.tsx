@@ -144,7 +144,6 @@ export default function MapFeature({ onEasterEggPress, onTimeCapsulePress }: Map
         }
       } catch (error) {
         if (__DEV__) {
-          console.error('[MapFeature] Discovery API error:', error);
         }
       }
     };

@@ -32,27 +32,7 @@ export const confirmTossPayment = async (
     const endpoint = `/${API_ENDPOINTS.PAYMENT.TOSS_CONFIRM}`;
     const requestBody = { paymentKey, orderId, amount };
 
-    console.log('🌐 [confirmTossPayment] API 호출 시작');
-    console.log('  - Endpoint:', endpoint);
-    console.log('  - Method: POST');
-    console.log('  - Request Body:', {
-      paymentKey: paymentKey.substring(0, 20) + '...', // 보안을 위해 일부만 표시
-      orderId,
-      amount,
-    });
-    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
-    console.log('  - Full URL:', `${apiClient.defaults.baseURL || ''}${endpoint}`);
-
     const response = await apiClient.post<TossPaymentConfirmResponse>(endpoint, requestBody);
-
-    console.log('✅ [confirmTossPayment] API 호출 성공');
-    console.log('  - Status:', response.status);
-    console.log('  - Response Data:', {
-      order_id: response.data.order_id,
-      payment_key: response.data.payment_key?.substring(0, 20) + '...',
-      status: response.data.status,
-      amount: response.data.amount,
-    });
 
     return response.data;
   } catch (error: any) {
@@ -64,14 +44,6 @@ export const confirmTossPayment = async (
     const errorCode = responseData?.code || responseData?.errorCode || responseData?.data?.code;
     const errorMessage =
       responseData?.message || responseData?.errorMessage || responseData?.data?.message;
-
-    console.log('🔍 [confirmTossPayment] 에러 응답 구조 분석:', {
-      status,
-      responseDataKeys: responseData ? Object.keys(responseData) : [],
-      errorCode,
-      errorMessage,
-      fullResponse: responseData,
-    });
 
     if (status === 400) {
       // errorCode가 없어도 errorMessage에 에러 코드가 포함되어 있을 수 있음
@@ -100,11 +72,6 @@ export const confirmTossPayment = async (
             const tossErrorCode = tossError.code;
             const tossErrorMsg = tossError.message;
 
-            console.log('🔍 [confirmTossPayment] 토스 에러 파싱 성공:', {
-              tossErrorCode,
-              tossErrorMsg,
-            });
-
             // 토스페이먼츠 에러 코드에 따른 메시지 매핑
             if (tossErrorCode === 'NOT_FOUND_PAYMENT_SESSION') {
               message = '결제 시간이 만료되었습니다. 다시 시도해주세요.';
@@ -123,7 +90,6 @@ export const confirmTossPayment = async (
           }
         } catch (parseError) {
           // JSON 파싱 실패 시 원본 메시지 사용
-          console.warn('[confirmTossPayment] 토스 에러 메시지 파싱 실패:', parseError);
           message = `결제 승인에 실패했습니다: ${tossErrorMessage}`;
         }
       } else {
@@ -145,7 +111,6 @@ export const confirmTossPayment = async (
     }
 
     const paymentError: PaymentError = { status, message };
-    console.error('[TossPayment API] 결제 승인 실패:', { status, errorCode, errorMessage });
     throw paymentError;
   }
 };
@@ -162,7 +127,6 @@ export const getTossPaymentByKey = async (paymentKey: string): Promise<TossPayme
     );
     return response.data;
   } catch (error: any) {
-    console.error('[TossPayment API] 결제 조회 실패 (paymentKey):', error.response?.data);
     throw error;
   }
 };
@@ -179,7 +143,6 @@ export const getTossPaymentByOrderNo = async (orderNo: string): Promise<TossPaym
     );
     return response.data;
   } catch (error: any) {
-    console.error('[TossPayment API] 결제 조회 실패 (orderNo):', error.response?.data);
     throw error;
   }
 };
@@ -232,7 +195,6 @@ export const cancelTossPayment = async (
     }
 
     const paymentError: PaymentError = { status, message };
-    console.error('[TossPayment API] 결제 취소 실패:', { status, errorCode, errorMessage });
     throw paymentError;
   }
 };
@@ -256,23 +218,12 @@ export const updateOrderStatus = async (
     const endpoint = `/${API_ENDPOINTS.ORDER.UPDATE_STATUS}/${orderId}/status`;
     const requestBody = { status };
 
-    console.log('🌐 [updateOrderStatus] API 호출 시작');
-    console.log('  - Endpoint:', endpoint);
-    console.log('  - Method: POST');
-    console.log('  - Request Body:', requestBody);
-    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
-    console.log('  - Full URL:', `${apiClient.defaults.baseURL || ''}${endpoint}`);
-
     const response = await apiClient.post<{
       order_id: string;
       order_status: string;
       payment_status?: string;
       updated_at: string;
     }>(endpoint, requestBody);
-
-    console.log('✅ [updateOrderStatus] API 호출 성공');
-    console.log('  - Status:', response.status);
-    console.log('  - Response Data:', JSON.stringify(response.data, null, 2));
 
     return response.data;
   } catch (error: any) {
@@ -297,7 +248,6 @@ export const updateOrderStatus = async (
       message = '네트워크 연결을 확인해주세요';
     }
 
-    console.error('[updateOrderStatus] 주문 상태 변경 실패:', { status, errorCode, errorMessage });
     throw new Error(message);
   }
 };
@@ -313,29 +263,12 @@ export const getMyPayments = async ({
   status = 'ALL',
 }: GetMyPaymentsParams = {}): Promise<PaymentListResponse> => {
   try {
-    console.log('🌐 [getMyPayments] API 호출 시작');
-    console.log('  - Endpoint:', `/${API_ENDPOINTS.PAYMENT.TOSS_MY_PAYMENTS}`);
-    console.log('  - Method: GET');
-    console.log('  - Params:', { page, limit, status });
-    console.log('  - Base URL:', apiClient.defaults.baseURL || '설정되지 않음');
-
     const response = await apiClient.get<PaymentListResponse>(
       `/${API_ENDPOINTS.PAYMENT.TOSS_MY_PAYMENTS}`,
       {
         params: { page, limit, status },
       },
     );
-
-    console.log('✅ [getMyPayments] API 호출 성공');
-    console.log('  - Status:', response.status);
-    console.log('  - Response Data (상세):', JSON.stringify(response.data, null, 2));
-    console.log('  - 요약:', {
-      paymentsCount: response.data.payments?.length || 0,
-      total: response.data.total,
-      page: response.data.page,
-      limit: response.data.limit,
-    });
-    console.log('  - Payments 배열:', response.data.payments);
 
     return response.data;
   } catch (error: any) {
@@ -356,7 +289,6 @@ export const getMyPayments = async ({
     }
 
     const paymentError: PaymentError = { status: statusCode, message };
-    console.error('[TossPayment API] 결제 내역 조회 실패:', { statusCode, errorCode, errorMessage });
     throw paymentError;
   }
 };

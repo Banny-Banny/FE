@@ -82,7 +82,6 @@ export function useEasterEggModal({ data }: UseEasterEggModalProps): UseEasterEg
         setMediaUrls({ imageUrl });
       } catch (error) {
         if (__DEV__) {
-          console.error('[EasterEggModal] 미디어 URL 변환 실패:', error);
         }
         setMediaUrls({
           imageUrl: null,

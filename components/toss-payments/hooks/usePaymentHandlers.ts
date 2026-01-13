@@ -99,7 +99,6 @@ export const usePaymentHandlers = ({
           err && typeof err === 'object' && 'message' in err
             ? (err as PaymentError).message
             : '결제 승인에 실패했습니다';
-        console.error('❌ [TossPayment] 결제 승인 실패:', errorMessage);
         Alert.alert('결제 승인 실패', errorMessage);
       }
     },

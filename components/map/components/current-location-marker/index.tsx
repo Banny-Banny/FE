@@ -72,7 +72,6 @@ export function CurrentLocationMarker({
     // WebView가 준비되지 않았으면 대기
     if (!isWebViewReady) {
       if (__DEV__) {
-        console.log('[CurrentLocationMarker] Waiting for WebView to be ready...');
       }
       return;
     }
@@ -81,7 +80,6 @@ export function CurrentLocationMarker({
     const sendMarker = () => {
       if (!webViewRef.current) {
         if (__DEV__) {
-          console.warn('[CurrentLocationMarker] WebView ref is not available');
         }
         return false;
       }
@@ -98,9 +96,7 @@ export function CurrentLocationMarker({
 
       if (__DEV__) {
         if (success) {
-          console.log('[CurrentLocationMarker] Location marker sent:', location);
         } else {
-          console.warn('[CurrentLocationMarker] Failed to send location marker');
         }
       }
 

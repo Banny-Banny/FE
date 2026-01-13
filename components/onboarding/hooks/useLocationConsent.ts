@@ -33,7 +33,6 @@ export function useLocationConsent() {
       const locationConsentGranted = status === 'granted';
 
       if (__DEV__) {
-        console.log('[LocationConsent] 위치 권한 상태:', status);
       }
 
       // 권한이 거부되어도 동의 완료로 처리 (사용자가 나중에 설정에서 변경 가능)
@@ -44,10 +43,6 @@ export function useLocationConsent() {
       const friendConsent = (await AsyncStorage.getItem(STORAGE_KEYS.FRIEND_CONSENT)) === 'true';
 
       if (__DEV__) {
-        console.log('[LocationConsent] 동의 상태 확인:', {
-          friendConsent,
-          locationConsent: locationConsentGranted,
-        });
       }
 
       // 모든 동의가 완료되었는지 확인
@@ -57,7 +52,6 @@ export function useLocationConsent() {
           await completeOnboarding(friendConsent, locationConsentGranted);
 
           if (__DEV__) {
-            console.log('[LocationConsent] 온보딩 완료 API 호출 성공');
           }
         } catch (apiError) {
           // API 호출 실패 시 사용자에게 알림
@@ -73,14 +67,12 @@ export function useLocationConsent() {
           );
 
           if (__DEV__) {
-            console.error('[LocationConsent] 온보딩 완료 API 호출 실패:', apiError);
           }
           // API 실패해도 로컬 저장은 완료되었으므로 계속 진행
         }
       } else {
         // 친구 동의가 아직 완료되지 않은 경우 (이론적으로는 발생하지 않아야 함)
         if (__DEV__) {
-          console.warn('[LocationConsent] 친구 동의가 아직 완료되지 않음');
         }
       }
 
@@ -88,10 +80,6 @@ export function useLocationConsent() {
       // 온보딩 완료 후 초대코드가 있으면 대기실로 이동
       const pendingInviteCode = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_INVITE_CODE);
       if (pendingInviteCode) {
-        console.log(
-          '🔗 [LocationConsent] 온보딩 완료 후 초대코드 발견 → 대기실로 이동:',
-          pendingInviteCode,
-        );
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
         router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}`);
         return;
@@ -101,7 +89,6 @@ export function useLocationConsent() {
     } catch (error) {
       // 동의 처리 오류 처리
       if (__DEV__) {
-        console.error('[LocationConsent] 위치 동의 처리 중 오류:', error);
       }
 
       Alert.alert('오류', '위치 권한 요청 중 오류가 발생했습니다.');
@@ -127,10 +114,6 @@ export function useLocationConsent() {
       const friendConsent = (await AsyncStorage.getItem(STORAGE_KEYS.FRIEND_CONSENT)) === 'true';
 
       if (__DEV__) {
-        console.log('[LocationConsent] 건너뛰기 - 동의 상태 확인:', {
-          friendConsent,
-          locationConsent: locationConsentGranted,
-        });
       }
 
       // 모든 동의가 완료되었는지 확인
@@ -140,7 +123,6 @@ export function useLocationConsent() {
           await completeOnboarding(friendConsent, locationConsentGranted);
 
           if (__DEV__) {
-            console.log('[LocationConsent] 온보딩 완료 API 호출 성공 (건너뛰기)');
           }
         } catch (apiError) {
           // API 호출 실패 시 사용자에게 알림
@@ -156,14 +138,12 @@ export function useLocationConsent() {
           );
 
           if (__DEV__) {
-            console.error('[LocationConsent] 온보딩 완료 API 호출 실패:', apiError);
           }
           // API 실패해도 로컬 저장은 완료되었으므로 계속 진행
         }
       } else {
         // 친구 동의가 아직 완료되지 않은 경우 (이론적으로는 발생하지 않아야 함)
         if (__DEV__) {
-          console.warn('[LocationConsent] 친구 동의가 아직 완료되지 않음');
         }
       }
 
@@ -171,10 +151,6 @@ export function useLocationConsent() {
       // 온보딩 완료 후 초대코드가 있으면 대기실로 이동
       const pendingInviteCode = await AsyncStorage.getItem(STORAGE_KEYS.PENDING_INVITE_CODE);
       if (pendingInviteCode) {
-        console.log(
-          '🔗 [LocationConsent] 온보딩 완료 후 초대코드 발견 → 대기실로 이동:',
-          pendingInviteCode,
-        );
         await AsyncStorage.removeItem(STORAGE_KEYS.PENDING_INVITE_CODE);
         router.replace(`/(tabs)/room/join?invite_code=${pendingInviteCode}`);
         return;
@@ -184,7 +160,6 @@ export function useLocationConsent() {
     } catch (error) {
       // 동의 처리 오류 처리
       if (__DEV__) {
-        console.error('[LocationConsent] 건너뛰기 처리 중 오류:', error);
       }
 
       Alert.alert('오류', '처리 중 오류가 발생했습니다.');

@@ -162,7 +162,6 @@ export function useEggDetail(params: UseEggDetailParams): UseEggDetailReturn {
       // eggId가 없으면 API 호출하지 않음
       if (!params.eggId || !accessToken) {
         if (__DEV__) {
-          console.warn('[useEggDetail] eggId 또는 토큰이 없어 API 호출을 건너뜁니다.');
         }
         return null;
       }

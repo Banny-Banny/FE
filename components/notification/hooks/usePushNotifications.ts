@@ -56,7 +56,6 @@ export function usePushNotifications() {
         // useNotifications 훅에서 이 이벤트를 구독하여 자동으로 새로고침
         notificationEvents.emit();
         if (__DEV__) {
-          console.log('[PushNotifications] 앱이 포그라운드로 돌아옴 - 알림 목록 새로고침 이벤트 발생');
         }
       }
       appState.current = nextAppState;
@@ -66,11 +65,6 @@ export function usePushNotifications() {
     notificationListener.current = Notifications.addNotificationReceivedListener(
       (notification) => {
         if (__DEV__) {
-          console.log('[PushNotifications] 알림 수신:', {
-            title: notification.request.content.title,
-            body: notification.request.content.body,
-            data: notification.request.content.data,
-          });
         }
         // 푸시 알림 수신 시 즉시 알림 목록 새로고침 이벤트 발생
         // useNotifications 훅에서 이 이벤트를 구독하여 자동으로 새로고침
@@ -85,10 +79,6 @@ export function usePushNotifications() {
         const notificationType = data?.type as string;
 
         if (__DEV__) {
-          console.log('[PushNotifications] 알림 탭:', {
-            type: notificationType,
-            data,
-          });
         }
 
         // 알림 타입에 따라 화면 이동
@@ -155,7 +145,6 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     // 권한이 거부된 경우
     if (finalStatus !== 'granted') {
       if (__DEV__) {
-        console.warn('[PushNotifications] 푸시 알림 권한이 거부되었습니다.');
       }
       return null;
     }
@@ -173,7 +162,6 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
     token = tokenData.data;
 
     if (__DEV__) {
-      console.log('[PushNotifications] 푸시 토큰 발급 성공:', token.substring(0, 20) + '...');
     }
 
     // 백엔드에 토큰 등록
@@ -182,20 +170,13 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
       await apiClient.post(endpoint, { token });
 
       if (__DEV__) {
-        console.log('[PushNotifications] 푸시 토큰 등록 성공');
       }
     } catch (error: any) {
       // 토큰 등록 실패는 치명적이지 않으므로 로깅만
-      console.error('[PushNotifications] 푸시 토큰 등록 실패:', error);
       if (__DEV__) {
-        console.error('[PushNotifications] 에러 상세:', {
-          message: error.message,
-          response: error.response?.data,
-        });
       }
     }
   } catch (error: any) {
-    console.error('[PushNotifications] 푸시 알림 초기화 실패:', error);
   }
 
   return token;

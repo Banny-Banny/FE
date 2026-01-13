@@ -29,7 +29,6 @@ export const useVideoThumbnail = () => {
       return uri;
     } catch (error) {
       if (__DEV__) {
-        console.error('동영상 썸네일 추출 오류:', error);
       }
       return null;
     }

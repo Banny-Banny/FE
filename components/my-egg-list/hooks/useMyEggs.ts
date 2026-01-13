@@ -81,7 +81,6 @@ const convertCoordinatesToAddress = async (lat: number, lng: number): Promise<st
       isNaN(lng)
     ) {
       if (__DEV__) {
-        console.warn('[useMyEggs] 유효하지 않은 좌표:', { lat, lng });
       }
       return null;
     }
@@ -91,7 +90,6 @@ const convertCoordinatesToAddress = async (lat: number, lng: number): Promise<st
 
     if (!kakaoApiKey) {
       if (__DEV__) {
-        console.warn('[useMyEggs] 카카오 API 키가 설정되지 않았습니다.');
       }
       return null;
     }
@@ -123,15 +121,7 @@ const convertCoordinatesToAddress = async (lat: number, lng: number): Promise<st
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
         const errorData = error.response?.data;
-        console.error('[useMyEggs] 주소 변환 실패:', {
-          status,
-          error: errorData,
-          lat,
-          lng,
-          message: error.message,
-        });
       } else {
-        console.error('[useMyEggs] 주소 변환 실패:', error);
       }
     }
     return null;
@@ -234,7 +224,6 @@ export function useMyEggs(params: UseMyEggsParams): UseMyEggsReturn {
       // 인증 토큰이 없으면 API 호출하지 않음
       if (!accessToken) {
         if (__DEV__) {
-          console.warn('[useMyEggs] 토큰이 없어 API 호출을 건너뜁니다.');
         }
         return null;
       }

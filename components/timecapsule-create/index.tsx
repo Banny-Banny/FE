@@ -37,7 +37,6 @@ export default function TimeCapsuleCreate() {
 
       // 결제 완료 후 리다이렉트된 경우
       if (paymentKey && orderId && amount) {
-        console.log('💳 [TimeCapsuleCreate] 결제 완료 리다이렉트 감지 - 결제 승인 처리 중 화면으로 이동');
         return true;
       }
     }
@@ -54,14 +53,12 @@ export default function TimeCapsuleCreate() {
         const step = parseInt(savedStep, 10);
         // step 3(대기실)은 복원하지 않고 항상 1로 시작
         if (step === 3) {
-          console.log('🔄 [TimeCapsuleCreate] step 3(대기실) 감지 - 캡슐 생성은 항상 step 1부터 시작');
           // sessionStorage 클리어
           sessionStorage.removeItem(STORAGE_KEYS.STEP);
           sessionStorage.removeItem(STORAGE_KEYS.STEP_INFO_DATA);
           sessionStorage.removeItem(STORAGE_KEYS.ORDER_DATA);
           return 1;
         }
-        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 step 복원:', step);
         return step;
       }
     }
@@ -72,7 +69,6 @@ export default function TimeCapsuleCreate() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const saved = sessionStorage.getItem(STORAGE_KEYS.STEP_INFO_DATA);
       if (saved) {
-        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 stepInfoData 복원');
         return JSON.parse(saved);
       }
     }
@@ -83,7 +79,6 @@ export default function TimeCapsuleCreate() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const saved = sessionStorage.getItem(STORAGE_KEYS.ORDER_DATA);
       if (saved) {
-        console.log('🔄 [TimeCapsuleCreate] sessionStorage에서 orderData 복원');
         return JSON.parse(saved);
       }
     }
@@ -92,22 +87,18 @@ export default function TimeCapsuleCreate() {
 
   const [step, setStep] = useState<number>(() => {
     const initialStep = getInitialStep();
-    console.log('🎬 [TimeCapsuleCreate] useState 초기화 - step:', initialStep);
     return initialStep;
   });
   const [stepInfoData, setStepInfoData] = useState<StepInfoFormData | null>(() => {
     const data = getInitialStepInfoData();
-    console.log('🎬 [TimeCapsuleCreate] useState 초기화 - stepInfoData:', data ? '있음' : '없음');
     return data;
   });
   const [orderData, setOrderData] = useState<CreateOrderResponse | null>(() => {
     const data = getInitialOrderData();
-    console.log('🎬 [TimeCapsuleCreate] useState 초기화 - orderData:', data ? '있음' : '없음');
     return data;
   });
   const [isPaymentRedirect, setIsPaymentRedirect] = useState<boolean>(() => {
     const isRedirect = checkPaymentRedirect();
-    console.log('🎬 [TimeCapsuleCreate] useState 초기화 - isPaymentRedirect:', isRedirect);
     return isRedirect;
   });
 
@@ -127,19 +118,16 @@ export default function TimeCapsuleCreate() {
     useCallback(() => {
       // 결제 리다이렉트 중이면 초기화하지 않음
       if (isPaymentRedirectRef.current) {
-        console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - 결제 리다이렉트 처리 중이므로 초기화 스킵');
         return;
       }
 
       // step이 2면 결제 진행 중이므로 초기화하지 않음 (결제 리다이렉트 대응)
       // step이 3(대기실)이면 항상 초기화 (대기실은 마이페이지에서 접근 가능)
       if (stepRef.current === 2) {
-        console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - 결제 진행 중이므로 초기화 스킵 (step:', stepRef.current, ')');
         return;
       }
 
       // step 1 또는 step 3인 경우 항상 초기화 (캡슐 생성은 항상 처음부터 시작)
-      console.log('🎯 [TimeCapsuleCreate] 화면 포커스 - state 초기화 (항상 새로 시작)');
       setStep(1);
       setStepInfoData(null);
       setOrderData(null);
@@ -153,15 +141,12 @@ export default function TimeCapsuleCreate() {
     }, []) // 의존성 배열 비우기 - 포커스 변경 시에만 실행
   );
 
-  console.log('🎯 TimeCapsuleCreate 렌더링! step:', step, 'isPaymentRedirect:', isPaymentRedirect);
-
   // ============================================
   // 웹 환경에서 state 변경 시 sessionStorage에 저장
   // ============================================
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       sessionStorage.setItem(STORAGE_KEYS.STEP, step.toString());
-      console.log('💾 [TimeCapsuleCreate] step 저장:', step);
     }
   }, [step]);
 
@@ -169,7 +154,6 @@ export default function TimeCapsuleCreate() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (stepInfoData) {
         sessionStorage.setItem(STORAGE_KEYS.STEP_INFO_DATA, JSON.stringify(stepInfoData));
-        console.log('💾 [TimeCapsuleCreate] stepInfoData 저장');
       }
     }
   }, [stepInfoData]);
@@ -178,7 +162,6 @@ export default function TimeCapsuleCreate() {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (orderData) {
         sessionStorage.setItem(STORAGE_KEYS.ORDER_DATA, JSON.stringify(orderData));
-        console.log('💾 [TimeCapsuleCreate] orderData 저장');
       }
     }
   }, [orderData]);
@@ -188,7 +171,6 @@ export default function TimeCapsuleCreate() {
   // ============================================
   useEffect(() => {
     if (step === 3 && Platform.OS === 'web' && typeof window !== 'undefined') {
-      console.log('🧹 [TimeCapsuleCreate] 3단계 도달 - sessionStorage 클리어');
       sessionStorage.removeItem(STORAGE_KEYS.STEP);
       sessionStorage.removeItem(STORAGE_KEYS.STEP_INFO_DATA);
       sessionStorage.removeItem(STORAGE_KEYS.ORDER_DATA);
@@ -198,7 +180,6 @@ export default function TimeCapsuleCreate() {
   // 결제 리다이렉트 후 결제 승인이 완료되면 step 3으로 이동
   useEffect(() => {
     if (isPaymentRedirect && step === 3) {
-      console.log('✅ [TimeCapsuleCreate] 결제 승인 완료 - 결제 리다이렉트 상태 해제');
       setIsPaymentRedirect(false);
     }
   }, [step, isPaymentRedirect]);
@@ -207,7 +188,6 @@ export default function TimeCapsuleCreate() {
   const [triggerPaymentCheck, setTriggerPaymentCheck] = useState(false);
   useEffect(() => {
     if (isPaymentRedirect && step === 2 && !triggerPaymentCheck) {
-      console.log('🚀 [TimeCapsuleCreate] 결제 승인 처리 트리거 설정');
       setTriggerPaymentCheck(true);
     }
   }, [isPaymentRedirect, step, triggerPaymentCheck]);
@@ -218,10 +198,7 @@ export default function TimeCapsuleCreate() {
 
   // 결제 완료 후 리다이렉트된 경우: 결제 승인 처리 중 화면 표시
   if (isPaymentRedirect && step === 2) {
-    console.log('💳 [TimeCapsuleCreate] 결제 승인 처리 중 화면 렌더링');
-
     if (!stepInfoData || !orderData) {
-      console.error('❌ [TimeCapsuleCreate] 결제 리다이렉트 상태인데 필수 데이터가 없습니다!');
       // 데이터가 없으면 결제 리다이렉트 상태 해제하고 step 1로 이동
       setIsPaymentRedirect(false);
       setStep(1);
@@ -237,12 +214,10 @@ export default function TimeCapsuleCreate() {
           formData={stepInfoData}
           orderData={orderData}
           onBack={() => {
-            console.log('🔙 [TimeCapsuleCreate] 1단계로 돌아가기');
             setIsPaymentRedirect(false);
             setStep(1);
           }}
           onSubmit={(paymentData) => {
-            console.log('✅ [TimeCapsuleCreate] 결제 완료:', paymentData);
             setStep(3); // 3단계로 이동
           }}
           triggerPaymentCheck={triggerPaymentCheck}
@@ -258,40 +233,26 @@ export default function TimeCapsuleCreate() {
   // 1단계: 타임캡슐 정보 입력
   if (step === 1) {
     const handleSubmit = (data: any) => {
-      console.log('✅ [TimeCapsuleCreate] 1단계 완료!');
-      console.log('📦 [TimeCapsuleCreate] 전체 데이터:', data);
-      console.log('📦 [TimeCapsuleCreate] orderData:', data.orderData);
-
       if (!data.orderData) {
-        console.error('❌ [TimeCapsuleCreate] orderData가 없습니다!');
         return;
       }
 
       setStepInfoData(data); // formData 저장
       setOrderData(data.orderData); // 백엔드 응답 저장
 
-      console.log('🚀 [TimeCapsuleCreate] 2단계로 이동!');
       setStep(2); // 2단계로 이동
     };
 
     const handleBack = () => {
-      console.log('🔙 메인으로 돌아가기');
       router.push(ROUTES.MAIN); // 메인 페이지로 이동
     };
-
-    console.log('📤 StepInfo에 onSubmit 전달:', typeof handleSubmit);
 
     return <StepInfo onSubmit={handleSubmit} onBack={handleBack} initialData={stepInfoData} />;
   }
 
   // 2단계: 결제
   if (step === 2) {
-    console.log('🎯 [TimeCapsuleCreate] 2단계 렌더링!');
-    console.log('📦 [TimeCapsuleCreate] stepInfoData:', stepInfoData);
-    console.log('📦 [TimeCapsuleCreate] orderData:', orderData);
-
     if (!stepInfoData || !orderData) {
-      console.error('❌ [TimeCapsuleCreate] 필수 데이터가 없습니다!');
       return null;
     }
 
@@ -300,11 +261,9 @@ export default function TimeCapsuleCreate() {
         formData={stepInfoData} // 1단계 폼 데이터 전달
         orderData={orderData} // 백엔드 주문 데이터 전달
         onBack={() => {
-          console.log('🔙 [TimeCapsuleCreate] 1단계로 돌아가기');
           setStep(1);
         }}
         onSubmit={(paymentData) => {
-          console.log('✅ [TimeCapsuleCreate] 결제 완료:', paymentData);
           setStep(3); // 3단계로 이동
         }}
       />
@@ -319,7 +278,6 @@ export default function TimeCapsuleCreate() {
 
     // orderData가 없으면 에러 처리
     if (!orderData) {
-      console.error('❌ [TimeCapsuleCreate] orderData가 없습니다!');
       return null;
     }
 
@@ -328,7 +286,6 @@ export default function TimeCapsuleCreate() {
         role={userRole}
         orderId={orderData.order_id} // 백엔드에서 생성한 order_id 전달
         onSubmit={() => {
-          console.log('✅ [TimeCapsuleCreate] 타임캡슐 제출 완료!');
           // TODO: 메인 화면으로 이동 또는 완료 페이지로 이동
           router.push(ROUTES.MAIN);
         }}

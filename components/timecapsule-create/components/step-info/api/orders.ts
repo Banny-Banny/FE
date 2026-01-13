@@ -16,26 +16,12 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
   try {
     // 🔍 요청 데이터 확인 (개발 모드)
     if (__DEV__) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📤 [createOrder] 주문 생성 요청');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📝 캡슐 제목 (capsule_title):', data.capsule_title);
-      console.log('📦 전체 요청 데이터:', JSON.stringify(data, null, 2));
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     const response = await apiClient.post<CreateOrderResponse>('/api/orders', data);
 
     // 🔍 응답 데이터 확인 (개발 모드)
     if (__DEV__) {
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('✅ [createOrder] 주문 생성 성공');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📦 전체 응답 데이터:', JSON.stringify(response.data, null, 2));
-      console.log('🆔 주문 ID (order_id):', response.data.order_id);
-      console.log('🏠 대기실 ID (capsule_id):', response.data.capsule_id);
-      console.log('💰 총 금액 (total_amount):', response.data.total_amount);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     return response.data;
@@ -45,20 +31,10 @@ export async function createOrder(data: CreateOrderRequest): Promise<CreateOrder
 
     // 개발 모드에서 상세 오류 정보 로깅
     if (__DEV__) {
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('❌ [createOrder] 주문 생성 실패');
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.error('📊 HTTP 상태 코드:', status);
-      console.error('📝 에러 메시지:', error.message);
-      console.error('📤 요청 데이터:', JSON.stringify(data, null, 2));
       if (error.response?.data) {
-        console.error('📥 서버 응답 데이터:', JSON.stringify(error.response.data, null, 2));
       }
       if (error.response?.headers) {
-        console.error('📋 응답 헤더:', error.response.headers);
       }
-      console.error('🌐 네트워크 오류 여부:', !error.response);
-      console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     }
 
     if (status === 400) {

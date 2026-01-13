@@ -122,7 +122,6 @@ function ButtonComponent({
         disabled
           ? undefined
           : () => {
-              console.log(`🔘 [Button] 버튼 "${label}" 클릭됨 (disabled: ${disabled})`);
               onPress();
             }
       }

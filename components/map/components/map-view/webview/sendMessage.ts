@@ -20,7 +20,6 @@ import type {
 function sendMessage(webViewRef: React.RefObject<WebView | null>, message: string) {
   if (!webViewRef.current) {
     if (__DEV__) {
-      console.warn('[sendMessage] WebView ref is not available');
     }
     return false;
   }
@@ -28,12 +27,10 @@ function sendMessage(webViewRef: React.RefObject<WebView | null>, message: strin
   try {
     webViewRef.current.postMessage(message);
     if (__DEV__) {
-      console.log('[sendMessage] Message sent:', JSON.parse(message).type);
     }
     return true;
   } catch (error) {
     if (__DEV__) {
-      console.error('[sendMessage] Failed to send message:', error);
     }
     return false;
   }

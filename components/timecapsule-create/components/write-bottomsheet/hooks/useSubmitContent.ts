@@ -40,7 +40,6 @@ async function getFileSize(uri: string): Promise<number> {
       const blob = await response.blob();
       return blob.size;
     } catch (error) {
-      console.error('웹에서 파일 크기 가져오기 실패:', error);
       throw new Error('파일 크기를 확인할 수 없습니다.');
     }
   } else {
@@ -93,9 +92,6 @@ async function validateMediaFile(uri: string, type: MediaType, filename?: string
     }
     // ⭐ 웹 환경에서 파일 크기 확인 실패 시 경고만 하고 계속 진행
     if (Platform.OS === 'web') {
-      console.warn(
-        `⚠️ [validateMediaFile] 웹에서 파일 크기 검증 실패, 계속 진행: ${extractedFilename}`,
-      );
       return; // 검증 실패해도 계속 진행
     }
     throw new Error('파일 크기를 확인할 수 없습니다.');
@@ -125,28 +121,19 @@ async function uriToFile(uri: string, name: string, type: string): Promise<File>
   try {
     if (Platform.OS === 'web') {
       // 웹 환경: fetch를 사용하여 Blob으로 변환
-      console.log(`🔄 [uriToFile] 웹 환경에서 파일 변환 시작: ${uri.substring(0, 50)}...`);
-
       try {
         const response = await fetch(uri);
         if (!response.ok) {
           throw new Error(`파일을 가져올 수 없습니다: ${response.status} ${response.statusText}`);
         }
         const blob = await response.blob();
-        console.log(
-          `✅ [uriToFile] Blob 생성 완료: ${blob.size} bytes, type: ${blob.type || type}`,
-        );
-
         // Blob의 타입이 비어있으면 전달받은 타입 사용
         const finalType = blob.type || type;
         const file = new File([blob], name, { type: finalType });
-        console.log(`✅ [uriToFile] File 객체 생성 완료: ${file.name}, ${file.size} bytes`);
         return file;
       } catch (fetchError) {
-        console.error('❌ [uriToFile] fetch 실패, 원인:', fetchError);
         // fetch 실패 시 추가 정보 로깅
         if (fetchError instanceof TypeError) {
-          console.error('  TypeError 발생 - CORS 또는 네트워크 문제일 수 있습니다');
         }
         throw fetchError;
       }
@@ -156,10 +143,6 @@ async function uriToFile(uri: string, name: string, type: string): Promise<File>
       return new File([blob], name, { type });
     }
   } catch (error) {
-    console.error('❌ [uriToFile] URI to File 변환 실패:', error);
-    console.error('  URI:', uri);
-    console.error('  파일명:', name);
-    console.error('  타입:', type);
     if (error instanceof Error) {
       throw new Error(`파일 변환에 실패했습니다: ${error.message}`);
     }
@@ -231,7 +214,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
         throw new Error(validation.message);
       }
 
-      console.log('📤 [useSubmitContent] FormData 생성 시작');
       setUploadProgress('FormData 생성 중...');
 
       // 2. FormData 생성
@@ -246,7 +228,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
       const newImageUris: string[] = [];
 
       if (data.photos.length > 0) {
-        console.log(`📤 [useSubmitContent] 이미지 ${data.photos.length}개 처리 중...`);
         for (let i = 0; i < data.photos.length; i++) {
           const photoUri = data.photos[i];
 
@@ -256,14 +237,12 @@ export function useSubmitContent(): UseSubmitContentReturn {
           } else {
             // HTTP/HTTPS URL: 이미 업로드된 파일
             existingImageUrls.push(photoUri);
-            console.log(`  ⏭️  이미지 ${i + 1}: 이미 업로드된 파일 URL 저장 - ${photoUri}`);
           }
         }
       }
 
       // ⭐ 이미 업로드된 이미지 URL을 별도 필드로 전송 (백엔드가 기존 파일 유지)
       if (existingImageUrls.length > 0) {
-        console.log(`📤 [useSubmitContent] 기존 이미지 URL ${existingImageUrls.length}개 전송`);
         existingImageUrls.forEach((url, index) => {
           formData.append(`existing_image_urls[${index}]`, url);
         });
@@ -272,24 +251,16 @@ export function useSubmitContent(): UseSubmitContentReturn {
       // 새 이미지 파일 추가
       if (newImageUris.length > 0) {
         setUploadProgress(`이미지 ${newImageUris.length}개 업로드 중...`);
-        console.log(`📤 [useSubmitContent] 새 이미지 ${newImageUris.length}개 업로드 준비`);
         for (let i = 0; i < newImageUris.length; i++) {
           const photoUri = newImageUris[i];
-          console.log(`  🔄 이미지 ${i + 1}: 로컬 파일 검증 및 변환 중...`);
-          console.log(`    URI: ${photoUri.substring(0, 80)}...`);
-
           // 파일명 추출
           const filename = photoUri.split('/').pop() || generateFileName(photoUri, 'photo', 'jpg');
-          console.log(`    파일명: ${filename}`);
-
           // 파일 검증 (타입 및 크기)
           try {
             await validateMediaFile(photoUri, 'IMAGE', filename);
-            console.log(`    ✅ 파일 검증 성공`);
           } catch (validationError) {
             const errorMessage =
               validationError instanceof Error ? validationError.message : '파일 검증 실패';
-            console.error(`  ❌ 이미지 ${i + 1} 검증 실패:`, errorMessage);
             throw new Error(`이미지 ${i + 1} 검증 실패: ${errorMessage}`);
           }
 
@@ -304,18 +275,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
               ? 'image/webp'
               : 'image/jpeg';
 
-          console.log(`    MIME 타입: ${mimeType}, 확장자: ${extension}`);
-
           const fileName = generateFileName(photoUri, 'photo', extension || 'jpg');
-          console.log(`    생성된 파일명: ${fileName}`);
-
           const photoFile = await uriToFile(photoUri, fileName, mimeType);
-          console.log(`    File 객체 생성 완료: ${photoFile.size} bytes`);
-
           formData.append('images', photoFile);
-          console.log(
-            `✅ [useSubmitContent] 이미지 ${i + 1}/${newImageUris.length} 변환 완료: ${fileName}`,
-          );
         }
       }
 
@@ -323,8 +285,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
       if (data.music) {
         if (isLocalFile(data.music)) {
           setUploadProgress('음성 파일 추가 중...');
-          console.log('📤 [useSubmitContent] 음성 파일 추가 중...');
-
           // URI에서 확장자 추출
           let extension = 'm4a'; // 기본값 (모든 플랫폼에서 m4a로 녹음)
           const uriParts = data.music.split('.');
@@ -353,9 +313,6 @@ export function useSubmitContent(): UseSubmitContentReturn {
             // 웹: URI를 Blob으로 변환 후 추가
             const blob = await uriToBlob(data.music);
             formData.append('music', blob, fileName);
-            console.log(
-              `✅ [useSubmitContent] [웹] 음성 파일 추가 완료: ${fileName} (${mimeType})`,
-            );
           } else {
             // React Native: { uri, type, name } 형태로 추가
             formData.append('music', {
@@ -363,13 +320,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
               type: mimeType,
               name: fileName,
             } as any);
-            console.log(
-              `✅ [useSubmitContent] [앱] 음성 파일 추가 완료: ${fileName} (${mimeType})`,
-            );
           }
         } else {
           // HTTP/HTTPS URL: 이미 업로드된 파일
-          console.log('  ⏭️  음성: 이미 업로드된 파일 URL 전송 - ', data.music);
           formData.append('existing_music_url', data.music);
         }
       }
@@ -379,21 +332,15 @@ export function useSubmitContent(): UseSubmitContentReturn {
         if (isLocalFile(data.video)) {
           // 로컬 파일: 새로 업로드
           setUploadProgress('비디오 파일 업로드 중...');
-          console.log('📤 [useSubmitContent] 비디오 파일 검증 및 변환 중...');
-          console.log(`  URI: ${data.video.substring(0, 80)}...`);
-
           // 파일명 추출
           const filename =
             data.video.split('/').pop() || generateFileName(data.video, 'video', 'mp4');
-          console.log(`  파일명: ${filename}`);
-
           // 파일 검증 (타입 및 크기)
           try {
             await validateMediaFile(data.video, 'VIDEO', filename);
           } catch (validationError) {
             const errorMessage =
               validationError instanceof Error ? validationError.message : '파일 검증 실패';
-            console.error('  ❌ 비디오 파일 검증 실패:', errorMessage);
             throw new Error(`비디오 파일 검증 실패: ${errorMessage}`);
           }
 
@@ -402,37 +349,24 @@ export function useSubmitContent(): UseSubmitContentReturn {
           const mimeType =
             extension === 'mp4' ? 'video/mp4' : extension === 'webm' ? 'video/webm' : 'video/mp4';
 
-          console.log(`  MIME 타입: ${mimeType}, 확장자: ${extension}`);
-
           const fileName = generateFileName(data.video, 'video', extension || 'mp4');
-          console.log(`  생성된 파일명: ${fileName}`);
-
           const videoFile = await uriToFile(data.video, fileName, mimeType);
-          console.log(`  File 객체 생성 완료: ${videoFile.size} bytes`);
-
           formData.append('video', videoFile);
-          console.log(`✅ [useSubmitContent] 비디오 파일 변환 완료: ${fileName}`);
         } else {
           // HTTP/HTTPS URL: 이미 업로드된 파일
-          console.log('  ⏭️  비디오: 이미 업로드된 파일 URL 전송 - ', data.video);
           formData.append('existing_video_url', data.video);
         }
       }
 
-      console.log('📤 [useSubmitContent] API 제출 시작');
       setUploadProgress('서버에 전송 중...');
 
       // ⭐ FormData 내용 확인 (디버깅용)
       if (Platform.OS === 'web') {
-        console.log('📋 [useSubmitContent] FormData 내용 확인:');
         for (const pair of (formData as any).entries()) {
           const [key, value] = pair;
           if (value instanceof File) {
-            console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
           } else if (value instanceof Blob) {
-            console.log(`  ${key}: Blob(${value.size} bytes, ${value.type})`);
           } else {
-            console.log(`  ${key}: ${typeof value === 'string' ? value.substring(0, 50) : value}`);
           }
         }
       }
@@ -440,11 +374,9 @@ export function useSubmitContent(): UseSubmitContentReturn {
       // 3. API 호출
       const result = await submitMyContent(capsuleId, formData);
 
-      console.log('✅ [useSubmitContent] 제출 완료:', result);
       setUploadProgress('');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '제출에 실패했습니다.';
-      console.error('❌ [useSubmitContent] 제출 실패:', errorMessage);
       setError(errorMessage);
       setUploadProgress('');
       throw err;

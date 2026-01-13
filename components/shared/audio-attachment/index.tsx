@@ -100,10 +100,6 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
       const extension = Platform.OS === 'web' ? 'mp3' : 'm4a';
       
       if (__DEV__) {
-        console.log('[AudioAttachment] 녹음 파일 정보:');
-        console.log('  - Platform:', Platform.OS);
-        console.log('  - URI:', uri);
-        console.log('  - 형식:', extension);
       }
       
       setSelectedAudioUri(uri);
@@ -135,7 +131,6 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({
         setSelectedAudioName(asset.name);
       }
     } catch (error) {
-      console.error('파일 선택 오류:', error);
       Alert.alert('오류', '파일을 선택할 수 없습니다.');
     }
   };

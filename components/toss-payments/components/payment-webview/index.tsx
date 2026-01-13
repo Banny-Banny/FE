@@ -65,7 +65,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   const paymentProcessedRef = useRef<boolean>(false); // 결제 처리 완료 플래그 (중복 호출 방지)
 
   if (!clientKey) {
-    console.error('[PaymentWebView] 토스페이먼츠 클라이언트 키가 설정되지 않았습니다');
     return null;
   }
 
@@ -80,11 +79,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           const canOpen = await Linking.canOpenURL(testUrl);
           const isSimulatorEnv = !canOpen;
           setIsSimulator(isSimulatorEnv);
-          console.log('📱 [PaymentWebView] 시뮬레이터/에뮬레이터 감지:', isSimulatorEnv);
           if (isSimulatorEnv) {
-            console.log(
-              '💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행',
-            );
           }
         }
       } catch (error: any) {
@@ -95,15 +90,10 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           errorMessage.includes('LSApplicationQueriesSchemes') ||
           errorMessage.includes('Unable to open URL')
         ) {
-          console.log('📱 [PaymentWebView] iOS 스킴 등록 필요 또는 시뮬레이터 환경으로 간주');
           // iOS 시뮬레이터에서는 앱 스킴이 등록되어 있어도 앱이 없으면 false 반환
           // 에러가 발생하면 시뮬레이터일 가능성이 높으므로 시뮬레이터로 간주
           setIsSimulator(true);
-          console.log(
-            '💡 [PaymentWebView] 시뮬레이터 환경: 앱 딥링크 대신 WebView 내에서 직접 결제 진행',
-          );
         } else {
-          console.error('❌ [PaymentWebView] 시뮬레이터 감지 실패:', error);
           // 기타 에러는 실제 기기로 간주
           setIsSimulator(false);
         }
@@ -226,13 +216,8 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   <div id="loading" class="loading" style="display: none;">결제창을 여는 중...</div>
 
   <script>
-    console.log('🚀 [PaymentWebView] 스크립트 시작');
-    
     const clientKey = "${clientKey}";
-    console.log('🔑 [PaymentWebView] 클라이언트 키:', clientKey ? '설정됨' : '없음');
-    
     if (typeof TossPayments === 'undefined') {
-      console.error('❌ [PaymentWebView] TossPayments SDK가 로드되지 않았습니다');
       window.ReactNativeWebView.postMessage(JSON.stringify({
         type: 'PAYMENT_ERROR',
         data: {
@@ -241,36 +226,20 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         }
       }));
     } else {
-      console.log('✅ [PaymentWebView] TossPayments SDK 로드 완료');
     }
     
     const tossPayments = TossPayments(clientKey);
-    console.log('✅ [PaymentWebView] TossPayments 초기화 완료');
-
     const button = document.getElementById('payment-button');
     const loading = document.getElementById('loading');
     
-    console.log('🔘 [PaymentWebView] 버튼 요소:', button ? '찾음' : '없음');
-
     if (button) {
       button.addEventListener('click', async function() {
-        console.log('👆 [PaymentWebView] 결제 버튼 클릭됨');
-        
         // ============================================
         // 실제 결제 로직
         // ============================================
         try {
           loading.style.display = 'block';
           button.disabled = true;
-          console.log('⏳ [PaymentWebView] 결제 요청 시작...');
-          console.log('  - paymentMethod:', '${paymentMethod}');
-          console.log('  - amount:', ${amount});
-          console.log('  - orderId:', "${orderId}");
-          console.log('  - orderName:', "${orderName}");
-          console.log('  - customerName:', "${customerName}");
-          console.log('  - successUrl:', '${successUrl}');
-          console.log('  - failUrl:', '${failUrl}');
-          
           // 결제수단 코드 변환 ('간편결제'는 '카드'로 변환)
           const paymentMethodCode = '${paymentMethod}' === '간편결제' ? '카드' : '${paymentMethod}';
           
@@ -283,17 +252,14 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             failUrl: '${failUrl}',
           });
           
-          console.log('✅ [PaymentWebView] 결제 요청 완료');
           // successUrl로 리다이렉트되므로 여기서는 처리하지 않음
           // 리다이렉트 후 URL 변경 감지로 처리됨
         } catch (error) {
-          console.error('❌ [PaymentWebView] 결제 요청 오류:', error);
           loading.style.display = 'none';
           button.disabled = false;
           
           // 사용자가 결제를 취소한 경우 (PAY_PROCESS_CANCELED)
           if (error.code === 'PAY_PROCESS_CANCELED') {
-            console.log('⚠️ [PaymentWebView] 사용자가 결제를 취소했습니다');
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'PAYMENT_FAIL',
               data: {
@@ -314,9 +280,7 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }));
         }
       });
-      console.log('✅ [PaymentWebView] 버튼 이벤트 리스너 등록 완료');
     } else {
-      console.error('❌ [PaymentWebView] 결제 버튼을 찾을 수 없습니다');
     }
 
     // URL 변경 감지 (성공/실패 처리)
@@ -356,7 +320,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         }
       } catch (error) {
         // URL 파싱 실패는 무시 (초기 로드 시 정상)
-        console.log('URL 파싱:', url, error.message);
       }
     }
 
@@ -382,38 +345,31 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 
       switch (message.type) {
         case 'WEBVIEW_READY':
-          console.log('✅ [PaymentWebView] WebView 준비 완료:', message.data);
           break;
 
         case 'PAYMENT_SUCCESS':
           // 중복 호출 방지: 이미 처리된 경우 무시
           if (paymentProcessedRef.current) {
-            console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 (handleMessage) - 중복 호출 방지');
             return;
           }
           paymentProcessedRef.current = true; // 플래그 설정
 
           const { paymentKey, orderId, amount } = message.data;
-          console.log('✅ [PaymentWebView] 결제 성공 (handleMessage):', { paymentKey, orderId, amount });
           onSuccess(paymentKey, orderId, parseInt(amount));
           break;
 
         case 'PAYMENT_FAIL':
           const { code, message: errorMessage } = message.data;
-          console.log('❌ [PaymentWebView] 결제 실패:', { code, message: errorMessage });
           onFail(code, errorMessage);
           break;
 
         case 'PAYMENT_ERROR':
-          console.log('❌ [PaymentWebView] 결제 에러:', message.data);
           onFail(message.data.code, message.data.message);
           break;
 
         default:
-          console.warn('[PaymentWebView] 알 수 없는 메시지 타입:', message.type);
       }
     } catch (error) {
-      console.error('[PaymentWebView] 메시지 파싱 오류:', error);
     }
   };
 
@@ -424,23 +380,17 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
   const handleShouldStartLoadWithRequest = (request: any) => {
     const { url, navigationType, mainDocumentURL } = request;
 
-    console.log('🔍 [PaymentWebView] URL 요청:', { url, navigationType, mainDocumentURL });
-
     // 빈 URL이나 about:blank는 무시 (무한 로딩 방지)
     if (!url || url === 'about:blank' || url.trim() === '') {
-      console.log('⏭️ [PaymentWebView] 빈 URL 무시');
       return false;
     }
 
     // ⚠️ 성공/실패 URL로의 이동을 차단하고 직접 처리 (404 페이지가 보이지 않도록)
     if (url.includes('/payment/success') || url.includes('/payment/fail')) {
-      console.log('🚫 [PaymentWebView] 결제 리다이렉트 URL 감지 - 페이지 로드 차단:', url);
-
       // 성공 URL 처리
       if (url.includes('/success')) {
         // 중복 호출 방지
         if (paymentProcessedRef.current) {
-          console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 - 중복 호출 방지');
           return false;
         }
         paymentProcessedRef.current = true;
@@ -452,18 +402,12 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           const amount = urlObj.searchParams.get('amount');
 
           if (paymentKey && orderId && amount) {
-            console.log('✅ [PaymentWebView] 결제 성공 (handleShouldStartLoadWithRequest):', {
-              paymentKey,
-              orderId,
-              amount,
-            });
             // 비동기 처리를 위해 setTimeout 사용
             setTimeout(() => {
               onSuccess(paymentKey, orderId, parseInt(amount));
             }, 0);
           }
         } catch (error) {
-          console.error('❌ [PaymentWebView] 성공 URL 파싱 실패:', error);
         }
       }
       // 실패 URL 처리
@@ -473,13 +417,11 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           const code = urlObj.searchParams.get('code') || 'PAYMENT_FAILED';
           const message = urlObj.searchParams.get('message') || '결제에 실패했습니다';
 
-          console.log('❌ [PaymentWebView] 결제 실패 (handleShouldStartLoadWithRequest):', { code, message });
           // 비동기 처리를 위해 setTimeout 사용
           setTimeout(() => {
             onFail(code, message);
           }, 0);
         } catch (error) {
-          console.error('❌ [PaymentWebView] 실패 URL 파싱 실패:', error);
         }
       }
 
@@ -489,12 +431,9 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 
     // 토스 앱 딥링크 감지 (supertoss://, toss://)
     if (url.startsWith('supertoss://') || url.startsWith('toss://')) {
-      console.log('🔗 [PaymentWebView] 토스 앱 딥링크 감지:', url);
-
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
         // 시뮬레이터에서는 토스 앱이 없으므로 딥링크를 무시하고 테스트 모드로 진행
-        console.log('📱 [PaymentWebView] 시뮬레이터 환경: 토스 앱 딥링크 무시 (테스트 모드 사용)');
         // 딥링크는 무시하고 WebView 내에서 테스트 모드로 진행
         return false;
       }
@@ -504,20 +443,14 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       // 앱을 열려고 시도하고, 실패하면 WebView에서 진행하도록 처리
       Linking.canOpenURL(url)
         .then((supported: boolean) => {
-          console.log('📱 [PaymentWebView] 토스 앱 설치 여부:', supported);
           if (supported) {
-            console.log('✅ [PaymentWebView] 토스 앱 열기 시도:', url);
             Linking.openURL(url).catch((err: Error) => {
-              console.error('❌ [PaymentWebView] 토스 앱 열기 실패:', err);
               // 앱 열기 실패 시 WebView에서 진행하도록 URL 다시 로드
               webViewRef.current?.injectJavaScript(`
                 window.location.href = "${url}";
               `);
             });
           } else {
-            console.warn(
-              '⚠️ [PaymentWebView] 토스 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
-            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -525,7 +458,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }
         })
         .catch((err: Error) => {
-          console.error('❌ [PaymentWebView] 딥링크 확인 실패, WebView 내에서 진행:', err);
           // 딥링크 확인 실패 시 WebView 내에서 진행
           webViewRef.current?.injectJavaScript(`
             window.location.href = "${url}";
@@ -544,8 +476,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       url.startsWith('kakaolink://') ||
       url.startsWith('kakaobank://')
     ) {
-      console.log('🔗 [PaymentWebView] 카카오페이/카카오뱅크 앱 딥링크 감지:', url);
-
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
         // 카카오페이 딥링크에서 payweb_url 파라미터 추출
@@ -558,11 +488,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           if (paywebUrlMatch && paywebUrlMatch[1]) {
             // payweb_url이 있으면 디코딩하여 WebView에서 로드
             const decodedPaywebUrl = decodeURIComponent(paywebUrlMatch[1]);
-            console.log(
-              '📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 payweb_url 추출:',
-              decodedPaywebUrl,
-            );
-
             // WebView에서 웹 URL로 리다이렉트
             setTimeout(() => {
               webViewRef.current?.injectJavaScript(`
@@ -575,10 +500,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             // payweb_url이 없으면 url 파라미터 확인
             const fallbackUrl = decodeURIComponent(urlMatch[1]);
             if (fallbackUrl.startsWith('http://') || fallbackUrl.startsWith('https://')) {
-              console.log(
-                '📱 [PaymentWebView] 시뮬레이터 환경: 카카오페이 fallback URL 사용:',
-                fallbackUrl,
-              );
               setTimeout(() => {
                 webViewRef.current?.injectJavaScript(`
                   window.location.href = "${fallbackUrl}";
@@ -588,12 +509,8 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             }
           }
         } catch (error) {
-          console.error('❌ [PaymentWebView] 카카오페이 딥링크 파싱 실패:', error);
         }
 
-        console.log(
-          '📱 [PaymentWebView] 시뮬레이터 환경: WebView 내에서 직접 결제 진행 (payweb_url 없음)',
-        );
         // payweb_url이 없으면 WebView가 해당 URL을 로드하도록 허용 (에러 발생하지만 무시)
         return true;
       }
@@ -603,23 +520,14 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       // 앱을 열려고 시도하고, 실패하면 WebView에서 진행하도록 처리
       Linking.canOpenURL(url)
         .then((supported: boolean) => {
-          console.log(
-            '📱 [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱 설치 여부:',
-            supported,
-          );
           if (supported) {
-            console.log('✅ [PaymentWebView] 카카오 앱 열기 시도:', url);
             Linking.openURL(url).catch((err: Error) => {
-              console.error('❌ [PaymentWebView] 카카오 앱 열기 실패:', err);
               // 앱 열기 실패 시 WebView에서 진행하도록 URL 다시 로드
               webViewRef.current?.injectJavaScript(`
                 window.location.href = "${url}";
               `);
             });
           } else {
-            console.warn(
-              '⚠️ [PaymentWebView] 카카오톡/카카오페이/카카오뱅크 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
-            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -627,7 +535,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }
         })
         .catch((err: Error) => {
-          console.error('❌ [PaymentWebView] 카카오 딥링크 확인 실패, WebView 내에서 진행:', err);
           // 딥링크 확인 실패 시 WebView 내에서 진행
           webViewRef.current?.injectJavaScript(`
             window.location.href = "${url}";
@@ -673,11 +580,8 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
     );
 
     if (isCardAppScheme) {
-      console.log('🔗 [PaymentWebView] 카드사 앱 딥링크 감지:', url);
-
       // 시뮬레이터/에뮬레이터 환경에서는 WebView 내에서 직접 결제 진행
       if (isSimulator) {
-        console.log('📱 [PaymentWebView] 시뮬레이터 환경: 카드사 앱 딥링크를 WebView 내에서 처리');
         // WebView가 해당 URL을 로드하도록 허용 (시뮬레이터에서는 앱이 없으므로 WebView에서 처리)
         return true;
       }
@@ -686,18 +590,13 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       Linking.canOpenURL(url)
         .then((supported: boolean) => {
           if (supported) {
-            console.log('✅ [PaymentWebView] 카드사 앱 열기 시도:', url);
             Linking.openURL(url).catch((err: Error) => {
-              console.error('❌ [PaymentWebView] 카드사 앱 열기 실패:', err);
               // 앱 열기 실패 시 WebView에서 진행하도록 URL 다시 로드
               webViewRef.current?.injectJavaScript(`
                 window.location.href = "${url}";
               `);
             });
           } else {
-            console.warn(
-              '⚠️ [PaymentWebView] 카드사 앱이 설치되어 있지 않습니다. WebView 내에서 진행합니다.',
-            );
             // 앱이 설치되어 있지 않으면 WebView 내에서 진행
             webViewRef.current?.injectJavaScript(`
               window.location.href = "${url}";
@@ -705,10 +604,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
           }
         })
         .catch((err: Error) => {
-          console.error(
-            '❌ [PaymentWebView] 카드사 앱 딥링크 확인 실패, WebView 내에서 진행:',
-            err,
-          );
           webViewRef.current?.injectJavaScript(`
             window.location.href = "${url}";
           `);
@@ -720,18 +615,15 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 
     // HTTP/HTTPS URL은 정상적으로 로드
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      console.log('✅ [PaymentWebView] HTTP/HTTPS URL 허용:', url);
       return true;
     }
 
     // data: URL (HTML 인라인)은 허용
     if (url.startsWith('data:')) {
-      console.log('✅ [PaymentWebView] data URL 허용');
       return true;
     }
 
     // 기타 URL은 로드하지 않음 (무한 로딩 방지)
-    console.warn('⚠️ [PaymentWebView] 알 수 없는 URL 스킴:', url);
     return false;
   };
 
@@ -748,7 +640,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       if (url.includes('/success')) {
         // 중복 호출 방지: 이미 처리된 경우 무시
         if (paymentProcessedRef.current) {
-          console.warn('⚠️ [PaymentWebView] 결제 이미 처리됨 (handleNavigationStateChange) - 중복 호출 방지');
           return;
         }
         paymentProcessedRef.current = true; // 플래그 설정
@@ -764,7 +655,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
         const amount = urlObj.searchParams.get('amount');
 
         if (paymentKey && orderId && amount) {
-          console.log('✅ [PaymentWebView] 결제 성공 (handleNavigationStateChange):', { paymentKey, orderId, amount });
           onSuccess(paymentKey, orderId, parseInt(amount));
         }
       }
@@ -783,15 +673,12 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
       }
     } catch (error) {
       // URL 파싱 에러는 무시 (404 페이지 등)
-      console.log('⚠️ [PaymentWebView] URL 파싱 실패 (무시):', url);
     }
   };
 
   // Modal이 열릴 때 로그
   useEffect(() => {
     if (visible) {
-      console.log('👁️ [PaymentWebView] Modal 표시됨');
-      console.log('📊 [PaymentWebView] 결제 정보:', { orderId, amount, orderName, customerName });
     }
   }, [visible, orderId, amount, orderName, customerName]);
 
@@ -813,7 +700,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             baseUrl: 'https://timeegg.com', // baseUrl 추가 (HTML 로딩 개선)
           }}
           injectedJavaScript={`
-            console.log('💉 [PaymentWebView] JavaScript 주입 완료');
             window.ReactNativeWebView.postMessage(JSON.stringify({
               type: 'WEBVIEW_READY',
               data: { message: 'WebView 준비 완료' }
@@ -832,11 +718,6 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
             if (isSimulator) {
               // 카드사 앱 딥링크 리다이렉트 에러
               if (errorDescription.includes('scheme that is not HTTP(S)')) {
-                console.warn(
-                  '⚠️ [PaymentWebView] 시뮬레이터 환경: 카드사 앱 딥링크 리다이렉트 에러 (정상 동작)',
-                );
-                console.warn('  - 에러 설명:', errorDescription);
-                console.warn('  - URL:', errorUrl);
                 return;
               }
 
@@ -847,17 +728,10 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
                 (errorUrl.includes('kakaopay.com') ||
                   errorUrl.includes('online-payment.kakaopay.com'))
               ) {
-                console.warn(
-                  '⚠️ [PaymentWebView] 시뮬레이터 환경: 카카오페이 URL 에러 (정상 동작)',
-                );
-                console.warn('  - 에러 설명:', errorDescription);
-                console.warn('  - URL:', errorUrl);
-                console.warn('  - 카카오페이는 payweb_url로 자동 리다이렉트됩니다.');
                 return;
               }
             }
 
-            console.error('❌ [PaymentWebView] WebView 에러:', nativeEvent);
           }}
           onHttpError={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
@@ -865,30 +739,19 @@ export const PaymentWebView: React.FC<PaymentWebViewProps> = ({
 
             // successUrl과 failUrl의 404 에러는 정상 동작 (WebView에서 URL만 감지하면 됨)
             if (statusCode === 404 && (url.includes('/payment/success') || url.includes('/payment/fail'))) {
-              console.log(
-                '✅ [PaymentWebView] 결제 리다이렉트 URL 감지 (404는 정상):',
-                url.includes('/success') ? 'SUCCESS' : 'FAIL',
-              );
               return; // 에러 로그 출력하지 않음
             }
 
             // 기타 HTTP 에러는 로그 출력
-            console.error('❌ [PaymentWebView] HTTP 에러:', statusCode, url);
           }}
           onLoadStart={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.log('🚀 [PaymentWebView] 로딩 시작:', nativeEvent.url);
           }}
           onLoadEnd={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.log('✅ [PaymentWebView] 로딩 완료:', nativeEvent.url);
           }}
           onLoadProgress={(syntheticEvent) => {
             const { nativeEvent } = syntheticEvent;
-            console.log(
-              '⏳ [PaymentWebView] 로딩 진행:',
-              Math.round(nativeEvent.progress * 100) + '%',
-            );
           }}
           originWhitelist={['*']}
           javaScriptEnabled={true}

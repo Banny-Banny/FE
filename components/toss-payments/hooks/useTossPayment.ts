@@ -65,11 +65,6 @@ export const useTossPayment = (): UseTossPaymentReturn => {
         // 개발 모드: 결제 승인 우회
         // ============================================
         if (SKIP_PAYMENT) {
-          console.log('🔧 [개발 모드] 결제 승인 우회 - Mock 데이터 사용');
-          console.log('  - paymentKey:', paymentKey);
-          console.log('  - orderId:', orderId);
-          console.log('  - amount:', amount);
-
           // Mock 데이터 반환 (실제 백엔드 응답 형식과 동일하게)
           const mockResponse: TossPaymentConfirmResponse = {
             order_id: orderId,
@@ -84,7 +79,6 @@ export const useTossPayment = (): UseTossPaymentReturn => {
           // 로딩 상태 시뮬레이션 (500ms 대기)
           await new Promise((resolve) => setTimeout(resolve, 500));
 
-          console.log('✅ [개발 모드] Mock 결제 승인 완료');
           return mockResponse;
         }
 

@@ -53,7 +53,6 @@ export function useNavigation() {
         router.push(path as Href);
       }
     } catch (error) {
-      console.error('Navigation push error:', error);
     }
   }, []);
 
@@ -80,7 +79,6 @@ export function useNavigation() {
         router.replace(path as Href);
       }
     } catch (error) {
-      console.error('Navigation replace error:', error);
     }
   }, []);
 
@@ -92,10 +90,8 @@ export function useNavigation() {
       if (router.canGoBack()) {
         router.back();
       } else {
-        console.warn('Cannot go back: No previous screen in history');
       }
     } catch (error) {
-      console.error('Navigation back error:', error);
     }
   }, []);
 
@@ -113,7 +109,6 @@ export function useNavigation() {
     try {
       router.replace(ROUTES.HOME as Href);
     } catch (error) {
-      console.error('Navigation toHome error:', error);
     }
   }, []);
 
@@ -127,12 +122,10 @@ export function useNavigation() {
         if (router.canGoBack()) {
           router.back();
         } else {
-          console.warn(`Can only go back ${i} steps, not ${steps}`);
           break;
         }
       }
     } catch (error) {
-      console.error('Navigation goBackSteps error:', error);
     }
   }, []);
 

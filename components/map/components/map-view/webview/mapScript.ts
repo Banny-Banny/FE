@@ -167,7 +167,6 @@ export function generateMapScript(): string {
               createMarkers(markerList, currentScale);
             }
           } catch (error) {
-            console.error("[setZoomLevel] 줌 레벨 변경 실패:", error);
           }
         });
       } else {
@@ -188,7 +187,6 @@ export function generateMapScript(): string {
             createMarkers(markerList, currentScale);
           }
         } catch (error) {
-          console.error("[setZoomLevel] 줌 레벨 변경 실패:", error);
         }
       }
     }
@@ -265,7 +263,6 @@ export function generateMapScript(): string {
         } catch (error) {
           // 개발 환경에서만 에러 로깅
           if (typeof __DEV__ !== 'undefined' && __DEV__) {
-            console.error("[createMarkers] 마커 생성 실패:", error);
           }
         }
       });
@@ -285,7 +282,6 @@ export function generateMapScript(): string {
           } catch (error) {
             // 개발 환경에서만 에러 로깅
             if (typeof __DEV__ !== 'undefined' && __DEV__) {
-              console.error("[moveCamera] 카메라 이동 실패:", error);
             }
           }
         });
@@ -295,7 +291,6 @@ export function generateMapScript(): string {
         } catch (error) {
           // 개발 환경에서만 에러 로깅
           if (typeof __DEV__ !== 'undefined' && __DEV__) {
-            console.error("[moveCamera] 카메라 이동 실패:", error);
           }
         }
       }

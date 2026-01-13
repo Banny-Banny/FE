@@ -57,7 +57,6 @@ export const useAudioPreview = (uri: string | null): UseAudioPreviewReturn => {
         player.play();
       }
     } catch (error) {
-      console.error('재생 토글 오류:', error);
     }
   };
 
@@ -73,7 +72,6 @@ export const useAudioPreview = (uri: string | null): UseAudioPreviewReturn => {
       player.pause();
       player.seekTo(0);
     } catch (error) {
-      console.error('재생 중지 오류:', error);
     }
   };
 
@@ -89,7 +87,6 @@ export const useAudioPreview = (uri: string | null): UseAudioPreviewReturn => {
         player.seekTo(0);
       }
     } catch (error) {
-      console.error('리소스 정리 오류:', error);
     }
   };
 

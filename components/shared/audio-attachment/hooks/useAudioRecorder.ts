@@ -48,7 +48,6 @@ const getRecordingOptions = (): RecordingOptions => {
     // 대부분의 브라우저는 webm을 지원하지만, 백엔드가 받지 않음
     // 일단 HIGH_QUALITY 프리셋 사용 (브라우저가 알아서 선택)
     if (__DEV__) {
-      console.log('[AudioRecorder] 웹 환경: 브라우저 기본 녹음 형식 사용');
     }
     return RecordingPresets.HIGH_QUALITY;
   }
@@ -104,7 +103,6 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
   const startRecording = async (): Promise<void> => {
     // 중복 호출 방지
     if (isPreparing.current || recorderState.isRecording) {
-      console.warn('녹음이 이미 진행 중이거나 준비 중입니다.');
       return;
     }
     isPreparing.current = true;
@@ -129,7 +127,6 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       await recorder.prepareToRecordAsync();
       recorder.record();
     } catch (error) {
-      console.error('녹음 시작 오류:', error);
       Alert.alert('오류', '녹음을 시작할 수 없습니다. 잠시 후 다시 시도해 주세요.');
     } finally {
       isPreparing.current = false;
@@ -146,13 +143,8 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
       const uri = recorder.uri;
 
       if (__DEV__ && uri) {
-        console.log('[AudioRecorder] 녹음 완료');
-        console.log('  - URI:', uri);
-        console.log('  - Platform:', Platform.OS);
-
         // URI에서 확장자 추출
         const extension = uri.split('.').pop()?.split('?')[0].toLowerCase();
-        console.log('  - 실제 녹음 형식:', extension);
       }
 
       // 녹음 종료 후 오디오 모드 복구 (다른 재생 기능에 영향 방지)
@@ -160,7 +152,6 @@ export const useAudioRecorder = (): UseAudioRecorderReturn => {
 
       return uri || null;
     } catch (error) {
-      console.error('녹음 중지 오류:', error);
       return null;
     }
   };

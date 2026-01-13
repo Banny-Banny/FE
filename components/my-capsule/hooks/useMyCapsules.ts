@@ -37,8 +37,6 @@ export function useMyCapsules() {
       };
     }
 
-    console.log('🔄 [useMyCapsules] 캡슐 리스트 분류 시작');
-
     // status 값으로 3가지 상태 분류
     const waitingRooms: MyCapsuleItem[] = [];
     const openedCapsules: MyCapsuleItem[] = [];
@@ -46,17 +44,8 @@ export function useMyCapsules() {
 
     data.items.forEach((capsule) => {
       // 디버깅: 각 캡슐 정보 출력
-      console.log('📦 [캡슐 분류 디버깅]', {
-        id: capsule.id,
-        title: capsule.title,
-        status: capsule.status,
-        openDate: capsule.openDate,
-        deadline: capsule.deadline,
-      });
-
       // 🎯 이스터에그 필터링: openDate와 deadline이 둘 다 null인 경우 제외
       if (capsule.openDate === null && capsule.deadline === null) {
-        console.log('🥚 [이스터에그 제외]', capsule.id, capsule.title);
         return; // 이 캡슐은 건너뛰기
       }
 
@@ -70,12 +59,6 @@ export function useMyCapsules() {
         // 잠긴 캡슐 - 아직 개봉되지 않은 캡슐
         lockedCapsules.push(capsule);
       }
-    });
-
-    console.log('✅ [useMyCapsules] 캡슐 리스트 분류 완료', {
-      대기실: waitingRooms.length,
-      열린캡슐: openedCapsules.length,
-      잠긴캡슐: lockedCapsules.length,
     });
 
     return { waitingRooms, openedCapsules, lockedCapsules };

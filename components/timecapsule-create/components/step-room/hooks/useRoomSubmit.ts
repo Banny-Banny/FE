@@ -73,23 +73,12 @@ export function useRoomSubmit(): UseRoomSubmitReturn {
       setIsSubmitting(true);
       setError(null);
 
-      console.log('=== 타임캡슐 최종 제출 시작 ===');
-      console.log('캡슐 ID:', roomId);
-      console.log('위치:', { latitude, longitude });
-
       // submitCapsule API 호출 (POST /api/capsules/step-rooms/:roomId/submit)
       const result = await submitCapsule(roomId, { latitude, longitude });
-
-      console.log('=== 타임캡슐 최종 제출 완료! ===');
-      console.log('매장 위치:', result.data.location.address);
-      console.log('매장 시각:', result.data.buried_at);
-      console.log('개봉 예정일:', result.data.open_date);
-      console.log('참여자 수:', result.data.participants);
 
       return result;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다';
-      console.error('❌ 타임캡슐 제출 실패:', errorMessage);
       setError(errorMessage);
 
       // 에러를 다시 throw하여 호출자가 처리할 수 있도록 함

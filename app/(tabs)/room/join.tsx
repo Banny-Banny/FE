@@ -41,7 +41,6 @@ export default function RoomJoinScreen() {
 
     // 케이스 1: 내 캡슐에서 입장 (capsuleId 직접 전달)
     if (directCapsuleId) {
-      console.log('🔗 [RoomJoin] 내 캡슐에서 입장:', directCapsuleId);
       setCapsuleId(directCapsuleId);
       setRole('host');
       setIsLoading(false);
@@ -50,13 +49,11 @@ export default function RoomJoinScreen() {
 
     // 케이스 2: 딥링크 초대 (invite_code로 조회)
     if (code) {
-      console.log('🔗 [RoomJoin] 딥링크로 입장:', code);
       setInviteCode(code);
       setRole('guest');
 
       // 토큰 확인 - 없으면 초대 코드 저장 후 온보딩으로 리다이렉트
       if (!accessToken && !isAuthLoading) {
-        console.log('🔗 [RoomJoin] 토큰 없음 → 초대 코드 저장 후 온보딩으로 이동');
         AsyncStorage.setItem(STORAGE_KEYS.PENDING_INVITE_CODE, code).then(() => {
           router.replace(ROUTES.AUTH_ONBOARDING as any);
         });
@@ -70,20 +67,13 @@ export default function RoomJoinScreen() {
 
           // 1단계: 초대 코드로 대기실 조회 (Public API)
           const response = await fetchRoomByInviteCode(code);
-          console.log('✅ [RoomJoin] 대기실 조회 성공:', response);
-          console.log('🔍 [RoomJoin] capsule_id:', response.room_id);
-
           const foundCapsuleId = response.room_id;
 
           // 2단계: 대기실 참여 (슬롯 배정)
-          console.log('🔄 [RoomJoin] 대기실 참여 시작...');
           await joinRoom(foundCapsuleId, code);
-          console.log('✅ [RoomJoin] 대기실 참여 성공!');
-
           setCapsuleId(foundCapsuleId);
           setIsLoading(false);
         } catch (err) {
-          console.error('❌ [RoomJoin] 대기실 조회/참여 실패:', err);
           setError(err instanceof Error ? err.message : '대기실에 참여할 수 없습니다.');
           setIsLoading(false);
         }
@@ -152,7 +142,6 @@ export default function RoomJoinScreen() {
         capsuleId={capsuleId}
         inviteCode={inviteCode || undefined}
         onSubmit={() => {
-          console.log('✅ [RoomJoin] 타임캡슐 제출 완료!');
           router.replace('/(tabs)/'); // 메인으로 이동
         }}
       />

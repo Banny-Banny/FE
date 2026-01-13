@@ -126,7 +126,6 @@ export function useNotifications(): UseNotificationsReturn {
         err.message ||
         '알림 목록을 불러오는 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useNotifications] 알림 목록 조회 실패:', err);
     } finally {
       setIsLoading(false);
     }
@@ -207,7 +206,6 @@ export function useNotifications(): UseNotificationsReturn {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useNotifications] 알림 읽음 처리 실패:', err);
       throw err;
     }
   }, []);
@@ -236,7 +234,6 @@ export function useNotifications(): UseNotificationsReturn {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useNotifications] 알림 읽음 처리 실패:', err);
       throw err;
     }
   }, []);
@@ -259,7 +256,6 @@ export function useNotifications(): UseNotificationsReturn {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 삭제 중 오류가 발생했습니다.';
       setError(errorMessage);
-      console.error('[useNotifications] 알림 삭제 실패:', err);
       throw err;
     }
   }, []);

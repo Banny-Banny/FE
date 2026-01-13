@@ -84,7 +84,6 @@ export default function UnlockedCapsuleDetail({
             const url = await getMediaUrl(image.id);
             newImageUrls.set(image.id, url);
           } catch (err) {
-            console.error('Failed to load image URL:', err);
           }
         }
       }

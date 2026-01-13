@@ -21,7 +21,6 @@ export default function ApiAuthKakaoCallback() {
     // 이미 리다이렉트했으면 무시
     if (hasRedirectedRef.current) {
       if (__DEV__) {
-        console.log('[ApiAuthKakaoCallback] 이미 리다이렉트 완료, 스킵');
       }
       return;
     }
@@ -29,7 +28,6 @@ export default function ApiAuthKakaoCallback() {
     hasRedirectedRef.current = true; // 리다이렉트 시작
 
     if (__DEV__) {
-      console.log('[ApiAuthKakaoCallback] 백엔드 콜백 처리:', { token: !!token, isNewUser });
     }
 
     // 토큰이 있으면 프론트엔드 콜백 라우트로 리다이렉트

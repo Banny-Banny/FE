@@ -49,9 +49,6 @@ export default function TossPayment({
   // 디버깅: 결제 금액 확인
   // ============================================
   useEffect(() => {
-    console.log('💰 [TossPayment] 결제 금액 확인:');
-    console.log('  - orderData.total_amount:', orderData.total_amount);
-    console.log('  - orderData 전체:', JSON.stringify(orderData, null, 2));
   }, [orderData]);
 
   // ============================================
@@ -69,12 +66,6 @@ export default function TossPayment({
 
         // 토스페이먼츠 리다이렉트 파라미터 확인
         if (paymentKey && orderIdParam && amountParam) {
-          console.log('🌐 [TossPayment - WEB] URL 파라미터에서 결제 성공 감지:', {
-            paymentKey,
-            orderId: orderIdParam,
-            amount: parseInt(amountParam),
-          });
-
           // URL 파라미터 제거 (중복 처리 방지)
           window.history.replaceState({}, '', window.location.pathname);
 
@@ -82,7 +73,6 @@ export default function TossPayment({
           await handlePaymentSuccess(paymentKey, orderIdParam, parseInt(amountParam));
         }
       } catch (error) {
-        console.error('❌ [TossPayment - WEB] URL 파라미터 확인 실패:', error);
       }
     };
 
@@ -96,17 +86,11 @@ export default function TossPayment({
     async (paymentKey: string, orderId: string, amount: number) => {
       // 중복 호출 방지: 이미 처리 중인 경우 무시
       if (isProcessingPayment) {
-        console.warn('⚠️ [TossPayment] 결제 처리 중 - 중복 호출 방지');
         return;
       }
       setIsProcessingPayment(true); // 플래그 설정
 
       try {
-        console.log('🎯 [TossPayment] handlePaymentSuccess 호출됨 (웹/모바일 공통)');
-        console.log('  - paymentKey:', paymentKey);
-        console.log('  - orderId:', orderId);
-        console.log('  - amount:', amount);
-
         // ⚠️ 결제 승인 성공 시에만 모달을 닫음 (에러 발생 시 재시도 가능하도록)
         // setShowPaymentWebView(false); // 아래로 이동
 
@@ -114,10 +98,6 @@ export default function TossPayment({
         // 1. orderId 검증: 백엔드에서 생성한 주문 ID와 일치하는지 확인
         if (orderId !== orderData.order_id) {
           Alert.alert('결제 오류', '주문 정보가 일치하지 않습니다.');
-          console.error('❌ [TossPayment] orderId 불일치:', {
-            orderId,
-            expected: orderData.order_id,
-          });
           return;
         }
 
@@ -128,17 +108,12 @@ export default function TossPayment({
             '결제 오류',
             `결제 금액이 일치하지 않습니다.\n결제 금액: ${amount}원\n주문 금액: ${orderData.total_amount}원`,
           );
-          console.error('❌ [TossPayment] amount 불일치:', {
-            amount,
-            expected: orderData.total_amount,
-          });
           return;
         }
 
         // 3. paymentKey 검증: 필수 값 확인
         if (!paymentKey || paymentKey.trim() === '') {
           Alert.alert('결제 오류', '결제 정보가 올바르지 않습니다.');
-          console.error('❌ [TossPayment] paymentKey 없음');
           return;
         }
 
@@ -146,31 +121,13 @@ export default function TossPayment({
         // 결제 승인 API 호출 (모든 환경)
         // ⚠️ 결제 승인 실패 시 주문 상태를 변경하지 않음
         // ============================================
-        console.log('💳 [TossPayment] 결제 승인 API 호출 시작');
-        console.log('  - Platform:', Platform.OS);
-        console.log('  - API: POST /api/payments/toss/confirm');
-        console.log('  - paymentKey:', paymentKey.substring(0, 20) + '...');
-        console.log('  - orderId:', orderId);
-        console.log('  - amount:', amount);
-
         let paymentData;
         try {
           paymentData = await confirmPayment(paymentKey, orderId, amount);
-          console.log('✅ [TossPayment] 결제 승인 API 호출 성공:', {
-            order_id: paymentData.order_id,
-            payment_key: paymentData.payment_key?.substring(0, 20) + '...',
-            status: paymentData.status,
-            amount: paymentData.amount,
-          });
-
           // 결제 승인 성공 시 모달 닫기
           setShowPaymentWebView(false);
         } catch (confirmError: any) {
           // 결제 승인 실패 시 에러 처리
-          console.error('❌ [TossPayment] 결제 승인 API 호출 실패:', confirmError);
-          console.error('  - Status:', confirmError.status);
-          console.error('  - Message:', confirmError.message);
-
           // 결제 시간 만료 에러의 경우 사용자가 다시 결제를 시도할 수 있도록 모달 유지
           const isPaymentExpired =
             confirmError.message?.includes('결제 시간이 만료') ||
@@ -208,55 +165,34 @@ export default function TossPayment({
         // ⚠️ 결제 승인이 성공한 경우에만 실행됨
         // ============================================
         try {
-          console.log('🔄 [TossPayment] 주문 상태 변경 API 호출');
-          console.log('  - orderId:', orderId);
-          console.log('  - status: PAID');
-          console.log('  - method: POST');
-          console.log('  - endpoint: /api/orders/:orderId/status');
-
           const orderStatusResponse = await updateOrderStatus(orderId, 'PAID');
 
           // 응답 데이터에서 주문 상태 확인
           if (orderStatusResponse.order_status) {
-            console.log('  - 변경된 주문 상태:', orderStatusResponse.order_status);
           }
           if (orderStatusResponse.order_id) {
-            console.log('  - 주문 ID:', orderStatusResponse.order_id);
           }
           if (orderStatusResponse.payment_status !== undefined) {
-            console.log('  - 결제 상태:', orderStatusResponse.payment_status);
           }
           if (orderStatusResponse.updated_at) {
-            console.log('  - 업데이트 시간:', orderStatusResponse.updated_at);
           }
 
           // 주문 상태가 PAID로 변경되었는지 확인
           if (orderStatusResponse.order_status === 'PAID') {
-            console.log('✅ [TossPayment] 주문 상태가 PAID로 성공적으로 변경되었습니다.');
           } else {
-            console.warn(
-              '⚠️ [TossPayment] 주문 상태가 예상과 다릅니다. 예상: PAID, 실제:',
-              orderStatusResponse.order_status,
-            );
           }
         } catch (err: any) {
-          console.error('❌ [TossPayment] 주문 상태 변경 실패:', err);
           if (err.response) {
-            console.error('  - 응답 상태:', err.response.status);
-            console.error('  - 응답 데이터:', err.response.data);
           }
           // 주문 상태 변경 실패는 경고만 표시하고 결제 플로우는 계속 진행
-          console.warn('⚠️ [TossPayment] 주문 상태 변경 실패했지만 결제는 완료되었습니다.');
         }
 
         // ⚠️ 먼저 step 3으로 이동 (대기실)
-        console.log('✅ [TossPayment] step 3으로 이동 (대기실)');
         if (onSubmit) {
           onSubmit(orderSummary);
         }
 
         // 결제 완료 모달 표시 (웹/모바일 공통)
-        console.log('✅ [TossPayment] 결제 완료 모달 표시');
         openModal({
           width: 344,
           height: 242,
@@ -274,7 +210,6 @@ export default function TossPayment({
           err && typeof err === 'object' && 'message' in err
             ? (err as PaymentError).message
             : '결제 승인에 실패했습니다';
-        console.error('❌ [TossPayment] 결제 승인 실패:', errorMessage);
         Alert.alert('결제 승인 실패', errorMessage);
       } finally {
         // 처리 완료 후 플래그 해제 (성공/실패 관계없이)
@@ -313,7 +248,6 @@ export default function TossPayment({
     // 개발 모드: 결제 자동 건너뛰기
     // ============================================
     if (SKIP_PAYMENT) {
-      console.log('🔧 [개발 모드] 결제 WebView 건너뛰기 - 자동으로 결제 성공 처리');
       // Mock 결제 데이터로 즉시 성공 처리
       const mockPaymentKey = 'mock-payment-key-' + Date.now();
       handlePaymentSuccess(mockPaymentKey, orderData.order_id, orderData.total_amount);
@@ -325,9 +259,6 @@ export default function TossPayment({
     // 결제 세션 만료 방지를 위해 주문을 갱신
     // ============================================
     try {
-      console.log('🔄 [TossPayment] 결제 직전 주문 데이터 조회 시작');
-      console.log('  - orderId:', orderData.order_id);
-
       // 주문 데이터 다시 조회 (결제 세션 갱신)
       // 백엔드 API 응답 구조에 따라 조정 필요
       const response = await apiClient.get<{ order: CreateOrderResponse } | CreateOrderResponse>(
@@ -336,10 +267,6 @@ export default function TossPayment({
 
       // 응답 구조에 따라 데이터 추출
       const latestOrderData = 'order' in response.data ? response.data.order : response.data;
-      console.log('✅ [TossPayment] 주문 데이터 조회 성공');
-      console.log('  - 최신 total_amount:', latestOrderData.total_amount);
-      console.log('  - 최신 status:', latestOrderData.status);
-
       // 최신 주문 데이터로 업데이트 (결제 세션 갱신)
       // orderData는 props이므로 직접 수정할 수 없지만,
       // PaymentWebView/PaymentWidgetWeb에 최신 데이터를 전달할 수 있도록 함
@@ -347,7 +274,6 @@ export default function TossPayment({
 
       setShowPaymentWebView(true);
     } catch (error: any) {
-      console.error('❌ [TossPayment] 주문 데이터 조회 실패:', error);
       Alert.alert('주문 조회 실패', '주문 정보를 불러오는데 실패했습니다. 다시 시도해주세요.');
       return;
     }

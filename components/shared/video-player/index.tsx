@@ -67,7 +67,6 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ progress, duration, onSeek })
         // 에러 로깅을 안전하게 처리
         if (__DEV__) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error('[ProgressBar] Seek 오류:', errorMessage);
         }
       } finally {
         isDragging.value = false;

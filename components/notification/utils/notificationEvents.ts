@@ -31,7 +31,6 @@ class NotificationEventEmitter {
       try {
         listener();
       } catch (error) {
-        console.error('[NotificationEvents] 리스너 실행 중 오류:', error);
       }
     });
   }

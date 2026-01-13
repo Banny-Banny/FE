@@ -111,7 +111,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => {
-        console.log('⚪ [PanResponder] onStartShouldSetPanResponder 호출됨');
         return false; // ⭐ 기본적으로 비활성화
       },
       onMoveShouldSetPanResponder: (_, gestureState) => {
@@ -120,7 +119,6 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
         const shouldActivate =
           Math.abs(gestureState.dy) > Math.abs(gestureState.dx) && Math.abs(gestureState.dy) > 5;
         if (shouldActivate) {
-          console.log('⚪ [PanResponder] 드래그 활성화됨', gestureState.dy);
         }
         return shouldActivate;
       },

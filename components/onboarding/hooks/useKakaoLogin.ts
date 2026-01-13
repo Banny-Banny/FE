@@ -60,18 +60,15 @@ export function useKakaoLogin() {
       if (Platform.OS === 'ios' && redirectUri.startsWith('exp://')) {
         redirectUri = redirectUri.replace('exp://', 'timeegg://');
         if (__DEV__) {
-          console.log('[KakaoLogin] 🔄 iOS redirect_uri 변환:', redirectUri);
         }
       }
 
       if (__DEV__) {
-        console.log('[KakaoLogin] 🎯 Redirect URI:', redirectUri);
       }
 
       const loginUrl = `${baseLoginUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`;
 
       if (__DEV__) {
-        console.log('[KakaoLogin] 🌐 OAuth URL:', loginUrl);
       }
 
       // 웹: 백엔드 OAuth 페이지로 직접 이동 (페이지 새로고침)
@@ -99,8 +96,6 @@ export function useKakaoLogin() {
           : 'timeegg://';
 
       if (__DEV__) {
-        console.log('[KakaoLogin] 🔗 Redirect scheme:', redirectScheme);
-        console.log('[KakaoLogin] 📱 Platform:', Platform.OS);
       }
 
       const webBrowserPromise = WebBrowser.openAuthSessionAsync(loginUrl, redirectScheme, {
