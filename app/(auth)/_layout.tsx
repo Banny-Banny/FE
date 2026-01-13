@@ -4,14 +4,14 @@
  * SafeAreaView는 RootProvider에서 통합 관리됩니다.
  */
 
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import React from 'react';
 import { View } from 'react-native';
 
 export default function AuthLayout() {
   return (
     <View style={{ flex: 1 }}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Slot />
     </View>
   );
 }

@@ -6,7 +6,7 @@
 
 import { RootProvider } from '@/commons/layout/provider';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { Slot } from 'expo-router';
 import '../global.css';
 
 export default function RootLayout() {
@@ -33,7 +33,7 @@ export default function RootLayout() {
 
   return (
     <RootProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <Slot />
     </RootProvider>
   );
 }
