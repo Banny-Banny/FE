@@ -38,6 +38,7 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
         bounces={false}
         style={styles.scrollView}>
         {/* 상단 환영 메시지 */}

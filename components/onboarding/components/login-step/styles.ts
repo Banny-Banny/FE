@@ -51,7 +51,7 @@ export function createResponsiveStyles(screenWidth: number) {
       backgroundColor: Colors.white[500],
     },
     scrollView: {
-      flex: 1,
+      // flex: 1 제거 - 불필요한 스크롤 방지
     },
     scrollContent: {
       paddingTop: 50 * scale, // Figma: 환영 메시지 시작 위치 (y=80)

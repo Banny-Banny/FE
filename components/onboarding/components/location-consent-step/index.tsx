@@ -6,6 +6,7 @@
 import { Button } from '@/commons/components/button';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 
 // 이미지 리소스
@@ -21,6 +22,8 @@ interface LocationConsentStepProps {
  * 위치 연동 동의 단계 (UI만 담당)
  */
 export function LocationConsentStep({ isLoading, onConsent, onSkip }: LocationConsentStepProps) {
+  const insets = useSafeAreaInsets();
+
   // 건너뛰기 핸들러 (권한 거부 처리)
   const handleSkip = () => {
     onSkip();
@@ -31,6 +34,7 @@ export function LocationConsentStep({ isLoading, onConsent, onSkip }: LocationCo
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
         bounces={false}>
         {/* 헤더 영역 */}
         <View style={styles.header}>
@@ -67,7 +71,7 @@ export function LocationConsentStep({ isLoading, onConsent, onSkip }: LocationCo
         </View>
 
         {/* 하단 버튼 영역 */}
-        <View style={styles.buttonContainer}>
+        <View style={[styles.buttonContainer, { paddingBottom: 62 + insets.bottom }]}>
           {/* 위치 권한 허용 버튼 */}
           <Button
             label="위치 권한 허용"

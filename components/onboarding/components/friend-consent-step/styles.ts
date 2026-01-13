@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     backgroundColor: Colors.white[500],
   },
   scrollContent: {
-    flexGrow: 1,
+    flexGrow: 1, // ScrollView가 화면 전체를 차지하도록 설정
   },
   // 헤더 영역
   header: {
@@ -64,9 +64,11 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'flex-start',
     paddingTop: 0,
+    paddingBottom: 0,
     width: 329,
     alignSelf: 'center',
     marginTop: 0,
+    marginBottom: 0,
     // justifyContent: 'center',
   },
   stepBadge: {
