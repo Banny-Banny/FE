@@ -11,17 +11,18 @@
  * Figma 노드 ID: 161:24117
  */
 
+import { Colors } from '@/commons/constants';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { Colors } from '@/commons/constants';
 import { styles } from './styles';
 
 interface MenuListProps {
   onPaymentHistoryPress?: () => void;
+  onCustomerServicePress?: () => void;
 }
 
-export function MenuList({ onPaymentHistoryPress }: MenuListProps) {
+export function MenuList({ onPaymentHistoryPress, onCustomerServicePress }: MenuListProps) {
   return (
     <View style={styles.container}>
       {/* 설정 메뉴 */}
@@ -41,12 +42,12 @@ export function MenuList({ onPaymentHistoryPress }: MenuListProps) {
       </Pressable>
 
       {/* 고객 센터 메뉴 (마지막 항목 - 구분선 없음) */}
-      <View style={styles.menuItemLast}>
+      <Pressable style={styles.menuItemLast} onPress={onCustomerServicePress}>
         <Text style={styles.menuText}>고객 센터</Text>
         <View style={styles.iconContainer} collapsable={false}>
           <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
