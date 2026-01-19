@@ -5,7 +5,7 @@
 
 // API 응답 타입
 export interface UserInfoSummary {
-  capsuleCount: number;
+  timeCapsuleCount: number;
   easterEggCount: number;
   friendCount: number;
 }

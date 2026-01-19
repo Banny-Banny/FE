@@ -1,0 +1,744 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 현재 파일:
+            - components/timecapsule-create/index.tsx (제거 대상 - step 통합 관리)
+조건-파일경로) 재사용 가능한 컴포넌트:
+            - components/timecapsule-create/components/step-info/ (그대로 재사용)
+            - components/timecapsule-create/components/step-room/ (그대로 재사용)
+            - components/toss-payments/index.tsx (그대로 재사용)
+조건-파일경로) 생성할 파일 (아키텍처 규칙 준수):
+            - components/timecapsule-create/pages/info/index.tsx (기본 정보 입력 - 비즈니스 로직)
+            - components/timecapsule-create/pages/payment/index.tsx (결제 - 비즈니스 로직)
+            - components/timecapsule-create/pages/room/index.tsx (대기실 - 비즈니스 로직)
+            - app/(tabs)/timecapsule/info.tsx (라우팅만 - 컴포넌트 import/export)
+            - app/(tabs)/timecapsule/payment.tsx (라우팅만 - 컴포넌트 import/export)
+            - app/(tabs)/timecapsule/room.tsx (라우팅만 - 컴포넌트 import/export)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일/API 로직은 절대 수정하지 말 것
+조건-기능유지) 각 step 컴포넌트를 독립적인 페이지로 분리
+조건-기능유지) 앱과 웹 모두에서 동일한 사용자 경험 제공
+조건-기능유지) 결제 리다이렉트 시에도 안정적으로 동작
+
+==============================================
+
+핵심요구사항) 타임캡슐 생성 플로우를 step별로 분리하여 리팩토링
+핵심요구사항-1) components/timecapsule-create/index.tsx의 step 관리 로직을 제거하고 각 step을 독립적인 페이지로 분리
+핵심요구사항-2) 각 step 간 데이터 전달은 navigation params를 사용
+핵심요구사항-3) 웹 환경에서 결제 리다이렉트 시 sessionStorage를 통한 복원 로직 구현
+핵심요구사항-4) 앱 환경에서도 동일하게 동작하도록 구현
+핵심요구사항-5) useFocusEffect를 사용한 복잡한 초기화 로직 제거
+핵심요구사항-6) 각 step 페이지에서 뒤로가기 동작 정의
+
+==============================================
+
+현재문제점분석) 웹 환경에서 발생하는 문제
+
+1. 증상:
+   - 결제(payment) 완료 후 info로 갔다가 다시 payment로 돌아온 후 room으로 이동
+   - 앱에서는 정상 작동하지만 웹에서만 발생
+
+2. 원인:
+   - 웹 브라우저의 히스토리 관리 방식: 결제 후 페이지 리다이렉트 시 React Navigation 상태 초기화
+   - useEffect 의존성: 결제 완료 후 돌아올 때 특정 상태 변경으로 useEffect 재실행
+   - useFocusEffect: 복잡한 초기화 로직으로 인해 step이 1로 리셋되었다가 복구
+
+3. 기존 임시방편:
+   - sessionStorage를 통한 state 저장/복원
+   - isPaymentRedirect, triggerPaymentCheck 플래그로 분기 처리
+   - 복잡한 useEffect 의존성 관리
+
+4. 근본적인 문제:
+   - 단일 컴포넌트에서 step state로 모든 단계 관리
+   - 의존성이 많아 하나가 꼬이면 전체가 영향받음
+
+==============================================
+
+리팩토링목표)
+
+1. 각 단계를 독립적인 페이지/컴포넌트로 분리하여 의존성 제거
+2. 웹 환경에서 결제 리다이렉트 시에도 안정적으로 동작
+3. 코드 복잡도 감소 및 유지보수성 향상
+4. 앱과 웹 모두에서 동일한 사용자 경험 제공
+5. 각 단계의 로직이 독립적이어서 디버깅 용이
+6. 나중에 단계 추가/제거/순서 변경 용이
+
+==============================================
+
+구조제안) 새로운 파일 구조 (아키텍처 규칙 준수)
+
+app/(tabs)/timecapsule/            # 라우팅 레이어 (로직 없음)
+├── info.tsx                       # 단순히 컴포넌트 import/export
+├── payment.tsx                    # 단순히 컴포넌트 import/export
+└── room.tsx                       # 단순히 컴포넌트 import/export
+
+components/timecapsule-create/      # 비즈니스 로직 레이어
+├── pages/
+│   ├── info/
+│   │   └── index.tsx              # 기본 정보 입력 페이지 (비즈니스 로직)
+│   ├── payment/
+│   │   └── index.tsx              # 결제 페이지 (비즈니스 로직)
+│   └── room/
+│       └── index.tsx               # 대기실 페이지 (비즈니스 로직)
+├── components/
+│   ├── step-info/                 # 기본 정보 입력 UI 컴포넌트 (재사용)
+│   └── step-room/                 # 대기실 UI 컴포넌트 (재사용)
+└── types.ts
+
+components/toss-payments/          # 결제 UI 컴포넌트 (재사용)
+└── index.tsx
+
+==============================================
+
+구현가이드-Info) 기본 정보 입력 페이지
+
+파일 구조:
+1. components/timecapsule-create/pages/info/index.tsx (비즈니스 로직)
+2. app/(tabs)/timecapsule/info.tsx (라우팅만)
+
+역할:
+- 타임캡슐 제목, 날짜, 위치 등 기본 정보 입력
+- StepInfo 컴포넌트를 래핑하여 사용
+- 폼 제출 시 백엔드에 order 생성 요청
+- orderData를 navigation params로 전달하여 payment 페이지로 이동
+
+구현 예시 - 비즈니스 로직 (components/timecapsule-create/pages/info/index.tsx):
+```typescript
+import { ROUTES } from '@/commons/constants';
+import StepInfo from '@/components/timecapsule-create/components/step-info';
+import { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
+import { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { View } from 'react-native';
+
+/**
+ * 타임캡슐 생성 - 기본 정보 입력 페이지
+ */
+export default function TimeCapsuleCreateInfo() {
+  const router = useRouter();
+
+  const handleSubmit = (data: any) => {
+    if (!data.orderData) {
+      return;
+    }
+
+    // 결제 페이지로 이동 (orderData와 formData 전달)
+    router.push({
+      pathname: '/timecapsule/payment',
+      params: {
+        orderData: JSON.stringify(data.orderData),
+        formData: JSON.stringify(data),
+      },
+    });
+  };
+
+  const handleBack = () => {
+    router.push(ROUTES.MAIN);
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <StepInfo onSubmit={handleSubmit} onBack={handleBack} />
+    </View>
+  );
+}
+```
+
+구현 예시 - 라우팅 (app/(tabs)/timecapsule/info.tsx):
+```typescript
+import TimeCapsuleCreateInfo from '@/components/timecapsule-create/pages/info';
+
+export default TimeCapsuleCreateInfo;
+```
+
+데이터 전달:
+- orderData: CreateOrderResponse (백엔드 응답)
+- formData: StepInfoFormData (폼 데이터)
+- JSON.stringify()로 직렬화하여 params로 전달
+
+뒤로가기:
+- 메인 페이지로 이동
+
+==============================================
+
+구현가이드-Payment) 결제 페이지
+
+파일 구조:
+1. components/timecapsule-create/pages/payment/index.tsx (비즈니스 로직)
+2. app/(tabs)/timecapsule/payment.tsx (라우팅만)
+
+역할:
+- Toss Payments를 통한 결제 처리
+- TossPayment 컴포넌트를 래핑하여 사용
+- info 페이지에서 전달받은 orderData, formData를 route params로 수신
+- 웹 환경에서 결제 리다이렉트 시 sessionStorage 복원
+- 결제 완료 후 room 페이지로 이동
+
+구현 예시 - 비즈니스 로직 (components/timecapsule-create/pages/payment/index.tsx):
+```typescript
+import { ROUTES } from '@/commons/constants';
+import { Spinner } from '@/commons/components/spinner';
+import TossPayment from '@/components/toss-payments';
+import { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
+import { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Platform, View } from 'react-native';
+
+/**
+ * 타임캡슐 생성 - 결제 페이지
+ */
+export default function TimeCapsuleCreatePayment() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // useMemo로 초기 데이터 계산 최적화
+  const initialData = useMemo(() => {
+    // 1순위: route params (일반적인 경우)
+    if (params.orderData && params.formData) {
+      return {
+        orderData: JSON.parse(params.orderData as string) as CreateOrderResponse,
+        formData: JSON.parse(params.formData as string) as StepInfoFormData,
+      };
+    }
+
+    // 2순위: sessionStorage (웹 환경, 결제 리다이렉트 시)
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const savedOrderData = sessionStorage.getItem('timecapsule_order_data');
+      const savedFormData = sessionStorage.getItem('timecapsule_form_data');
+      if (savedOrderData && savedFormData) {
+        return {
+          orderData: JSON.parse(savedOrderData) as CreateOrderResponse,
+          formData: JSON.parse(savedFormData) as StepInfoFormData,
+        };
+      }
+    }
+
+    return null;
+  }, [params.orderData, params.formData]);
+
+  const [orderData, setOrderData] = useState<CreateOrderResponse | null>(
+    initialData?.orderData || null
+  );
+  const [formData, setFormData] = useState<StepInfoFormData | null>(
+    initialData?.formData || null
+  );
+
+  // 웹 환경에서 데이터를 sessionStorage에 저장 (결제 리다이렉트 대비)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && orderData && formData) {
+      sessionStorage.setItem('timecapsule_order_data', JSON.stringify(orderData));
+      sessionStorage.setItem('timecapsule_form_data', JSON.stringify(formData));
+    }
+  }, [orderData, formData]);
+
+  // 데이터가 없으면 info 페이지로 리다이렉트 (로딩 표시)
+  useEffect(() => {
+    if (!orderData || !formData) {
+      setIsRedirecting(true);
+      router.replace('/timecapsule/info');
+    }
+  }, [orderData, formData, router]);
+
+  if (isRedirecting || !orderData || !formData) {
+    return <Spinner />;
+  }
+
+  const handleBack = () => {
+    // sessionStorage 클리어
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      sessionStorage.removeItem('timecapsule_order_data');
+      sessionStorage.removeItem('timecapsule_form_data');
+    }
+    router.back();
+  };
+
+  const handleSubmit = (paymentData: any) => {
+    // sessionStorage 클리어
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      sessionStorage.removeItem('timecapsule_order_data');
+      sessionStorage.removeItem('timecapsule_form_data');
+    }
+
+    // 대기실 페이지로 이동 (orderId 전달)
+    router.push({
+      pathname: '/timecapsule/room',
+      params: {
+        orderId: orderData.order_id,
+      },
+    });
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <TossPayment
+        formData={formData}
+        orderData={orderData}
+        onBack={handleBack}
+        onSubmit={handleSubmit}
+      />
+    </View>
+  );
+}
+```
+
+데이터 수신:
+- route params에서 orderData, formData 수신 (우선순위 1)
+- sessionStorage에서 복원 (웹 환경, 결제 리다이렉트 시, 우선순위 2)
+
+데이터 저장:
+- 웹 환경에서만 sessionStorage에 저장 (결제 리다이렉트 대비)
+
+데이터 전달:
+- orderId만 room 페이지로 전달
+
+뒤로가기:
+- info 페이지로 이동 (결제 취소)
+- sessionStorage 클리어
+
+==============================================
+
+구현가이드-Room) 대기실 페이지
+
+파일 구조:
+1. components/timecapsule-create/pages/room/index.tsx (비즈니스 로직)
+2. app/(tabs)/timecapsule/room.tsx (라우팅만)
+
+역할:
+- 참여자들이 모두 입력을 완료할 때까지 대기
+- StepRoom 컴포넌트를 래핑하여 사용
+- payment 페이지에서 전달받은 orderId를 route params로 수신
+- 완료 후 메인 페이지 또는 캡슐 보관함으로 이동
+
+구현 예시 - 비즈니스 로직 (components/timecapsule-create/pages/room/index.tsx):
+```typescript
+import { ROUTES } from '@/commons/constants';
+import { Spinner } from '@/commons/components/spinner';
+import StepRoom from '@/components/timecapsule-create/components/step-room';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
+
+/**
+ * 타임캡슐 생성 - 대기실 페이지
+ */
+export default function TimeCapsuleCreateRoom() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const orderId = params.orderId as string;
+
+  // orderId가 없으면 info 페이지로 리다이렉트 (로딩 표시)
+  useEffect(() => {
+    if (!orderId) {
+      setIsRedirecting(true);
+      router.replace('/timecapsule/info');
+    }
+  }, [orderId, router]);
+
+  if (isRedirecting || !orderId) {
+    return <Spinner />;
+  }
+
+  const handleSubmit = () => {
+    // 메인 페이지로 이동
+    router.push(ROUTES.MAIN);
+  };
+
+  // TODO: 실제로는 결제 완료 후 서버에서 호스트/게스트 정보를 받아와야 함
+  // 현재는 임시로 호스트로 설정
+  const userRole: 'host' | 'guest' = 'host';
+
+  return (
+    <View style={{ flex: 1 }}>
+      <StepRoom
+        role={userRole}
+        orderId={orderId}
+        onSubmit={handleSubmit}
+        // capsuleId, inviteCode는 게스트용 optional props
+      />
+    </View>
+  );
+}
+```
+
+⚠️ StepRoom Props 참고:
+- role: 'host' | 'guest' (필수)
+- orderId?: string (방장용 - 대기실 생성)
+- capsuleId?: string (게스트용 - 딥링크로 입장)
+- inviteCode?: string (게스트용 - 콘텐츠 제출 시 필요)
+- onSubmit?: () => void (타임캡슐 묻기 완료 핸들러)
+
+데이터 수신:
+- orderId를 route params로 수신
+
+완료 후:
+- 메인 페이지로 이동
+
+뒤로가기:
+- 불가 (대기실 진입 후 이탈 방지)
+- 또는 경고 표시 후 이동 (선택사항)
+
+==============================================
+
+구현가이드-라우팅) expo-router 라우팅 설정
+
+app/(tabs)/ 구조:
+```
+app/(tabs)/
+├── timecapsule/
+│   ├── create.tsx (기존 파일 - 제거 또는 리다이렉트)
+│   ├── index.tsx (기존 파일 - 유지)
+│   ├── info.tsx (신규)
+│   ├── payment.tsx (신규)
+│   └── room.tsx (신규)
+```
+
+네비게이션 플로우:
+```
+Main Page
+    ↓
+/timecapsule/info (기본 정보 입력)
+    ↓ (router.push with params)
+/timecapsule/payment (결제)
+    ↓ (router.push with params)
+/timecapsule/room (대기실)
+    ↓
+Main Page / My Capsule
+```
+
+웹 환경 URL:
+- 기본 정보 입력: /timecapsule/info
+- 결제: /timecapsule/payment?orderData=...&formData=...
+- 결제 리다이렉트: /timecapsule/payment?paymentKey=...&orderId=...&amount=...
+- 대기실: /timecapsule/room?orderId=...
+
+==============================================
+
+구현가이드-데이터전달) 데이터 전달 방식
+
+1. Navigation Params (우선순위 1)
+   - info → payment: orderData, formData
+   - payment → room: orderId
+   - JSON.stringify()로 직렬화
+   - JSON.parse()로 복원
+
+2. SessionStorage (웹 전용, 우선순위 2)
+   - payment 페이지에서만 사용
+   - 결제 리다이렉트 시 데이터 복원용
+   - 키:
+     - timecapsule_order_data
+     - timecapsule_form_data
+   - payment 완료 시 클리어
+   - payment 뒤로가기 시 클리어
+
+3. 데이터 복원 우선순위
+   - 1순위: route params (일반적인 경우)
+   - 2순위: sessionStorage (웹 환경, 결제 리다이렉트 시)
+   - 데이터 없음: info 페이지로 리다이렉트
+
+==============================================
+
+구현가이드-웹결제리다이렉트) 웹 환경 결제 리다이렉트 처리
+
+문제 상황:
+- 결제 완료 후 ?paymentKey=xxx&orderId=xxx&amount=xxx 파라미터와 함께 리다이렉트
+- payment 페이지가 언마운트되면서 상태가 날아감
+
+해결 방안:
+1. payment 페이지 마운트 시 orderData와 formData를 sessionStorage에 저장
+2. 결제 리다이렉트 후 payment 페이지로 돌아오면 sessionStorage에서 복원
+3. TossPayment 컴포넌트가 URL 파라미터를 확인하고 결제 승인 처리
+4. 결제 승인 완료 후 room 페이지로 이동
+5. room 페이지 이동 시 sessionStorage 클리어
+
+구현 흐름:
+```
+1. 사용자가 결제 버튼 클릭
+   ↓
+2. payment 페이지에서 orderData/formData를 sessionStorage에 저장 (웹만)
+   ↓
+3. TossPayment가 결제창 열기
+   ↓
+4. 결제 완료 후 /timecapsule/payment?paymentKey=xxx&orderId=xxx&amount=xxx로 리다이렉트
+   ↓
+5. payment 페이지 컴포넌트 마운트
+   - route params 없음
+   - sessionStorage에서 orderData/formData 복원
+   ↓
+6. TossPayment가 URL 파라미터 확인 및 결제 승인 API 호출
+   ↓
+7. 결제 승인 완료 후 onSubmit 콜백 실행
+   ↓
+8. room 페이지로 이동 (sessionStorage 클리어)
+```
+
+==============================================
+
+구현가이드-기존파일처리) components/timecapsule-create/index.tsx 처리
+
+옵션 A: 완전히 제거
+- components/timecapsule-create/index.tsx 파일 삭제
+- 더 이상 사용하지 않음
+
+옵션 B: 리다이렉터로 변경 (아키텍처 규칙 준수)
+```typescript
+// components/timecapsule-create/pages/redirect/index.tsx
+import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+
+/**
+ * 타임캡슐 생성 - 리다이렉터
+ * @deprecated 이제 /timecapsule/info를 사용하세요
+ */
+export default function TimeCapsuleCreateRedirect() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/timecapsule/info');
+  }, []);
+
+  return null;
+}
+
+// app/(tabs)/timecapsule/create.tsx (기존 파일)
+import TimeCapsuleCreateRedirect from '@/components/timecapsule-create/pages/redirect';
+
+export default TimeCapsuleCreateRedirect;
+```
+
+권장: 옵션 A (완전히 제거)
+
+==============================================
+
+마이그레이션단계) 단계별 작업 순서
+
+Phase 1: 준비 작업
+1. [ ] 기존 components/timecapsule-create/index.tsx 백업
+2. [ ] components/timecapsule-create/pages/ 디렉토리 생성
+3. [ ] components/timecapsule-create/pages/info/ 디렉토리 생성
+4. [ ] components/timecapsule-create/pages/payment/ 디렉토리 생성
+5. [ ] components/timecapsule-create/pages/room/ 디렉토리 생성
+6. [ ] 각 페이지 파일 생성
+   - components/timecapsule-create/pages/info/index.tsx
+   - components/timecapsule-create/pages/payment/index.tsx
+   - components/timecapsule-create/pages/room/index.tsx
+   - app/(tabs)/timecapsule/info.tsx
+   - app/(tabs)/timecapsule/payment.tsx
+   - app/(tabs)/timecapsule/room.tsx
+
+Phase 2: 페이지별 분리
+1. [ ] info 페이지 구현
+   - StepInfo 컴포넌트 래핑
+   - onSubmit → router.push('/timecapsule/payment') 구현
+   - orderData/formData 전달 구현
+   - 뒤로가기 → 메인 페이지
+   - initialData prop 생략 (optional)
+
+2. [ ] payment 페이지 구현
+   - TossPayment 컴포넌트 래핑
+   - route params에서 orderData/formData 수신
+   - useMemo로 초기 데이터 계산 최적화
+   - sessionStorage 저장/복원 구현 (웹 환경)
+   - 결제 리다이렉트 처리
+   - 리다이렉트 시 Spinner 표시
+   - onSubmit → router.push('/timecapsule/room') 구현
+   - 뒤로가기 → info 페이지 (sessionStorage 클리어)
+
+3. [ ] room 페이지 구현
+   - StepRoom 컴포넌트 래핑
+   - route params에서 orderId 수신
+   - 리다이렉트 시 Spinner 표시
+   - StepRoom Props 전체 명시 (capsuleId, inviteCode는 optional)
+   - 완료 후 메인 페이지 이동
+   - 뒤로가기 → 불가 또는 경고
+
+Phase 3: 테스트
+1. [ ] 앱 환경 테스트 (iOS/Android)
+   - info → payment 데이터 전달 확인
+   - payment → room 데이터 전달 확인
+   - 뒤로가기 동작 확인
+
+2. [ ] 웹 환경 테스트
+   - info → payment 데이터 전달 확인
+   - 결제 리다이렉트 시나리오 테스트
+   - sessionStorage 복원 로직 확인
+   - payment → room 데이터 전달 확인
+   - 뒤로가기 동작 확인
+
+Phase 4: 정리
+1. [ ] 기존 components/timecapsule-create/index.tsx 제거
+2. [ ] 불필요한 코드 제거 (isPaymentRedirect, triggerPaymentCheck, stepRef 등)
+3. [ ] 주석 및 문서 업데이트
+4. [ ] 타입 에러 0건 확인
+
+==============================================
+
+주의사항)
+
+1. 데이터 전달 방식 일관성
+   - 앱과 웹에서 동일한 데이터 전달 방식 사용
+   - 가능한 한 navigation params 우선 사용
+   - sessionStorage는 웹 환경에서 결제 리다이렉트 시에만 사용
+
+2. 웹 환경 Fallback
+   - 결제 리다이렉트 시에만 sessionStorage 사용
+   - 다른 경우는 일반 라우팅으로 처리
+   - sessionStorage 키 충돌 방지
+
+3. 뒤로가기 처리
+   - info: 메인으로 이동
+   - payment: info 페이지로 이동 (결제 취소, sessionStorage 클리어)
+   - room: 뒤로가기 불가 또는 경고 표시
+
+4. 기존 API 호환성
+   - components/timecapsule-create/components/step-info/api/ 유지
+   - API 호출 로직 변경 없음
+   - 컴포넌트 재사용 (수정 없음)
+
+5. My Capsule과의 연동
+   - room 페이지 완료 후 캡슐 보관함 리페치 필요
+   - 대기실 접근 시 router.push(/room/join?capsuleId=xxx) 호환성 유지
+
+6. 라우팅 URL
+   - 기본 정보 입력: /timecapsule/info
+   - 결제: /timecapsule/payment
+   - 대기실: /timecapsule/room
+
+7. TypeScript 타입 안정성
+   - route params 타입 명시
+   - JSON.parse() 후 타입 캐스팅
+   - any 사용 금지
+
+8. 에러 처리
+   - 데이터 없음 시 info 페이지로 리다이렉트
+   - orderId 없음 시 info 페이지로 리다이렉트
+   - 에러 로깅 (console.error)
+
+9. 기존 컴포넌트 수정 금지
+   - StepInfo 컴포넌트 수정 없음
+   - TossPayment 컴포넌트 수정 없음
+   - StepRoom 컴포넌트 수정 없음
+   - 단순히 래핑만 수행
+
+10. sessionStorage 클리어 타이밍
+    - payment 완료 시 (room 페이지 이동 시)
+    - payment 뒤로가기 시
+    - room 도달 시 (선택사항)
+
+==============================================
+
+예상효과)
+
+✅ 의존성 감소: 각 단계가 독립적으로 동작
+✅ 웹 안정성: 결제 리다이렉트 시에도 안정적
+✅ 디버깅 용이: 어느 단계에서 문제가 생겼는지 명확
+✅ 유지보수성: 각 단계 로직이 독립적이어서 수정 쉬움
+✅ 확장성: 나중에 단계 추가/제거/순서 변경 용이
+✅ 코드 복잡도 감소: useFocusEffect, useEffect 의존성 관리 불필요
+✅ 상태 관리 단순화: step state 제거
+✅ 앱/웹 일관성: 동일한 사용자 경험
+
+==============================================
+
+최종검토 체크리스트)
+
+파일 생성:
+- [ ] components/timecapsule-create/pages/info/index.tsx 생성됨
+- [ ] components/timecapsule-create/pages/payment/index.tsx 생성됨
+- [ ] components/timecapsule-create/pages/room/index.tsx 생성됨
+- [ ] app/(tabs)/timecapsule/info.tsx 생성됨 (라우팅만)
+- [ ] app/(tabs)/timecapsule/payment.tsx 생성됨 (라우팅만)
+- [ ] app/(tabs)/timecapsule/room.tsx 생성됨 (라우팅만)
+
+info 페이지 구현:
+- [ ] components/timecapsule-create/pages/info/index.tsx에 비즈니스 로직 구현
+- [ ] StepInfo 컴포넌트 import 및 사용
+- [ ] onSubmit → router.push('/timecapsule/payment') 구현
+- [ ] orderData, formData를 JSON.stringify()하여 params로 전달
+- [ ] onBack → router.push(ROUTES.MAIN) 구현
+- [ ] initialData prop 생략 (optional)
+- [ ] app/(tabs)/timecapsule/info.tsx는 단순히 컴포넌트 import/export만
+- [ ] TypeScript 타입 에러 0건
+
+payment 페이지 구현:
+- [ ] components/timecapsule-create/pages/payment/index.tsx에 비즈니스 로직 구현
+- [ ] TossPayment 컴포넌트 import 및 사용
+- [ ] useMemo로 초기 데이터 계산 최적화 (params.orderData, params.formData 의존성)
+- [ ] route params에서 orderData, formData 수신
+- [ ] JSON.parse()로 데이터 복원
+- [ ] 웹 환경에서 sessionStorage에 데이터 저장
+- [ ] 웹 환경에서 sessionStorage에서 데이터 복원
+- [ ] 데이터 복원 우선순위 구현 (1: params, 2: sessionStorage)
+- [ ] 데이터 없음 시 info 페이지로 리다이렉트 (useEffect 사용)
+- [ ] 리다이렉트 시 Spinner 컴포넌트 표시
+- [ ] onSubmit → router.push('/timecapsule/room') 구현
+- [ ] orderId를 params로 전달
+- [ ] sessionStorage 클리어 (room 페이지 이동 시)
+- [ ] onBack → router.back() 구현
+- [ ] sessionStorage 클리어 (뒤로가기 시)
+- [ ] app/(tabs)/timecapsule/payment.tsx는 단순히 컴포넌트 import/export만
+- [ ] TypeScript 타입 에러 0건
+
+room 페이지 구현:
+- [ ] components/timecapsule-create/pages/room/index.tsx에 비즈니스 로직 구현
+- [ ] StepRoom 컴포넌트 import 및 사용
+- [ ] route params에서 orderId 수신
+- [ ] orderId 없음 시 info 페이지로 리다이렉트 (useEffect 사용)
+- [ ] 리다이렉트 시 Spinner 컴포넌트 표시
+- [ ] StepRoom Props 전체 명시 (role, orderId, onSubmit, 주석으로 capsuleId/inviteCode는 optional)
+- [ ] onSubmit → router.push(ROUTES.MAIN) 구현
+- [ ] app/(tabs)/timecapsule/room.tsx는 단순히 컴포넌트 import/export만
+- [ ] TypeScript 타입 에러 0건
+
+기존 파일 처리:
+- [ ] components/timecapsule-create/index.tsx 제거됨
+- [ ] 불필요한 코드 제거됨 (isPaymentRedirect, triggerPaymentCheck, stepRef 등)
+
+테스트 (앱):
+- [ ] info → payment 데이터 전달 확인됨
+- [ ] payment → room 데이터 전달 확인됨
+- [ ] info 뒤로가기 → 메인 페이지 확인됨
+- [ ] payment 뒤로가기 → info 페이지 확인됨
+- [ ] 전체 플로우 정상 작동 확인됨
+
+테스트 (웹):
+- [ ] info → payment 데이터 전달 확인됨
+- [ ] payment에서 sessionStorage 저장 확인됨
+- [ ] 결제 리다이렉트 시 sessionStorage 복원 확인됨
+- [ ] 결제 승인 후 room 페이지 이동 확인됨
+- [ ] payment → room 데이터 전달 확인됨
+- [ ] sessionStorage 클리어 확인됨 (room 페이지 이동 시)
+- [ ] sessionStorage 클리어 확인됨 (뒤로가기 시)
+- [ ] info 뒤로가기 → 메인 페이지 확인됨
+- [ ] payment 뒤로가기 → info 페이지 확인됨
+- [ ] 전체 플로우 정상 작동 확인됨
+- [ ] ⭐ 웹에서 결제 후 info로 갔다가 다시 payment로 돌아오는 문제 해결 확인됨
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 컴포넌트 수정 0건
+- [ ] any 타입 사용 최소화
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+- [ ] 아키텍처 규칙 준수: app/ 폴더는 라우팅만, 비즈니스 로직은 components/에 위치
+
+문서 업데이트:
+- [ ] 라우팅 변경 사항 문서화
+- [ ] 데이터 전달 방식 문서화
+- [ ] 웹 결제 리다이렉트 처리 방법 문서화
+
+==============================================

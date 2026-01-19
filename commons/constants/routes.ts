@@ -13,7 +13,7 @@ export const ROUTES = {
   MY_PAGE: '/(tabs)/mypage',
 
   // 타임캡슐
-  TIMECAPSULE_CREATE: '/timecapsule/create',
+  TIMECAPSULE_CREATE: '/timecapsule/info', // 리팩토링: step별 분리 (/info → /payment → /room)
   TIMECAPSULE_DETAIL: '/timecapsule/detail',
 
   // 인증

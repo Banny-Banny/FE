@@ -18,23 +18,69 @@ import type {
 
 /**
  * 참여중인 타임캡슐 리스트 조회 API
- * @param limit 한 페이지에 표시할 아이템 수 (기본값: 20)
- * @param offset 건너뛸 아이템 수 (기본값: 0)
+ * ⭐ 기본 동작: 전체 데이터를 자동으로 페이지네이션하여 가져옴
+ *
+ * @param fetchAll true면 전체 데이터 자동 수집 (기본값: true)
+ * @param limit 한 페이지 크기 (기본값: 20)
+ * @param offset 단일 페이지 조회 시 시작 위치 (fetchAll=false일 때만 사용)
  * @returns 참여중인 타임캡슐 리스트 (camelCase)
  * @throws 401: JWT 토큰 없음 또는 유효하지 않음
  * @throws 500: 서버 내부 오류
  */
 export async function getMyCapsules(
+  fetchAll: boolean = true,
   limit: number = 20,
   offset: number = 0,
 ): Promise<MyCapsuleListResponse> {
   try {
-    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
-    const response = await apiClient.get<MyCapsuleListResponse>('/api/me/capsules', {
+    // 첫 번째 요청으로 total 확인
+    const firstResponse = await apiClient.get<MyCapsuleListResponse>('/api/me/capsules', {
       params: { limit, offset },
     });
 
-    return response.data;
+    // fetchAll이 false이거나 전체 데이터가 이미 다 왔으면 바로 반환
+    if (!fetchAll || firstResponse.data.items.length >= firstResponse.data.total) {
+      return firstResponse.data;
+    }
+
+    // 전체 데이터 수집 필요 - 병렬로 나머지 페이지 요청
+    const allItems = [...firstResponse.data.items];
+    const totalCount = firstResponse.data.total;
+    const remainingCount = totalCount - allItems.length;
+
+    if (remainingCount > 0) {
+      // 필요한 추가 요청 계산
+      const additionalRequests: Promise<MyCapsuleListResponse>[] = [];
+      let currentOffset = limit;
+
+      while (currentOffset < totalCount) {
+        additionalRequests.push(
+          apiClient
+            .get<MyCapsuleListResponse>('/api/me/capsules', {
+              params: { limit, offset: currentOffset },
+            })
+            .then((res) => res.data),
+        );
+        currentOffset += limit;
+      }
+
+      // 모든 요청을 병렬로 실행
+      const additionalResponses = await Promise.all(additionalRequests);
+
+      // 모든 아이템 합치기
+      additionalResponses.forEach((response) => {
+        allItems.push(...response.items);
+      });
+    }
+
+    // 전체 데이터 반환
+    return {
+      items: allItems,
+      total: totalCount,
+      limit: allItems.length,
+      offset: 0,
+      hasNext: false,
+    };
   } catch (error: any) {
     if (error.response?.status === 401) {
       throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
@@ -57,7 +103,7 @@ interface ApiSlotResponse {
   profile_img: string | null;
   entry_id: string | null;
   wrote_at: string | null;
-  content: string | null;
+  text_message: string | null; // ⭐ API는 content가 아닌 text_message를 반환
   images_ids: Array<{
     media_id: string;
     object_key: string;
@@ -94,20 +140,20 @@ interface ApiCapsuleDetailResponse {
 }
 
 function transformSlotContent(
-  content: string | null,
+  textMessage: string | null,
   imagesIds: ApiSlotResponse['images_ids'],
   audioId: ApiSlotResponse['audio_id'],
   videoId: ApiSlotResponse['video_id'],
 ): SlotContent | undefined {
-  if (!content && (!imagesIds || imagesIds.length === 0) && !audioId && !videoId) {
+  if (!textMessage && (!imagesIds || imagesIds.length === 0) && !audioId && !videoId) {
     return undefined;
   }
 
   const result: SlotContent = {};
 
   // 텍스트 콘텐츠
-  if (content) {
-    result.text = content;
+  if (textMessage) {
+    result.text = textMessage;
   }
 
   // 이미지 변환 - media_id만 저장 (URL은 컴포넌트에서 가져옴)
@@ -150,14 +196,14 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
     // ⭐ entry_id가 있으면 작성된 것으로 간주 (가장 중요!)
     const hasEntry = slot.entry_id !== null;
 
-    // entry_id가 없어도 content나 media가 있으면 작성된 것으로 간주
-    const hasContent = slot.content !== null && slot.content.trim() !== '';
+    // entry_id가 없어도 text_message나 media가 있으면 작성된 것으로 간주
+    const hasContent = slot.text_message !== null && slot.text_message.trim() !== '';
     const hasImages = slot.images_ids && slot.images_ids.length > 0;
     const hasAudio = slot.audio_id !== null;
     const hasVideo = slot.video_id !== null;
     const hasMedia = hasImages || hasAudio || hasVideo;
 
-    // 작성 여부: entry_id가 있거나, content/media가 있으면 작성된 것
+    // 작성 여부: entry_id가 있거나, text_message/media가 있으면 작성된 것
     const isWritten = hasEntry || hasContent || hasMedia;
 
     // 작성자 정보 (user_id가 있으면 작성자가 있는 것)
@@ -178,7 +224,7 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
     // 🔓 열린 상태일 때만 콘텐츠 표시
     const content = isLocked
       ? undefined
-      : transformSlotContent(slot.content, slot.images_ids, slot.audio_id, slot.video_id);
+      : transformSlotContent(slot.text_message, slot.images_ids, slot.audio_id, slot.video_id);
 
     return {
       slotId: slot.slot_id,

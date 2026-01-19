@@ -420,6 +420,10 @@ export default function StepInfo({ onSubmit, onBack, initialData }: StepInfoProp
                     }
                   }}
                   maxLength={MAX_CAPSULE_NAME_LENGTH}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  blurOnSubmit={true}
                 />
               )}
             />
