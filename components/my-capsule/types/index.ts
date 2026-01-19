@@ -28,6 +28,10 @@ export interface MyCapsuleItem {
  */
 export interface MyCapsuleListResponse {
   items: MyCapsuleItem[];                          // 캡슐 리스트
+  total: number;                                   // 전체 캡슐 개수
+  limit: number;                                   // 현재 limit 값
+  offset: number;                                  // 현재 offset 값
+  hasNext?: boolean;                               // 다음 페이지 존재 여부 (선택적)
 }
 
 /**

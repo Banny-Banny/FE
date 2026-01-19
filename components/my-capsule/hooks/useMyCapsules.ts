@@ -11,6 +11,10 @@ import type { CategorizedCapsules, MyCapsuleItem } from '../types';
 /**
  * 참여중인 타임캡슐 리스트 조회 및 3가지 상태 분류 Hook
  *
+ * ⭐ 전체 데이터 자동 수집:
+ * - API가 pagination을 지원하므로 자동으로 모든 페이지를 가져옴
+ * - 사용자의 모든 캡슐(총 157개 등)을 status 기준으로 분류
+ *
  * 분류 기준:
  * - waitingRooms: status === "WAITING"
  * - openedCapsules: status !== "WAITING" && openDate <= 현재시각
@@ -19,10 +23,10 @@ import type { CategorizedCapsules, MyCapsuleItem } from '../types';
  * @returns {object} capsules, isLoading, error, refetch
  */
 export function useMyCapsules() {
-  // @tanstack/react-query를 사용한 API 호출
+  // @tanstack/react-query를 사용한 API 호출 (fetchAll=true로 전체 데이터 가져옴)
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['myCapsules'],
-    queryFn: () => getMyCapsules(),
+    queryFn: () => getMyCapsules(true), // 전체 데이터 자동 수집
     retry: 1,
   });
 
