@@ -28,6 +28,10 @@ export default function MyPageFeature() {
     router.push('/(tabs)/payment-history');
   };
 
+  const handleCustomerServicePress = () => {
+    router.push('/(tabs)/customer-service');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerWrapper}>
@@ -45,7 +49,7 @@ export default function MyPageFeature() {
           <ActivityStats />
         </View>
         <View style={styles.menuList}>
-          <MenuList onPaymentHistoryPress={handlePaymentHistoryPress} />
+          <MenuList onPaymentHistoryPress={handlePaymentHistoryPress} onCustomerServicePress={handleCustomerServicePress} />
         </View>
         <View style={styles.logoutButton}>
           <LogoutButton onPress={handleLogout} />

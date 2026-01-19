@@ -35,6 +35,9 @@ export const ROUTES = {
 
   // 내 캡슐
   MY_CAPSULE: '/(tabs)/my-capsule',
+
+  // 고객센터
+  CUSTOMER_SERVICE: '/(tabs)/customer-service',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;
