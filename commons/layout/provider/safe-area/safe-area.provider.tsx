@@ -1,3 +1,4 @@
+import { Colors } from '@/commons/constants';
 import { usePathname, useSegments } from 'expo-router';
 import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
@@ -44,8 +45,7 @@ export const AppSafeAreaProvider: React.FC<AppSafeAreaProviderProps> = ({ childr
   return (
     <SafeAreaView
       style={isMapRoute ? styles.mapSafeArea : styles.safeArea}
-      edges={isMapRoute ? ([] as const) : edges}
-    >
+      edges={isMapRoute ? ([] as const) : edges}>
       {children}
     </SafeAreaView>
   );
@@ -54,7 +54,7 @@ export const AppSafeAreaProvider: React.FC<AppSafeAreaProviderProps> = ({ childr
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: 'hotpink', //추후 수정 예정
+    backgroundColor: Colors.white[500], //추후 수정 예정
   },
   mapSafeArea: {
     flex: 1,
