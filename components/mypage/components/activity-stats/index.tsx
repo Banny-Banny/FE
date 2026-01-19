@@ -15,7 +15,6 @@ import { ROUTES } from '@/commons/constants/routes';
 import { useNavigation, useToggle } from '@/commons/hooks';
 import React, { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useMyCapsules } from '@/components/my-capsule/hooks/useMyCapsules';
 import { useUserInfo } from '../../hooks/useUserInfo';
 import { FriendsModal } from './friends';
 import { useFriends } from './friends/hooks/useFriends';
@@ -30,41 +29,18 @@ export function ActivityStats() {
   const navigation = useNavigation();
 
   // ============================================
-  // 사용자 통계 정보 (summary만 사용)
+  // 사용자 통계 정보 (GET /api/auth/me의 summary 사용)
   // ============================================
   const { data: userInfo } = useUserInfo();
-  
-  // ============================================
-  // 캡슐 개수 계산 (API에서 실제 데이터 가져오기)
-  // ============================================
-  const { capsules, isLoading: isCapsulesLoading, error: capsulesError } = useMyCapsules();
-  
-  // 실제 캡슐 개수 계산 (대기실 + 열린 캡슐 + 잠긴 캡슐 = 전체 캡슐 개수)
-  // API에서 직접 가져온 실제 캡슐 개수를 사용하여 정확한 개수 표시
-  const actualCapsuleCount = useMemo(() => {
-    const count = 
-      capsules.waitingRooms.length +
-      capsules.openedCapsules.length +
-      capsules.lockedCapsules.length;
-    
-    // 디버깅: 캡슐 개수 계산 결과 로그
-    return count;
-  }, [capsules, isCapsulesLoading, capsulesError]);
-  
-  // summary 정보 (캡슐 개수는 실제 API에서 가져온 값 사용)
-  // 에러 발생 시 userInfo의 summary에서 fallback 값 사용
+
+  // summary 정보 (모든 통계는 userInfo의 summary에서 가져옴)
   const summary = useMemo(() => {
-    // API 호출 실패 시 userInfo의 summary에서 캡슐 개수 사용 (fallback)
-    const capsuleCount = capsulesError 
-      ? (userInfo?.summary?.capsuleCount ?? 0)
-      : actualCapsuleCount;
-    
     return {
-      capsuleCount, // API 성공 시 실제 개수, 실패 시 userInfo의 summary 값
+      capsuleCount: userInfo?.summary?.timeCapsuleCount ?? 0,
       easterEggCount: userInfo?.summary?.easterEggCount ?? 0,
       friendCount: userInfo?.summary?.friendCount ?? 0,
     };
-  }, [actualCapsuleCount, userInfo?.summary, capsulesError]);
+  }, [userInfo?.summary]);
 
   // ============================================
   // 친구 목록 관리 (API 호출 로직은 useFriends 훅에서 처리)
