@@ -61,6 +61,16 @@ export const API_ENDPOINTS = {
     COMPLETE: 'api/media/complete', // 미디어 업로드 완료 (POST)
     URL: 'api/media', // 미디어 URL 조회 (GET) - {id}/url 파라미터 필요
   },
+
+  // 고객센터 (Customer Service) - 추후 수정 예정
+  CUSTOMER_SERVICE: {
+    INQUIRIES: 'api/customer-service/inquiries', // 문의 내역 목록 조회 (GET)
+    INQUIRY_DETAIL: 'api/customer-service/inquiries/{id}', // 문의 상세 조회 (GET) - {id} 파라미터 필요
+    INQUIRY_CREATE: 'api/customer-service/inquiries', // 새 문의 생성 (POST)
+    MESSAGES: 'api/customer-service/inquiries/{inquiryId}/messages', // 채팅 메시지 조회 (GET) - {inquiryId} 파라미터 필요
+    MESSAGE_SEND: 'api/customer-service/inquiries/{inquiryId}/messages', // 메시지 전송 (POST) - {inquiryId} 파라미터 필요
+    FILE_UPLOAD: 'api/customer-service/chat/upload', // 파일 업로드 (POST)
+  },
 } as const;
 
 export type ApiEndpointKey = keyof typeof API_ENDPOINTS;
