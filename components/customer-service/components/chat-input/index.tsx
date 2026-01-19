@@ -9,6 +9,8 @@ import { ChatInputProps } from './types';
 import { ChatTextInput } from './text-input';
 import { SendButton } from './send-button';
 import { AttachmentButton } from './attachment-button';
+import { FilePreviewContainer } from '../file-preview';
+import { MessageAttachment } from '@/components/customer-service/types';
 import { styles } from './styles';
 
 /**
@@ -17,20 +19,26 @@ import { styles } from './styles';
  * @description
  * - 텍스트 입력 및 전송 기능
  * - 파일 첨부 기능 (선택사항)
+ * - 파일 미리보기 표시
  * - 네이버 톡톡 스타일 구현
  */
 export function ChatInput({
   onSendMessage,
   onAttachFile,
+  attachments = [],
+  onRemoveAttachment,
   isLoading = false,
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
     const trimmedMessage = message.trim();
-    if (trimmedMessage.length === 0) return;
+    const hasAttachments = attachments && attachments.length > 0;
+    
+    // 메시지나 첨부파일이 있어야 전송 가능
+    if (trimmedMessage.length === 0 && !hasAttachments) return;
 
-    onSendMessage(trimmedMessage);
+    onSendMessage(trimmedMessage, attachments);
     setMessage(''); // 입력창 초기화
   };
 
@@ -39,24 +47,36 @@ export function ChatInput({
   };
 
   return (
-    <View style={styles.inputContainer}>
-      {/* 첨부 파일 버튼 (선택사항) */}
-      {onAttachFile && <AttachmentButton onPress={onAttachFile} />}
+    <View>
+      {/* 파일 미리보기 */}
+      {attachments && attachments.length > 0 && (
+        <FilePreviewContainer
+          attachments={attachments}
+          onRemove={onRemoveAttachment}
+          showRemoveButton={true}
+        />
+      )}
 
-      {/* 텍스트 입력 필드 */}
-      <ChatTextInput
-        value={message}
-        onChangeText={setMessage}
-        placeholder="메시지를 입력하세요"
-        onSubmitEditing={handleSubmitEditing}
-      />
+      {/* 입력창 */}
+      <View style={styles.inputContainer}>
+        {/* 첨부 파일 버튼 (선택사항) */}
+        {onAttachFile && <AttachmentButton onPress={onAttachFile} />}
 
-      {/* 전송 버튼 */}
-      <SendButton
-        onPress={handleSend}
-        disabled={message.trim().length === 0}
-        isLoading={isLoading}
-      />
+        {/* 텍스트 입력 필드 */}
+        <ChatTextInput
+          value={message}
+          onChangeText={setMessage}
+          placeholder="메시지를 입력하세요"
+          onSubmitEditing={handleSubmitEditing}
+        />
+
+        {/* 전송 버튼 */}
+        <SendButton
+          onPress={handleSend}
+          disabled={message.trim().length === 0 && (!attachments || attachments.length === 0)}
+          isLoading={isLoading}
+        />
+      </View>
     </View>
   );
 }

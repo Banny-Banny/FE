@@ -138,6 +138,91 @@ export const mockMessagesByInquiry: Record<string, ChatMessage[]> = {
       updated_at: '2024-01-10T09:00:00Z',
     },
   ],
+  // 파일 첨부가 포함된 Mock 메시지 샘플
+  'inquiry-5': [
+    {
+      id: 'msg-5-1',
+      customer_service_id: 'inquiry-5',
+      sender_type: 'USER' as SenderType,
+      sender_user_id: 'user-1',
+      content: '이미지를 첨부했습니다. 확인 부탁드립니다.',
+      attachments: [
+        {
+          id: 'att-5-1-1',
+          type: 'IMAGE' as const,
+          name: 'screenshot.png',
+          url: 'https://picsum.photos/400/300?random=1',
+          size: 1024 * 512, // 512KB
+          mimeType: 'image/png',
+        },
+      ],
+      is_read_by_admin: false,
+      is_read_by_user: true,
+      created_at: '2024-01-16T10:00:00Z',
+      updated_at: '2024-01-16T10:00:00Z',
+    },
+    {
+      id: 'msg-5-2',
+      customer_service_id: 'inquiry-5',
+      sender_type: 'USER' as SenderType,
+      sender_user_id: 'user-1',
+      content: '파일도 첨부합니다.',
+      attachments: [
+        {
+          id: 'att-5-2-1',
+          type: 'FILE' as const,
+          name: 'document.pdf',
+          url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          size: 1024 * 1024 * 2, // 2MB
+          mimeType: 'application/pdf',
+        },
+      ],
+      is_read_by_admin: false,
+      is_read_by_user: true,
+      created_at: '2024-01-16T10:05:00Z',
+      updated_at: '2024-01-16T10:05:00Z',
+    },
+    {
+      id: 'msg-5-3',
+      customer_service_id: 'inquiry-5',
+      sender_type: 'USER' as SenderType,
+      sender_user_id: 'user-1',
+      content: '', // 텍스트 없이 이미지만 첨부하는 경우
+      attachments: [
+        {
+          id: 'att-5-3-1',
+          type: 'IMAGE' as const,
+          name: 'photo.jpg',
+          url: 'https://picsum.photos/400/300?random=2',
+          size: 1024 * 768, // 768KB
+          mimeType: 'image/jpeg',
+        },
+        {
+          id: 'att-5-3-2',
+          type: 'IMAGE' as const,
+          name: 'photo2.jpg',
+          url: 'https://picsum.photos/400/300?random=3',
+          size: 1024 * 900, // 900KB
+          mimeType: 'image/jpeg',
+        },
+      ],
+      is_read_by_admin: false,
+      is_read_by_user: true,
+      created_at: '2024-01-16T10:10:00Z',
+      updated_at: '2024-01-16T10:10:00Z',
+    },
+    {
+      id: 'msg-5-4',
+      customer_service_id: 'inquiry-5',
+      sender_type: 'ADMIN' as SenderType,
+      sender_admin_id: 'admin-1',
+      content: '첨부해주신 파일들을 확인했습니다. 처리해드리겠습니다.',
+      is_read_by_admin: true,
+      is_read_by_user: false,
+      created_at: '2024-01-16T10:20:00Z',
+      updated_at: '2024-01-16T10:20:00Z',
+    },
+  ],
 };
 
 /**

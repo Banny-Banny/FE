@@ -176,35 +176,35 @@
 
 #### 3.1 파일 선택 컴포넌트
 
-- [ ] T073 [P] Create `components/customer-service/components/file-picker/` directory
-- [ ] T074 Create `components/customer-service/components/file-picker/index.tsx` as file picker component
-- [ ] T075 [P] Create `components/customer-service/components/file-picker/image-picker.tsx` for image selection using expo-image-picker
-- [ ] T076 [P] Create `components/customer-service/components/file-picker/document-picker.tsx` for file selection using expo-document-picker
-- [ ] T077 Create `components/customer-service/components/file-picker/types.ts` with Props types
-- [ ] T078 Create `components/customer-service/components/file-picker/styles.ts` with StyleSheet definitions
+- [X] T073 [P] Create `components/customer-service/components/file-picker/` directory
+- [X] T074 Create `components/customer-service/components/file-picker/index.tsx` as file picker component
+- [X] T075 [P] Create `components/customer-service/components/file-picker/image-picker.tsx` for image selection using expo-image-picker
+- [X] T076 [P] Create `components/customer-service/components/file-picker/document-picker.tsx` for file selection using expo-document-picker
+- [X] T077 Create `components/customer-service/components/file-picker/types.ts` with Props types
+- [X] T078 Create `components/customer-service/components/file-picker/styles.ts` with StyleSheet definitions
 
 #### 3.2 파일 미리보기 컴포넌트
 
-- [ ] T079 [P] Create `components/customer-service/components/file-preview/` directory
-- [ ] T080 Create `components/customer-service/components/file-preview/index.tsx` as file preview container
-- [ ] T081 [P] Create `components/customer-service/components/file-preview/image-preview.tsx` for image preview
-- [ ] T082 [P] Create `components/customer-service/components/file-preview/file-preview.tsx` for file preview (filename, size)
-- [ ] T083 Create `components/customer-service/components/file-preview/types.ts` with Props types
-- [ ] T084 Create `components/customer-service/components/file-preview/styles.ts` with StyleSheet definitions
+- [X] T079 [P] Create `components/customer-service/components/file-preview/` directory
+- [X] T080 Create `components/customer-service/components/file-preview/index.tsx` as file preview container
+- [X] T081 [P] Create `components/customer-service/components/file-preview/image-preview.tsx` for image preview
+- [X] T082 [P] Create `components/customer-service/components/file-preview/file-preview.tsx` for file preview (filename, size)
+- [X] T083 Create `components/customer-service/components/file-preview/types.ts` with Props types
+- [X] T084 Create `components/customer-service/components/file-preview/styles.ts` with StyleSheet definitions
 
 #### 3.3 파일 업로드 처리 (Mock)
 
-- [ ] T085 Create `components/customer-service/hooks/useMockFileUpload.ts` for file upload hook (Mock)
-- [ ] T086 Add file size validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T087 Add file type validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T088 Add upload progress state management (Mock) to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T089 Add Mock message addition after upload completion to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T085 Create `components/customer-service/hooks/useMockFileUpload.ts` for file upload hook (Mock)
+- [X] T086 Add file size validation to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T087 Add file type validation to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T088 Add upload progress state management (Mock) to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T089 Add Mock message addition after upload completion to `components/customer-service/hooks/useMockFileUpload.ts`
 
 #### 3.4 채팅 메시지에 파일 표시
 
-- [ ] T090 Add image message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T091 Add file message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T092 Add file download functionality (optional) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T090 Add image message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T091 Add file message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T092 Add file download functionality (optional) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
 
 ---
 

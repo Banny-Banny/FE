@@ -113,4 +113,73 @@ export const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     alignItems: 'center',
   },
+
+  // ============================================
+  // Attachments
+  // ============================================
+  attachmentsContainer: {
+    gap: Spacing.sm,
+  },
+  attachmentsContainerWithContent: {
+    marginTop: Spacing.sm,
+  },
+  imageAttachment: {
+    width: Spacing['4xl'] * 3, // 192px (200px는 토큰에 없어 가장 가까운 값 사용)
+    height: Spacing['4xl'] * 3, // 192px
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    backgroundColor: Colors.whiteGrey[200],
+  },
+  imageAttachmentImage: {
+    width: '100%',
+    height: '100%',
+  },
+  fileAttachment: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    backgroundColor: Colors.whiteGrey[200],
+    gap: Spacing.sm,
+    minWidth: Spacing['4xl'] * 3, // 192px (200px는 토큰에 없어 가장 가까운 값 사용)
+    maxWidth: '100%',
+  },
+  fileAttachmentUser: {
+    backgroundColor: Colors.blue[400],
+  },
+  fileAttachmentIcon: {
+    width: Spacing.xl, // 32px
+    height: Spacing.xl, // 32px
+    borderRadius: BorderRadius.sm,
+    backgroundColor: Colors.white[50],
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fileAttachmentIconUser: {
+    backgroundColor: Colors.blue[300],
+  },
+  fileAttachmentContent: {
+    flex: 1,
+  },
+  fileAttachmentName: {
+    ...Typography.body.body6, // fontSize: 14
+    fontWeight: '500',
+    marginBottom: Spacing.xs / 2, // 2px (토큰에 없어 xs/2 사용)
+  },
+  fileAttachmentNameUser: {
+    color: Colors.white[50],
+  },
+  fileAttachmentNameAdmin: {
+    color: Colors.black[500],
+  },
+  fileAttachmentSize: {
+    ...Typography.body.body9, // fontSize: 12
+  },
+  fileAttachmentSizeUser: {
+    color: Colors.white[50],
+    opacity: 0.8,
+  },
+  fileAttachmentSizeAdmin: {
+    color: Colors.grey[600],
+  },
 });

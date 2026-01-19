@@ -20,8 +20,12 @@ export interface AttachmentButtonProps {
   onPress: () => void;
 }
 
+import { MessageAttachment } from '@/components/customer-service/types';
+
 export interface ChatInputProps {
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, attachments?: MessageAttachment[]) => void;
   onAttachFile?: () => void;
+  attachments?: MessageAttachment[];
+  onRemoveAttachment?: (attachmentId: string) => void;
   isLoading?: boolean;
 }

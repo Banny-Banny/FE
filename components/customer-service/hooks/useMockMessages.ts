@@ -4,7 +4,7 @@
  */
 
 import { useState, useMemo } from 'react';
-import { ChatMessage, ChatMessageWithStatus, MessageStatus } from '../types';
+import { ChatMessage, ChatMessageWithStatus, MessageStatus, MessageAttachment } from '../types';
 import { getMockMessagesByInquiryId } from '../mocks/messages';
 
 interface UseMockMessagesOptions {
@@ -13,7 +13,7 @@ interface UseMockMessagesOptions {
 
 interface UseMockMessagesReturn {
   messages: ChatMessageWithStatus[];
-  addMessage: (content: string) => void;
+  addMessage: (content: string, attachments?: MessageAttachment[]) => void;
   updateMessageStatus: (messageId: string, status: MessageStatus) => void;
   isLoading: boolean;
 }
@@ -39,13 +39,14 @@ export function useMockMessages({ inquiryId }: UseMockMessagesOptions): UseMockM
   /**
    * 새 메시지 추가 (Mock)
    */
-  const addMessage = (content: string) => {
+  const addMessage = (content: string, attachments?: MessageAttachment[]) => {
     const newMessage: ChatMessageWithStatus = {
       id: `msg-${Date.now()}`,
       customer_service_id: inquiryId,
       sender_type: 'USER',
       sender_user_id: 'user-1', // Mock user ID
-      content,
+      content: content || '', // 빈 문자열도 허용 (파일만 첨부하는 경우)
+      attachments: attachments && attachments.length > 0 ? attachments : undefined,
       is_read_by_admin: false,
       is_read_by_user: true,
       created_at: new Date().toISOString(),
