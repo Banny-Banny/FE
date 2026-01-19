@@ -28,6 +28,9 @@ export function useMyCapsules() {
     queryKey: ['myCapsules'],
     queryFn: () => getMyCapsules(true), // 전체 데이터 자동 수집
     retry: 1,
+    staleTime: 0, // 항상 stale 상태로 간주 (리페치 허용)
+    gcTime: 5 * 60 * 1000, // 5분간 캐시 유지 (메모리 관리)
+    refetchOnMount: 'always', // 마운트될 때마다 무조건 리페치
   });
 
   // status와 openDate로 3가지 상태 분류

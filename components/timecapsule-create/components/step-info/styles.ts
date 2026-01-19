@@ -74,9 +74,9 @@ export const styles = StyleSheet.create({
     color: Colors.black[500],
     padding: 0,
     margin: 0,
-    includeFontPadding: false,
+    flex: 1,
+    includeFontPadding: true,
     textAlignVertical: 'center',
-    lineHeight: 16, // fontSize와 동일하게 설정하여 수직 정렬 문제 해결
   },
 
   // ============================================
