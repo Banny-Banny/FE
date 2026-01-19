@@ -35,6 +35,7 @@ const TAB_SCREENS = [
 const HIDDEN_SCREENS = [
   'timecapsule/info',
   'timecapsule/payment',
+  'timecapsule/payment-callback',
   'timecapsule/room',
   'timecapsule/index',
   'myegglist',

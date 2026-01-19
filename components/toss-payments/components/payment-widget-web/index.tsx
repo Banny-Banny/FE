@@ -42,20 +42,19 @@ export const PaymentWidgetWeb: React.FC<PaymentWidgetWebProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY;
 
-  // 웹 환경에서는 현재 페이지의 쿼리 파라미터로 처리
-  const getCurrentUrl = () => {
+  // successUrl과 failUrl을 결제 확인 페이지로 설정
+  const getCallbackUrl = () => {
     if (typeof window === 'undefined') return '';
-    return window.location.origin + window.location.pathname;
+    return window.location.origin + '/timecapsule/payment-callback';
   };
 
-  // successUrl과 failUrl을 현재 페이지의 쿼리 파라미터로 설정
   const successUrl =
     typeof window !== 'undefined'
-      ? `${getCurrentUrl()}?payment=success`
+      ? `${getCallbackUrl()}`
       : API_ENDPOINTS.PAYMENT.TOSS_SUCCESS_URL;
   const failUrl =
     typeof window !== 'undefined'
-      ? `${getCurrentUrl()}?payment=fail`
+      ? `${getCallbackUrl()}?payment=fail`
       : API_ENDPOINTS.PAYMENT.TOSS_FAIL_URL;
 
   useEffect(() => {
@@ -160,87 +159,14 @@ export const PaymentWidgetWeb: React.FC<PaymentWidgetWebProps> = ({
       }
     };
 
-    // URL 변경 감지 (결제 성공/실패 처리)
-    const handleUrlChange = () => {
-      if (typeof window === 'undefined') return;
-
-      try {
-        const url = window.location.href;
-        const urlObj = new URL(url);
-
-        // 성공 URL 처리 (토스페이먼츠가 리다이렉트한 경우)
-        const paymentKey = urlObj.searchParams.get('paymentKey');
-        const orderIdParam = urlObj.searchParams.get('orderId');
-        const amountParam = urlObj.searchParams.get('amount');
-        const paymentStatus = urlObj.searchParams.get('payment');
-
-        // 토스페이먼츠가 리다이렉트한 경우 (paymentKey가 있는 경우)
-        if (paymentKey && orderIdParam && amountParam) {
-          // 부모 컴포넌트의 handlePaymentSuccess 호출
-          // 이 함수에서 confirmPayment와 updateOrderStatus API를 호출함
-          onSuccess(paymentKey, orderIdParam, parseInt(amountParam));
-
-          onClose();
-          // URL에서 쿼리 파라미터 제거 (뒤로가기 시 중복 처리 방지)
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-
-        // 실패 URL 처리 (토스페이먼츠가 리다이렉트한 경우)
-        const code = urlObj.searchParams.get('code');
-        const message = urlObj.searchParams.get('message');
-
-        if (code || message || paymentStatus === 'fail') {
-          const errorCode = code || 'PAYMENT_FAILED';
-          const errorMessage = message || '결제에 실패했습니다';
-
-          onFail(errorCode, errorMessage);
-          onClose();
-          // URL에서 쿼리 파라미터 제거
-          window.history.replaceState({}, '', window.location.pathname);
-          return;
-        }
-      } catch (error) {
-        // URL 파싱 실패는 무시
-      }
-    };
-
     // SDK 로드 시작 (모달이 열릴 때만)
     if (visible) {
       loadTossPayments();
     }
 
-    // 초기 URL 확인 및 리스너 설정 (모달이 열릴 때)
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    if (visible) {
-      // 약간의 지연 후 URL 확인 (리다이렉트 완료 대기)
-      timeoutId = setTimeout(() => {
-        handleUrlChange();
-      }, 100);
-
-      // popstate 이벤트 리스너 (뒤로가기/앞으로가기)
-      window.addEventListener('popstate', handleUrlChange);
-      // hashchange 이벤트 리스너 (해시 변경)
-      window.addEventListener('hashchange', handleUrlChange);
-      // 주기적으로 URL 확인 (리다이렉트 감지)
-      intervalId = setInterval(() => {
-        handleUrlChange();
-      }, 500);
-    }
-
-    // cleanup 함수
-    return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-      window.removeEventListener('popstate', handleUrlChange);
-      window.removeEventListener('hashchange', handleUrlChange);
-    };
+    // ⚠️ URL 변경 감지 로직 제거
+    // 결제 완료 후 결제 확인 페이지(/timecapsule/payment-callback)로 리다이렉트되므로
+    // 이 컴포넌트에서 URL을 감지할 필요가 없음
   }, [
     visible,
     orderId,

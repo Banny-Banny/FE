@@ -11,9 +11,9 @@
  */
 
 import { Spinner } from '@/commons/components/spinner';
-import TossPayment from '@/components/toss-payments';
 import type { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
 import type { StepInfoFormData } from '@/components/timecapsule-create/components/step-info/types';
+import TossPayment from '@/components/toss-payments';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, View } from 'react-native';
@@ -103,11 +103,9 @@ export default function TimeCapsuleCreatePayment() {
 
   // 상태 관리
   const [orderData, setOrderData] = useState<CreateOrderResponse | null>(
-    initialData?.orderData || null
+    initialData?.orderData || null,
   );
-  const [formData, setFormData] = useState<StepInfoFormData | null>(
-    initialData?.formData || null
-  );
+  const [formData, setFormData] = useState<StepInfoFormData | null>(initialData?.formData || null);
 
   /**
    * 웹 환경에서 데이터를 sessionStorage에 저장 (결제 리다이렉트 대비)
@@ -153,15 +151,17 @@ export default function TimeCapsuleCreatePayment() {
   /**
    * 결제 완료 핸들러
    * - sessionStorage 클리어 후 room 페이지로 이동
+   * - 결제 완료 플래그를 전달하여 대기실에서 모달 표시
    */
   const handleSubmit = () => {
     clearSessionStorage();
 
-    // 대기실 페이지로 이동 (orderId 전달)
+    // 대기실 페이지로 이동 (orderId와 결제 완료 플래그 전달)
     router.push({
       pathname: '/timecapsule/room',
       params: {
         orderId: orderData.order_id,
+        paymentCompleted: 'true', // 결제 완료 플래그
       },
     });
   };

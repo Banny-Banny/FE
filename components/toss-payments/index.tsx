@@ -3,10 +3,8 @@
  * 토스페이먼츠 결제 Feature Container (WebView 기반)
  */
 
-import { useModal } from '@/commons/components/modal/hooks/useModal';
 import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
 import type { CreateOrderResponse } from '@/components/timecapsule-create/components/step-info/api/types/order';
-import PaymentCompleteModal from '@/components/timecapsule-create/modals/payment-complete-modal';
 import { apiClient } from '@/utils';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, ScrollView, View } from 'react-native';
@@ -35,7 +33,6 @@ export default function TossPayment({
   // ============================================
   // Hooks
   // ============================================
-  const { openModal, closeModal } = useModal();
   const { allAgreed, agreements, isPaymentEnabled, handleAllAgreeToggle, handleAgreementToggle } =
     usePaymentValidation();
   const orderSummary = useOrderSummary(orderData);
@@ -188,19 +185,10 @@ export default function TossPayment({
         }
 
         // ⚠️ 먼저 step 3으로 이동 (대기실)
+        // 모달은 대기실 페이지에서 표시됨
         if (onSubmit) {
           onSubmit(orderSummary);
         }
-
-        // 결제 완료 모달 표시 (웹/모바일 공통)
-        openModal({
-          width: 344,
-          height: 242,
-          closeOnBackdropPress: true,
-          children: <PaymentCompleteModal onConfirm={() => {
-            closeModal();
-          }} />,
-        });
 
         if (onPaymentSuccess) {
           onPaymentSuccess(paymentData);
@@ -218,8 +206,6 @@ export default function TossPayment({
     },
     [
       confirmPayment,
-      openModal,
-      closeModal,
       onSubmit,
       onPaymentSuccess,
       orderData.order_id,
