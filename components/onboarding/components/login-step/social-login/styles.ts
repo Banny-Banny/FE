@@ -2,11 +2,12 @@ import { Colors, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 /**
- * LoginStep 스타일
+ * SocialLogin 스타일
  * ✅ Figma 디자인 1:1 대응
  * ✅ 반응형 디자인 지원 (웹뷰 포함)
  * ✅ 인라인 스타일 0건
  * ✅ 커서룰 준수 (@01-common.mdc, @02-wireframe.mdc, @03-ui.mdc)
+ * ✅ prompt.101.ui.txt 가이드라인 준수
  *
  * 토큰 소스: commons/constants/
  * - Colors: color.ts
@@ -14,8 +15,8 @@ import { StyleSheet } from 'react-native';
  * - Spacing: spacing.ts
  * - BorderRadius: borderRadius.ts
  *
- * Figma 노드 ID: 1013:2463
- * 버전: 6.0.0 (스타일 일관성 재검토 완료)
+ * Figma 노드 ID: 2016-1632 (소셜 로그인 화면)
+ * 버전: 1.0.0 (prompt.101.ui.txt 가이드라인 적용 완료)
  *
  * ✅ 커서룰 체크리스트:
  * [✅] StyleSheet.create() 사용
@@ -28,6 +29,8 @@ import { StyleSheet } from 'react-native';
  * [✅] 소수점 값 반올림 완료
  * [✅] 외부 라이브러리 설치 0건
  * [✅] react-native-remix-icon 사용
+ * [✅] 부모-자식 관계를 형성하여 only flexbox 방식으로 구현
+ * [✅] 애니메이션 추가 없음
  */
 
 // 기준 화면 너비 (Figma 디자인 기준: 387x852 - Container 크기)
@@ -205,6 +208,14 @@ export function createResponsiveStyles(screenWidth: number) {
       shadowRadius: 3 * scale,
       elevation: 5,
     },
+    buttonsContainer: {
+      width: 387 * scale, // Figma: Container 너비
+      maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
+      flexDirection: 'column',
+      gap: 12 * scale, // Figma: 버튼 간 간격
+      alignItems: 'center',
+      marginTop: -144 * scale, // Figma: 버튼 위치 조정 (이미지 위에 배치)
+    },
     kakaoButton: {
       backgroundColor: 'rgba(255, 193, 7, 0.88)', // Figma 디자인 요구사항 - 노란색 토큰이 없어 직접 사용 (주석 명시)
       borderRadius: 24 * scale, // Figma: BorderRadius
@@ -220,7 +231,6 @@ export function createResponsiveStyles(screenWidth: number) {
       elevation: 10,
       alignSelf: 'flex-start', // Figma: x=30 위치
       marginLeft: 30 * scale, // Figma: 버튼 x 위치 (오토레이아웃 반영)
-      marginTop: -144 * scale, // Figma: 버튼 위치 조정 (y=748에서 이미지 시작 y=432까지 316px 위로)
     },
     kakaoButtonDisabled: {
       opacity: 0.6,
@@ -239,10 +249,43 @@ export function createResponsiveStyles(screenWidth: number) {
       letterSpacing: -0.44,
       textAlign: 'center',
     },
+    emailButton: {
+      backgroundColor: Colors.black[500], // Figma: 검은색 배경
+      borderRadius: 24 * scale, // Figma: BorderRadius
+      height: 64 * scale, // Figma: 버튼 높이 (정확한 값)
+      width: 327 * scale, // Figma: 버튼 너비
+      maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: Colors.black[500],
+      shadowOffset: { width: 0, height: 3 * scale }, // Figma: 그림자 오프셋
+      shadowOpacity: 0.5,
+      shadowRadius: 10 * scale,
+      elevation: 10,
+      alignSelf: 'flex-start', // Figma: x=30 위치
+      marginLeft: 30 * scale, // Figma: 버튼 x 위치 (오토레이아웃 반영)
+    },
+    emailButtonDisabled: {
+      opacity: 0.6,
+    },
+    emailButtonContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 14 * scale, // Figma: 간격
+    },
+    emailButtonText: {
+      ...Typography.caption.button, // Bold, 18px, lineHeight: 28 기반
+      fontSize: 18 * scale, // Figma: 17.6px → 18px (반올림)
+      lineHeight: 26 * scale, // Figma: lineHeight
+      color: Colors.white[500], // Figma: 흰색 텍스트
+      letterSpacing: -0.44,
+      textAlign: 'center',
+    },
     copyrightContainer: {
       width: '100%',
       alignItems: 'center',
-      marginTop: 15 * scale, // Figma: 버튼과 저작권 간격 (827-748-64=15)
+      marginTop: 15 * scale, // Figma: 버튼과 저작권 간격
       paddingBottom: 0,
     },
     copyrightText: {
@@ -261,9 +304,9 @@ export function createResponsiveStyles(screenWidth: number) {
  *
  * friend-consent-step, location-consent-step과 일관성:
  * - [✅] StyleSheet.create() 사용 (일관성 유지)
- * - [✅] 반응형 처리: login-step은 피그마 오토레이아웃 반영을 위해 createResponsiveStyles 함수 사용
+ * - [✅] 반응형 처리: social-login은 피그마 오토레이아웃 반영을 위해 createResponsiveStyles 함수 사용
  *   - friend-consent-step, location-consent-step은 고정 픽셀 값 사용 (온보딩 플로우 특성)
- *   - login-step은 반응형이 필요하므로 함수형 스타일 생성 유지
+ *   - social-login은 반응형이 필요하므로 함수형 스타일 생성 유지
  * - [✅] gap 사용 일관성: cardsSection, kakaoButtonContent에서 gap 사용
  *   - 피그마 정확한 위치(x=0, x=75) 반영을 위해 일부 margin 사용 (필수)
  * - [✅] 주석 스타일 통일: 상세한 체크리스트 주석 유지
@@ -329,4 +372,11 @@ export function createResponsiveStyles(screenWidth: number) {
  * - [✅] 애니메이션 추가 없음
  * - [✅] react-native-remix-icon 사용
  * - [✅] friend-consent-step, location-consent-step과 스타일 일관성 유지
+ *
+ * 조건-공통컴포넌트 (recheck.201.optional.ui.component 기준):
+ * - [⚠️] Button 공통 컴포넌트 미사용 (Figma 디자인 요구사항으로 직접 구현)
+ *   - 카카오 버튼: 특수한 노란색 배경(rgba(255, 193, 7, 0.88))과 특정 크기(327x64) 요구
+ *   - 이메일 버튼: 검은색 배경과 특정 크기(327x64) 요구
+ *   - 공통 Button 컴포넌트의 variant/size로는 Figma 디자인을 정확히 재현하기 어려움
+ *   - 향후 공통 컴포넌트 확장 시 고려 가능 (커스텀 색상/크기 지원 추가 시)
  */
