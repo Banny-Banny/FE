@@ -57,7 +57,7 @@ interface ApiSlotResponse {
   profile_img: string | null;
   entry_id: string | null;
   wrote_at: string | null;
-  content: string | null;
+  text_message: string | null; // ⭐ API는 content가 아닌 text_message를 반환
   images_ids: Array<{
     media_id: string;
     object_key: string;
@@ -94,20 +94,20 @@ interface ApiCapsuleDetailResponse {
 }
 
 function transformSlotContent(
-  content: string | null,
+  textMessage: string | null,
   imagesIds: ApiSlotResponse['images_ids'],
   audioId: ApiSlotResponse['audio_id'],
   videoId: ApiSlotResponse['video_id'],
 ): SlotContent | undefined {
-  if (!content && (!imagesIds || imagesIds.length === 0) && !audioId && !videoId) {
+  if (!textMessage && (!imagesIds || imagesIds.length === 0) && !audioId && !videoId) {
     return undefined;
   }
 
   const result: SlotContent = {};
 
   // 텍스트 콘텐츠
-  if (content) {
-    result.text = content;
+  if (textMessage) {
+    result.text = textMessage;
   }
 
   // 이미지 변환 - media_id만 저장 (URL은 컴포넌트에서 가져옴)
@@ -150,14 +150,14 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
     // ⭐ entry_id가 있으면 작성된 것으로 간주 (가장 중요!)
     const hasEntry = slot.entry_id !== null;
 
-    // entry_id가 없어도 content나 media가 있으면 작성된 것으로 간주
-    const hasContent = slot.content !== null && slot.content.trim() !== '';
+    // entry_id가 없어도 text_message나 media가 있으면 작성된 것으로 간주
+    const hasContent = slot.text_message !== null && slot.text_message.trim() !== '';
     const hasImages = slot.images_ids && slot.images_ids.length > 0;
     const hasAudio = slot.audio_id !== null;
     const hasVideo = slot.video_id !== null;
     const hasMedia = hasImages || hasAudio || hasVideo;
 
-    // 작성 여부: entry_id가 있거나, content/media가 있으면 작성된 것
+    // 작성 여부: entry_id가 있거나, text_message/media가 있으면 작성된 것
     const isWritten = hasEntry || hasContent || hasMedia;
 
     // 작성자 정보 (user_id가 있으면 작성자가 있는 것)
@@ -178,7 +178,7 @@ function transformApiResponse(apiResponse: ApiCapsuleDetailResponse): OpenedCaps
     // 🔓 열린 상태일 때만 콘텐츠 표시
     const content = isLocked
       ? undefined
-      : transformSlotContent(slot.content, slot.images_ids, slot.audio_id, slot.video_id);
+      : transformSlotContent(slot.text_message, slot.images_ids, slot.audio_id, slot.video_id);
 
     return {
       slotId: slot.slot_id,
