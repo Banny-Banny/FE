@@ -144,6 +144,19 @@ export const Colors = {
     950: '#0E2863', // Dark Active
     darker: '#0B1F4D', // Darker
   },
+  // Yellow 팔레트 (진행중 상태 표시용)
+  yellow: {
+    50: '#FFF9E6', // Light
+    100: '#FFF4D9', // Light Hover
+    200: '#FFE9B3', // Light Active
+    500: '#FFC107', // Normal
+    600: '#E6AE06', // Normal Hover
+    700: '#CC9B05', // Normal Active
+    800: '#BF9205', // Dark
+    900: '#997504', // Dark Hover
+    950: '#735803', // Dark Active
+    darker: '#594602', // Darker
+  },
   // Border colors with opacity (Figma 디자인 시스템)
   border: {
     light: 'rgba(10, 10, 10, 0.08)', // Figma: rgba(10,10,10,0.08) - 일반 테두리
