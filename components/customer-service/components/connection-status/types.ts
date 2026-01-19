@@ -7,4 +7,5 @@ import { ConnectionStatus } from '../../../types';
 
 export interface ConnectionStatusProps {
   status: ConnectionStatus;
+  onReconnect?: () => void;
 }

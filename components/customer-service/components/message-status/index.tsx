@@ -1,14 +1,14 @@
 /**
- * components/customer-service/components/chat-message-list/message-status.tsx
+ * components/customer-service/components/message-status/index.tsx
  * 메시지 전송 상태 표시 컴포넌트
  */
 
+import { Colors } from '@/commons/constants';
 import React from 'react';
 import { View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { MessageStatusProps } from './types';
 import { styles } from './styles';
-import { Colors } from '@/commons/constants';
+import { MessageStatusProps } from './types';
 
 /**
  * 메시지 전송 상태 표시 컴포넌트
@@ -18,7 +18,7 @@ import { Colors } from '@/commons/constants';
  * - sent: 전송 완료 (체크 아이콘)
  * - failed: 전송 실패 (재시도 아이콘)
  */
-export function MessageStatus({ status, isRead = false }: MessageStatusProps) {
+export function MessageStatus({ status, isRead = false, onRetry }: MessageStatusProps) {
   if (status === 'sending') {
     return (
       <View style={styles.messageStatusContainer}>

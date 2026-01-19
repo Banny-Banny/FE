@@ -220,33 +220,33 @@
 
 #### 4.1 읽지 않은 메시지 관리 (Mock)
 
-- [ ] T093 Add unread message count management (Mock data based) to `components/customer-service/hooks/useMockMessages.ts`
-- [ ] T094 Add message read processing logic (Mock) to `components/customer-service/hooks/useMockMessages.ts`
-- [ ] T095 Add read status display to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
+- [X] T093 Add unread message count management (Mock data based) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T094 Add message read processing logic (Mock) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T095 Add read status display to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
 
 #### 4.2 메시지 전송 상태 관리 (Mock)
 
-- [ ] T096 Add sending status display to `components/customer-service/components/chat-message-list/message-status.tsx`
-- [ ] T097 Add retry functionality on send failure (Mock) to `components/customer-service/components/chat-input/send-button.tsx`
-- [ ] T098 Add send failure message display to `components/customer-service/components/chat-message-list/message-status.tsx`
+- [X] T096 Add sending status display to `components/customer-service/components/chat-message-list/message-status.tsx`
+- [X] T097 Add retry functionality on send failure (Mock) to `components/customer-service/components/chat-input/send-button.tsx`
+- [X] T098 Add send failure message display to `components/customer-service/components/chat-message-list/message-status.tsx`
 
 #### 4.3 연결 상태 관리 (Mock)
 
-- [ ] T099 Add connection status display (connected/disconnected, Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
-- [ ] T100 Add auto-reconnect UI on disconnection (Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
-- [ ] T101 Add UI feedback based on connection status to `components/customer-service/components/chat-header/index.tsx`
+- [X] T099 Add connection status display (connected/disconnected, Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
+- [X] T100 Add auto-reconnect UI on disconnection (Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
+- [X] T101 Add UI feedback based on connection status to `components/customer-service/components/chat-header/index.tsx`
 
 #### 4.4 성능 최적화
 
-- [ ] T102 Optimize message list with FlatList virtualization in `components/customer-service/components/chat-message-list/index.tsx`
-- [ ] T103 Add message memoization (React.memo) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T104 Minimize unnecessary re-renders in `components/customer-service/components/chat-room/index.tsx`
-- [ ] T105 Add image optimization (caching, resizing) to `components/customer-service/components/file-preview/image-preview.tsx`
+- [X] T102 Optimize message list with FlatList virtualization in `components/customer-service/components/chat-message-list/index.tsx`
+- [X] T103 Add message memoization (React.memo) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T104 Minimize unnecessary re-renders in `components/customer-service/components/chat-room/index.tsx`
+- [X] T105 Add image optimization (caching, resizing) to `components/customer-service/components/file-preview/image-preview.tsx`
 
 #### 4.5 문의 상태 업데이트 (Mock)
 
-- [ ] T106 Add inquiry status change handling (Mock, is_resolved, status) to `components/customer-service/hooks/useMockInquiries.ts`
-- [ ] T107 Add UI display based on inquiry status to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
+- [X] T106 Add inquiry status change handling (Mock, is_resolved, status) to `components/customer-service/hooks/useMockInquiries.ts`
+- [X] T107 Add UI display based on inquiry status to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
 
 ---
 
@@ -369,11 +369,11 @@
 - [x] 업로드 진행 상태가 표시됨 (Mock)
 
 ### Phase 4
-- [x] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
-- [x] 메시지 전송 상태가 정확히 표시됨 (Mock)
-- [x] 연결 상태가 정확히 표시됨 (Mock)
-- [x] 성능이 최적화됨 (스크롤이 부드러움)
-- [x] 재연결 UI가 정상 동작함 (Mock)
+- [X] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
+- [X] 메시지 전송 상태가 정확히 표시됨 (Mock)
+- [X] 연결 상태가 정확히 표시됨 (Mock)
+- [X] 성능이 최적화됨 (스크롤이 부드러움)
+- [X] 재연결 UI가 정상 동작함 (Mock)
 
 ### Phase 5
 - [x] WebSocket 연결이 정상적으로 동작함

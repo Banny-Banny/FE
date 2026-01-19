@@ -21,4 +21,11 @@ export const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 14,
   },
+  reconnectText: {
+    ...Typography.body.body9,
+    fontSize: 11,
+    lineHeight: 14,
+    color: Colors.blue[500],
+    fontWeight: '600',
+  },
 });

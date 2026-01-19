@@ -1,15 +1,15 @@
 /**
- * components/customer-service/components/file-preview/image-preview.tsx
+ * components/customer-service/components/image-preview/index.tsx
  * 이미지 미리보기 컴포넌트
  */
 
-import React from 'react';
-import { TouchableOpacity, View, Text } from 'react-native';
-import { Image } from 'expo-image';
-import Icon from 'react-native-remix-icon';
-import { ImagePreviewProps } from './types';
-import { styles } from './styles';
 import { Colors } from '@/commons/constants';
+import { Image } from 'expo-image';
+import React from 'react';
+import { TouchableOpacity, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
+import { styles } from './styles';
+import { ImagePreviewProps } from './types';
 
 /**
  * 이미지 미리보기 컴포넌트
@@ -37,6 +37,8 @@ export function ImagePreview({
           style={styles.imagePreview}
           contentFit="cover"
           transition={200}
+          cachePolicy="memory-disk" // 메모리 및 디스크 캐싱
+          placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} // 블러 플레이스홀더
         />
       </TouchableOpacity>
 

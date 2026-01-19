@@ -76,8 +76,8 @@ export function InquiryItem({ inquiry, onPress }: InquiryItemProps) {
     }
   };
 
-  // Mock: 읽지 않은 메시지 개수 계산 (실제로는 API에서 받아옴)
-  const unreadCount = inquiry.is_resolved ? 0 : 1; // Mock 데이터
+  // 읽지 않은 메시지 개수 (useMockInquiries에서 계산된 값 사용)
+  const unreadCount = (inquiry as any).unreadCount || 0;
   const isClosed = inquiry.status === 'CLOSED';
 
   return (

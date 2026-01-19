@@ -24,6 +24,7 @@ export function ChatHeader({
   title = '고객센터',
   connectionStatus,
   onBack,
+  onReconnect,
 }: ChatHeaderProps) {
   const router = useRouter();
 
@@ -45,7 +46,7 @@ export function ChatHeader({
       {/* 제목 섹션 */}
       <View style={styles.titleSection}>
         <Text style={styles.title}>{title}</Text>
-        <ConnectionStatus status={connectionStatus} />
+        <ConnectionStatus status={connectionStatus} onReconnect={onReconnect} />
       </View>
     </View>
   );

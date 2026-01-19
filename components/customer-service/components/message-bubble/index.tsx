@@ -1,72 +1,21 @@
 /**
- * components/customer-service/components/chat-message-list/message-bubble.tsx
+ * components/customer-service/components/message-bubble/index.tsx
  * 메시지 버블 컴포넌트 (네이버 톡톡 스타일)
  */
 
-import React from 'react';
-import { Text, View, TouchableOpacity, Linking, Alert } from 'react-native';
+import { Colors } from '@/commons/constants';
 import { Image } from 'expo-image';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import Icon from 'react-native-remix-icon';
-import { MessageBubbleProps } from './types';
-import { MessageTime } from './message-time';
-import { MessageStatus } from './message-status';
+import { MessageStatus } from '../message-status';
+import { MessageTime } from '../message-time';
+import { formatFileSize, getFileIconName, handleFileDownload } from '../shared/message-utils';
 import { styles } from './styles';
-import { Typography, Colors, Spacing } from '@/commons/constants';
+import { MessageBubbleProps } from './types';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
-
-/**
- * 파일 크기 포맷팅 함수
- */
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
-}
-
-/**
- * 파일 아이콘 이름 가져오기
- */
-function getFileIconName(mimeType?: string): string {
-  if (!mimeType) return 'file-line';
-
-  if (mimeType.startsWith('image/')) {
-    return 'image-line';
-  } else if (mimeType.startsWith('video/')) {
-    return 'video-line';
-  } else if (mimeType.startsWith('audio/')) {
-    return 'music-line';
-  } else if (mimeType.includes('pdf')) {
-    return 'file-pdf-line';
-  } else if (mimeType.includes('word') || mimeType.includes('document')) {
-    return 'file-word-line';
-  } else if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) {
-    return 'file-excel-line';
-  } else if (mimeType.includes('zip') || mimeType.includes('archive')) {
-    return 'file-zip-line';
-  }
-
-  return 'file-line';
-}
-
-/**
- * 파일 다운로드 처리 (선택사항)
- */
-async function handleFileDownload(url: string, fileName: string) {
-  try {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    } else {
-      Alert.alert('오류', '파일을 열 수 없습니다.');
-    }
-  } catch (error) {
-    Alert.alert('오류', '파일 다운로드에 실패했습니다.');
-  }
-}
 
 /**
  * 메시지 버블 컴포넌트
@@ -79,10 +28,11 @@ async function handleFileDownload(url: string, fileName: string) {
  * - 파일 첨부 지원 (이미지, 파일)
  */
 export const MessageBubble = React.memo<MessageBubbleProps>(
-  ({ message, showTime = true, showStatus = true }) => {
+  ({ message, showTime = true, showStatus = true, onRetry }) => {
     const isUserMessage = message.sender_type === 'USER';
     const hasAttachments = message.attachments && message.attachments.length > 0;
     const hasContent = message.content && message.content.trim().length > 0;
+    const isFailed = message.status === 'failed';
 
     return (
       <AnimatedView
@@ -125,6 +75,8 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
                         style={styles.imageAttachmentImage}
                         contentFit="cover"
                         transition={200}
+                        cachePolicy="memory-disk" // 메모리 및 디스크 캐싱
+                        placeholder={{ blurhash: 'L6PZfSi_.AyE_3t7t7R**0o#DgR4' }} // 블러 플레이스홀더
                       />
                     </TouchableOpacity>
                   );
@@ -186,9 +138,24 @@ export const MessageBubble = React.memo<MessageBubbleProps>(
           <View style={styles.messageFooter}>
             {showTime && <MessageTime timestamp={message.created_at} />}
             {showStatus && message.status && (
-              <MessageStatus status={message.status} isRead={message.is_read_by_admin} />
+              <MessageStatus
+                status={message.status}
+                isRead={message.is_read_by_admin}
+                onRetry={isFailed && onRetry ? () => onRetry(message.id) : undefined}
+              />
             )}
           </View>
+        )}
+        
+        {/* 전송 실패 메시지 표시 */}
+        {isUserMessage && isFailed && (
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => onRetry?.(message.id)}
+            activeOpacity={0.7}>
+            <Icon name="refresh-line" size={14} color={Colors.red[500]} />
+            <Text style={styles.retryText}>다시 전송</Text>
+          </TouchableOpacity>
         )}
 
         {/* 관리자 메시지 시간 표시 */}

@@ -5,10 +5,10 @@
 
 import React from 'react';
 import { View } from 'react-native';
-import { FilePreviewContainerProps } from './types';
-import { ImagePreview } from './image-preview';
-import { FilePreview } from './file-preview';
+import { FilePreviewItem } from '../file-preview-item';
+import { ImagePreview } from '../image-preview';
 import { styles } from './styles';
+import { FilePreviewContainerProps } from './types';
 
 /**
  * 파일 미리보기 컨테이너 컴포넌트
@@ -41,7 +41,7 @@ export function FilePreviewContainer({
           );
         } else {
           return (
-            <FilePreview
+            <FilePreviewItem
               key={attachment.id}
               attachment={attachment}
               onRemove={onRemove ? () => onRemove(attachment.id) : undefined}

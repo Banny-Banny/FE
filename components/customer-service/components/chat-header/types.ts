@@ -9,4 +9,5 @@ export interface ChatHeaderProps {
   title?: string;
   connectionStatus: ConnectionStatus;
   onBack?: () => void;
+  onReconnect?: () => void;
 }

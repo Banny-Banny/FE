@@ -15,6 +15,9 @@ interface UseMockMessagesReturn {
   messages: ChatMessageWithStatus[];
   addMessage: (content: string, attachments?: MessageAttachment[]) => void;
   updateMessageStatus: (messageId: string, status: MessageStatus) => void;
+  retryMessage: (messageId: string) => void;
+  markMessagesAsRead: () => void;
+  unreadCount: number;
   isLoading: boolean;
 }
 
@@ -75,6 +78,40 @@ export function useMockMessages({ inquiryId }: UseMockMessagesOptions): UseMockM
     );
   };
 
+  /**
+   * 전송 실패한 메시지 재시도 (Mock)
+   */
+  const retryMessage = (messageId: string) => {
+    // 메시지를 전송 중으로 변경
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId ? { ...msg, status: 'sending' as MessageStatus } : msg
+      )
+    );
+
+    // Mock: 전송 중 상태를 전송 완료로 변경 (시뮬레이션)
+    setTimeout(() => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId ? { ...msg, status: 'sent' as MessageStatus } : msg
+        )
+      );
+    }, 500);
+  };
+
+  /**
+   * 메시지를 읽음 처리 (Mock)
+   */
+  const markMessagesAsRead = () => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.sender_type === 'ADMIN' && !msg.is_read_by_user
+          ? { ...msg, is_read_by_user: true }
+          : msg
+      )
+    );
+  };
+
   // 시간순으로 정렬된 메시지 반환
   const sortedMessages = useMemo(() => {
     return [...messages].sort((a, b) => {
@@ -84,10 +121,18 @@ export function useMockMessages({ inquiryId }: UseMockMessagesOptions): UseMockM
     });
   }, [messages]);
 
+  // 읽지 않은 메시지 개수 계산 (관리자 메시지 중 읽지 않은 것)
+  const unreadCount = useMemo(() => {
+    return messages.filter((msg) => msg.sender_type === 'ADMIN' && !msg.is_read_by_user).length;
+  }, [messages]);
+
   return {
     messages: sortedMessages,
     addMessage,
     updateMessageStatus,
+    retryMessage,
+    markMessagesAsRead,
+    unreadCount,
     isLoading: false, // Mock 데이터는 즉시 로드
   };
 }

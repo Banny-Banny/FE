@@ -19,7 +19,7 @@ import { ConnectionStatusProps } from './types';
  * - disconnected: 연결 끊김 (회색)
  * - error: 오류 (빨간색)
  */
-export function ConnectionStatus({ status }: ConnectionStatusProps) {
+export function ConnectionStatus({ status, onReconnect }: ConnectionStatusProps) {
   const getStatusConfig = () => {
     switch (status) {
       case 'connecting':
@@ -56,11 +56,17 @@ export function ConnectionStatus({ status }: ConnectionStatusProps) {
   };
 
   const config = getStatusConfig();
+  const showReconnect = (status === 'disconnected' || status === 'error') && onReconnect;
 
   return (
     <View style={styles.container}>
       <Icon name={config.icon as any} size={12} color={config.color} />
       <Text style={[styles.text, { color: config.color }]}>{config.text}</Text>
+      {showReconnect && (
+        <Text style={styles.reconnectText} onPress={onReconnect}>
+          {' • '}재연결
+        </Text>
+      )}
     </View>
   );
 }
