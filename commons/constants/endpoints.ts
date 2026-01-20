@@ -13,8 +13,8 @@ export const API_ENDPOINTS = {
     // 카카오 로그인 시작: 서버가 카카오 인증 페이지로 리다이렉트 후 콜백으로 돌아옴
     KAKAO: 'api/auth/kakao',
     // 이메일 로그인
-    EMAIL_LOGIN: 'api/auth/email/login', // 이메일 로그인 (POST) - body: { email: string, password: string }
-    EMAIL_SIGNUP: 'api/auth/email/signup', // 이메일 회원가입 (POST) - body: { email: string, password: string, nickname?: string }
+    EMAIL_LOGIN: 'api/auth/local/login', // 자체 로그인 (POST) - body: { phoneNumber?: string, email?: string, password: string }
+    EMAIL_SIGNUP: 'api/auth/local/signup', // 자체 회원가입 (POST) - body: { nickname: string, phoneNumber: string, password: string, email?: string, profileImg?: string }
     ME: 'api/auth/me', // 내 정보 조회 (GET)
     VERIFY: 'api/auth/verify', // 토큰 유효성 검증 (GET)
     FRIENDS: 'api/me/friends', // 친구 목록 조회 (GET) - 페이지네이션 파라미터: limit, offset
