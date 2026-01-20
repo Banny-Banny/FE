@@ -28,4 +28,6 @@ export interface ChatInputProps {
   attachments?: MessageAttachment[];
   onRemoveAttachment?: (attachmentId: string) => void;
   isLoading?: boolean;
+  isRoomEntered?: boolean; // EC-004: 방 입장 여부
+  errorMessage?: string; // EC-004: 에러 메시지
 }

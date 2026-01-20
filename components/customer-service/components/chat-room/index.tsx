@@ -3,23 +3,27 @@
  * 채팅방 전체 레이아웃 컴포넌트
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { View, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, KeyboardAvoidingView, Platform, Keyboard, Text } from 'react-native';
 import { ChatHeader } from '../chat-header';
 import { ChatMessageList } from '../chat-message-list';
 import { ChatInput } from '../chat-input';
 import { selectFile } from '../file-picker';
-import { useMockMessages } from '../../hooks/useMockMessages';
 import { useMockFileUpload } from '../../hooks/useMockFileUpload';
+import { useSocket } from '../../hooks/useSocket';
+import { useChatMessages } from '../../hooks/useChatMessages';
+import { useChatHistory } from '../../hooks/useChatHistory';
 import { MessageAttachment } from '../../types';
 import { FilePickerResult } from '../file-picker/types';
+import { Colors, Spacing, Typography } from '@/commons/constants';
+import { Toast } from '@/commons/components/toast';
 import { styles } from './styles';
-import { ConnectionStatus } from '../../types';
 
 interface ChatRoomProps {
-  inquiryId: string;
+  inquiryId?: string; // 선택사항: 없으면 join_room이 새 문의 생성
   inquiryTitle?: string;
   onBack?: () => void;
+  onInquiryIdReceived?: (inquiryId: string) => void; // 새 문의 생성 시 inquiryId 콜백
 }
 
 /**
@@ -32,29 +36,118 @@ interface ChatRoomProps {
  * - 파일 첨부 기능 통합
  * - 네이버 톡톡 스타일 구현
  */
-export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
-  const { messages, addMessage, isLoading } = useMockMessages({ inquiryId });
+export function ChatRoom({ inquiryId, inquiryTitle, onBack, onInquiryIdReceived }: ChatRoomProps) {
   const { uploadFile, uploadProgress, resetProgress } = useMockFileUpload();
-  const [connectionStatus] = useState<ConnectionStatus>('connected'); // Mock: 연결 상태
+  
+  // WebSocket 연결 관리 (EC-001, EC-003, EC-005)
+  const { 
+    connectionStatus, 
+    isRoomEntered, 
+    isActiveDevice, 
+    joinRoom,
+    socket // Phase 5: Socket 인스턴스
+  } = useSocket({ 
+    inquiryId,
+    onRoomIdReceived: (roomId) => {
+      console.log('roomId 수신:', roomId);
+    },
+    onInquiryIdReceived: (newInquiryId) => {
+      // 새 문의 생성 시 inquiryId 콜백 호출
+      onInquiryIdReceived?.(newInquiryId);
+    },
+    onError: (message) => {
+      showToast(message);
+    },
+  });
+
+  // 채팅 메시지 송수신 관리 (EC-002, EC-004, EC-006, Phase 4, Phase 5)
+  const { 
+    messages: wsMessages, 
+    addMessage, 
+    retryMessage,
+    markMessagesAsRead,
+    sendReadAlert,
+    unreadCount, // Phase 4: 읽지 않은 메시지 개수
+    isOffline,
+    isLoading: messagesLoading 
+  } = useChatMessages({ 
+    inquiryId, 
+    socket, // Phase 5: Socket 인스턴스 전달
+    isRoomEntered,
+    connectionStatus 
+  });
+
+  // 채팅 내역 조회 (HTTP API + WebSocket 병합) (Phase 5)
+  const {
+    messages: allMessages,
+    isLoading: historyLoading,
+    hasNext,
+    loadMore,
+  } = useChatHistory({
+    inquiryId,
+    webSocketMessages: wsMessages, // useChatMessages에서 받은 실시간 메시지 전달
+  });
+
   const [attachments, setAttachments] = useState<MessageAttachment[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const messageListRef = useRef<any>(null);
 
-  const handleSendMessage = (message: string, messageAttachments?: MessageAttachment[]) => {
-    // 첨부파일이 있으면 함께 전송
-    const finalAttachments = messageAttachments && messageAttachments.length > 0 
-      ? messageAttachments 
-      : attachments.length > 0 
-        ? attachments 
-        : undefined;
-    
-    addMessage(message, finalAttachments);
-    
-    // 첨부파일 초기화
-    setAttachments([]);
-    resetProgress();
-    
-    // 메시지 전송 후 키보드 닫기
-    Keyboard.dismiss();
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  // 방 입장 시도
+  useEffect(() => {
+    if (connectionStatus === 'connected' && !isRoomEntered) {
+      joinRoom().catch((error) => {
+        console.error('방 입장 실패:', error);
+        setErrorMessage('채팅방 입장에 실패했습니다.');
+      });
+    }
+  }, [connectionStatus, isRoomEntered, joinRoom]);
+
+  const handleSendMessage = async (message: string, messageAttachments?: MessageAttachment[]) => {
+    try {
+      // EC-004: 방 입장 전 메시지 전송 차단
+      if (!isRoomEntered) {
+        setErrorMessage('먼저 채팅방에 입장해주세요.');
+        return;
+      }
+
+      // EC-003: 비활성 기기에서 메시지 전송 차단
+      if (!isActiveDevice) {
+        setErrorMessage('다른 기기에서 채팅 중입니다.');
+        return;
+      }
+
+      // 첨부파일이 있으면 함께 전송
+      const finalAttachments = messageAttachments && messageAttachments.length > 0 
+        ? messageAttachments 
+        : attachments.length > 0 
+          ? attachments 
+          : undefined;
+      
+      // Phase 5: 실제 WebSocket으로 메시지 전송 (async)
+      await addMessage(message, finalAttachments);
+      
+      // 에러 메시지 초기화
+      setErrorMessage('');
+      
+      // 첨부파일 초기화
+      setAttachments([]);
+      resetProgress();
+      
+      // 메시지 전송 후 키보드 닫기
+      Keyboard.dismiss();
+
+      // EC-006: 읽음 처리 알림 전송 (debounce 처리됨)
+      sendReadAlert();
+    } catch (error: any) {
+      setErrorMessage(error.message || '메시지 전송에 실패했습니다.');
+    }
   };
 
   const handleAttachFile = async () => {
@@ -77,8 +170,16 @@ export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
   };
 
   const handleLoadMore = () => {
-    // Mock: 과거 메시지 로드 (Phase 4에서 구현)
+    // Phase 5: 실제 API로 과거 메시지 로드
+    loadMore();
   };
+
+  // EC-006: 메시지 읽음 처리 (스크롤 시 자동 호출)
+  useEffect(() => {
+    if (allMessages.length > 0 && isRoomEntered) {
+      sendReadAlert();
+    }
+  }, [allMessages.length, isRoomEntered, sendReadAlert]);
 
   // 키보드가 올라올 때 자동 스크롤
   useEffect(() => {
@@ -109,13 +210,22 @@ export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
         onBack={onBack}
       />
 
+      {/* EC-003: 여러 기기 동시 접속 안내 메시지 */}
+      {!isActiveDevice && (
+        <View style={styles.deviceWarningContainer}>
+          <Text style={styles.deviceWarningText}>
+            다른 기기에서 채팅 중입니다. 이 기기는 읽기 전용 모드입니다.
+          </Text>
+        </View>
+      )}
+
       {/* 메시지 리스트 */}
       <View style={styles.messageListContainer}>
         <ChatMessageList
           ref={messageListRef}
-          messages={messages}
+          messages={allMessages}
           onLoadMore={handleLoadMore}
-          isLoading={isLoading}
+          isLoading={messagesLoading || historyLoading}
         />
       </View>
 
@@ -125,7 +235,16 @@ export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
         onAttachFile={handleAttachFile}
         attachments={attachments}
         onRemoveAttachment={handleRemoveAttachment}
-        isLoading={isLoading || uploadProgress.status === 'uploading'}
+        isLoading={messagesLoading || uploadProgress.status === 'uploading'}
+        isRoomEntered={isRoomEntered && isActiveDevice}
+        errorMessage={errorMessage && errorMessage.trim() !== '' ? errorMessage : undefined}
+      />
+
+      {/* Toast 메시지 */}
+      <Toast
+        message={toastMessage}
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
       />
     </KeyboardAvoidingView>
   );
