@@ -54,9 +54,9 @@
 
 #### 0.6 API 응답 변환 유틸리티 생성
 
-- [ ] T020 Create `components/customer-service/utils/transformers.ts` for API response format conversion
-- [ ] T021 Add camelCase to snake_case conversion function for Inquiry type to `components/customer-service/utils/transformers.ts`
-- [ ] T022 Add camelCase to snake_case conversion function for Message type to `components/customer-service/utils/transformers.ts`
+- [X] T020 Create `components/customer-service/utils/transformers.ts` for API response format conversion
+- [X] T021 Add camelCase to snake_case conversion function for Inquiry type to `components/customer-service/utils/transformers.ts`
+- [X] T022 Add camelCase to snake_case conversion function for Message type to `components/customer-service/utils/transformers.ts`
 
 ---
 
