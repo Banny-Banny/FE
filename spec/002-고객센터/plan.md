@@ -16,9 +16,9 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
 - **스타일링**: React Native StyleSheet + NativeWind 4.2.1
 - **아이콘**: react-native-remix-icon 4.7.0
 - **HTTP 클라이언트**: axios 1.13.2
-- **실시간 통신**: WebSocket (라이브러리 선택 필요 - NEEDS CLARIFICATION)
-  - 옵션 1: `socket.io-client` (Socket.IO 사용 시)
-  - 옵션 2: 네이티브 WebSocket API
+- **실시간 통신**: Socket.IO (`socket.io-client`)
+  - 네임스페이스: `/user-chat`
+  - 이벤트: `join_room`, `send_message`, `receive_message`, `read_alert`
 
 ### 기존 구조 분석
 - **마이페이지 위치**: `components/mypage/`
@@ -46,7 +46,10 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
   - 채팅창 경로: `app/(tabs)/customer-service/[inquiryId].tsx` 또는 모달
 
 #### 3. API 연동
-- **엔드포인트**: `commons/constants/endpoints.ts`에 고객센터 관련 엔드포인트 추가
+- **엔드포인트**: 
+  - `GET /api/me/inquiries`: 문의 목록 조회 (페이지네이션)
+  - `GET /api/me/inquiries/{id}`: 문의 상세 및 채팅 내역 조회 (페이지네이션)
+- **API 응답 형식**: camelCase (API) → snake_case (내부 타입) 변환 필요
 - **API 호출**: `components/customer-service/api/` 또는 hooks에서 직접 호출
 - **에러 처리**: 기존 `apiClient` 인터셉터 활용
 
@@ -132,20 +135,30 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
   - 읽지 않은 메시지 개수 표시 (is_read_by_user 기반)
   - 문의 상태 표시 (is_resolved, status)
 
-### FR-CS-6: 파일 첨부 (선택사항)
-- **우선순위**: Low
-- **설명**: 채팅 중 이미지나 파일을 첨부할 수 있음
+### FR-CS-6: Edge Cases 처리
+- **우선순위**: High
+- **설명**: 예외 상황 및 에러 처리
 - **기능**:
-  - 이미지 선택 및 전송
-  - 파일 선택 및 전송
-  - 파일 크기 제한
-  - 이미지 미리보기
+  - WebSocket 연결 실패 처리 (최대 3회 재시도, 실패 시 문의 목록으로 이동)
+  - 네트워크 불안정 시 메시지 전송 실패 처리 (오프라인 모드, 로컬 큐 저장, 자동 재시도)
+  - 여러 기기 동시 접속 처리 (마지막 접속 기기만 활성화, 다른 기기는 읽기 전용)
+  - 방 입장 전 메시지 전송 차단
+  - roomId 생성 실패 처리
+  - 읽음 처리 알림 중복 방지 (500ms debounce)
+  - HTTP API와 WebSocket 메시지 중복 병합 처리 (메시지 ID 기준, 타임스탬프 비교)
 
 ## Non-Functional Requirements
 
 ### 성능
-- **로딩 시간**: FAQ 목록 로딩 1초 이하
-- **이미지 최적화**: 첨부 파일 이미지 최적화
+- **로딩 시간**: 
+  - 문의 목록 조회: 2초 이내 (SC-001)
+  - WebSocket 연결: 3초 이내 (SC-002)
+  - 메시지 전송 후 표시: 1초 이내 (SC-003)
+  - 채팅 내역 조회: 1초 이내 (최신 메시지 20개) (SC-007)
+- **실시간 응답**: 메시지 전송 후 상대방 수신: 2초 이내 (SC-004)
+- **재연결**: WebSocket 연결 끊김 시 5초 이내 자동 재연결 시도 (SC-005)
+- **성공률**: 메시지 전송 성공률 95% 이상 (SC-006)
+- **스크롤 성능**: 무한 스크롤 60fps 이상 유지 (SC-008)
 - **캐싱**: React Query를 통한 자동 캐싱
 
 ### 사용성
@@ -175,12 +188,17 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
 
 ##### 0.2 타입 정의
 - [ ] `components/customer-service/types.ts` 생성
-  - `Inquiry`: 문의 타입 (id, user_id, title, content, admin_reply, is_resolved, status, last_message_at, last_message_preview, created_at, updated_at, deleted_at)
+  - `Inquiry`: 문의 타입 (API 응답: camelCase, 내부 타입: snake_case)
+    - API 응답: id, status, isResolved, title, lastMessageAt, lastMessagePreview, unreadCount, createdAt
+    - 내부 타입: id, user_id, status, is_resolved, title, last_message_at, last_message_preview, unread_count, created_at, updated_at
   - `InquiryStatus`: 문의 상태 enum ('PENDING' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED')
-  - `ChatMessage`: 메시지 타입 (id, customer_service_id, sender_type, sender_user_id, sender_admin_id, content, is_read_by_admin, is_read_by_user, created_at, updated_at, deleted_at)
+  - `Message`: 메시지 타입 (API 응답: camelCase, 내부 타입: snake_case)
+    - API 응답: id, senderType, senderUserId, senderAdminId, content, isReadByAdmin, isReadByUser, createdAt, updatedAt
+    - 내부 타입: id, customer_service_id, sender_type, sender_user_id, sender_admin_id, content, is_read_by_admin, is_read_by_user, created_at, updated_at
   - `SenderType`: 발신자 타입 enum ('USER' | 'ADMIN')
   - `MessageStatus`: 메시지 상태 (sending, sent, failed)
   - `ConnectionStatus`: 연결 상태 (connecting, connected, disconnected, error)
+  - `ChatRoom`: 채팅방 타입 (roomId로 식별, 유저는 roomId 없이 자동 생성 가능)
 
 ##### 0.3 Mock 데이터 생성
 - [ ] `components/customer-service/mocks/inquiries.ts` 생성
@@ -279,9 +297,9 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
   - `index.tsx`: 채팅 입력창 컨테이너
   - `text-input.tsx`: 텍스트 입력 필드
   - `send-button.tsx`: 전송 버튼
-  - `attachment-button.tsx`: 첨부 파일 버튼 (선택사항)
   - `types.ts`: Props 타입
   - `styles.ts`: 스타일 정의
+  - **참고**: 파일 첨부 기능은 Out of Scope (별도 기능으로 구현 예정)
 
 ##### 2.4 채팅 헤더 컴포넌트
 - [ ] `components/customer-service/components/chat-header/` 생성
@@ -319,49 +337,62 @@ TimeEgg 앱의 고객센터 페이지를 구현합니다. 네이버 톡톡처럼
 
 ---
 
-### Phase 3: 파일 첨부 기능 구현 (5-7일) - UI 우선
+### Phase 3: Edge Cases 및 에러 처리 구현 (5-7일)
 
 #### 목표
-이미지 및 파일 첨부 기능 UI 구현 (Mock 데이터 사용)
+예외 상황 및 에러 처리 로직 구현 (Mock 데이터 사용)
 
 #### 작업 항목
 
-##### 3.1 파일 선택 컴포넌트
-- [ ] `components/customer-service/components/file-picker/` 생성
-  - `index.tsx`: 파일 선택 컴포넌트
-  - `image-picker.tsx`: 이미지 선택 (`expo-image-picker`)
-  - `document-picker.tsx`: 파일 선택 (`expo-document-picker`)
-  - `types.ts`: Props 타입
-  - `styles.ts`: 스타일 정의
+##### 3.1 WebSocket 연결 실패 처리 (EC-001)
+- [ ] 연결 실패 시 사용자 알림 표시
+- [ ] 자동 재시도 로직 구현 (최대 3회)
+- [ ] 3회 실패 시 문의 목록으로 자동 이동 및 토스트 메시지 표시
+  - 토스트 메시지: "연결에 실패했습니다. 잠시 후 다시 시도해주세요."
 
-##### 3.2 파일 미리보기 컴포넌트
-- [ ] `components/customer-service/components/file-preview/` 생성
-  - `index.tsx`: 파일 미리보기 컨테이너
-  - `image-preview.tsx`: 이미지 미리보기
-  - `file-preview.tsx`: 파일 미리보기 (파일명, 크기 등)
-  - `types.ts`: Props 타입
-  - `styles.ts`: 스타일 정의
+##### 3.2 네트워크 불안정 처리 (EC-002)
+- [ ] 네트워크 불안정 감지 로직
+- [ ] 오프라인 모드 전환
+- [ ] 전송 실패 메시지 로컬 큐 저장
+- [ ] 네트워크 복구 후 3초 뒤 자동 재시도
+- [ ] 재시도 실패 시 사용자 알림 및 수동 재시도 옵션 제공
 
-##### 3.3 파일 업로드 처리 (Mock)
-- [ ] 파일 업로드 훅 생성 (Mock)
-  - `components/customer-service/hooks/useMockFileUpload.ts`
-  - 파일 크기 검증
-  - 파일 형식 검증
-  - 업로드 진행 상태 관리 (Mock)
-  - 업로드 완료 후 Mock 메시지 추가
+##### 3.3 여러 기기 동시 접속 처리 (EC-003)
+- [ ] 마지막 접속 기기 활성화 로직
+- [ ] 비활성 기기 읽기 전용 모드 전환
+- [ ] "다른 기기에서 채팅 중입니다" 안내 메시지 표시
+- [ ] 활성 기기 변경 시 자동 모드 전환
 
-##### 3.4 채팅 메시지에 파일 표시
-- [ ] `message-bubble.tsx` 수정
-  - 이미지 메시지 표시
-  - 파일 메시지 표시
-  - 파일 다운로드 기능 (선택사항)
+##### 3.4 방 입장 전 메시지 전송 차단 (EC-004)
+- [ ] 방 미입장 상태 감지
+- [ ] 전송 버튼 비활성화 또는 에러 메시지 표시
+- [ ] "먼저 채팅방에 입장해주세요" 에러 메시지
+
+##### 3.5 roomId 생성 실패 처리 (EC-005)
+- [ ] roomId 생성 실패 감지
+- [ ] WebSocket 연결 차단
+- [ ] "채팅방 생성에 실패했습니다" 에러 메시지 표시
+- [ ] 문의 목록으로 자동 이동 및 토스트 메시지 표시
+  - 토스트 메시지: "채팅방을 생성할 수 없습니다. 잠시 후 다시 시도해주세요."
+
+##### 3.6 읽음 처리 중복 방지 (EC-006)
+- [ ] `read_alert` 이벤트 debounce 처리 (500ms)
+- [ ] 이미 읽음 처리된 메시지의 중복 알림 무시
+- [ ] 클라이언트 이중 방어 로직 구현
+
+##### 3.7 메시지 중복 병합 처리 (EC-007)
+- [ ] HTTP API와 WebSocket 메시지 병합 로직
+- [ ] 메시지 ID 기준 중복 제거
+- [ ] 타임스탬프 비교로 최신 메시지 우선 반영
+- [ ] WebSocket 메시지 우선 반영 로직
+- [ ] 시간순 정렬 표시
 
 #### 완료 기준
-- 이미지 선택 및 전송 UI가 정상 동작함 (Mock)
-- 파일 선택 및 전송 UI가 정상 동작함 (Mock, 구현한 경우)
-- 파일 미리보기가 정상 표시됨
-- 파일 크기 및 형식 제한이 동작함
-- 업로드 진행 상태가 표시됨 (Mock)
+- 모든 Edge Cases가 정상적으로 처리됨
+- 에러 메시지가 명확하게 표시됨
+- 자동 재연결이 정상 동작함
+- 메시지 중복 병합이 정확히 동작함
+- 여러 기기 동시 접속이 정상 처리됨
 
 ---
 
@@ -415,53 +446,70 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 
 ##### 5.1 WebSocket 연결 훅
 - [ ] `components/customer-service/hooks/useSocket.ts` 생성
-  - WebSocket 연결 관리
-  - 연결 상태 관리 (`useState`)
-  - 자동 재연결 로직
+  - Socket.IO 클라이언트 연결 관리 (`socket.io-client`)
+  - `/user-chat` 네임스페이스 연결
+  - 인증 토큰 전달 (`auth: { token }` 또는 `Authorization: Bearer <token>`)
+  - 연결 상태 관리 (`useState`: connecting, connected, disconnected, error)
+  - 자동 재연결 로직 (최대 3회, EC-001)
   - 연결 해제 처리
   - 에러 처리
 
 ##### 5.2 메시지 송수신 훅
 - [ ] `components/customer-service/hooks/useChatMessages.ts` 생성
   - 메시지 리스트 상태 관리 (`useState` 또는 `useReducer`)
-  - 메시지 전송 함수 (실제 API 호출)
-  - 메시지 수신 이벤트 핸들러 (WebSocket)
+  - `join_room` 이벤트 호출 (roomId 없이, 서버가 자동 생성/조회)
+  - `join_room` 응답으로 받은 roomId 저장
+  - `send_message` 이벤트로 메시지 전송
+  - `receive_message` 이벤트로 실시간 메시지 수신
+  - `read_alert` 이벤트로 읽음 처리 알림 (500ms debounce, EC-006)
+  - `read_alert` 이벤트로 상대방 읽음 상태 수신
   - 메시지 상태 업데이트 (전송 중, 전송 완료, 전송 실패)
-  - 메시지 읽음 처리
+  - 방 입장 전 메시지 전송 차단 (EC-004)
 
 ##### 5.3 문의 내역 조회 훅 (실제 API)
 - [ ] `components/customer-service/hooks/useInquiries.ts` 생성
-  - `useQuery`를 사용한 문의 내역 목록 조회
+  - `useQuery`를 사용한 문의 내역 목록 조회 (`GET /api/me/inquiries`)
+  - API 응답 형식: camelCase → snake_case 변환
+  - 페이지네이션 처리 (total, limit, offset, hasNext)
   - 문의 상태별 필터링
   - 문의 정렬 (최신순 등)
   - Mock 데이터 훅을 실제 API로 교체
 
 ##### 5.4 채팅 내역 조회 훅 (실제 API)
 - [ ] `components/customer-service/hooks/useChatHistory.ts` 생성
-  - `useInfiniteQuery`를 사용한 채팅 내역 조회 (inquiry_id로 필터링)
+  - `useInfiniteQuery`를 사용한 채팅 내역 조회 (`GET /api/me/inquiries/{id}`)
+  - API 응답 형식: camelCase → snake_case 변환
+  - 페이지네이션 처리 (total, limit, offset, hasNext)
   - 무한 스크롤로 과거 메시지 로드
-  - WebSocket 메시지와 API 조회 메시지 병합 로직
+  - WebSocket 메시지와 API 조회 메시지 병합 로직 (EC-007)
+    - 메시지 ID 기준 중복 제거
+    - 타임스탬프 비교로 최신 메시지 우선 반영
+    - WebSocket 메시지 우선 반영
+    - 시간순 정렬
   - Mock 데이터 훅을 실제 API로 교체
 
 ##### 5.5 API 엔드포인트 정의
-- [ ] `commons/constants/endpoints.ts`에 추가
+- [ ] `commons/constants/endpoints.ts`에 추가 (이미 정의되어 있음, 확인 필요)
   ```typescript
   CUSTOMER_SERVICE: {
-    INQUIRIES: 'api/customer-service/inquiries',
-    INQUIRY_DETAIL: 'api/customer-service/inquiries/{id}',
-    INQUIRY_CREATE: 'api/customer-service/inquiries',
-    MESSAGES: 'api/customer-service/inquiries/{inquiryId}/messages',
-    MESSAGE_SEND: 'api/customer-service/inquiries/{inquiryId}/messages',
-    FILE_UPLOAD: 'api/customer-service/chat/upload',
+    INQUIRIES: 'api/me/inquiries', // 문의 목록 조회 (GET)
+    INQUIRY_DETAIL: 'api/me/inquiries/{id}', // 문의 상세 및 채팅 내역 조회 (GET)
   }
   ```
+- [ ] WebSocket 연결 설정
+  - Socket.IO 서버 URL 설정
+  - 네임스페이스: `/user-chat`
+  - 인증 토큰 전달 방식 확인
 
 ##### 5.6 WebSocket 라이브러리 설치 및 설정
-- [ ] WebSocket 라이브러리 선택 및 설치
-  - `socket.io-client` (Socket.IO 사용 시)
-  - 또는 네이티브 WebSocket API 사용
+- [ ] `socket.io-client` 라이브러리 설치
+  - `npm install socket.io-client`
+  - `package.md` 문서 업데이트 (외부 라이브러리 도입 가이드 준수)
 - [ ] WebSocket 연결 유틸리티 생성
   - `components/customer-service/utils/socket.ts` 또는 `hooks/useSocket.ts`
+  - Socket.IO 클라이언트 인스턴스 생성
+  - `/user-chat` 네임스페이스 연결
+  - 인증 토큰 전달
   - 연결 관리, 재연결 로직, 이벤트 핸들러
 
 #### 완료 기준
@@ -518,23 +566,18 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 ## Technical Considerations
 
 ### 1. WebSocket 라이브러리 선택
-- **옵션 1**: `socket.io-client` (추천)
-  - 백엔드가 Socket.IO를 사용하는 경우
+- **결정**: `socket.io-client` 사용
+  - 백엔드가 Socket.IO 서버를 사용 (`/user-chat`, `/admin-chat` 네임스페이스)
   - 자동 재연결, 방(room) 기능 등 편의 기능 제공
   - 설치: `npm install socket.io-client`
-- **옵션 2**: 네이티브 WebSocket API
-  - 더 가벼운 구현
-  - 재연결 로직 직접 구현 필요
-  - 추가 라이브러리 불필요
-- **결정**: 백엔드와 협의 필요 (NEEDS CLARIFICATION)
-  - 백엔드에서 사용하는 WebSocket 프로토콜 확인 필요
-  - Socket.IO 서버인지, 네이티브 WebSocket 서버인지 확인
+  - 인증: `auth: { token }` 또는 `Authorization: Bearer <token>` 헤더로 전달
 
 ### 2. 실시간 메시지 상태 관리
-- WebSocket 연결 상태 관리 (`useState` 또는 Context)
+- WebSocket 연결 상태 관리 (`useState`: connecting, connected, disconnected, error)
 - 메시지 리스트 상태 관리 (`useState` 또는 `useReducer`)
-- 새 메시지 도착 시 자동 업데이트
-- 메시지 전송 대기열 관리 (네트워크 오류 시)
+- 새 메시지 도착 시 자동 업데이트 (`receive_message` 이벤트)
+- 메시지 전송 대기열 관리 (네트워크 오류 시, EC-002)
+- HTTP API와 WebSocket 메시지 병합 (EC-007)
 
 ### 3. 채팅 UI 구현
 - FlatList를 사용한 메시지 리스트 (가상화로 성능 최적화)
@@ -542,12 +585,11 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 - 키보드가 올라올 때 자동 스크롤 (`KeyboardAvoidingView` 또는 `react-native-keyboard-aware-scroll-view`)
 - 메시지 버블 스타일링 (사용자/관리자 구분)
 
-### 4. 파일 첨부 처리
-- `expo-image-picker`: 이미지 선택
-- `expo-document-picker`: 파일 선택
-- 파일 크기 제한 (예: 10MB)
-- 파일 형식 제한 (이미지, PDF 등)
-- 파일 업로드 진행 상태 표시
+### 4. API 응답 변환 처리
+- API 응답은 camelCase 형식
+- 내부 타입은 snake_case 형식 사용
+- API 응답을 받을 때 내부 타입으로 변환하는 로직 필요
+- 변환 유틸리티 함수 생성 (`components/customer-service/utils/transformers.ts`)
 
 ### 5. 채팅 내역 조회
 - React Query의 `useInfiniteQuery` 활용
@@ -557,24 +599,24 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 ## Dependencies
 
 ### 백엔드
-- [ ] WebSocket 서버 구현 필요
-  - Socket.IO 또는 네이티브 WebSocket 서버
+- [x] WebSocket 서버 구현 완료 (Socket.IO)
+  - `/user-chat` 네임스페이스 제공
+  - `/admin-chat` 네임스페이스 제공
   - 실시간 메시지 송수신 처리
   - 채팅방 관리 (1:1 채팅)
-  - 메시지 저장 및 조회 API
-- [ ] 채팅 관련 REST API 구현 필요
-  - 채팅 내역 조회 API (페이지네이션)
-  - 파일 업로드 API (이미지/파일 첨부 시)
+  - 이벤트: `join_room`, `send_message`, `receive_message`, `read_alert`
+- [x] 채팅 관련 REST API 구현 완료
+  - `GET /api/me/inquiries`: 문의 목록 조회 (페이지네이션)
+  - `GET /api/me/inquiries/{id}`: 문의 상세 및 채팅 내역 조회 (페이지네이션)
 
 ### 프론트엔드
 - [ ] **추가 설치 필요**: WebSocket 라이브러리
-  - `socket.io-client` (Socket.IO 사용 시)
-  - 또는 네이티브 WebSocket API 사용
+  - `socket.io-client` (Socket.IO 클라이언트)
+  - 설치 후 `package.md` 문서 업데이트 필수 (외부 라이브러리 도입 가이드 준수)
 - 기존 라이브러리 활용:
-  - `@tanstack/react-query`: 채팅 내역 조회
-  - `expo-image-picker`: 이미지 선택
-  - `expo-document-picker`: 파일 선택
+  - `@tanstack/react-query`: 채팅 내역 조회 (`useQuery`, `useInfiniteQuery`)
   - `react-native-reanimated`: 애니메이션
+  - `axios`: HTTP 클라이언트 (기존 `apiClient` 활용)
 
 ## Risk Mitigation
 
@@ -584,10 +626,10 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
    - 완화: 프론트엔드 개발 시 모킹 API 사용
    - 완화: 백엔드와의 명확한 API 스펙 정의
 
-2. **파일 업로드 실패**
-   - 완화: 파일 크기 및 형식 제한
-   - 완화: 업로드 진행 상태 표시
-   - 완화: 재시도 기능 제공
+2. **WebSocket 연결 불안정**
+   - 완화: 자동 재연결 로직 (최대 3회)
+   - 완화: 연결 상태 UI 표시
+   - 완화: 연결 실패 시 명확한 에러 메시지 및 대안 제시
 
 3. **사용자 경험 저하**
    - 완화: 명확한 로딩 상태 표시
@@ -602,13 +644,20 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 
 ### 품질 지표
 - 에러율 1% 이하
-- 응답 시간 1초 이하 (정상 동작 시)
+- 응답 시간: 
+  - 문의 목록 조회: 2초 이내 (SC-001)
+  - WebSocket 연결: 3초 이내 (SC-002)
+  - 메시지 전송 후 표시: 1초 이내 (SC-003)
+  - 채팅 내역 조회: 1초 이내 (SC-007)
 - WebSocket 연결 안정성 99% 이상
+- 메시지 전송 성공률 95% 이상 (SC-006)
 - 사용자 만족도 (수동 테스트 기반)
 
 ### 사용자 경험
-- 메시지 전송 성공률 95% 이상
-- 실시간 채팅 응답 시간 만족도
+- 메시지 전송 성공률 95% 이상 (SC-006)
+- 실시간 채팅 응답 시간: 메시지 전송 후 상대방 수신 2초 이내 (SC-004)
+- 무한 스크롤 성능: 60fps 이상 유지 (SC-008)
+- 자동 재연결: 연결 끊김 시 5초 이내 재연결 시도 (SC-005)
 
 ## Timeline Summary
 
@@ -617,7 +666,7 @@ Mock 데이터를 실제 API 및 WebSocket으로 교체
 | Phase 0 | 2-3일 | 기반 구조 및 타입 정의 (Mock 데이터 준비) |
 | Phase 1 | 5-7일 | 문의 내역 리스트 UI 구현 (Mock 데이터) |
 | Phase 2 | 10-14일 | 채팅 UI 구현 (Mock 데이터) |
-| Phase 3 | 5-7일 | 파일 첨부 기능 UI 구현 (Mock 데이터) |
+| Phase 3 | 5-7일 | Edge Cases 및 에러 처리 구현 (Mock 데이터) |
 | Phase 4 | 3-5일 | 채팅 상태 관리 및 최적화 (Mock 데이터) |
 | Phase 5 | 7-10일 | API 연동 및 WebSocket 구현 (Mock → 실제) |
 | Phase 6 | 3-5일 | 통합 및 마무리 |
