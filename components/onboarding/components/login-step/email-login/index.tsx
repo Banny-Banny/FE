@@ -25,23 +25,29 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
   const [password, setPassword] = useState('');
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { isLoading: loginLoading, loginWithEmail } = useEmailLogin();
+  const { isLoading: loginLoading, loginWithEmail, signupWithEmail } = useEmailLogin();
 
   const isLoading = externalLoading || loginLoading;
 
   // 로그인 처리
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 모두 입력해주세요.');
+    if ((!email && !phoneNumber) || !password) {
+      Alert.alert('입력 오류', '이메일 또는 전화번호와 비밀번호를 모두 입력해주세요.');
       return;
     }
 
-    const result = await loginWithEmail({ email, password });
+    const result = await loginWithEmail({ 
+      email: email || undefined, 
+      phoneNumber: phoneNumber || undefined,
+      password: password 
+    });
+    
     if (result && result.token) {
       const userData = getUserFromToken(result.token) || {
         id: result.user.id,
-        email: result.user.email,
+        email: result.user.email || email,
         nickname: result.user.nickname,
       };
 
@@ -49,16 +55,17 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
       // 성공 시 입력값 초기화
       setEmail('');
       setPassword('');
+      setPhoneNumber('');
       setName('');
       setConfirmPassword('');
       setIsSignup(false);
     }
   };
 
-  // 회원가입 처리 (임시 - API 엔드포인트 추가 필요)
+  // 회원가입 처리
   const handleSignup = async () => {
-    if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('입력 오류', '모든 필드를 입력해주세요.');
+    if (!name || !phoneNumber || !password || !confirmPassword) {
+      Alert.alert('입력 오류', '이름, 전화번호, 비밀번호를 모두 입력해주세요.');
       return;
     }
 
@@ -72,8 +79,36 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
       return;
     }
 
-    // TODO: 회원가입 API 호출
-    Alert.alert('알림', '회원가입 기능은 준비 중입니다.');
+    // 회원가입 API 호출
+    const result = await signupWithEmail({ 
+      nickname: name, 
+      phoneNumber: phoneNumber,
+      password: password,
+      email: email || undefined, // 선택사항이지만 입력된 경우 전송
+    });
+    
+    if (result && result.token) {
+      // 회원가입 성공 모달 표시
+      Alert.alert(
+        '회원가입 완료',
+        '회원가입이 완료되었습니다!',
+        [
+          {
+            text: '확인',
+            onPress: () => {
+              // 로그인 화면으로 전환
+              setIsSignup(false);
+              // 회원가입 시 입력한 정보 초기화 (로그인용 정보는 유지)
+              setName('');
+              setConfirmPassword('');
+              // 전화번호와 비밀번호는 로그인을 위해 유지
+              // email도 선택사항이므로 유지
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    }
   };
 
   return (
@@ -116,21 +151,68 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
             </View>
           )}
 
-          {/* 이메일 입력 */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>이메일</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="example@email.com"
-              placeholderTextColor={Colors.grey[500]}
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
+          {/* 로그인 시: 전화번호 또는 이메일 입력 */}
+          {!isSignup && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>전화번호 또는 이메일</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="01012345678 또는 example@email.com"
+                placeholderTextColor={Colors.grey[500]}
+                value={phoneNumber || email}
+                onChangeText={(text) => {
+                  // 전화번호 형식인지 이메일 형식인지 자동 감지
+                  if (/^[0-9-]/.test(text)) {
+                    setPhoneNumber(text);
+                    setEmail('');
+                  } else {
+                    setEmail(text);
+                    setPhoneNumber('');
+                  }
+                }}
+                keyboardType="default"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+            </View>
+          )}
+
+          {/* 회원가입 시: 전화번호 입력 (필수) */}
+          {isSignup && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>전화번호</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="01012345678"
+                placeholderTextColor={Colors.grey[500]}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+            </View>
+          )}
+
+          {/* 회원가입 시: 이메일 입력 (선택사항) */}
+          {isSignup && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>이메일 (선택사항)</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="example@email.com"
+                placeholderTextColor={Colors.grey[500]}
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+                editable={!isLoading}
+              />
+            </View>
+          )}
 
           {/* 비밀번호 입력 */}
           <View style={styles.inputContainer}>
