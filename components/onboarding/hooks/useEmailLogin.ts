@@ -41,6 +41,40 @@ export function useEmailLogin() {
   const [isLoading, setIsLoading] = useState(false);
 
   /**
+   * 백엔드 응답에서 토큰/유저 정보를 추출
+   * - token | accessToken | access_token | data.token | data.accessToken 등 대응
+   */
+  const extractAuthResult = useCallback(
+    (
+      data: any,
+      params?: { email?: string; nickname?: string },
+    ): EmailLoginResult | null => {
+      const token =
+        data?.token ||
+        data?.accessToken ||
+        data?.access_token ||
+        data?.data?.token ||
+        data?.data?.accessToken ||
+        data?.data?.access_token;
+
+      if (!token) {
+        return null;
+      }
+
+      const userPayload = data?.user || data?.data?.user || data?.data || data;
+
+      const user = {
+        id: userPayload?.id || userPayload?.userId || '',
+        email: userPayload?.email ?? params?.email ?? '',
+        nickname: userPayload?.nickname ?? params?.nickname ?? '',
+      };
+
+      return { token, user };
+    },
+    [],
+  );
+
+  /**
    * 이메일 로그인 실행 및 결과 반환
    */
   const loginWithEmail = useCallback(
@@ -108,15 +142,12 @@ export function useEmailLogin() {
 
         const response = await publicApiClient.post(loginUrl, requestBody);
 
-        if (response.data && response.data.token) {
-          return {
-            token: response.data.token,
-            user: response.data.user || {
-              id: response.data.userId || '',
-              email: params.email || '',
-              nickname: response.data.nickname,
-            },
-          };
+        const parsed = extractAuthResult(response.data, {
+          email: params.email,
+        });
+
+        if (parsed) {
+          return parsed;
         }
 
         Alert.alert('로그인 실패', '이메일/전화번호 또는 비밀번호가 올바르지 않습니다.');
@@ -205,15 +236,13 @@ export function useEmailLogin() {
 
         const response = await publicApiClient.post(signupUrl, requestBody);
 
-        if (response.data && response.data.token) {
-          return {
-            token: response.data.token,
-            user: response.data.user || {
-              id: response.data.userId || '',
-              email: params.email,
-              nickname: params.nickname || response.data.nickname,
-            },
-          };
+        const parsed = extractAuthResult(response.data, {
+          email: params.email,
+          nickname: params.nickname,
+        });
+
+        if (parsed) {
+          return parsed;
         }
 
         Alert.alert('회원가입 실패', '회원가입에 실패했습니다. 다시 시도해주세요.');
