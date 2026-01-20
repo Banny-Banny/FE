@@ -98,6 +98,7 @@ export const styles = StyleSheet.create({
     lineHeight: 24, // Figma: lineHeight
     fontWeight: FontWeight.regular,
     height: 52, // Figma: 51.925px → 52px
+    width: '100%', // PasswordInput과 동일한 넓이를 위해 추가
     paddingHorizontal: 16,
     paddingVertical: 14, // Figma: 14px
     textAlignVertical: 'center',

@@ -207,7 +207,8 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
     bunnyImage: {
       width: 400 * scale, // Figma: 이미지 너비 (정확한 값)
       maxWidth: '120%', // 반응형: 화면 너비를 넘지 않도록
-      height: 420 * scale, // Figma: 이미지 높이 (정확한 값)
+      height: 460 * scale, // Figma: 이미지 높이 (정확한 값)
+      
       shadowColor: Colors.black[500],
       shadowOffset: { width: 0, height: 5 * scale },
       shadowOpacity: 0.25,
