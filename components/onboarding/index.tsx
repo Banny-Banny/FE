@@ -8,9 +8,10 @@ import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
 import { getUserFromToken } from '@/utils';
 import { useEffect, useRef } from 'react';
 import { Linking, Platform } from 'react-native';
+import { EmailLogin } from './components/login-step/email-login';
 import { FriendConsentStep } from './components/friend-consent-step';
 import { LocationConsentStep } from './components/location-consent-step';
-import { LoginStep } from './components/login-step';
+import { SocialLogin } from './components/login-step/social-login';
 import { useOnboardingFlow } from './hooks/useOnboardingFlow';
 
 /**
@@ -19,7 +20,7 @@ import { useOnboardingFlow } from './hooks/useOnboardingFlow';
  * - AuthProvider 상태에 따라 현재 단계 자동 결정
  */
 export default function OnboardingFeature() {
-  const { currentStep, login, friendConsent, locationConsent } = useOnboardingFlow();
+  const { currentStep, login, friendConsent, locationConsent, setCurrentStep } = useOnboardingFlow();
   const { login: authLogin } = useAuth();
   const isProcessingDeepLink = useRef(false);
 
@@ -164,30 +165,68 @@ export default function OnboardingFeature() {
     }
   };
 
+  // 이메일 로그인 핸들러
+  const handleEmailLogin = () => {
+    setCurrentStep('email-login');
+  };
+
+  // 이메일 로그인 뒤로가기 핸들러
+  const handleEmailLoginBack = () => {
+    setCurrentStep('login');
+  };
+
+  // 이메일 로그인 성공 핸들러
+  const handleEmailLoginSuccess = async (token: string, userData: any) => {
+    await authLogin(token, userData);
+    // 로그인 성공 후 자동으로 다음 단계로 진행 (AuthProvider가 처리)
+  };
+
   // 단계별 컴포넌트 렌더링
+  let stepComponent = null;
   switch (currentStep) {
     case 'login':
-      return <LoginStep isLoading={login.isLoading} onKakaoLogin={handleKakaoLogin} />;
+      stepComponent = (
+        <SocialLogin
+          isLoading={login.isLoading}
+          onKakaoLogin={handleKakaoLogin}
+          onEmailLogin={handleEmailLogin}
+        />
+      );
+      break;
+    case 'email-login':
+      stepComponent = (
+        <EmailLogin
+          isLoading={login.isLoading}
+          onLoginSuccess={handleEmailLoginSuccess}
+          onBack={handleEmailLoginBack}
+        />
+      );
+      break;
     case 'friend-consent':
-      return (
+      stepComponent = (
         <FriendConsentStep
           isLoading={friendConsent.isLoading}
           onConsent={friendConsent.handleConsent}
           onSkip={friendConsent.handleSkip}
         />
       );
+      break;
     case 'location-consent':
-      return (
+      stepComponent = (
         <LocationConsentStep
           isLoading={locationConsent.isLoading}
           onConsent={locationConsent.handleConsent}
           onSkip={locationConsent.handleSkip}
         />
       );
+      break;
     case 'complete':
       // 완료 시 AuthProvider가 자동으로 메인으로 리다이렉트
-      return null;
+      stepComponent = null;
+      break;
     default:
-      return null;
+      stepComponent = null;
   }
+
+  return <>{stepComponent}</>;
 }

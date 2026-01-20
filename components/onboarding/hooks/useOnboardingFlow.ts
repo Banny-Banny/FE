@@ -10,7 +10,7 @@ import { useKakaoLogin } from './useKakaoLogin';
 import { useFriendConsent } from './useFriendConsent';
 import { useLocationConsent } from './useLocationConsent';
 
-export type OnboardingStep = 'login' | 'friend-consent' | 'location-consent' | 'complete';
+export type OnboardingStep = 'login' | 'email-login' | 'friend-consent' | 'location-consent' | 'complete';
 
 /**
  * 온보딩 플로우 단계 관리 Hook
@@ -40,6 +40,7 @@ export function useOnboardingFlow() {
 
   return {
     currentStep,
+    setCurrentStep,
     login,
     friendConsent,
     locationConsent,

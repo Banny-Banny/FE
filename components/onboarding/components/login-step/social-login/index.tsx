@@ -1,6 +1,6 @@
 /**
- * components/onboarding/components/login-step/index.tsx
- * 로그인 단계 UI 컴포넌트 (순수 프레젠테이션)
+ * components/onboarding/components/login-step/social-login/index.tsx
+ * 소셜 로그인 단계 UI 컴포넌트 (순수 프레젠테이션)
  */
 
 import { Image } from 'expo-image';
@@ -13,23 +13,16 @@ const imgRabbitImage = require('@/assets/icons/onboarding_page_icon.png');
 const imgLocationPin = require('@/assets/icons/locationPin.png');
 const imgFriend = require('@/assets/icons/friend.png');
 
-// 피그마에서 제공된 이미지 에셋 URL
-const IMG_ILLUSTRATION =
-  'http://localhost:3845/assets/1f32b8de05056d1ec9a5f74cec54c29176823019.png';
-const IMG_ELLIPSE = 'http://localhost:3845/assets/5fd04f478f1b1f756c49f81b5c65ba151f3c22eb.svg';
-const IMG_LOCATION_ICON =
-  'http://localhost:3845/assets/e11f6bf89ea89599d3c731a4b3757e56614bcf0d.svg';
-const IMG_FRIEND_ICON = 'http://localhost:3845/assets/10cc22e87847878b14afe497576868a4fa09453f.svg';
-
-interface LoginStepProps {
+interface SocialLoginProps {
   isLoading: boolean;
   onKakaoLogin: () => void;
+  onEmailLogin: () => void;
 }
 
 /**
- * 로그인 단계 (UI만 담당)
+ * 소셜 로그인 단계 (UI만 담당)
  */
-export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
+export function SocialLogin({ isLoading, onKakaoLogin, onEmailLogin }: SocialLoginProps) {
   const { width: screenWidth } = useWindowDimensions();
   const styles = createResponsiveStyles(screenWidth);
 
@@ -84,20 +77,36 @@ export function LoginStep({ isLoading, onKakaoLogin }: LoginStepProps) {
           <View style={styles.backgroundImagesWrapper}>
             <Image source={imgRabbitImage} style={styles.bunnyImage} contentFit="cover" />
 
-            {/* 카카오 로그인 버튼 (이미지 위에 배치) */}
-            <Pressable
-              style={[styles.kakaoButton, isLoading && styles.kakaoButtonDisabled]}
-              onPress={onKakaoLogin}
-              disabled={isLoading}>
-              <View style={styles.kakaoButtonContent}>
-                <Text style={styles.kakaoButtonText}>
-                  {isLoading ? '로그인 중...' : '카카오로 시작하기'}
-                </Text>
-                {!isLoading && (
-                  <Icon name="arrow-right-line" size={21} color={styles.kakaoButtonText.color} />
-                )}
-              </View>
-            </Pressable>
+            {/* 로그인 버튼들 (이미지 위에 배치) */}
+            <View style={styles.buttonsContainer}>
+              {/* 카카오 로그인 버튼 */}
+              <Pressable
+                style={[styles.kakaoButton, isLoading && styles.kakaoButtonDisabled]}
+                onPress={onKakaoLogin}
+                disabled={isLoading}>
+                <View style={styles.kakaoButtonContent}>
+                  <Text style={styles.kakaoButtonText}>
+                    {isLoading ? '로그인 중...' : '카카오로 시작하기'}
+                  </Text>
+                  {!isLoading && (
+                    <Icon name="arrow-right-line" size={21} color={styles.kakaoButtonText.color} />
+                  )}
+                </View>
+              </Pressable>
+
+              {/* 이메일 로그인 버튼 */}
+              <Pressable
+                style={[styles.emailButton, isLoading && styles.emailButtonDisabled]}
+                onPress={onEmailLogin}
+                disabled={isLoading}>
+                <View style={styles.emailButtonContent}>
+                  <Text style={styles.emailButtonText}>이메일로 시작하기</Text>
+                  {!isLoading && (
+                    <Icon name="arrow-right-line" size={21} color={styles.emailButtonText.color} />
+                  )}
+                </View>
+              </Pressable>
+            </View>
           </View>
         </View>
 
