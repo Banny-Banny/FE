@@ -184,52 +184,52 @@
 
 #### 3.1 WebSocket 연결 실패 처리 (EC-001)
 
-- [ ] T073 Add connection failure user notification display to `components/customer-service/hooks/useSocket.ts`
-- [ ] T074 Add auto-retry logic (max 3 attempts) to `components/customer-service/hooks/useSocket.ts`
-- [ ] T075 Add automatic navigation to inquiry list page after 3 failed retries to `components/customer-service/hooks/useSocket.ts`
-- [ ] T076 Add toast message "연결에 실패했습니다. 잠시 후 다시 시도해주세요." after 3 failed retries in `components/customer-service/hooks/useSocket.ts`
+- [X] T073 Add connection failure user notification display to `components/customer-service/hooks/useSocket.ts`
+- [X] T074 Add auto-retry logic (max 3 attempts) to `components/customer-service/hooks/useSocket.ts`
+- [X] T075 Add automatic navigation to inquiry list page after 3 failed retries to `components/customer-service/hooks/useSocket.ts`
+- [X] T076 Add toast message "연결에 실패했습니다. 잠시 후 다시 시도해주세요." after 3 failed retries in `components/customer-service/hooks/useSocket.ts`
 
 #### 3.2 네트워크 불안정 처리 (EC-002)
 
-- [ ] T077 Add network instability detection logic to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T078 Add offline mode transition to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T079 Add failed message local queue storage to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T080 Add automatic retry 3 seconds after network recovery to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T081 Add user notification and manual retry option on retry failure to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T077 Add network instability detection logic to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T078 Add offline mode transition to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T079 Add failed message local queue storage to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T080 Add automatic retry 3 seconds after network recovery to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T081 Add user notification and manual retry option on retry failure to `components/customer-service/hooks/useChatMessages.ts`
 
 #### 3.3 여러 기기 동시 접속 처리 (EC-003)
 
-- [ ] T082 Add last accessed device activation logic to `components/customer-service/hooks/useSocket.ts`
-- [ ] T083 Add inactive device read-only mode transition to `components/customer-service/hooks/useSocket.ts`
-- [ ] T084 Add "다른 기기에서 채팅 중입니다" guide message display to `components/customer-service/components/chat-room/index.tsx`
-- [ ] T085 Add automatic mode transition on active device change to `components/customer-service/hooks/useSocket.ts`
+- [X] T082 Add last accessed device activation logic to `components/customer-service/hooks/useSocket.ts`
+- [X] T083 Add inactive device read-only mode transition to `components/customer-service/hooks/useSocket.ts`
+- [X] T084 Add "다른 기기에서 채팅 중입니다" guide message display to `components/customer-service/components/chat-room/index.tsx`
+- [X] T085 Add automatic mode transition on active device change to `components/customer-service/hooks/useSocket.ts`
 
 #### 3.4 방 입장 전 메시지 전송 차단 (EC-004)
 
-- [ ] T086 Add room non-entry state detection to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T087 Add send button disable or error message display to `components/customer-service/components/chat-input/send-button.tsx`
-- [ ] T088 Add "먼저 채팅방에 입장해주세요" error message to `components/customer-service/components/chat-input/index.tsx`
+- [X] T086 Add room non-entry state detection to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T087 Add send button disable or error message display to `components/customer-service/components/chat-input/send-button.tsx`
+- [X] T088 Add "먼저 채팅방에 입장해주세요" error message to `components/customer-service/components/chat-input/index.tsx`
 
 #### 3.5 roomId 생성 실패 처리 (EC-005)
 
-- [ ] T089 Add roomId creation failure detection to `components/customer-service/hooks/useSocket.ts`
-- [ ] T090 Add WebSocket connection blocking on roomId creation failure to `components/customer-service/hooks/useSocket.ts`
-- [ ] T091 Add "채팅방 생성에 실패했습니다" error message display to `components/customer-service/hooks/useSocket.ts`
-- [ ] T092 Add automatic navigation to inquiry list page and toast message "채팅방을 생성할 수 없습니다. 잠시 후 다시 시도해주세요." to `components/customer-service/hooks/useSocket.ts`
+- [X] T089 Add roomId creation failure detection to `components/customer-service/hooks/useSocket.ts`
+- [X] T090 Add WebSocket connection blocking on roomId creation failure to `components/customer-service/hooks/useSocket.ts`
+- [X] T091 Add "채팅방 생성에 실패했습니다" error message display to `components/customer-service/hooks/useSocket.ts`
+- [X] T092 Add automatic navigation to inquiry list page and toast message "채팅방을 생성할 수 없습니다. 잠시 후 다시 시도해주세요." to `components/customer-service/hooks/useSocket.ts`
 
 #### 3.6 읽음 처리 중복 방지 (EC-006)
 
-- [ ] T093 Add `read_alert` event debounce processing (500ms) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T094 Add ignore duplicate notifications for already read messages to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T095 Add client-side double defense logic to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T093 Add `read_alert` event debounce processing (500ms) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T094 Add ignore duplicate notifications for already read messages to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T095 Add client-side double defense logic to `components/customer-service/hooks/useChatMessages.ts`
 
 #### 3.7 메시지 중복 병합 처리 (EC-007)
 
-- [ ] T096 Add HTTP API and WebSocket message merge logic to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T097 Add message ID-based duplicate removal to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T098 Add timestamp comparison for latest message priority reflection to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T099 Add WebSocket message priority reflection logic to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T100 Add chronological sorting display to `components/customer-service/components/chat-message-list/index.tsx`
+- [X] T096 Add HTTP API and WebSocket message merge logic to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T097 Add message ID-based duplicate removal to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T098 Add timestamp comparison for latest message priority reflection to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T099 Add WebSocket message priority reflection logic to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T100 Add chronological sorting display to `components/customer-service/components/chat-message-list/index.tsx`
 
 ---
 
@@ -287,67 +287,67 @@
 
 #### 5.1 WebSocket 연결 훅
 
-- [ ] T108 Create `components/customer-service/hooks/useSocket.ts` for Socket.IO client connection management
-- [ ] T109 Add Socket.IO client connection to `/user-chat` namespace to `components/customer-service/hooks/useSocket.ts`
-- [ ] T110 Add authentication token passing (`auth: { token }` or `Authorization: Bearer <token>`) to `components/customer-service/hooks/useSocket.ts`
-- [ ] T111 Add connection state management (useState: connecting, connected, disconnected, error) to `components/customer-service/hooks/useSocket.ts`
-- [ ] T112 Add auto-reconnect logic (max 3 attempts, EC-001) to `components/customer-service/hooks/useSocket.ts`
-- [ ] T113 Add connection cleanup handling to `components/customer-service/hooks/useSocket.ts`
-- [ ] T114 Add error handling to `components/customer-service/hooks/useSocket.ts`
+- [X] T108 Create `components/customer-service/hooks/useSocket.ts` for Socket.IO client connection management
+- [X] T109 Add Socket.IO client connection to `/user-chat` namespace to `components/customer-service/hooks/useSocket.ts`
+- [X] T110 Add authentication token passing (`auth: { token }` or `Authorization: Bearer <token>`) to `components/customer-service/hooks/useSocket.ts`
+- [X] T111 Add connection state management (useState: connecting, connected, disconnected, error) to `components/customer-service/hooks/useSocket.ts`
+- [X] T112 Add auto-reconnect logic (max 3 attempts, EC-001) to `components/customer-service/hooks/useSocket.ts`
+- [X] T113 Add connection cleanup handling to `components/customer-service/hooks/useSocket.ts`
+- [X] T114 Add error handling to `components/customer-service/hooks/useSocket.ts`
 
 #### 5.2 메시지 송수신 훅
 
-- [ ] T115 Create `components/customer-service/hooks/useChatMessages.ts` for message list state management (useState or useReducer)
-- [ ] T116 Add `join_room` event call (without roomId, server auto-creates/retrieves) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T117 Add roomId storage from `join_room` response to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T118 Add `send_message` event for message sending to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T119 Add `receive_message` event handler for real-time message receiving to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T120 Add `read_alert` event for read processing notification (500ms debounce, EC-006) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T121 Add `read_alert` event handler for receiving counterpart read status to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T122 Add message status update (sending, sent, failed) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T123 Add message send blocking before room entry (EC-004) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T115 Create `components/customer-service/hooks/useChatMessages.ts` for message list state management (useState or useReducer)
+- [X] T116 Add `join_room` event call (without roomId, server auto-creates/retrieves) to `components/customer-service/hooks/useChatMessages.ts` (useSocket에서 처리)
+- [X] T117 Add roomId storage from `join_room` response to `components/customer-service/hooks/useChatMessages.ts` (useSocket에서 처리)
+- [X] T118 Add `send_message` event for message sending to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T119 Add `receive_message` event handler for real-time message receiving to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T120 Add `read_alert` event for read processing notification (500ms debounce, EC-006) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T121 Add `read_alert` event handler for receiving counterpart read status to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T122 Add message status update (sending, sent, failed) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T123 Add message send blocking before room entry (EC-004) to `components/customer-service/hooks/useChatMessages.ts`
 
 #### 5.3 문의 내역 조회 훅 (실제 API)
 
-- [ ] T124 Create `components/customer-service/hooks/useInquiries.ts` with useQuery for inquiry list retrieval (`GET /api/me/inquiries`)
-- [ ] T125 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T126 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T127 Add inquiry status filtering to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T128 Add inquiry sorting (latest first) to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T129 Replace Mock data hook with actual API in `app/(tabs)/customer-service.tsx`
+- [X] T124 Create `components/customer-service/hooks/useInquiries.ts` with useQuery for inquiry list retrieval (`GET /api/me/inquiries`)
+- [X] T125 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T126 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T127 Add inquiry status filtering to `components/customer-service/hooks/useInquiries.ts`
+- [X] T128 Add inquiry sorting (latest first) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T129 Replace Mock data hook with actual API in `app/(tabs)/customer-service.tsx`
 
 #### 5.4 채팅 내역 조회 훅 (실제 API)
 
-- [ ] T130 Create `components/customer-service/hooks/useChatHistory.ts` with useInfiniteQuery for chat history retrieval (`GET /api/me/inquiries/{id}`)
-- [ ] T131 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T132 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T133 Add infinite scroll for loading past messages to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T134 Add merge logic for WebSocket messages and API retrieved messages (EC-007) to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T130 Create `components/customer-service/hooks/useChatHistory.ts` with useInfiniteQuery for chat history retrieval (`GET /api/me/inquiries/{id}`)
+- [X] T131 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T132 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T133 Add infinite scroll for loading past messages to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T134 Add merge logic for WebSocket messages and API retrieved messages (EC-007) to `components/customer-service/hooks/useChatHistory.ts`
   - Message ID-based duplicate removal
   - Timestamp comparison for latest message priority reflection
   - WebSocket message priority reflection
   - Chronological sorting
-- [ ] T135 Replace Mock data hook with actual API in `app/(tabs)/customer-service/[inquiryId].tsx`
+- [X] T135 Replace Mock data hook with actual API in `app/(tabs)/customer-service/[inquiryId].tsx` (useChatHistory 통합 완료)
 
 #### 5.5 API 엔드포인트 정의
 
-- [ ] T136 Verify CUSTOMER_SERVICE endpoints in `commons/constants/endpoints.ts` (already defined, verify):
-  - INQUIRIES: 'api/me/inquiries' (GET - inquiry list retrieval)
-  - INQUIRY_DETAIL: 'api/me/inquiries/{id}' (GET - inquiry detail and chat history retrieval)
-- [ ] T137 Add WebSocket connection configuration:
-  - Socket.IO server URL configuration
-  - Namespace: `/user-chat`
-  - Authentication token passing method verification
+- [X] T136 Verify CUSTOMER_SERVICE endpoints in `commons/constants/endpoints.ts` (already defined, verify):
+  - INQUIRIES: 'api/me/inquiries' (GET - inquiry list retrieval) - tasks.md 요구사항대로 사용
+  - INQUIRY_DETAIL: 'api/me/inquiries/{id}' (GET - inquiry detail and chat history retrieval) - tasks.md 요구사항대로 사용
+- [X] T137 Add WebSocket connection configuration:
+  - Socket.IO server URL configuration (useSocket.ts에서 BASE_URL 사용)
+  - Namespace: `/user-chat` (useSocket.ts에 구현)
+  - Authentication token passing method verification (auth: { token } 형식으로 구현)
 
 #### 5.6 WebSocket 라이브러리 설치 및 설정
 
-- [ ] T138 Install `socket.io-client` library (`npm install socket.io-client`)
-- [ ] T139 Update `doc/v.1.0/package.md` documentation (follow external library introduction guide)
-- [ ] T140 Create WebSocket connection utility in `components/customer-service/utils/socket.ts` or `hooks/useSocket.ts`
-- [ ] T141 Add Socket.IO client instance creation to WebSocket utility
-- [ ] T142 Add `/user-chat` namespace connection to WebSocket utility
-- [ ] T143 Add authentication token passing to WebSocket utility
-- [ ] T144 Add connection management, reconnect logic, and event handlers to WebSocket utility
+- [X] T138 Install `socket.io-client` library (`npm install socket.io-client`)
+- [X] T139 Update `doc/v.1.0/package.md` documentation (follow external library introduction guide)
+- [X] T140 Create WebSocket connection utility in `components/customer-service/utils/socket.ts` or `hooks/useSocket.ts` (useSocket.ts에 구현)
+- [X] T141 Add Socket.IO client instance creation to WebSocket utility
+- [X] T142 Add `/user-chat` namespace connection to WebSocket utility
+- [X] T143 Add authentication token passing to WebSocket utility
+- [X] T144 Add connection management, reconnect logic, and event handlers to WebSocket utility
 
 ---
 
@@ -411,11 +411,11 @@
 - [x] 애니메이션이 부드럽게 동작함
 
 ### Phase 3
-- [ ] 모든 Edge Cases가 정상적으로 처리됨
-- [ ] 에러 메시지가 명확하게 표시됨
-- [ ] 자동 재연결이 정상 동작함
-- [ ] 메시지 중복 병합이 정확히 동작함
-- [ ] 여러 기기 동시 접속이 정상 처리됨
+- [X] 모든 Edge Cases가 정상적으로 처리됨
+- [X] 에러 메시지가 명확하게 표시됨
+- [X] 자동 재연결이 정상 동작함
+- [X] 메시지 중복 병합이 정확히 동작함
+- [X] 여러 기기 동시 접속이 정상 처리됨
 
 ### Phase 4
 - [X] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
