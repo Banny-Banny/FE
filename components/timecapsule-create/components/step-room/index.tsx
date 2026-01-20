@@ -662,7 +662,6 @@ export default function StepRoom({
             inviteCode={propsInviteCode} // 게스트용 (처음 참여 시 필요)
             onSave={handleBottomSheetSave}
             roomSettings={roomSettings}
-            isReadOnly={selectedParticipant.status === 'completed'}
           />
         )}
       </ScrollView>

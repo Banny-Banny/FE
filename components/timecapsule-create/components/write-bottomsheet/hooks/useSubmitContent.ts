@@ -253,11 +253,16 @@ export function useSubmitContent(): UseSubmitContentReturn {
         setUploadProgress(`이미지 ${newImageUris.length}개 업로드 중...`);
         for (let i = 0; i < newImageUris.length; i++) {
           const photoUri = newImageUris[i];
-          // 파일명 추출
-          const filename = photoUri.split('/').pop() || generateFileName(photoUri, 'photo', 'jpg');
+          // 파일명 추출 (확장자 없을 경우 기본 jpg 부여)
+          const originalFilename = photoUri.split('/').pop() || '';
+          const hasExtension = !!getFileExtension(originalFilename);
+          const filenameForUpload = hasExtension
+            ? originalFilename
+            : generateFileName(photoUri, 'photo', 'jpg');
+
           // 파일 검증 (타입 및 크기)
           try {
-            await validateMediaFile(photoUri, 'IMAGE', filename);
+            await validateMediaFile(photoUri, 'IMAGE', filenameForUpload);
           } catch (validationError) {
             const errorMessage =
               validationError instanceof Error ? validationError.message : '파일 검증 실패';
@@ -265,7 +270,7 @@ export function useSubmitContent(): UseSubmitContentReturn {
           }
 
           // MIME 타입 추론
-          const extension = getFileExtension(filename);
+          const extension = getFileExtension(filenameForUpload) || 'jpg';
           const mimeType =
             extension === 'jpg' || extension === 'jpeg'
               ? 'image/jpeg'
@@ -275,8 +280,7 @@ export function useSubmitContent(): UseSubmitContentReturn {
               ? 'image/webp'
               : 'image/jpeg';
 
-          const fileName = generateFileName(photoUri, 'photo', extension || 'jpg');
-          const photoFile = await uriToFile(photoUri, fileName, mimeType);
+          const photoFile = await uriToFile(photoUri, filenameForUpload, mimeType);
           formData.append('images', photoFile);
         }
       }

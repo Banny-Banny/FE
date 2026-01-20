@@ -410,3 +410,4 @@ React.useEffect(() => {
 - `components/timecapsule-create/components/write-bottomsheet/index.tsx` - 바텀시트 컴포넌트
 - `components/timecapsule-create/components/step-room/types.ts` - 타입 정의 (필요시)
 
+

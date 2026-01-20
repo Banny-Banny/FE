@@ -93,3 +93,4 @@ export const formatRelativeTime = (dateString: string): string => {
   const diffInYears = Math.floor(diffInMonths / 12);
   return `${diffInYears}년 전`;
 };
+

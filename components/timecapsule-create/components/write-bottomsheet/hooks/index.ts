@@ -5,3 +5,4 @@
 
 export { useMediaPicker } from './useMediaPicker';
 export { useSubmitContent } from './useSubmitContent';
+export { useUpdateContent } from './useUpdateContent';
