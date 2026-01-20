@@ -32,15 +32,19 @@
  */
 
 import { BorderRadius, Colors, FontFamily, FontSize, FontWeight, Typography } from '@/commons/constants';
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
+
+const { height: viewportHeight } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white[500],
+    minHeight: viewportHeight, // 전체 화면 높이 기반 레이아웃
   },
   scrollContent: {
     flexGrow: 1,
+    minHeight: viewportHeight,
     paddingHorizontal: 32, // Figma: 31.992px → 32px
     paddingTop: 32, // Figma: 31.992px → 32px
     paddingBottom: 24,
@@ -93,11 +97,15 @@ export const styles = StyleSheet.create({
     height: 52, // Figma: 51.925px → 52px
     paddingHorizontal: 16,
     paddingVertical: 14, // Figma: 14px
+    textAlignVertical: 'center',
     backgroundColor: Colors.white[500], // Figma: white
     borderRadius: BorderRadius.md, // 12px
     borderWidth: 1,
     borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     color: Colors.black[500],
+  },
+  inputError: {
+    borderColor: Colors.red[500], // 에러 시 빨간색 테두리
   },
   submitButton: {
     height: 56, // Figma: 55.985px → 56px
