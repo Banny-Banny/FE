@@ -23,15 +23,15 @@ interface SocialLoginProps {
  * 소셜 로그인 단계 (UI만 담당)
  */
 export function SocialLogin({ isLoading, onKakaoLogin, onEmailLogin }: SocialLoginProps) {
-  const { width: screenWidth } = useWindowDimensions();
-  const styles = createResponsiveStyles(screenWidth);
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const styles = createResponsiveStyles(screenWidth, screenHeight);
 
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={true}
+        scrollEnabled={false}
         bounces={false}
         style={styles.scrollView}>
         {/* 상단 환영 메시지 */}
