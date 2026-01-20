@@ -31,7 +31,7 @@ export function SocialLogin({ isLoading, onKakaoLogin, onEmailLogin }: SocialLog
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
+        scrollEnabled={true}
         bounces={false}
         style={styles.scrollView}>
         {/* 상단 환영 메시지 */}
