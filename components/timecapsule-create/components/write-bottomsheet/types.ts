@@ -119,8 +119,6 @@ export interface UserBottomSheetProps {
   onSave?: (content: any) => Promise<void>;
   /** 대기실 설정값 (옵션, 없으면 기본값 사용) */
   roomSettings?: RoomSettingsResponse | null;
-  /** 읽기 전용 모드 (제출 완료된 참여자용) */
-  isReadOnly?: boolean;
 }
 
 /**
@@ -212,6 +210,48 @@ export interface ContentSubmitErrorResponse {
   error: string;
   /** 에러 메시지 */
   message: string;
+}
+
+/**
+ * ========================================
+ * PATCH 콘텐츠 부분 수정 API 타입 정의
+ * ========================================
+ */
+
+/**
+ * PATCH 요청용 FormData 타입 (참고용)
+ * 모든 필드가 선택적이며, 전달된 필드만 수정됩니다.
+ *
+ * - text_message: 전달 시 텍스트 메시지 교체
+ * - images: 전달 시 이미지 전체 교체 (최대 5개)
+ * - music: 전달 시 음성 파일 교체
+ * - video: 전달 시 동영상 파일 교체
+ */
+export interface ContentPatchFormData {
+  /** 텍스트 메시지 (선택, 전달 시 교체) */
+  text_message?: string;
+  /** 이미지 파일 배열 (선택, 전달 시 전체 교체, 최대 5개) */
+  images?: File[];
+  /** 음성 파일 (선택, 전달 시 교체) */
+  music?: File;
+  /** 동영상 파일 (선택, 전달 시 교체) */
+  video?: File;
+}
+
+/**
+ * useUpdateContent Hook 반환 타입
+ */
+export interface UseUpdateContentReturn {
+  /** 콘텐츠 수정 함수 */
+  updateContent: (data: UserContentFormData, capsuleId: string, originalData?: UserContentFormData) => Promise<void>;
+  /** 수정 중 상태 */
+  isUpdating: boolean;
+  /** 에러 메시지 */
+  error: string | null;
+  /** 업로드 진행 상태 메시지 */
+  uploadProgress: string;
+  /** 변경 사항 확인 함수 */
+  hasChanges: (data: UserContentFormData, originalData?: UserContentFormData) => boolean;
 }
 
 /**

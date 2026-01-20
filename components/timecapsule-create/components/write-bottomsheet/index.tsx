@@ -22,7 +22,7 @@ import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Alert, Image, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
-import { useMediaPicker, useSubmitContent } from './hooks';
+import { useMediaPicker, useSubmitContent, useUpdateContent } from './hooks';
 import { styles } from './styles';
 import type { UserBottomSheetProps, UserContentFormData } from './types';
 
@@ -34,7 +34,6 @@ export default function UserBottomSheet({
   inviteCode,
   onSave,
   roomSettings,
-  isReadOnly = false,
 }: UserBottomSheetProps) {
   // 모달 제어 Hook
   const { openModal, closeModal } = useModal();
@@ -53,6 +52,9 @@ export default function UserBottomSheet({
 
   // ⭐ 이미 한 번 콘텐츠를 불러왔는지 여부 (캡슐 ID별로 추적)
   const hasLoadedRef = React.useRef<string | null>(null);
+
+  // ⭐ 원본 데이터 저장 (수정 시 변경 감지용)
+  const [originalData, setOriginalData] = React.useState<UserContentFormData | null>(null);
 
   // react-hook-form 설정
   const {
@@ -96,19 +98,21 @@ export default function UserBottomSheet({
               ? myContent.data.text_message
               : JSON.stringify(myContent.data.text_message);
 
-          reset({
+          const loadedData: UserContentFormData = {
             textContent,
             photos: myContent.data.images?.map((img) => img.url) || [],
             music: myContent.data.music?.url || null,
             video: myContent.data.video?.url || null,
-          });
+          };
 
-          // ⭐ 서버 status가 COMPLETED이면 이미 제출 완료 상태로 설정
-          if (myContent.data.status === 'COMPLETED') {
-            setHasSubmitted(true);
-          } else {
-            setHasSubmitted(false);
-          }
+          reset(loadedData);
+
+          // ⭐ 원본 데이터 저장 (수정 시 변경 감지용)
+          setOriginalData(loadedData);
+
+          // ⭐ 서버에서 기존 콘텐츠가 존재하면 상태와 무관하게 수정 모드로 전환
+          // (WAITING/PENDING 상태에서도 PATCH를 사용하도록 강제)
+          setHasSubmitted(true);
 
           // ⭐ 불러오기 완료 표시
           hasLoadedRef.current = capsuleId;
@@ -126,6 +130,7 @@ export default function UserBottomSheet({
 
         if (isNotFoundError) {
           setHasSubmitted(false); // ⭐ 아직 제출 안 함
+          setOriginalData(null); // ⭐ 원본 데이터 없음
           // participant.content 폴백 사용 안 함 - 서버가 소스 오브 트루스
           reset({
             textContent: '',
@@ -139,6 +144,7 @@ export default function UserBottomSheet({
         } else {
           // 에러 발생 시에도 빈 폼으로 초기화 (서버를 신뢰)
           setHasSubmitted(false);
+          setOriginalData(null); // ⭐ 원본 데이터 없음
           reset({
             textContent: '',
             photos: [],
@@ -191,6 +197,18 @@ export default function UserBottomSheet({
     validateContent,
     uploadProgress, // ⭐ 추가
   } = useSubmitContent();
+
+  // ⭐ useUpdateContent Hook 사용 (기존 콘텐츠 수정용)
+  const {
+    updateContent,
+    isUpdating,
+    error: updateError,
+    uploadProgress: updateProgress,
+    hasChanges,
+  } = useUpdateContent();
+
+  // ⭐ 수정 모드 여부 (이미 제출 완료된 콘텐츠가 있는 경우)
+  const isEditMode = hasSubmitted;
 
   // 사진 삭제 핸들러
   const handleDeletePhoto = (index: number) => {
@@ -320,23 +338,23 @@ export default function UserBottomSheet({
 
   // 폼 제출 핸들러
   const onFormSubmit = async (data: UserContentFormData) => {
-    // ⭐ 이미 제출 완료된 경우 저장 방지
-    if (hasSubmitted || isReadOnly) {
+    // ⭐ 수정 모드에서 변경 사항이 없는 경우 안내
+    if (isEditMode && originalData && !hasChanges(data, originalData)) {
       openModal({
         width: 344,
         height: 'auto',
         closeOnBackdropPress: true,
         children: (
           <View style={{ padding: 24, alignItems: 'center' }}>
-            {/* 경고 아이콘 */}
+            {/* 정보 아이콘 */}
             <View style={{ marginBottom: 16 }}>
-              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              <Icon name="information-line" size={64} color={Colors.blue[500]} />
             </View>
 
             {/* 타이틀 */}
             <Text
               style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              저장 불가
+              변경 사항 없음
             </Text>
 
             {/* 설명 */}
@@ -347,7 +365,7 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
+              수정된 내용이 없습니다.
             </Text>
 
             {/* 확인 버튼 */}
@@ -358,8 +376,8 @@ export default function UserBottomSheet({
       return;
     }
 
-    // ⭐ 연타 방지: 이미 저장 중이면 즉시 무시
-    if (isSaving || isSubmitting) {
+    // ⭐ 연타 방지: 이미 저장/수정 중이면 즉시 무시
+    if (isSaving || isSubmitting || isUpdating) {
       return;
     }
 
@@ -468,21 +486,25 @@ export default function UserBottomSheet({
         return;
       }
 
-      // 부모 컴포넌트의 onSave가 있으면 호출 (우선순위 높음)
-      if (onSave) {
+      // ⭐ 수정 모드에서는 항상 PATCH API 사용 (POST로 덮어쓰는 문제 방지)
+      if (isEditMode) {
+        await updateContent(data, capsuleId, originalData || undefined);
+        setOriginalData(data);
+      } else if (onSave) {
+        // 신규 저장 시에만 부모 onSave 호출 (POST 흐름)
         await onSave({
           text: data.textContent,
           images: data.photos,
-          voiceRecording: data.music, // music을 voiceRecording으로 매핑
+          voiceRecording: data.music,
           video: data.video,
         });
       } else {
-        // ⭐ capsuleId 및 inviteCode 전달
+        // ⭐ 저장 모드: POST API 호출 (capsuleId 및 inviteCode 전달)
         await submitContent({ ...data, inviteCode }, capsuleId);
       }
 
-      // 제출 성공 시 모달 표시 후 바텀시트 닫기
-      // ⭐ 저장 성공 시 제출 완료 상태로 설정 (영구적으로 재수정 불가)
+      // 제출/수정 성공 시 모달 표시 후 바텀시트 닫기
+      // ⭐ 저장 성공 시 제출 완료 상태로 설정
       setHasSubmitted(true);
       // ⭐ 저장 성공 시 다음에 다시 열 때 최신 데이터를 불러올 수 있도록 초기화
       hasLoadedRef.current = null;
@@ -500,7 +522,7 @@ export default function UserBottomSheet({
             {/* 타이틀 */}
             <Text
               style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              저장 완료
+              {isEditMode ? '수정 완료' : '저장 완료'}
             </Text>
 
             {/* 설명 */}
@@ -511,7 +533,7 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              타임캡슐 내용이 저장되었습니다!
+              {isEditMode ? '타임캡슐 내용이 수정되었습니다!' : '타임캡슐 내용이 저장되었습니다!'}
             </Text>
 
             {/* 확인 버튼 */}
@@ -552,7 +574,7 @@ export default function UserBottomSheet({
             {/* 타이틀 */}
             <Text
               style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              저장 실패
+              {isEditMode ? '수정 실패' : '저장 실패'}
             </Text>
 
             {/* 에러 메시지 */}
@@ -563,7 +585,7 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              {err instanceof Error ? err.message : '저장에 실패했습니다.'}
+              {err instanceof Error ? err.message : isEditMode ? '수정에 실패했습니다.' : '저장에 실패했습니다.'}
             </Text>
 
             {/* 확인 버튼 */}
@@ -577,52 +599,9 @@ export default function UserBottomSheet({
   // react-hook-form의 handleSubmit 함수 저장
   const handleFormSubmit = handleSubmit(onFormSubmit);
 
-  // 저장 버튼 핸들러 (플랫폼별 분기: 웹=Modal, 앱=Alert)
+  // 저장/수정 버튼 핸들러 (플랫폼별 분기: 웹=Modal, 앱=Alert)
   const handleSave = () => {
-    // ⭐ 이미 제출 완료된 경우 또는 읽기 전용 모드인 경우 저장 불가
-    if (hasSubmitted || isReadOnly) {
-      if (Platform.OS === 'web') {
-        openModal({
-          width: 344,
-          height: 'auto',
-          closeOnBackdropPress: true,
-          children: (
-            <View style={{ padding: 24, alignItems: 'center' }}>
-              <View style={{ marginBottom: 16 }}>
-                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
-              </View>
-              <Text
-                style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-                저장 불가
-              </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                  marginBottom: 24,
-                  textAlign: 'center',
-                }}>
-                이미 제출 완료된 콘텐츠는 수정할 수 없습니다.
-              </Text>
-              <Button
-                label="확인"
-                variant="primary"
-                size="S"
-                fullWidth={true}
-                onPress={closeModal}
-              />
-            </View>
-          ),
-        });
-      } else {
-        Alert.alert('저장 불가', '이미 제출 완료된 콘텐츠는 수정할 수 없습니다.', [
-          { text: '확인', style: 'default' },
-        ]);
-      }
-      return;
-    }
-
-    // ⭐ 플랫폼별 저장 확인 다이얼로그
+    // ⭐ 플랫폼별 저장/수정 확인 다이얼로그
     if (Platform.OS === 'web') {
       // 웹: 커스텀 Modal 사용
       openModal({
@@ -632,11 +611,11 @@ export default function UserBottomSheet({
         children: (
           <View style={{ padding: 24, alignItems: 'center' }}>
             <View style={{ marginBottom: 16 }}>
-              <Icon name="save-line" size={64} color={Colors.blue[500]} />
+              <Icon name={isEditMode ? 'edit-line' : 'save-line'} size={64} color={Colors.blue[500]} />
             </View>
             <Text
               style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
-              저장하시겠어요?
+              {isEditMode ? '수정하시겠어요?' : '저장하시겠어요?'}
             </Text>
             <Text
               style={{
@@ -645,11 +624,11 @@ export default function UserBottomSheet({
                 marginBottom: 24,
                 textAlign: 'center',
               }}>
-              한번 저장한 내용은 수정할 수 없어요
+              {isEditMode ? '변경된 내용을 저장합니다.' : '작성한 내용을 저장합니다.'}
             </Text>
             <DualButton
               cancelLabel="취소"
-              confirmLabel="저장하기"
+              confirmLabel={isEditMode ? '수정하기' : '저장하기'}
               size="S"
               cancelVariant="outline"
               confirmVariant="primary"
@@ -667,15 +646,15 @@ export default function UserBottomSheet({
     } else {
       // 앱: React Native Alert 사용
       Alert.alert(
-        '저장하시겠어요?',
-        '한번 저장한 내용은 수정할 수 없어요',
+        isEditMode ? '수정하시겠어요?' : '저장하시겠어요?',
+        isEditMode ? '변경된 내용을 저장합니다.' : '작성한 내용을 저장합니다.',
         [
           {
             text: '취소',
             style: 'cancel',
           },
           {
-            text: '저장하기',
+            text: isEditMode ? '수정하기' : '저장하기',
             style: 'default',
             onPress: async () => {
               await handleFormSubmit();
@@ -741,42 +720,41 @@ export default function UserBottomSheet({
   };
 
   // 하단 고정 버튼 영역 (공통 컴포넌트의 footer 스타일 사용)
-  const renderFooter = () => (
-    <>
-      {!isReadOnly && !hasSubmitted ? (
-        <>
-          <DualButton
-            cancelLabel="취소"
-            confirmLabel={
-              isSaving || isSubmitting
-                ? uploadProgress || '저장 중...' // ⭐ 업로드 진행 상태 표시
-                : '저장'
-            }
-            size="M"
-            cancelVariant="outline"
-            confirmVariant="primary"
-            confirmDisabled={isSaving || isSubmitting || hasSubmitted} // ⭐ 제출 완료 시에도 비활성화
-            onCancelPress={() => {
-              handleCancel();
-            }}
-            onConfirmPress={() => {
-              handleSave();
-            }}
-          />
-          <Text style={styles.hintText}>한번 저장한 내용은 수정할 수 없어요</Text>
-        </>
-      ) : (
-        <View style={{ paddingVertical: 16 }}>
-          <Button label="닫기" variant="primary" size="L" fullWidth={true} onPress={onClose} />
-          {hasSubmitted && !isReadOnly && (
-            <Text style={[styles.hintText, { marginTop: 8, textAlign: 'center' }]}>
-              이미 제출 완료된 콘텐츠입니다
-            </Text>
-          )}
-        </View>
-      )}
-    </>
-  );
+  const renderFooter = () => {
+    // ⭐ 현재 진행 중인 작업 상태 확인
+    const isProcessing = isSaving || isSubmitting || isUpdating;
+    const currentProgress = isEditMode ? updateProgress : uploadProgress;
+
+    // ⭐ 버튼 라벨 결정
+    const getConfirmLabel = () => {
+      if (isProcessing) {
+        return currentProgress || (isEditMode ? '수정 중...' : '저장 중...');
+      }
+      return isEditMode ? '수정' : '저장';
+    };
+
+    return (
+      <>
+        <DualButton
+          cancelLabel="취소"
+          confirmLabel={getConfirmLabel()}
+          size="M"
+          cancelVariant="outline"
+          confirmVariant="primary"
+          confirmDisabled={isProcessing}
+          onCancelPress={() => {
+            handleCancel();
+          }}
+          onConfirmPress={() => {
+            handleSave();
+          }}
+        />
+        <Text style={styles.hintText}>
+          {isEditMode ? '수정된 내용을 저장합니다' : '저장 후에도 수정할 수 있어요'}
+        </Text>
+      </>
+    );
+  };
 
   return (
     <BottomSheet isVisible={isVisible} onClose={onClose} footer={renderFooter()}>
@@ -785,9 +763,7 @@ export default function UserBottomSheet({
         <View style={styles.header}>
           <Text style={styles.title}>MY CONTENTS</Text>
           <Text style={styles.subtitle}>
-            {hasSubmitted || isReadOnly
-              ? '제출 완료된 콘텐츠입니다 (수정 불가)'
-              : '나만의 타임캡슐 내용을 작성해요'}
+            {isEditMode ? '콘텐츠를 수정할 수 있어요' : '나만의 타임캡슐 내용을 작성해요'}
           </Text>
         </View>
 
@@ -806,21 +782,13 @@ export default function UserBottomSheet({
               }}
               render={({ field: { onChange, value } }) => (
                 <TextInput
-                  style={[
-                    styles.textArea,
-                    (isReadOnly || hasSubmitted) && {
-                      backgroundColor: Colors.grey[50],
-                      color: Colors.black[500],
-                      borderRadius: 16, // ⭐ 컨테이너와 동일한 borderRadius 적용
-                    },
-                  ]}
+                  style={styles.textArea}
                   placeholder="당신의 이야기를 남겨주세요..."
                   placeholderTextColor={Colors.grey[400]}
                   multiline
                   value={value}
                   onChangeText={onChange}
                   textAlignVertical="top"
-                  editable={!isReadOnly && !hasSubmitted}
                 />
               )}
             />
@@ -835,17 +803,14 @@ export default function UserBottomSheet({
               사진 ({watch('photos').length}/{maxImagesPerPerson})
             </Text>
           </View>
-          {/* ⭐ 읽기 전용 모드가 아닐 때만 사진 추가 버튼 표시 */}
-          {!isReadOnly && !hasSubmitted && (
-            <Button
-              label={isPickingImage ? '선택 중...' : '사진 추가'}
-              variant="outline"
-              size="M"
-              icon="ri-add-line"
-              disabled={isPickingImage || currentPhotos.length >= maxImagesPerPerson}
-              onPress={handleAddPhoto}
-            />
-          )}
+          <Button
+            label={isPickingImage ? '선택 중...' : '사진 추가'}
+            variant="outline"
+            size="M"
+            icon="ri-add-line"
+            disabled={isPickingImage || currentPhotos.length >= maxImagesPerPerson}
+            onPress={handleAddPhoto}
+          />
 
           {/* 추가된 사진 미리보기 - 그리드 배치 (3 + 2) */}
           <Controller
@@ -875,13 +840,11 @@ export default function UserBottomSheet({
                           </Text>
                         </View>
                         {/* 삭제 버튼 */}
-                        {!isReadOnly && !hasSubmitted && (
-                          <Pressable
-                            style={styles.deleteButton}
-                            onPress={() => handleDeletePhoto(index)}>
-                            <Icon name="close-line" size={20} color={Colors.black[500]} />
-                          </Pressable>
-                        )}
+                        <Pressable
+                          style={styles.deleteButton}
+                          onPress={() => handleDeletePhoto(index)}>
+                          <Icon name="close-line" size={20} color={Colors.black[500]} />
+                        </Pressable>
                       </View>
                     ))}
                   </View>
@@ -898,17 +861,14 @@ export default function UserBottomSheet({
               <Icon name="mic-line" size={20} color={Colors.black[500]} />
               <Text style={styles.sectionTitle}>음성 ({currentMusic ? 1 : 0}/1)</Text>
             </View>
-            {/* ⭐ 읽기 전용 모드가 아닐 때만 음성 추가/교체 버튼 표시 */}
-            {!isReadOnly && !hasSubmitted && (
-              <Button
-                label={currentMusic ? '음성 교체' : '음성 추가'}
-                variant="outline"
-                size="M"
-                icon="ri-add-line"
-                disabled={isAudioAttachmentVisible}
-                onPress={handleAddMusic}
-              />
-            )}
+            <Button
+              label={currentMusic ? '음성 교체' : '음성 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isAudioAttachmentVisible}
+              onPress={handleAddMusic}
+            />
 
             {/* 선택된 음성 표시 */}
             {currentMusic && (
@@ -919,13 +879,11 @@ export default function UserBottomSheet({
                     {currentMusic.split('/').pop() || '음성 파일'}
                   </Text>
                 </View>
-                {!isReadOnly && !hasSubmitted && (
-                  <Pressable
-                    style={styles.mediaDeleteButton}
-                    onPress={() => setValue('music', null, { shouldDirty: true })}>
-                    <Icon name="close-line" size={20} color={Colors.black[500]} />
-                  </Pressable>
-                )}
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('music', null, { shouldDirty: true })}>
+                  <Icon name="close-line" size={20} color={Colors.black[500]} />
+                </Pressable>
               </View>
             )}
           </View>
@@ -938,17 +896,14 @@ export default function UserBottomSheet({
               <Icon name="video-line" size={20} color={Colors.black[500]} />
               <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
             </View>
-            {/* ⭐ 읽기 전용 모드가 아닐 때만 동영상 추가/교체 버튼 표시 */}
-            {!isReadOnly && !hasSubmitted && (
-              <Button
-                label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
-                variant="outline"
-                size="M"
-                icon="ri-add-line"
-                disabled={isPickingVideo}
-                onPress={handleAddVideo}
-              />
-            )}
+            <Button
+              label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isPickingVideo}
+              onPress={handleAddVideo}
+            />
 
             {/* 선택된 동영상 표시 */}
             {currentVideo && (
@@ -959,13 +914,11 @@ export default function UserBottomSheet({
                     {currentVideo.split('/').pop() || '동영상 파일'}
                   </Text>
                 </View>
-                {!isReadOnly && !hasSubmitted && (
-                  <Pressable
-                    style={styles.mediaDeleteButton}
-                    onPress={() => setValue('video', null, { shouldDirty: true })}>
-                    <Icon name="close-line" size={20} color={Colors.black[500]} />
-                  </Pressable>
-                )}
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('video', null, { shouldDirty: true })}>
+                  <Icon name="close-line" size={20} color={Colors.black[500]} />
+                </Pressable>
               </View>
             )}
           </View>

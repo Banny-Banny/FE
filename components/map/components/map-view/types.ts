@@ -61,3 +61,4 @@ export interface CapsuleMarker {
   lng: number;
   data: CapsuleItem; // 마커에 포함될 전체 데이터
 }
+
