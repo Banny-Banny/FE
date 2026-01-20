@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     paddingBottom: 24,
   },
   header: {
-    marginBottom: 48, // Figma: 뒤로가기 버튼과 제목 사이 간격
+    marginBottom: 20, // Figma: 뒤로가기 버튼과 제목 사이 간격
   },
   backButton: {
     width: 40, // Figma: 39.989px → 40px
@@ -61,8 +61,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   titleSection: {
-    marginBottom: 48, // Figma: 제목 섹션과 폼 사이 간격 (47.999px → 48px)
-    gap: 12, // Figma: 제목과 설명 사이 간격 (11.991px → 12px)
+    marginBottom: 36, // Figma: 제목 섹션과 폼 사이 간격 (47.999px → 48px)
+    gap: 8, // Figma: 제목과 설명 사이 간격 (11.991px → 12px)
   },
   title: {
     fontFamily: FontFamily.variable,
@@ -88,6 +88,9 @@ export const styles = StyleSheet.create({
   label: {
     ...Typography.body.body11,
     color: Colors.black[500],
+  },
+  requiredMark: {
+    color: Colors.red[500],
   },
   input: {
     fontFamily: FontFamily.variable,

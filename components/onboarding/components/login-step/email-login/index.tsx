@@ -170,7 +170,10 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
             <>
               {/* 이름 입력 */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>이름</Text>
+                <Text style={styles.label}>
+                  이름
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <Controller
                   control={signupForm.control}
                   name="name"
@@ -192,7 +195,10 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
 
               {/* 전화번호 입력 */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>전화번호</Text>
+                <Text style={styles.label}>
+                  전화번호
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <Controller
                   control={signupForm.control}
                   name="phoneNumber"
@@ -216,9 +222,9 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
                 <ErrorMessage message={signupForm.formState.errors.phoneNumber?.message} />
               </View>
 
-              {/* 이메일 입력 (선택사항) */}
+              {/* 이메일 입력 */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>이메일 (선택사항)</Text>
+                <Text style={styles.label}>이메일</Text>
                 <Controller
                   control={signupForm.control}
                   name="email"
@@ -244,7 +250,10 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
 
               {/* 비밀번호 입력 */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>비밀번호</Text>
+                <Text style={styles.label}>
+                  비밀번호
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <PasswordInput
                   control={signupForm.control}
                   name="password"
@@ -256,7 +265,10 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
 
               {/* 비밀번호 확인 입력 */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>비밀번호 확인</Text>
+                <Text style={styles.label}>
+                  비밀번호 확인
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
                 <PasswordInput
                   control={signupForm.control}
                   name="confirmPassword"
