@@ -109,58 +109,58 @@
 
 #### 2.1 Mock 데이터 훅
 
-- [ ] T039 Create `components/customer-service/hooks/useMockMessages.ts` to return chat message list from Mock data
-- [ ] T040 Add inquiryId filtering (Mock) to `components/customer-service/hooks/useMockMessages.ts`
-- [ ] T041 Add message sorting (chronological order) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T039 Create `components/customer-service/hooks/useMockMessages.ts` to return chat message list from Mock data
+- [X] T040 Add inquiryId filtering (Mock) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T041 Add message sorting (chronological order) to `components/customer-service/hooks/useMockMessages.ts`
 
 #### 2.2 채팅 메시지 리스트 컴포넌트
 
-- [ ] T042 [P] Create `components/customer-service/components/chat-message-list/` directory
-- [ ] T043 Create `components/customer-service/components/chat-message-list/index.tsx` as message list container
-- [ ] T044 [P] Create `components/customer-service/components/chat-message-list/message-bubble.tsx` with user/admin message bubble distinction
-- [ ] T045 [P] Create `components/customer-service/components/chat-message-list/message-time.tsx` for message time display
-- [ ] T046 [P] Create `components/customer-service/components/chat-message-list/message-status.tsx` for message send status display (sending, sent, failed)
-- [ ] T047 Create `components/customer-service/components/chat-message-list/types.ts` with Props types
-- [ ] T048 Create `components/customer-service/components/chat-message-list/styles.ts` with StyleSheet definitions
+- [X] T042 [P] Create `components/customer-service/components/chat-message-list/` directory
+- [X] T043 Create `components/customer-service/components/chat-message-list/index.tsx` as message list container
+- [X] T044 [P] Create `components/customer-service/components/chat-message-list/message-bubble.tsx` with user/admin message bubble distinction
+- [X] T045 [P] Create `components/customer-service/components/chat-message-list/message-time.tsx` for message time display
+- [X] T046 [P] Create `components/customer-service/components/chat-message-list/message-status.tsx` for message send status display (sending, sent, failed)
+- [X] T047 Create `components/customer-service/components/chat-message-list/types.ts` with Props types
+- [X] T048 Create `components/customer-service/components/chat-message-list/styles.ts` with StyleSheet definitions
 
 #### 2.3 채팅 입력창 컴포넌트
 
-- [ ] T049 [P] Create `components/customer-service/components/chat-input/` directory
-- [ ] T050 Create `components/customer-service/components/chat-input/index.tsx` as chat input container
-- [ ] T051 [P] Create `components/customer-service/components/chat-input/text-input.tsx` for text input field
-- [ ] T052 [P] Create `components/customer-service/components/chat-input/send-button.tsx` for send button
-- [ ] T053 [P] Create `components/customer-service/components/chat-input/attachment-button.tsx` for attachment file button (optional)
-- [ ] T054 Create `components/customer-service/components/chat-input/types.ts` with Props types
-- [ ] T055 Create `components/customer-service/components/chat-input/styles.ts` with StyleSheet definitions
+- [X] T049 [P] Create `components/customer-service/components/chat-input/` directory
+- [X] T050 Create `components/customer-service/components/chat-input/index.tsx` as chat input container
+- [X] T051 [P] Create `components/customer-service/components/chat-input/text-input.tsx` for text input field
+- [X] T052 [P] Create `components/customer-service/components/chat-input/send-button.tsx` for send button
+- [X] T053 [P] Create `components/customer-service/components/chat-input/attachment-button.tsx` for attachment file button (optional)
+- [X] T054 Create `components/customer-service/components/chat-input/types.ts` with Props types
+- [X] T055 Create `components/customer-service/components/chat-input/styles.ts` with StyleSheet definitions
 
 #### 2.4 채팅 헤더 컴포넌트
 
-- [ ] T056 [P] Create `components/customer-service/components/chat-header/` directory
-- [ ] T057 Create `components/customer-service/components/chat-header/index.tsx` for chat header (admin info, connection status)
-- [ ] T058 [P] Create `components/customer-service/components/chat-header/connection-status.tsx` for connection status display
-- [ ] T059 Create `components/customer-service/components/chat-header/types.ts` with Props types
-- [ ] T060 Create `components/customer-service/components/chat-header/styles.ts` with StyleSheet definitions
+- [X] T056 [P] Create `components/customer-service/components/chat-header/` directory
+- [X] T057 Create `components/customer-service/components/chat-header/index.tsx` for chat header (admin info, connection status)
+- [X] T058 [P] Create `components/customer-service/components/chat-header/connection-status.tsx` for connection status display
+- [X] T059 Create `components/customer-service/components/chat-header/types.ts` with Props types
+- [X] T060 Create `components/customer-service/components/chat-header/styles.ts` with StyleSheet definitions
 
 #### 2.5 채팅 페이지 통합
 
-- [ ] T061 [P] Create `components/customer-service/components/chat-room/` directory
-- [ ] T062 Create `components/customer-service/components/chat-room/index.tsx` as chat room full layout
-- [ ] T063 Add KeyboardAvoidingView or react-native-keyboard-aware-scroll-view to `components/customer-service/components/chat-room/index.tsx`
-- [ ] T064 Integrate message list, input, and header (using Mock data) in `components/customer-service/components/chat-room/index.tsx`
-- [ ] T065 Create `app/(tabs)/customer-service/[inquiryId].tsx` to render chat room Feature Container
-- [ ] T066 Add inquiryId parameter to load inquiry info from Mock data in `app/(tabs)/customer-service/[inquiryId].tsx`
+- [X] T061 [P] Create `components/customer-service/components/chat-room/` directory
+- [X] T062 Create `components/customer-service/components/chat-room/index.tsx` as chat room full layout
+- [X] T063 Add KeyboardAvoidingView or react-native-keyboard-aware-scroll-view to `components/customer-service/components/chat-room/index.tsx`
+- [X] T064 Integrate message list, input, and header (using Mock data) in `components/customer-service/components/chat-room/index.tsx`
+- [X] T065 Create `app/(tabs)/customer-service/[inquiryId].tsx` to render chat room Feature Container
+- [X] T066 Add inquiryId parameter to load inquiry info from Mock data in `app/(tabs)/customer-service/[inquiryId].tsx`
 
 #### 2.6 키보드 및 스크롤 처리
 
-- [ ] T067 Implement auto-scroll when keyboard appears in `components/customer-service/components/chat-room/index.tsx`
-- [ ] T068 Implement auto-scroll when new message arrives (Mock) in `components/customer-service/components/chat-room/index.tsx`
-- [ ] T069 Add trigger for loading past messages based on scroll position in `components/customer-service/components/chat-room/index.tsx`
+- [X] T067 Implement auto-scroll when keyboard appears in `components/customer-service/components/chat-room/index.tsx`
+- [X] T068 Implement auto-scroll when new message arrives (Mock) in `components/customer-service/components/chat-room/index.tsx`
+- [X] T069 Add trigger for loading past messages based on scroll position in `components/customer-service/components/chat-room/index.tsx`
 
 #### 2.7 애니메이션 구현
 
-- [ ] T070 Add message animation using react-native-reanimated in `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T071 Add message send animation in `components/customer-service/components/chat-input/send-button.tsx`
-- [ ] T072 Add loading indicator animation in `components/customer-service/components/chat-message-list/index.tsx`
+- [X] T070 Add message animation using react-native-reanimated in `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T071 Add message send animation in `components/customer-service/components/chat-input/send-button.tsx`
+- [X] T072 Add loading indicator animation in `components/customer-service/components/chat-message-list/index.tsx`
 
 ---
 
@@ -176,35 +176,35 @@
 
 #### 3.1 파일 선택 컴포넌트
 
-- [ ] T073 [P] Create `components/customer-service/components/file-picker/` directory
-- [ ] T074 Create `components/customer-service/components/file-picker/index.tsx` as file picker component
-- [ ] T075 [P] Create `components/customer-service/components/file-picker/image-picker.tsx` for image selection using expo-image-picker
-- [ ] T076 [P] Create `components/customer-service/components/file-picker/document-picker.tsx` for file selection using expo-document-picker
-- [ ] T077 Create `components/customer-service/components/file-picker/types.ts` with Props types
-- [ ] T078 Create `components/customer-service/components/file-picker/styles.ts` with StyleSheet definitions
+- [X] T073 [P] Create `components/customer-service/components/file-picker/` directory
+- [X] T074 Create `components/customer-service/components/file-picker/index.tsx` as file picker component
+- [X] T075 [P] Create `components/customer-service/components/file-picker/image-picker.tsx` for image selection using expo-image-picker
+- [X] T076 [P] Create `components/customer-service/components/file-picker/document-picker.tsx` for file selection using expo-document-picker
+- [X] T077 Create `components/customer-service/components/file-picker/types.ts` with Props types
+- [X] T078 Create `components/customer-service/components/file-picker/styles.ts` with StyleSheet definitions
 
 #### 3.2 파일 미리보기 컴포넌트
 
-- [ ] T079 [P] Create `components/customer-service/components/file-preview/` directory
-- [ ] T080 Create `components/customer-service/components/file-preview/index.tsx` as file preview container
-- [ ] T081 [P] Create `components/customer-service/components/file-preview/image-preview.tsx` for image preview
-- [ ] T082 [P] Create `components/customer-service/components/file-preview/file-preview.tsx` for file preview (filename, size)
-- [ ] T083 Create `components/customer-service/components/file-preview/types.ts` with Props types
-- [ ] T084 Create `components/customer-service/components/file-preview/styles.ts` with StyleSheet definitions
+- [X] T079 [P] Create `components/customer-service/components/file-preview/` directory
+- [X] T080 Create `components/customer-service/components/file-preview/index.tsx` as file preview container
+- [X] T081 [P] Create `components/customer-service/components/file-preview/image-preview.tsx` for image preview
+- [X] T082 [P] Create `components/customer-service/components/file-preview/file-preview.tsx` for file preview (filename, size)
+- [X] T083 Create `components/customer-service/components/file-preview/types.ts` with Props types
+- [X] T084 Create `components/customer-service/components/file-preview/styles.ts` with StyleSheet definitions
 
 #### 3.3 파일 업로드 처리 (Mock)
 
-- [ ] T085 Create `components/customer-service/hooks/useMockFileUpload.ts` for file upload hook (Mock)
-- [ ] T086 Add file size validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T087 Add file type validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T088 Add upload progress state management (Mock) to `components/customer-service/hooks/useMockFileUpload.ts`
-- [ ] T089 Add Mock message addition after upload completion to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T085 Create `components/customer-service/hooks/useMockFileUpload.ts` for file upload hook (Mock)
+- [X] T086 Add file size validation to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T087 Add file type validation to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T088 Add upload progress state management (Mock) to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T089 Add Mock message addition after upload completion to `components/customer-service/hooks/useMockFileUpload.ts`
 
 #### 3.4 채팅 메시지에 파일 표시
 
-- [ ] T090 Add image message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T091 Add file message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T092 Add file download functionality (optional) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T090 Add image message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T091 Add file message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T092 Add file download functionality (optional) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
 
 ---
 
@@ -220,33 +220,33 @@
 
 #### 4.1 읽지 않은 메시지 관리 (Mock)
 
-- [ ] T093 Add unread message count management (Mock data based) to `components/customer-service/hooks/useMockMessages.ts`
-- [ ] T094 Add message read processing logic (Mock) to `components/customer-service/hooks/useMockMessages.ts`
-- [ ] T095 Add read status display to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
+- [X] T093 Add unread message count management (Mock data based) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T094 Add message read processing logic (Mock) to `components/customer-service/hooks/useMockMessages.ts`
+- [X] T095 Add read status display to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
 
 #### 4.2 메시지 전송 상태 관리 (Mock)
 
-- [ ] T096 Add sending status display to `components/customer-service/components/chat-message-list/message-status.tsx`
-- [ ] T097 Add retry functionality on send failure (Mock) to `components/customer-service/components/chat-input/send-button.tsx`
-- [ ] T098 Add send failure message display to `components/customer-service/components/chat-message-list/message-status.tsx`
+- [X] T096 Add sending status display to `components/customer-service/components/chat-message-list/message-status.tsx`
+- [X] T097 Add retry functionality on send failure (Mock) to `components/customer-service/components/chat-input/send-button.tsx`
+- [X] T098 Add send failure message display to `components/customer-service/components/chat-message-list/message-status.tsx`
 
 #### 4.3 연결 상태 관리 (Mock)
 
-- [ ] T099 Add connection status display (connected/disconnected, Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
-- [ ] T100 Add auto-reconnect UI on disconnection (Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
-- [ ] T101 Add UI feedback based on connection status to `components/customer-service/components/chat-header/index.tsx`
+- [X] T099 Add connection status display (connected/disconnected, Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
+- [X] T100 Add auto-reconnect UI on disconnection (Mock) to `components/customer-service/components/chat-header/connection-status.tsx`
+- [X] T101 Add UI feedback based on connection status to `components/customer-service/components/chat-header/index.tsx`
 
 #### 4.4 성능 최적화
 
-- [ ] T102 Optimize message list with FlatList virtualization in `components/customer-service/components/chat-message-list/index.tsx`
-- [ ] T103 Add message memoization (React.memo) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [ ] T104 Minimize unnecessary re-renders in `components/customer-service/components/chat-room/index.tsx`
-- [ ] T105 Add image optimization (caching, resizing) to `components/customer-service/components/file-preview/image-preview.tsx`
+- [X] T102 Optimize message list with FlatList virtualization in `components/customer-service/components/chat-message-list/index.tsx`
+- [X] T103 Add message memoization (React.memo) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T104 Minimize unnecessary re-renders in `components/customer-service/components/chat-room/index.tsx`
+- [X] T105 Add image optimization (caching, resizing) to `components/customer-service/components/file-preview/image-preview.tsx`
 
 #### 4.5 문의 상태 업데이트 (Mock)
 
-- [ ] T106 Add inquiry status change handling (Mock, is_resolved, status) to `components/customer-service/hooks/useMockInquiries.ts`
-- [ ] T107 Add UI display based on inquiry status to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
+- [X] T106 Add inquiry status change handling (Mock, is_resolved, status) to `components/customer-service/hooks/useMockInquiries.ts`
+- [X] T107 Add UI display based on inquiry status to `components/customer-service/components/inquiry-list/inquiry-item.tsx`
 
 ---
 
@@ -369,11 +369,11 @@
 - [x] 업로드 진행 상태가 표시됨 (Mock)
 
 ### Phase 4
-- [x] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
-- [x] 메시지 전송 상태가 정확히 표시됨 (Mock)
-- [x] 연결 상태가 정확히 표시됨 (Mock)
-- [x] 성능이 최적화됨 (스크롤이 부드러움)
-- [x] 재연결 UI가 정상 동작함 (Mock)
+- [X] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
+- [X] 메시지 전송 상태가 정확히 표시됨 (Mock)
+- [X] 연결 상태가 정확히 표시됨 (Mock)
+- [X] 성능이 최적화됨 (스크롤이 부드러움)
+- [X] 재연결 UI가 정상 동작함 (Mock)
 
 ### Phase 5
 - [x] WebSocket 연결이 정상적으로 동작함

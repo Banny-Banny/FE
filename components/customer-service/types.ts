@@ -42,6 +42,18 @@ export interface Inquiry {
 }
 
 /**
+ * 파일 첨부 타입
+ */
+export interface MessageAttachment {
+  id: string;
+  type: 'IMAGE' | 'FILE';
+  name: string;
+  url: string;
+  size?: number; // 바이트 단위
+  mimeType?: string;
+}
+
+/**
  * 채팅 메시지 타입
  */
 export interface ChatMessage {
@@ -51,6 +63,7 @@ export interface ChatMessage {
   sender_user_id?: string;
   sender_admin_id?: string;
   content: string;
+  attachments?: MessageAttachment[]; // 파일 첨부 (선택사항)
   is_read_by_admin: boolean;
   is_read_by_user: boolean;
   created_at: string; // ISO 8601 형식

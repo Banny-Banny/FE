@@ -59,6 +59,18 @@ export const mockInquiries: Inquiry[] = [
     created_at: '2024-01-10T08:00:00Z',
     updated_at: '2024-01-10T09:00:00Z',
   },
+  {
+    id: 'inquiry-5',
+    user_id: 'user-1',
+    title: '파일 첨부 문의',
+    content: '이미지를 첨부했습니다. 확인 부탁드립니다.',
+    is_resolved: false,
+    status: 'PENDING' as InquiryStatus,
+    last_message_at: '2024-01-16T10:20:00Z',
+    last_message_preview: '첨부해주신 파일들을 확인했습니다. 처리해드리겠습니다.',
+    created_at: '2024-01-16T10:00:00Z',
+    updated_at: '2024-01-16T10:20:00Z',
+  },
 ];
 
 /**
