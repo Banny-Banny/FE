@@ -31,6 +31,8 @@
 | 15   | `react-hook-form`                           | `^7.68.0`   | 25-12-18  | Form          | 폼 상태 관리 및 검증 라이브러리        |
 | 16   | `@react-native-async-storage/async-storage` | `^2.2.0`    | 25-12-21  | Utilities     | 비동기 키-값 저장소 (인증 토큰 저장용) |
 | 17   | `expo-location`                             | `^19.0.8`   | 25-12-29  | Location      | 위치 권한 및 현재 위치 정보 가져오기   |
+| 18   | `zod`                                       | `^3.22.0`   | 25-01-XX  | Form          | TypeScript 우선 스키마 검증 라이브러리 |
+| 19   | `@hookform/resolvers`                      | `^3.3.0`    | 25-01-XX  | Form          | React Hook Form과 Zod 통합 리졸버     |
 
 ---
 
@@ -326,6 +328,28 @@
 | **설치 이유**   | React에서 폼 상태 관리 및 검증을 위한 경량 라이브러리. 최소한의 리렌더링으로 성능 최적화를 제공하며, zod와 함께 사용하여 타입 안전한 폼 검증 구현 |
 | **주요 사용처** | 프로젝트 내 모든 폼 컴포넌트 (예: `components/map/components/egg-form`, `components/timecapsule-create` 등)에서 폼 상태 관리 및 검증 로직 구현    |
 
+#### 26. zod
+
+| 항목            | 내용                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `zod`                                                                                                                                             |
+| **버전**        | `^3.22.0`                                                                                                                                         |
+| **설치 날짜**   | 25-01-XX                                                                                                                                          |
+| **카테고리**    | Form Validation                                                                                                                                   |
+| **설치 이유**   | TypeScript 우선 스키마 검증 라이브러리. 타입 안전성을 보장하며 React Hook Form과 통합하여 실시간 폼 검증 구현. 이메일, 비밀번호, 전화번호 등 복잡한 검증 규칙을 스키마로 정의 |
+| **주요 사용처** | `components/onboarding/components/login-step/email-login/`에서 이메일 로그인/회원가입 폼 검증 스키마 정의 및 실시간 검증 구현                      |
+
+#### 27. @hookform/resolvers
+
+| 항목            | 내용                                                                                                                                              |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **이름**        | `@hookform/resolvers`                                                                                                                            |
+| **버전**        | `^3.3.0`                                                                                                                                          |
+| **설치 날짜**   | 25-01-XX                                                                                                                                          |
+| **카테고리**    | Form Validation                                                                                                                                   |
+| **설치 이유**   | React Hook Form과 Zod, Yup 등 다양한 검증 라이브러리를 통합하는 리졸버. Zod 스키마를 React Hook Form의 resolver로 변환하여 타입 안전한 폼 검증 구현 |
+| **주요 사용처** | `components/onboarding/components/login-step/email-login/`에서 Zod 스키마를 React Hook Form과 통합하여 사용                                    |
+
 ---
 
 ### 결제 (Payment)
@@ -601,9 +625,9 @@
 
 - @tanstack/react-query, axios
 
-### Form Management (1개)
+### Form Management (3개)
 
-- react-hook-form
+- react-hook-form, zod, @hookform/resolvers
 
 ### Development (5개)
 
@@ -630,6 +654,7 @@
 | 1.0.12 | 25-12-21 | @react-native-async-storage/async-storage 추가 (인증 토큰 및 사용자 정보 저장용)                              | 최지호 |
 | 1.0.13 | 25-12-29 | @tosspayments/payment-sdk-react-native 추가 (토스페이먼츠 결제 SDK, 타임캡슐 생성 시 결제 기능 구현용)        | Cursor |
 | 1.0.14 | 25-01-10 | expo-video 추가 (비디오 플레이어 컴포넌트 구현용)                                                          | Cursor |
+| 1.0.15 | 25-01-XX | zod, @hookform/resolvers 추가 (이메일 로그인 폼 검증 강화 및 실시간 검증 구현용)                        | Cursor |
 
 ---
 

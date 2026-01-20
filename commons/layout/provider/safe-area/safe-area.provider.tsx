@@ -31,7 +31,7 @@ export const AppSafeAreaProvider: React.FC<AppSafeAreaProviderProps> = ({ childr
       isMapRoute: isMap,
       edges: isAuth
         ? (['top', 'bottom', 'left', 'right'] as const)
-        : (['top', 'left', 'right'] as const),
+        : (['top','bottom', 'left', 'right'] as const),
     };
   }, [segments, pathname]);
 
