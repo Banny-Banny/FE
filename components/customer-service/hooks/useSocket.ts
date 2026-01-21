@@ -1,96 +1,93 @@
 /**
  * components/customer-service/hooks/useSocket.ts
- * WebSocket 연결 관리 훅 (실제 Socket.IO)
+ * WebSocket 연결 관리 훅 (단순화 버전)
  * 
  * @description
- * - Phase 5: 실제 Socket.IO 클라이언트를 사용한 WebSocket 연결 관리
- * - 연결 실패, 재연결, 여러 기기 접속 등의 Edge Case 처리
+ * - 한 유저당 채팅방 1개만 존재
+ * - 불필요한 복잡도 제거
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'expo-router';
-import { io, Socket } from 'socket.io-client';
+import { STORAGE_KEYS } from '@/commons/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
+import { io, Socket } from 'socket.io-client';
 import { ConnectionStatus } from '../types';
-import { STORAGE_KEYS } from '@/commons/constants';
 
 interface UseSocketOptions {
-  inquiryId?: string; // 선택사항: 없으면 서버가 자동으로 새 문의 생성
   onConnectionChange?: (status: ConnectionStatus) => void;
   onRoomIdReceived?: (roomId: string) => void;
-  onInquiryIdReceived?: (inquiryId: string) => void; // 새 문의 생성 시 inquiryId 콜백
-  onError?: (message: string) => void; // 에러 메시지 콜백
+  onError?: (message: string) => void;
 }
 
 interface UseSocketReturn {
   connectionStatus: ConnectionStatus;
   roomId: string | null;
   isRoomEntered: boolean;
-  isActiveDevice: boolean; // 여러 기기 동시 접속 시 활성 기기 여부
   connect: () => void;
   disconnect: () => void;
   reconnect: () => void;
   joinRoom: () => Promise<void>;
-  socket: Socket | null; // Socket 인스턴스 (메시지 송수신에 사용)
+  socket: Socket | null;
 }
 
 const MAX_RETRY_ATTEMPTS = 3;
-const RETRY_DELAY = 1000; // 1초
+const RETRY_DELAY = 1000;
 const NAMESPACE = '/user-chat';
 
-/**
- * Socket.IO 서버 URL 가져오기
- */
 const getSocketUrl = (): string | null => {
   const url = Constants.expoConfig?.extra?.apiBaseUrl || process.env.EXPO_PUBLIC_API_BASE_URL || '';
-  
-  if (!url || url === 'your_api_url' || url.includes('your_api')) {
-    return null;
-  }
-  
-  // 끝의 슬래시 제거
+  if (!url || url === 'your_api_url' || url.includes('your_api')) return null;
   return url.endsWith('/') ? url.slice(0, -1) : url;
 };
 
 /**
- * WebSocket 연결 관리 훅 (실제 Socket.IO)
- * 
- * @param options - 옵션 객체
- * @param options.inquiryId - 문의 ID
- * @param options.onConnectionChange - 연결 상태 변경 콜백
- * @param options.onRoomIdReceived - roomId 수신 콜백
- * @param options.onError - 에러 메시지 콜백
- * @returns WebSocket 연결 상태 및 제어 함수들
+ * WebSocket 연결 관리 훅 (단순화 버전)
+ * - 한 유저당 채팅방 1개만 존재
  */
-export function useSocket({ inquiryId, onConnectionChange, onRoomIdReceived, onInquiryIdReceived, onError }: UseSocketOptions): UseSocketReturn {
+export function useSocket({ onConnectionChange, onRoomIdReceived, onError }: UseSocketOptions): UseSocketReturn {
   const router = useRouter();
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('disconnected');
   const [roomId, setRoomId] = useState<string | null>(null);
   const [isRoomEntered, setIsRoomEntered] = useState(false);
-  const [isActiveDevice, setIsActiveDevice] = useState(true); // 기본적으로 활성 기기
   
   const socketRef = useRef<Socket | null>(null);
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isConnectingRef = useRef(false);
 
-  /**
-   * 연결 상태 변경 및 콜백 호출
-   */
   const updateConnectionStatus = useCallback((status: ConnectionStatus) => {
     setConnectionStatus(status);
     onConnectionChange?.(status);
   }, [onConnectionChange]);
 
-  /**
-   * WebSocket 연결 시도 (실제 Socket.IO)
-   * EC-001: 연결 실패 처리 및 자동 재시도
-   */
-  const connect = useCallback(async () => {
-    if (connectionStatus === 'connected' || connectionStatus === 'connecting' || isConnectingRef.current) {
-      return;
+  const disconnect = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
+
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+      socketRef.current.close();
+      socketRef.current = null;
+    }
+
+    updateConnectionStatus('disconnected');
+    setIsRoomEntered(false);
+    setRoomId(null);
+    isConnectingRef.current = false;
+    retryCountRef.current = 0;
+  }, [updateConnectionStatus]);
+
+  const connect = useCallback(async () => {
+    if (isConnectingRef.current || connectionStatus === 'connecting') return;
+    if (connectionStatus === 'connected' && socketRef.current?.connected) return;
+
+    if (socketRef.current) disconnect();
 
     const socketUrl = getSocketUrl();
     if (!socketUrl) {
@@ -101,10 +98,8 @@ export function useSocket({ inquiryId, onConnectionChange, onRoomIdReceived, onI
 
     isConnectingRef.current = true;
     updateConnectionStatus('connecting');
-    retryCountRef.current = 0;
 
     try {
-      // AsyncStorage에서 토큰 가져오기
       const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       if (!token) {
         updateConnectionStatus('error');
@@ -113,122 +108,67 @@ export function useSocket({ inquiryId, onConnectionChange, onRoomIdReceived, onI
         return;
       }
 
-      // Socket.IO 클라이언트 생성
       const socket = io(`${socketUrl}${NAMESPACE}`, {
-        auth: {
-          token: token, // T110: 인증 토큰 전달
-        },
-        transports: ['websocket', 'polling'], // WebSocket 우선, 폴백으로 polling
-        reconnection: false, // 수동 재연결 관리
+        auth: { token },
+        transports: ['websocket', 'polling'],
+        reconnection: false,
         timeout: 10000,
+        forceNew: true,
+        multiplex: false,
       });
 
       socketRef.current = socket;
 
-      // 연결 성공 이벤트
       socket.on('connect', () => {
-        console.log('Socket.IO 연결 성공');
         updateConnectionStatus('connected');
         retryCountRef.current = 0;
         isConnectingRef.current = false;
       });
 
-      // 연결 실패 이벤트
-      socket.on('connect_error', (error) => {
-        console.error('Socket.IO 연결 실패:', error);
+      socket.on('connect_error', () => {
         retryCountRef.current += 1;
+        isConnectingRef.current = false;
 
         if (retryCountRef.current >= MAX_RETRY_ATTEMPTS) {
-          // 최대 재시도 횟수 초과
           updateConnectionStatus('error');
           onError?.('연결에 실패했습니다. 잠시 후 다시 시도해주세요.');
           socket.disconnect();
+          socket.close();
           socketRef.current = null;
-          isConnectingRef.current = false;
-          
-          // 문의 목록 페이지로 이동
-          setTimeout(() => {
-            router.replace('/(tabs)/customer-service');
-          }, 2000);
+          setTimeout(() => router.replace('/(tabs)/customer-service'), 2000);
         } else {
-          // 재시도
           retryTimeoutRef.current = setTimeout(() => {
+            socket.removeAllListeners();
             socket.disconnect();
+            socket.close();
+            socketRef.current = null;
             connect();
-          }, RETRY_DELAY);
+          }, RETRY_DELAY) as unknown as NodeJS.Timeout;
         }
       });
 
-      // 연결 해제 이벤트
       socket.on('disconnect', (reason) => {
-        console.log('Socket.IO 연결 해제:', reason);
         if (reason === 'io server disconnect') {
-          // 서버가 연결을 끊은 경우 (인증 실패 등)
           updateConnectionStatus('error');
           socketRef.current = null;
           isConnectingRef.current = false;
         } else {
-          // 클라이언트가 연결을 끊은 경우 또는 네트워크 오류
           updateConnectionStatus('disconnected');
         }
       });
-
-      // 여러 기기 동시 접속 처리 (EC-003)
-      socket.on('device_deactivated', () => {
-        console.log('다른 기기에서 접속하여 이 기기는 비활성화됨');
-        setIsActiveDevice(false);
-        updateConnectionStatus('disconnected');
-      });
-
-      socket.on('device_activated', () => {
-        console.log('이 기기가 활성화됨');
-        setIsActiveDevice(true);
-        if (socket.connected) {
-          updateConnectionStatus('connected');
-        }
-      });
-
     } catch (error) {
-      console.error('Socket.IO 연결 중 오류:', error);
       updateConnectionStatus('error');
       onError?.('연결 중 오류가 발생했습니다.');
       isConnectingRef.current = false;
     }
-  }, [connectionStatus, updateConnectionStatus, router, onError]);
+  }, [connectionStatus, disconnect, onError, router, updateConnectionStatus]);
 
-  /**
-   * WebSocket 연결 해제
-   */
-  const disconnect = useCallback(() => {
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
-
-    updateConnectionStatus('disconnected');
-    setIsRoomEntered(false);
-    setRoomId(null);
-    isConnectingRef.current = false;
-  }, [updateConnectionStatus]);
-
-  /**
-   * 재연결 시도
-   */
   const reconnect = useCallback(() => {
     disconnect();
     retryCountRef.current = 0;
     connect();
   }, [connect, disconnect]);
 
-  /**
-   * 방 입장 (join_room 이벤트)
-   * EC-005: roomId 생성 실패 처리
-   */
   const joinRoom = useCallback(async () => {
     const socket = socketRef.current;
     if (!socket || !socket.connected) {
@@ -237,87 +177,103 @@ export function useSocket({ inquiryId, onConnectionChange, onRoomIdReceived, onI
 
     return new Promise<void>((resolve, reject) => {
       let isResolved = false;
-      
-      // 타임아웃 처리 (10초)
+
       const timeoutId = setTimeout(() => {
-        if (!isResolved) {
-          isResolved = true;
-          updateConnectionStatus('error');
-          onError?.('방 입장 시간이 초과되었습니다.');
-          disconnect();
-          setTimeout(() => {
-            router.replace('/(tabs)/customer-service');
-          }, 1000);
-          reject(new Error('방 입장 시간이 초과되었습니다.'));
-        }
+        if (isResolved) return;
+        isResolved = true;
+        console.error('[joinRoom] 타임아웃 발생');
+        updateConnectionStatus('error');
+        onError?.('방 입장 시간이 초과되었습니다.');
+        disconnect();
+        setTimeout(() => router.replace('/(tabs)/customer-service'), 1000);
+        reject(new Error('방 입장 시간이 초과되었습니다.'));
       }, 10000);
 
-      // join_room 이벤트 전송 (inquiryId 없으면 서버가 자동으로 새 문의 생성/조회)
-      socket.emit('join_room', inquiryId ? { inquiryId } : {}, (response: { roomId?: string; inquiryId?: string; error?: string }) => {
-        if (isResolved) {
-          return; // 이미 타임아웃으로 reject된 경우 무시
-        }
+      console.log('[joinRoom] join_room 이벤트 전송');
 
-        clearTimeout(timeoutId);
+      // 콜백 방식
+      socket.emit('join_room', {}, (response: any) => {
+        if (isResolved) return;
         isResolved = true;
+        clearTimeout(timeoutId);
 
-        if (response.error) {
-          // roomId 생성 실패
+        console.log('[joinRoom] 콜백 응답 받음:', response);
+
+        if (response?.error) {
           updateConnectionStatus('error');
           onError?.('채팅방 생성에 실패했습니다');
-          
-          // WebSocket 연결 차단
           disconnect();
-          
-          // 문의 목록 페이지로 이동 및 토스트 메시지
           setTimeout(() => {
             router.replace('/(tabs)/customer-service');
             onError?.('채팅방을 생성할 수 없습니다. 잠시 후 다시 시도해주세요.');
           }, 1000);
-          
           reject(new Error(response.error));
           return;
         }
 
-        if (response.roomId) {
-          // roomId 수신 성공
+        if (response?.roomId) {
           setRoomId(response.roomId);
           setIsRoomEntered(true);
           onRoomIdReceived?.(response.roomId);
-          
-          // 새 문의 생성 시 inquiryId도 함께 받음
-          if (response.inquiryId) {
-            onInquiryIdReceived?.(response.inquiryId);
-          }
-          
           resolve();
         } else {
           reject(new Error('roomId를 받지 못했습니다.'));
         }
       });
-    });
-  }, [inquiryId, isRoomEntered, updateConnectionStatus, disconnect, router, onError, onRoomIdReceived]);
 
-  /**
-   * 컴포넌트 마운트 시 자동 연결
-   */
+      // 이벤트 방식 (혹시 서버가 이벤트로 응답하는 경우)
+      const handleJoinRoomResponse = (response: any) => {
+        if (isResolved) return;
+        isResolved = true;
+        clearTimeout(timeoutId);
+
+        console.log('[joinRoom] 이벤트 응답 받음:', response);
+
+        socket.off('join_room_response', handleJoinRoomResponse);
+
+        if (response?.roomId) {
+          setRoomId(response.roomId);
+          setIsRoomEntered(true);
+          onRoomIdReceived?.(response.roomId);
+          resolve();
+        } else if (response?.error) {
+          reject(new Error(response.error));
+        }
+      };
+
+      socket.once('join_room_response', handleJoinRoomResponse);
+    });
+  }, [updateConnectionStatus, disconnect, router, onError, onRoomIdReceived]);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        const socket = socketRef.current;
+        if (socket && !socket.connected && connectionStatus !== 'connecting') {
+          reconnect();
+        } else if (!socket && connectionStatus === 'disconnected') {
+          connect();
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => subscription.remove();
+  }, [connectionStatus, connect, reconnect]);
+
   useEffect(() => {
     connect();
-
-    return () => {
-      disconnect();
-    };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => disconnect();
+  }, []);
 
   return {
     connectionStatus,
     roomId,
     isRoomEntered,
-    isActiveDevice,
     connect,
     disconnect,
     reconnect,
     joinRoom,
-    socket: socketRef.current, // Socket 인스턴스 반환
+    socket: socketRef.current,
   };
 }
