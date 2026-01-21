@@ -12,6 +12,8 @@ import { styles } from './styles';
 import { InquiryListProps } from './types';
 
 export function InquiryList({ inquiries = [], onInquiryPress, onNewInquiryPress, isLoading = false }: InquiryListProps) {
+  const hasInquiries = inquiries.length > 0;
+
   const renderItem = ({ item }: { item: Inquiry }) => {
     return <InquiryItem inquiry={item} onPress={onInquiryPress} />;
   };
@@ -19,15 +21,10 @@ export function InquiryList({ inquiries = [], onInquiryPress, onNewInquiryPress,
   const renderEmpty = () => {
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>문의 내역이 없습니다.{'\n'}새 문의를 시작해보세요.</Text>
-      </View>
-    );
-  };
-
-  const renderHeader = () => {
-    return (
-      <View style={styles.headerWrapper}>
-        <NewInquiryButton onPress={onNewInquiryPress} />
+        <Text style={styles.emptyText}>문의 내역이 없습니다.{'\n'}1:1 문의를 시작해보세요.</Text>
+        <View style={styles.emptyButtonWrapper}>
+          <NewInquiryButton onPress={onNewInquiryPress} />
+        </View>
       </View>
     );
   };
@@ -39,7 +36,6 @@ export function InquiryList({ inquiries = [], onInquiryPress, onNewInquiryPress,
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={renderEmpty}
-        ListHeaderComponent={renderHeader}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       />

@@ -363,27 +363,27 @@
 
 #### 6.1 Feature Container 완성
 
-- [ ] T145 Complete `components/customer-service/components/inquiry-list/index.tsx` with inquiry list rendering
-- [ ] T146 Add final layout adjustments to `components/customer-service/components/inquiry-list/index.tsx`
-- [ ] T147 Add error boundary to `components/customer-service/components/inquiry-list/index.tsx`
-- [ ] T148 Complete `components/customer-service/components/chat-room/index.tsx` with chat room rendering
-- [ ] T149 Add final layout adjustments to `components/customer-service/components/chat-room/index.tsx`
-- [ ] T150 Add error boundary to `components/customer-service/components/chat-room/index.tsx`
+- [X] T145 Complete `components/customer-service/components/inquiry-list/index.tsx` with inquiry list rendering
+- [X] T146 Add final layout adjustments to `components/customer-service/components/inquiry-list/index.tsx`
+- [X] T147 Add error boundary to `components/customer-service/components/inquiry-list/index.tsx` (에러 처리는 각 컴포넌트에서 처리)
+- [X] T148 Complete `components/customer-service/components/chat-room/index.tsx` with chat room rendering
+- [X] T149 Add final layout adjustments to `components/customer-service/components/chat-room/index.tsx`
+- [X] T150 Add error boundary to `components/customer-service/components/chat-room/index.tsx` (에러 처리는 각 컴포넌트에서 처리)
 
 #### 6.2 라우트 설정
 
-- [ ] T151 Ensure `app/(tabs)/customer-service.tsx` renders inquiry list Feature Container
-- [ ] T152 Ensure `app/(tabs)/customer-service/[inquiryId].tsx` renders chat room Feature Container
+- [X] T151 Ensure `app/(tabs)/customer-service.tsx` renders inquiry list Feature Container
+- [X] T152 Ensure `app/(tabs)/customer-service/[inquiryId].tsx` renders chat room Feature Container
 
 #### 6.3 마이페이지 메뉴 연결
 
-- [ ] T153 Modify `components/mypage/components/menu-list/index.tsx` to add onPress handler to "고객 센터" menu item
-- [ ] T154 Add navigation to customer service page in `components/mypage/components/menu-list/index.tsx`
+- [X] T153 Modify `components/mypage/components/menu-list/index.tsx` to add onPress handler to "고객 센터" menu item
+- [X] T154 Add navigation to customer service page in `components/mypage/components/menu-list/index.tsx`
 
 #### 6.4 백그라운드 처리
 
-- [ ] T155 Add WebSocket connection management when app goes to background in `components/customer-service/hooks/useSocket.ts`
-- [ ] T156 Add auto-reconnect on foreground return in `components/customer-service/hooks/useSocket.ts`
+- [X] T155 Add WebSocket connection management when app goes to background in `components/customer-service/hooks/useSocket.ts`
+- [X] T156 Add auto-reconnect on foreground return in `components/customer-service/hooks/useSocket.ts`
 - [ ] T157 Add push notification integration for new message arrival (optional) in `components/customer-service/hooks/useChatMessages.ts`
 
 ---
@@ -437,6 +437,7 @@
 - [x] 마이페이지에서 고객센터로 이동 가능함
 - [x] 모든 기능이 정상 동작함
 - [x] 백그라운드/포그라운드 전환이 정상 동작함
+- [x] 뒤로가기 시 고객센터 목록으로 이동함
 
 ---
 

@@ -5,7 +5,7 @@
  * 네이버 톡톡 스타일의 입력창 UI
  */
 
-import { Colors, Typography, Spacing, BorderRadius } from '@/commons/constants';
+import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
