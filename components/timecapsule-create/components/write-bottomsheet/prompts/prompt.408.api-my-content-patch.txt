@@ -1,0 +1,72 @@
+# PATCH /api/capsules/step-rooms/{capsuleId}/my-content - 내 콘텐츠 부분 수정 프롬프트
+
+## 🎯 목적
+- 스텝룸 바텀시트에 "수정하기" 기능을 붙여, 이미 저장한 콘텐츠를 부분 수정합니다.
+- 새로 열린 PATCH 엔드포인트를 사용하여 전달된 필드만 변경하고, 전달되지 않은 필드는 그대로 유지합니다.
+
+## 🔌 API 명세 (백엔드 제공)
+- Method: `PATCH`
+- Path: `/api/capsules/step-rooms/{capsuleId}/my-content`
+- Path Param: `capsuleId` (string, UUID, required)
+- Content-Type: `multipart/form-data`
+- Body (모두 선택적이며, 전달된 필드만 수정):
+  - `text_message`: string — 텍스트 메시지 (보내면 교체)
+  - `images`: File[] — 이미지 파일 배열 (보내면 **전체 교체**, 최대 5개)
+  - `music`: File — 음성 파일 (보내면 교체)
+  - `video`: File — 동영상 파일 (보내면 교체)
+- 동작: 전달된 필드만 수정, 미전달 필드는 기존 값 유지
+- 인증: JWT Bearer (apiClient가 자동 처리)
+
+## ✅ 요구사항
+1) API 함수 추가/수정
+   - 파일: `components/timecapsule-create/components/write-bottomsheet/api/content.ts`
+   - `patchMyContent(capsuleId, formData)` 함수 생성
+   - `PATCH /api/capsules/step-rooms/${capsuleId}/my-content` 호출 (FormData 그대로 전송, Content-Type 명시하지 않음)
+   - 에러 핸들링: 400/401/403/404/500에 맞는 사용자 메시지
+
+2) 타입 정의
+   - 파일: `components/timecapsule-create/components/write-bottomsheet/types.ts`
+   - PATCH 요청용 타입(참고용): `ContentPatchFormData` (모두 optional)
+   - 응답은 기존 `ContentSubmitResponse` 재사용 가능 (필요 시 별도 타입 추가)
+
+3) Hook 설계
+   - 파일: `components/timecapsule-create/components/write-bottomsheet/hooks/useUpdateContent.ts` (신규) 또는 기존 `useSubmitContent` 내 분기 추가
+   - 입력: `data: UserContentFormData`, `capsuleId: string`
+   - 처리:
+     - text_message 필수 아님 (제공 시에만 append)
+     - 이미지가 수정된 경우에만 `images` 필드 append (보내면 전체 교체)
+     - 음악/비디오도 수정된 경우에만 append
+     - 아무 것도 수정하지 않았다면 호출하지 않거나 early return
+   - 상태: `isUpdating`, `error`, `uploadProgress` 관리 (저장과 구분)
+   - 성공: 성공 메시지 → 바텀시트 닫기 → 상위 데이터 refetch/refresh 트리거
+   - 실패: 에러 메시지 표시
+
+4) UI 연동
+   - 파일: `components/timecapsule-create/components/write-bottomsheet/index.tsx`
+   - "저장"과 "수정" 흐름을 분기 (예: 모드 prop 또는 기존 데이터 존재 여부로 판별)
+   - 수정 시 버튼 라벨/로딩 문구: "수정 중..."
+   - 수정 대상 필드가 없으면 호출하지 않고 안내
+
+5) 제약 및 검증
+   - 이미지: 최대 5개
+   - text_message 길이 검증(500자 등 기존 규칙 유지 가능)
+   - 파일 타입/크기 검증은 기존 헬퍼 재사용 (`validateMediaFile`, `uriToFile` 등)
+   - 네트워크/서버 에러 시 Alert로 사용자 피드백
+
+## 🛠 구현 가이드 (요약)
+- FormData에 "변경된 항목만" append
+- `PATCH` 메서드 사용, apiClient가 헤더 자동 설정
+- images를 append하면 기존 이미지는 모두 교체됨을 UI에서 안내
+- 기존 remote URL만 있고 로컬 파일이 없으면 images 필드 미전달 → 기존 유지
+
+## 🔍 체크리스트
+- [ ] `patchMyContent` 함수가 PATCH로 호출된다
+- [ ] Content-Type 수동 지정 없음 (FormData 그대로)
+- [ ] text_message 제공 시에만 FormData에 포함
+- [ ] images 제공 시 전체 교체 (최대 5개) 검증
+- [ ] music/video 제공 시 교체
+- [ ] 아무 것도 변경 안 했을 때 호출 안 함 또는 경고
+- [ ] 로딩/에러/성공 피드백 표시
+- [ ] 기존 UI/스타일 변경 없음
+- [ ] TypeScript 에러 0건
+

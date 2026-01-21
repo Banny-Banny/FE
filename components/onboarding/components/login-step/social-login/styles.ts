@@ -35,32 +35,38 @@ import { StyleSheet } from 'react-native';
 
 // 기준 화면 너비 (Figma 디자인 기준: 387x852 - Container 크기)
 const DESIGN_WIDTH = 387;
+const DESIGN_HEIGHT = 852;
 
 /**
  * 반응형 스타일 생성 함수
  * 피그마 오토레이아웃을 반영하여 반응형으로 구현
  * 화면 크기에 따라 비율 스케일링
  */
-export function createResponsiveStyles(screenWidth: number) {
-  // 화면 너비에 따른 스케일 (387px 기준)
-  const scale = screenWidth / DESIGN_WIDTH;
+export function createResponsiveStyles(screenWidth: number, screenHeight: number) {
+  // 화면 비율에 따른 스케일 (387x852px 기준) - 더 작은 축 기준으로 축소
+  const scale = Math.min(screenWidth / DESIGN_WIDTH, screenHeight / DESIGN_HEIGHT);
 
-  // 중앙 정렬을 위한 좌우 여백 계산
-  const horizontalPadding = Math.max(0, (screenWidth - 387 * scale) / 2);
+  // 콘텐츠 최대 너비 (디자인 좌표 정확도 유지)
+  const maxContentWidth = 387 * scale;
 
   return StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: Colors.white[500],
+      minHeight: screenHeight, // viewport height 기반 레이아웃 고정
     },
     scrollView: {
       // flex: 1 제거 - 불필요한 스크롤 방지
     },
     scrollContent: {
-      paddingTop: 50 * scale, // Figma: 환영 메시지 시작 위치 (y=80)
+      paddingTop: 30 * scale, // Figma: 환영 메시지 시작 위치 (y=80)
       paddingBottom: 25 * scale, // Figma: 하단 여유 공간 (852-827=25)
-      paddingHorizontal: horizontalPadding, // 중앙 정렬을 위한 좌우 여백
+      paddingHorizontal: 0, // 패딩 제거 (maxWidth + alignSelf로 중앙 정렬)
       alignItems: 'center', // 중앙 정렬
+      minHeight: screenHeight,
+      maxWidth: maxContentWidth, // 최대 너비 제한 (디자인 좌표 정확도 유지)
+      alignSelf: 'center', // 컨테이너 자체를 중앙 정렬
+      width: '100%',
     },
     welcomeSection: {
       alignItems: 'center',
@@ -92,7 +98,7 @@ export function createResponsiveStyles(screenWidth: number) {
     cardsSection: {
       width: 387 * scale, // Figma: Container 너비
       maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
-      marginBottom: 33 * scale, // Figma: 카드와 이미지 간격 (432-321-78=33)
+      // marginBottom: 33 * scale, // Figma: 카드와 이미지 간격 (432-321-78=33)
       paddingHorizontal: 0,
       flexDirection: 'column', // 세로 배치
       gap: 21 * scale, // Figma: 카드 간 간격 (321-222-78=21)
@@ -187,7 +193,7 @@ export function createResponsiveStyles(screenWidth: number) {
     bottomSection: {
       width: '100%',
       alignItems: 'center',
-      paddingHorizontal: horizontalPadding, // 중앙 정렬을 위한 좌우 여백
+      paddingHorizontal: 0, // 패딩 제거 (maxWidth + alignSelf로 중앙 정렬)
       marginTop: 0,
       marginBottom: 0,
     },
@@ -199,9 +205,10 @@ export function createResponsiveStyles(screenWidth: number) {
       flexDirection: 'column',
     },
     bunnyImage: {
-      width: 387 * scale, // Figma: 이미지 너비 (정확한 값)
-      maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
-      height: 420 * scale, // Figma: 이미지 높이 (정확한 값)
+      width: 400 * scale, // Figma: 이미지 너비 (정확한 값)
+      maxWidth: '120%', // 반응형: 화면 너비를 넘지 않도록
+      height: 460 * scale, // Figma: 이미지 높이 (정확한 값)
+      
       shadowColor: Colors.black[500],
       shadowOffset: { width: 0, height: 5 * scale },
       shadowOpacity: 0.25,

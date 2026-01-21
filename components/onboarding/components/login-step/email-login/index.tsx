@@ -1,14 +1,26 @@
 /**
  * components/onboarding/components/login-step/email-login/index.tsx
  * 이메일 로그인 화면 컴포넌트
+ * 
+ * ✅ React Hook Form + Zod 통합
+ * ✅ 실시간 검증
+ * ✅ 에러 메시지 표시
+ * ✅ 비밀번호 토글 기능
+ * ✅ 약관 동의 기능
  */
 
 import { Colors } from '@/commons/constants';
 import { useEmailLogin } from '@/components/onboarding/hooks/useEmailLogin';
 import { getUserFromToken } from '@/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
 import React, { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Alert, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
+import { ErrorMessage } from './components/error-message';
+import { PasswordInput } from './components/password-input';
+import { TermsConsent } from './components/terms-consent';
+import { loginSchema, signupSchema, type LoginFormData, type SignupFormData } from './schemas';
 import { styles } from './styles';
 
 interface EmailLoginProps {
@@ -21,29 +33,55 @@ interface EmailLoginProps {
  * 이메일 로그인 화면
  */
 export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack }: EmailLoginProps) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const { isLoading: loginLoading, loginWithEmail, signupWithEmail } = useEmailLogin();
 
   const isLoading = externalLoading || loginLoading;
 
-  // 로그인 처리
-  const handleLogin = async () => {
-    if ((!email && !phoneNumber) || !password) {
-      Alert.alert('입력 오류', '이메일 또는 전화번호와 비밀번호를 모두 입력해주세요.');
-      return;
-    }
+  // 로그인 폼
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+    defaultValues: {
+      emailOrPhone: '',
+      password: '',
+    },
+  });
 
-    const result = await loginWithEmail({ 
-      email: email || undefined, 
-      phoneNumber: phoneNumber || undefined,
-      password: password 
+  // 회원가입 폼
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      phoneNumber: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      termsConsent: {
+        service: false,
+        privacy: false,
+        marketing: false,
+      },
+    },
+  });
+
+  // 현재 사용할 폼
+  const currentForm = isSignup ? signupForm : loginForm;
+
+  // 로그인 처리
+  const handleLogin = async (data: LoginFormData) => {
+    // 이메일 또는 전화번호 구분
+    const isEmail = data.emailOrPhone.includes('@');
+    const email = isEmail ? data.emailOrPhone : undefined;
+    const phoneNumber = !isEmail ? data.emailOrPhone.replace(/-/g, '') : undefined;
+
+    const result = await loginWithEmail({
+      email,
+      phoneNumber,
+      password: data.password,
     });
-    
+
     if (result && result.token) {
       const userData = getUserFromToken(result.token) || {
         id: result.user.id,
@@ -53,40 +91,22 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
 
       await onLoginSuccess(result.token, userData);
       // 성공 시 입력값 초기화
-      setEmail('');
-      setPassword('');
-      setPhoneNumber('');
-      setName('');
-      setConfirmPassword('');
-      setIsSignup(false);
+      loginForm.reset();
     }
   };
 
   // 회원가입 처리
-  const handleSignup = async () => {
-    if (!name || !phoneNumber || !password || !confirmPassword) {
-      Alert.alert('입력 오류', '이름, 전화번호, 비밀번호를 모두 입력해주세요.');
-      return;
-    }
+  const handleSignup = async (data: SignupFormData) => {
+    // 전화번호 하이픈 제거 (스키마에서 이미 처리되지만 안전을 위해)
+    const cleanPhoneNumber = data.phoneNumber.replace(/-/g, '');
 
-    if (password !== confirmPassword) {
-      Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다.');
-      return;
-    }
-
-    if (password.length < 8) {
-      Alert.alert('입력 오류', '비밀번호는 8자 이상 입력해주세요.');
-      return;
-    }
-
-    // 회원가입 API 호출
-    const result = await signupWithEmail({ 
-      nickname: name, 
-      phoneNumber: phoneNumber,
-      password: password,
-      email: email || undefined, // 선택사항이지만 입력된 경우 전송
+    const result = await signupWithEmail({
+      nickname: data.name,
+      phoneNumber: cleanPhoneNumber,
+      password: data.password,
+      email: data.email || undefined,
     });
-    
+
     if (result && result.token) {
       // 회원가입 성공 모달 표시
       Alert.alert(
@@ -98,11 +118,8 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
             onPress: () => {
               // 로그인 화면으로 전환
               setIsSignup(false);
-              // 회원가입 시 입력한 정보 초기화 (로그인용 정보는 유지)
-              setName('');
-              setConfirmPassword('');
-              // 전화번호와 비밀번호는 로그인을 위해 유지
-              // email도 선택사항이므로 유지
+              // 회원가입 폼 초기화
+              signupForm.reset();
             },
           },
         ],
@@ -111,11 +128,25 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
     }
   };
 
+  // 로그인/회원가입 전환
+  const handleToggleMode = () => {
+    setIsSignup(!isSignup);
+    // 폼 초기화
+    if (isSignup) {
+      signupForm.reset();
+    } else {
+      loginForm.reset();
+    }
+  };
+
+  const sanitizeNumericInput = (value: string) => value.replace(/[^0-9]/g, '');
+
   return (
     <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={false}
         bounces={false}>
         {/* 헤더 */}
         <View style={styles.header}>
@@ -134,141 +165,204 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
 
         {/* 입력 폼 */}
         <View style={styles.form}>
-          {/* 회원가입 시 이름 입력 */}
-          {isSignup && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>이름</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="홍길동"
-                placeholderTextColor={Colors.grey[500]}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
+          {isSignup ? (
+            // 회원가입 폼
+            <>
+              {/* 이름 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>
+                  이름
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
+                <Controller
+                  control={signupForm.control}
+                  name="name"
+                  render={({ field: { onChange, value } }) => (
+                    <TextInput
+                      style={[styles.input, signupForm.formState.errors.name && styles.inputError]}
+                      placeholder="홍길동"
+                      placeholderTextColor={Colors.grey[500]}
+                      value={value}
+                      onChangeText={onChange}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  )}
+                />
+                <ErrorMessage message={signupForm.formState.errors.name?.message} />
+              </View>
+
+              {/* 전화번호 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>
+                  전화번호
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
+                <Controller
+                  control={signupForm.control}
+                  name="phoneNumber"
+                  render={({ field: { onChange, value } }) => (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        signupForm.formState.errors.phoneNumber && styles.inputError,
+                      ]}
+                      placeholder="전화번호를 입력해주세요"
+                      placeholderTextColor={Colors.grey[500]}
+                      value={value}
+                      onChangeText={(text) => onChange(sanitizeNumericInput(text))}
+                      keyboardType="phone-pad"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  )}
+                />
+                <ErrorMessage message={signupForm.formState.errors.phoneNumber?.message} />
+              </View>
+
+              {/* 이메일 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>이메일</Text>
+                <Controller
+                  control={signupForm.control}
+                  name="email"
+                  render={({ field: { onChange, value } }) => (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        signupForm.formState.errors.email && styles.inputError,
+                      ]}
+                      placeholder="이메일을 입력해주세요"
+                      placeholderTextColor={Colors.grey[500]}
+                      value={value || ''}
+                      onChangeText={onChange}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  )}
+                />
+                <ErrorMessage message={signupForm.formState.errors.email?.message} />
+              </View>
+
+              {/* 비밀번호 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>
+                  비밀번호
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
+                <PasswordInput
+                  control={signupForm.control}
+                  name="password"
+                  placeholder="8자 이상 입력해주세요"
+                  error={signupForm.formState.errors.password}
+                  editable={!isLoading}
+                />
+              </View>
+
+              {/* 비밀번호 확인 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>
+                  비밀번호 확인
+                  <Text style={styles.requiredMark}> *</Text>
+                </Text>
+                <PasswordInput
+                  control={signupForm.control}
+                  name="confirmPassword"
+                  placeholder="비밀번호를 다시 입력해주세요"
+                  error={signupForm.formState.errors.confirmPassword}
+                  editable={!isLoading}
+                />
+              </View>
+
+              {/* 약관 동의 */}
+              <View style={styles.inputContainer}>
+                <TermsConsent
+                  control={signupForm.control}
+                  errors={signupForm.formState.errors.termsConsent}
+                  editable={!isLoading}
+                />
+              </View>
+
+              {/* 회원가입 버튼 */}
+              <Pressable
+                style={[
+                  styles.submitButton,
+                  (!signupForm.formState.isValid || isLoading) && styles.submitButtonDisabled,
+                ]}
+                onPress={signupForm.handleSubmit(handleSignup)}
+                disabled={!signupForm.formState.isValid || isLoading}>
+                <Text style={styles.submitButtonText}>
+                  {isLoading ? '처리 중...' : '회원가입'}
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            // 로그인 폼
+            <>
+              {/* 전화번호 또는 이메일 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>전화번호 또는 이메일</Text>
+                <Controller
+                  control={loginForm.control}
+                  name="emailOrPhone"
+                  render={({ field: { onChange, value } }) => (
+                    <TextInput
+                      style={[
+                        styles.input,
+                        loginForm.formState.errors.emailOrPhone && styles.inputError,
+                      ]}
+                      placeholder="전화번호 또는 이메일을 입력해주세요"
+                      placeholderTextColor={Colors.grey[500]}
+                      value={value}
+                      onChangeText={onChange}
+                      keyboardType="default"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      editable={!isLoading}
+                    />
+                  )}
+                />
+                <ErrorMessage message={loginForm.formState.errors.emailOrPhone?.message} />
+              </View>
+
+              {/* 비밀번호 입력 */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.label}>비밀번호</Text>
+                <PasswordInput
+                  control={loginForm.control}
+                  name="password"
+                  placeholder="비밀번호를 입력하세요"
+                  error={loginForm.formState.errors.password}
+                  editable={!isLoading}
+                />
+              </View>
+
+              {/* 로그인 버튼 */}
+              <Pressable
+                style={[
+                  styles.submitButton,
+                  (!loginForm.formState.isValid || isLoading) && styles.submitButtonDisabled,
+                ]}
+                onPress={loginForm.handleSubmit(handleLogin)}
+                disabled={!loginForm.formState.isValid || isLoading}>
+                <Text style={styles.submitButtonText}>
+                  {isLoading ? '처리 중...' : '로그인'}
+                </Text>
+              </Pressable>
+            </>
           )}
-
-          {/* 로그인 시: 전화번호 또는 이메일 입력 */}
-          {!isSignup && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>전화번호 또는 이메일</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="01012345678 또는 example@email.com"
-                placeholderTextColor={Colors.grey[500]}
-                value={phoneNumber || email}
-                onChangeText={(text) => {
-                  // 전화번호 형식인지 이메일 형식인지 자동 감지
-                  if (/^[0-9-]/.test(text)) {
-                    setPhoneNumber(text);
-                    setEmail('');
-                  } else {
-                    setEmail(text);
-                    setPhoneNumber('');
-                  }
-                }}
-                keyboardType="default"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-          )}
-
-          {/* 회원가입 시: 전화번호 입력 (필수) */}
-          {isSignup && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>전화번호</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="01012345678"
-                placeholderTextColor={Colors.grey[500]}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-          )}
-
-          {/* 회원가입 시: 이메일 입력 (선택사항) */}
-          {isSignup && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>이메일 (선택사항)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="example@email.com"
-                placeholderTextColor={Colors.grey[500]}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-          )}
-
-          {/* 비밀번호 입력 */}
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>비밀번호</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={isSignup ? '8자 이상 입력해주세요' : '비밀번호를 입력하세요'}
-              placeholderTextColor={Colors.grey[500]}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoCapitalize="none"
-              autoCorrect={false}
-              editable={!isLoading}
-            />
-          </View>
-
-          {/* 회원가입 시 비밀번호 확인 입력 */}
-          {isSignup && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>비밀번호 확인</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="비밀번호를 다시 입력해주세요"
-                placeholderTextColor={Colors.grey[500]}
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                editable={!isLoading}
-              />
-            </View>
-          )}
-
-          {/* 로그인/회원가입 버튼 */}
-          <Pressable
-            style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-            onPress={isSignup ? handleSignup : handleLogin}
-            disabled={isLoading}>
-            <Text style={styles.submitButtonText}>
-              {isLoading ? '처리 중...' : isSignup ? '회원가입' : '로그인'}
-            </Text>
-          </Pressable>
 
           {/* 로그인/회원가입 전환 */}
           <View style={styles.switchContainer}>
             <Text style={styles.switchText}>
               {isSignup ? '이미 계정이 있으신가요? ' : '계정이 없으신가요? '}
             </Text>
-            <Pressable
-              onPress={() => setIsSignup(!isSignup)}
-              disabled={isLoading}>
-              <Text style={styles.switchLink}>
-                {isSignup ? '로그인' : '회원가입'}
-              </Text>
+            <Pressable onPress={handleToggleMode} disabled={isLoading}>
+              <Text style={styles.switchLink}>{isSignup ? '로그인' : '회원가입'}</Text>
             </Pressable>
           </View>
         </View>

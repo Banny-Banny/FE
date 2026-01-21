@@ -85,9 +85,14 @@ export function useMediaPicker(
     // 파일명 추출
     const extractedFilename = filename || uri.split('/').pop() || '';
     const extension = getFileExtension(extractedFilename);
+    const extensionForValidation =
+      extension || (type === 'IMAGE' ? 'jpg' : type === 'VIDEO' ? 'mp4' : 'm4a');
+    const filenameForValidation = extension
+      ? extractedFilename
+      : `${extractedFilename || 'file'}.${extensionForValidation}`;
 
     // 확장자 검증
-    if (!validateFileExtension(extractedFilename, type)) {
+    if (!validateFileExtension(filenameForValidation, type)) {
       const allowedExtensions = ALLOWED_EXTENSIONS[type];
       const allowedFormats = allowedExtensions.join(', ').toUpperCase();
       throw new Error(

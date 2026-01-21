@@ -32,21 +32,25 @@
  */
 
 import { BorderRadius, Colors, FontFamily, FontSize, FontWeight, Typography } from '@/commons/constants';
-import { StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
+
+const { height: viewportHeight } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white[500],
+    minHeight: viewportHeight, // 전체 화면 높이 기반 레이아웃
   },
   scrollContent: {
     flexGrow: 1,
+    minHeight: viewportHeight,
     paddingHorizontal: 32, // Figma: 31.992px → 32px
     paddingTop: 32, // Figma: 31.992px → 32px
     paddingBottom: 24,
   },
   header: {
-    marginBottom: 48, // Figma: 뒤로가기 버튼과 제목 사이 간격
+    marginBottom: 20, // Figma: 뒤로가기 버튼과 제목 사이 간격
   },
   backButton: {
     width: 40, // Figma: 39.989px → 40px
@@ -57,8 +61,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   titleSection: {
-    marginBottom: 48, // Figma: 제목 섹션과 폼 사이 간격 (47.999px → 48px)
-    gap: 12, // Figma: 제목과 설명 사이 간격 (11.991px → 12px)
+    marginBottom: 36, // Figma: 제목 섹션과 폼 사이 간격 (47.999px → 48px)
+    gap: 8, // Figma: 제목과 설명 사이 간격 (11.991px → 12px)
   },
   title: {
     fontFamily: FontFamily.variable,
@@ -85,19 +89,27 @@ export const styles = StyleSheet.create({
     ...Typography.body.body11,
     color: Colors.black[500],
   },
+  requiredMark: {
+    color: Colors.red[500],
+  },
   input: {
     fontFamily: FontFamily.variable,
     fontSize: 15, // Figma: 15px
     lineHeight: 24, // Figma: lineHeight
     fontWeight: FontWeight.regular,
     height: 52, // Figma: 51.925px → 52px
+    width: '100%', // PasswordInput과 동일한 넓이를 위해 추가
     paddingHorizontal: 16,
     paddingVertical: 14, // Figma: 14px
+    textAlignVertical: 'center',
     backgroundColor: Colors.white[500], // Figma: white
     borderRadius: BorderRadius.md, // 12px
     borderWidth: 1,
     borderColor: Colors.border.light, // Figma: rgba(10,10,10,0.08)
     color: Colors.black[500],
+  },
+  inputError: {
+    borderColor: Colors.red[500], // 에러 시 빨간색 테두리
   },
   submitButton: {
     height: 56, // Figma: 55.985px → 56px
