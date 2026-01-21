@@ -49,8 +49,8 @@ export function SocialLogin({ isLoading, onKakaoLogin, onEmailLogin }: SocialLog
                 <View style={styles.cardIconLeft}>
                   <Image source={imgLocationPin} style={styles.cardIcon} contentFit="contain" />
                 </View>
-                <View style={styles.cardFirstTextContainer}>
-                  <Text style={styles.cardTitle}>지도에서 추억 숨기기</Text>
+                <View style={styles.cardFirstTextContainer} >
+                  <Text style={styles.cardTitle} >지도에서 추억 숨기기</Text>
                   <Text style={styles.cardDescription}>원하는 장소에 타임캡슐을 묻어보세요</Text>
                 </View>
               </View>
@@ -61,8 +61,10 @@ export function SocialLogin({ isLoading, onKakaoLogin, onEmailLogin }: SocialLog
           <View style={styles.cardSecond}>
             <View style={styles.cardSecondContent}>
               <View style={styles.cardSecondTextContainer}>
-                <Text style={styles.cardTitle}>친구와 함께</Text>
-                <Text style={styles.cardDescriptionSecond}>소중한 사람들과 추억을 공유하세요</Text>
+                <Text style={[styles.cardTitle, styles.cardTitleRight]}>친구와 함께</Text>
+                <Text style={[styles.cardDescriptionSecond, styles.cardDescriptionRight]}>
+                  소중한 사람들과 추억을 공유하세요
+                </Text>
               </View>
               <View style={styles.cardIconRight}>
                 <Image source={imgFriend} style={styles.cardIconSecond} contentFit="contain" />

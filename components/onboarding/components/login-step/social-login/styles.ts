@@ -54,27 +54,32 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       flex: 1,
       backgroundColor: Colors.white[500],
       minHeight: screenHeight, // viewport height 기반 레이아웃 고정
+       borderWidth: 2, // 보더 두께
+    borderColor: 'green'
     },
     scrollView: {
       // flex: 1 제거 - 불필요한 스크롤 방지
     },
     scrollContent: {
-      paddingTop: 30 * scale, // Figma: 환영 메시지 시작 위치 (y=80)
-      paddingBottom: 25 * scale, // Figma: 하단 여유 공간 (852-827=25)
-      paddingHorizontal: 0, // 패딩 제거 (maxWidth + alignSelf로 중앙 정렬)
+      paddingTop: 36 * scale, // Figma: 환영 메시지 시작 위치 (y=80)÷
+      
       alignItems: 'center', // 중앙 정렬
-      minHeight: screenHeight,
       maxWidth: maxContentWidth, // 최대 너비 제한 (디자인 좌표 정확도 유지)
       alignSelf: 'center', // 컨테이너 자체를 중앙 정렬
       width: '100%',
+      borderWidth: 2, // 보더 두께
+    borderColor: 'blue'
+      
     },
     welcomeSection: {
       alignItems: 'center',
       marginTop: 0, // Figma: 상단 여유 없음
-      marginBottom: 42 * scale, // Figma: 카드와의 간격 (222-104-76=42)
+      marginBottom: 32 * scale, // Figma: 카드와의 간격 (222-104-76=42)
       paddingHorizontal: 0,
-      width: 283 * scale, // Figma: 텍스트 영역 너비
+      width: 313 * scale, // Figma: 텍스트 영역 너비
       maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
+       borderWidth: 2, // 보더 두께
+    borderColor: 'red'
     },
     welcomeTitle: {
       fontFamily: 'DungGeunMo', // DungGeunMo 폰트는 Typography에 없어 직접 지정
@@ -96,15 +101,18 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       textAlign: 'center',
     },
     cardsSection: {
-      width: 387 * scale, // Figma: Container 너비
+      width: 313 * scale, // Figma: Container 너비
       maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
       // marginBottom: 33 * scale, // Figma: 카드와 이미지 간격 (432-321-78=33)
       paddingHorizontal: 0,
       flexDirection: 'column', // 세로 배치
+      alignItems: 'center',
+      justifyContent: 'center',
+      margin: 'auto',
       gap: 21 * scale, // Figma: 카드 간 간격 (321-222-78=21)
     },
     cardFirst: {
-      width: 312 * scale, // Figma: 카드 너비 (정확한 값)
+      width: 283 * scale, // Figma: 카드 너비 (정확한 값)
       maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
       height: 78 * scale, // Figma: 카드 높이
       alignSelf: 'flex-start', // Figma: x=0에서 시작
@@ -121,9 +129,9 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       height: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      paddingLeft: 18 * scale, // Figma: 좌측 패딩
-      paddingRight: 20 * scale, // Figma: 우측 패딩
-      gap: 19 * scale, // Figma: 아이콘(x=35.07)과 텍스트(x=54) 간격 = 19px
+      paddingLeft: 10 * scale, // Figma: 좌측 패딩
+
+      gap: 4 * scale, // Figma: 아이콘(x=35.07)과 텍스트(x=54) 간격 = 19px
     },
     cardIconLeft: {
       width: 40 * scale, // Figma: 아이콘 컨테이너 크기
@@ -135,11 +143,11 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       flex: 1,
     },
     cardSecond: {
-      width: 312 * scale, // Figma: 카드 너비 (정확한 값)
+      width: 283 * scale, // Figma: 카드 너비 (정확한 값)
       maxWidth: '100%', // 반응형: 화면 너비를 넘지 않도록
       height: 78 * scale, // Figma: 카드 높이
       alignSelf: 'flex-start', // Figma: x=75에서 시작
-      marginLeft: 75 * scale, // Figma: x=75 위치 (오토레이아웃 반영)
+      marginLeft: 30 * scale, // Figma: x=75 위치 (오토레이아웃 반영)
     },
     cardSecondContent: {
       backgroundColor: Colors.grey[100],
@@ -147,12 +155,12 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       height: '100%',
       flexDirection: 'row',
       alignItems: 'center',
-      paddingLeft: 20 * scale, // Figma: 좌측 패딩
-      paddingRight: 20 * scale, // Figma: 우측 패딩
-      gap: 17 * scale, // Figma: 텍스트와 아이콘 간격
-    },
-    cardSecondTextContainer: {
-      flex: 1,
+      textAlign: 'right',  
+      paddingLeft: 10 * scale, // Figma: 좌측 패딩
+      paddingRight: 10 * scale, // Figma: 우측 패딩
+      gap: 4 * scale, // Figma: 텍스트와 아이콘 간격
+      borderWidth: 2, // 보더 두께
+    borderColor: 'yellow'
     },
     cardIconRight: {
       width: 40 * scale, // Figma: 아이콘 컨테이너 크기
@@ -168,12 +176,24 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       marginBottom: 4 * scale, // Figma: 하단 간격
       letterSpacing: -0.41,
     },
+    // card2 전용 우측 정렬
+    cardTitleRight: {
+      textAlign: 'right',
+    },
+    cardDescriptionRight: {
+      textAlign: 'right',
+    },
+    cardSecondTextContainer: {
+      flex: 1,
+      alignItems: 'flex-end',
+    },
     cardDescription: {
       ...Typography.body.body6, // Regular, 14px
       fontSize: 14 * scale, // Figma: 정확한 크기
       lineHeight: 20 * scale, // Figma: lineHeight
       color: Colors.darkGrey[300],
       letterSpacing: -0.15,
+      
     },
     cardDescriptionSecond: {
       ...Typography.body.body6, // Regular, 14px
@@ -221,7 +241,7 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       flexDirection: 'column',
       gap: 12 * scale, // Figma: 버튼 간 간격
       alignItems: 'center',
-      marginTop: -144 * scale, // Figma: 버튼 위치 조정 (이미지 위에 배치)
+      marginTop: -188 * scale, // Figma: 버튼 위치 조정 (이미지 위에 배치)
     },
     kakaoButton: {
       backgroundColor: 'rgba(255, 193, 7, 0.88)', // Figma 디자인 요구사항 - 노란색 토큰이 없어 직접 사용 (주석 명시)
@@ -238,9 +258,10 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       elevation: 10,
       alignSelf: 'flex-start', // Figma: x=30 위치
       marginLeft: 30 * scale, // Figma: 버튼 x 위치 (오토레이아웃 반영)
+       opacity: 0.95,
     },
     kakaoButtonDisabled: {
-      opacity: 0.6,
+      opacity: 0.1,
     },
     kakaoButtonContent: {
       flexDirection: 'row',

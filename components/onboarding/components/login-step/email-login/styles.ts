@@ -100,8 +100,9 @@ export const styles = StyleSheet.create({
     height: 52, // Figma: 51.925px → 52px
     width: '100%', // PasswordInput과 동일한 넓이를 위해 추가
     paddingHorizontal: 16,
-    paddingVertical: 14, // Figma: 14px
+    paddingVertical: 12, // Android에서 중앙 정렬 유지 (기존 14px → 12px)
     textAlignVertical: 'center',
+    includeFontPadding: false, // Android 폰트 패딩 제거로 수직 정렬 보정
     backgroundColor: Colors.white[500], // Figma: white
     borderRadius: BorderRadius.md, // 12px
     borderWidth: 1,

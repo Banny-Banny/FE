@@ -34,6 +34,7 @@ interface EmailLoginProps {
  */
 export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack }: EmailLoginProps) {
   const [isSignup, setIsSignup] = useState(false);
+  const [phoneNumberHasNonNumeric, setPhoneNumberHasNonNumeric] = useState(false);
   const { isLoading: loginLoading, loginWithEmail, signupWithEmail } = useEmailLogin();
 
   const isLoading = externalLoading || loginLoading;
@@ -65,6 +66,8 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
       },
     },
   });
+
+  const nameValue = signupForm.watch('name', '');
 
   // 현재 사용할 폼
   const currentForm = isSignup ? signupForm : loginForm;
@@ -131,6 +134,7 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
   // 로그인/회원가입 전환
   const handleToggleMode = () => {
     setIsSignup(!isSignup);
+    setPhoneNumberHasNonNumeric(false);
     // 폼 초기화
     if (isSignup) {
       signupForm.reset();
@@ -146,8 +150,10 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
-        bounces={false}>
+        bounces={false}
+        keyboardShouldPersistTaps="always"
+        keyboardDismissMode="interactive"
+        nestedScrollEnabled={true}>
         {/* 헤더 */}
         <View style={styles.header}>
           <Pressable onPress={onBack} style={styles.backButton}>
@@ -177,16 +183,24 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
                 <Controller
                   control={signupForm.control}
                   name="name"
+                  defaultValue=""
                   render={({ field: { onChange, value } }) => (
                     <TextInput
                       style={[styles.input, signupForm.formState.errors.name && styles.inputError]}
-                      placeholder="홍길동"
+                      placeholder="이름을 입력해주세요"
                       placeholderTextColor={Colors.grey[500]}
-                      value={value}
-                      onChangeText={onChange}
-                      autoCapitalize="none"
+                      value={nameValue}
+                      onChangeText={(text) => {
+                        signupForm.setValue('name', text, { shouldValidate: true, shouldDirty: true });
+                        onChange(text);
+                      }}
+                      keyboardType="default"
+                      autoCapitalize="words"
                       autoCorrect={false}
                       editable={!isLoading}
+                      multiline={false}
+                      returnKeyType="next"
+                      textContentType="name"
                     />
                   )}
                 />
@@ -206,12 +220,17 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
                     <TextInput
                       style={[
                         styles.input,
-                        signupForm.formState.errors.phoneNumber && styles.inputError,
+                        (signupForm.formState.errors.phoneNumber || phoneNumberHasNonNumeric) && styles.inputError,
                       ]}
                       placeholder="전화번호를 입력해주세요"
                       placeholderTextColor={Colors.grey[500]}
-                      value={value}
-                      onChangeText={(text) => onChange(sanitizeNumericInput(text))}
+                      value={value || ''}
+                      onChangeText={(text) => {
+                        const hasNonNumeric = /[^0-9]/.test(text);
+                        const sanitized = sanitizeNumericInput(text);
+                        setPhoneNumberHasNonNumeric(hasNonNumeric);
+                        onChange(sanitized);
+                      }}
                       keyboardType="phone-pad"
                       autoCapitalize="none"
                       autoCorrect={false}
@@ -219,7 +238,13 @@ export function EmailLogin({ isLoading: externalLoading, onLoginSuccess, onBack 
                     />
                   )}
                 />
-                <ErrorMessage message={signupForm.formState.errors.phoneNumber?.message} />
+                <ErrorMessage 
+                  message={
+                    phoneNumberHasNonNumeric 
+                      ? '숫자만 입력 가능합니다' 
+                      : signupForm.formState.errors.phoneNumber?.message
+                  } 
+                />
               </View>
 
               {/* 이메일 입력 */}
