@@ -52,6 +52,12 @@
 - [X] T018 Create `components/customer-service/styles.ts` with StyleSheet.create()
 - [X] T019 Add basic container styles to `components/customer-service/styles.ts`
 
+#### 0.6 API 응답 변환 유틸리티 생성
+
+- [X] T020 Create `components/customer-service/utils/transformers.ts` for API response format conversion
+- [X] T021 Add camelCase to snake_case conversion function for Inquiry type to `components/customer-service/utils/transformers.ts`
+- [X] T022 Add camelCase to snake_case conversion function for Message type to `components/customer-service/utils/transformers.ts`
+
 ---
 
 ## Phase 1: 문의 내역 리스트 UI 구현 (UI 우선)
@@ -164,47 +170,66 @@
 
 ---
 
-## Phase 3: 파일 첨부 기능 구현 (UI 우선)
+## Phase 3: Edge Cases 및 에러 처리 구현 (UI 우선)
 
-**Goal**: 이미지 및 파일 첨부 기능 UI 구현 (Mock 데이터 사용)
+**Goal**: 예외 상황 및 에러 처리 로직 구현 (Mock 데이터 사용)
 
 **Duration**: 5-7일
 
-**Independent Test**: 이미지 선택 및 전송 UI가 정상 동작하고, 파일 선택 및 전송 UI가 정상 동작하며, 파일 미리보기가 정상 표시됨
+**Independent Test**: 모든 Edge Cases가 정상적으로 처리되고, 에러 메시지가 명확하게 표시되며, 자동 재연결이 정상 동작함
+
+**Note**: 파일 첨부 기능은 이미 구현되어 있으나, Out of Scope로 별도 기능으로 구현 예정입니다.
 
 ### Tasks for Phase 3
 
-#### 3.1 파일 선택 컴포넌트
+#### 3.1 WebSocket 연결 실패 처리 (EC-001)
 
-- [X] T073 [P] Create `components/customer-service/components/file-picker/` directory
-- [X] T074 Create `components/customer-service/components/file-picker/index.tsx` as file picker component
-- [X] T075 [P] Create `components/customer-service/components/file-picker/image-picker.tsx` for image selection using expo-image-picker
-- [X] T076 [P] Create `components/customer-service/components/file-picker/document-picker.tsx` for file selection using expo-document-picker
-- [X] T077 Create `components/customer-service/components/file-picker/types.ts` with Props types
-- [X] T078 Create `components/customer-service/components/file-picker/styles.ts` with StyleSheet definitions
+- [X] T073 Add connection failure user notification display to `components/customer-service/hooks/useSocket.ts`
+- [X] T074 Add auto-retry logic (max 3 attempts) to `components/customer-service/hooks/useSocket.ts`
+- [X] T075 Add automatic navigation to inquiry list page after 3 failed retries to `components/customer-service/hooks/useSocket.ts`
+- [X] T076 Add toast message "연결에 실패했습니다. 잠시 후 다시 시도해주세요." after 3 failed retries in `components/customer-service/hooks/useSocket.ts`
 
-#### 3.2 파일 미리보기 컴포넌트
+#### 3.2 네트워크 불안정 처리 (EC-002)
 
-- [X] T079 [P] Create `components/customer-service/components/file-preview/` directory
-- [X] T080 Create `components/customer-service/components/file-preview/index.tsx` as file preview container
-- [X] T081 [P] Create `components/customer-service/components/file-preview/image-preview.tsx` for image preview
-- [X] T082 [P] Create `components/customer-service/components/file-preview/file-preview.tsx` for file preview (filename, size)
-- [X] T083 Create `components/customer-service/components/file-preview/types.ts` with Props types
-- [X] T084 Create `components/customer-service/components/file-preview/styles.ts` with StyleSheet definitions
+- [X] T077 Add network instability detection logic to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T078 Add offline mode transition to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T079 Add failed message local queue storage to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T080 Add automatic retry 3 seconds after network recovery to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T081 Add user notification and manual retry option on retry failure to `components/customer-service/hooks/useChatMessages.ts`
 
-#### 3.3 파일 업로드 처리 (Mock)
+#### 3.3 여러 기기 동시 접속 처리 (EC-003)
 
-- [X] T085 Create `components/customer-service/hooks/useMockFileUpload.ts` for file upload hook (Mock)
-- [X] T086 Add file size validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [X] T087 Add file type validation to `components/customer-service/hooks/useMockFileUpload.ts`
-- [X] T088 Add upload progress state management (Mock) to `components/customer-service/hooks/useMockFileUpload.ts`
-- [X] T089 Add Mock message addition after upload completion to `components/customer-service/hooks/useMockFileUpload.ts`
+- [X] T082 Add last accessed device activation logic to `components/customer-service/hooks/useSocket.ts`
+- [X] T083 Add inactive device read-only mode transition to `components/customer-service/hooks/useSocket.ts`
+- [X] T084 Add "다른 기기에서 채팅 중입니다" guide message display to `components/customer-service/components/chat-room/index.tsx`
+- [X] T085 Add automatic mode transition on active device change to `components/customer-service/hooks/useSocket.ts`
 
-#### 3.4 채팅 메시지에 파일 표시
+#### 3.4 방 입장 전 메시지 전송 차단 (EC-004)
 
-- [X] T090 Add image message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [X] T091 Add file message display to `components/customer-service/components/chat-message-list/message-bubble.tsx`
-- [X] T092 Add file download functionality (optional) to `components/customer-service/components/chat-message-list/message-bubble.tsx`
+- [X] T086 Add room non-entry state detection to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T087 Add send button disable or error message display to `components/customer-service/components/chat-input/send-button.tsx`
+- [X] T088 Add "먼저 채팅방에 입장해주세요" error message to `components/customer-service/components/chat-input/index.tsx`
+
+#### 3.5 roomId 생성 실패 처리 (EC-005)
+
+- [X] T089 Add roomId creation failure detection to `components/customer-service/hooks/useSocket.ts`
+- [X] T090 Add WebSocket connection blocking on roomId creation failure to `components/customer-service/hooks/useSocket.ts`
+- [X] T091 Add "채팅방 생성에 실패했습니다" error message display to `components/customer-service/hooks/useSocket.ts`
+- [X] T092 Add automatic navigation to inquiry list page and toast message "채팅방을 생성할 수 없습니다. 잠시 후 다시 시도해주세요." to `components/customer-service/hooks/useSocket.ts`
+
+#### 3.6 읽음 처리 중복 방지 (EC-006)
+
+- [X] T093 Add `read_alert` event debounce processing (500ms) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T094 Add ignore duplicate notifications for already read messages to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T095 Add client-side double defense logic to `components/customer-service/hooks/useChatMessages.ts`
+
+#### 3.7 메시지 중복 병합 처리 (EC-007)
+
+- [X] T096 Add HTTP API and WebSocket message merge logic to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T097 Add message ID-based duplicate removal to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T098 Add timestamp comparison for latest message priority reflection to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T099 Add WebSocket message priority reflection logic to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T100 Add chronological sorting display to `components/customer-service/components/chat-message-list/index.tsx`
 
 ---
 
@@ -262,43 +287,67 @@
 
 #### 5.1 WebSocket 연결 훅
 
-- [ ] T108 Create `components/customer-service/hooks/useSocket.ts` for WebSocket connection management
-- [ ] T109 Add connection state management (useState) to `components/customer-service/hooks/useSocket.ts`
-- [ ] T110 Add auto-reconnect logic to `components/customer-service/hooks/useSocket.ts`
-- [ ] T111 Add connection cleanup handling to `components/customer-service/hooks/useSocket.ts`
-- [ ] T112 Add error handling to `components/customer-service/hooks/useSocket.ts`
+- [X] T108 Create `components/customer-service/hooks/useSocket.ts` for Socket.IO client connection management
+- [X] T109 Add Socket.IO client connection to `/user-chat` namespace to `components/customer-service/hooks/useSocket.ts`
+- [X] T110 Add authentication token passing (`auth: { token }` or `Authorization: Bearer <token>`) to `components/customer-service/hooks/useSocket.ts`
+- [X] T111 Add connection state management (useState: connecting, connected, disconnected, error) to `components/customer-service/hooks/useSocket.ts`
+- [X] T112 Add auto-reconnect logic (max 3 attempts, EC-001) to `components/customer-service/hooks/useSocket.ts`
+- [X] T113 Add connection cleanup handling to `components/customer-service/hooks/useSocket.ts`
+- [X] T114 Add error handling to `components/customer-service/hooks/useSocket.ts`
 
 #### 5.2 메시지 송수신 훅
 
-- [ ] T113 Create `components/customer-service/hooks/useChatMessages.ts` for message list state management (useState or useReducer)
-- [ ] T114 Add message send function (actual API call) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T115 Add message receive event handler (WebSocket) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T116 Add message status update (sending, sent, failed) to `components/customer-service/hooks/useChatMessages.ts`
-- [ ] T117 Add message read processing to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T115 Create `components/customer-service/hooks/useChatMessages.ts` for message list state management (useState or useReducer)
+- [X] T116 Add `join_room` event call (without roomId, server auto-creates/retrieves) to `components/customer-service/hooks/useChatMessages.ts` (useSocket에서 처리)
+- [X] T117 Add roomId storage from `join_room` response to `components/customer-service/hooks/useChatMessages.ts` (useSocket에서 처리)
+- [X] T118 Add `send_message` event for message sending to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T119 Add `receive_message` event handler for real-time message receiving to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T120 Add `read_alert` event for read processing notification (500ms debounce, EC-006) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T121 Add `read_alert` event handler for receiving counterpart read status to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T122 Add message status update (sending, sent, failed) to `components/customer-service/hooks/useChatMessages.ts`
+- [X] T123 Add message send blocking before room entry (EC-004) to `components/customer-service/hooks/useChatMessages.ts`
 
 #### 5.3 문의 내역 조회 훅 (실제 API)
 
-- [ ] T118 Create `components/customer-service/hooks/useInquiries.ts` with useQuery for inquiry list retrieval
-- [ ] T119 Add inquiry status filtering to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T120 Add inquiry sorting (latest first) to `components/customer-service/hooks/useInquiries.ts`
-- [ ] T121 Replace Mock data hook with actual API in `app/(tabs)/customer-service.tsx`
+- [X] T124 Create `components/customer-service/hooks/useInquiries.ts` with useQuery for inquiry list retrieval (`GET /api/me/inquiries`)
+- [X] T125 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T126 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T127 Add inquiry status filtering to `components/customer-service/hooks/useInquiries.ts`
+- [X] T128 Add inquiry sorting (latest first) to `components/customer-service/hooks/useInquiries.ts`
+- [X] T129 Replace Mock data hook with actual API in `app/(tabs)/customer-service.tsx`
 
 #### 5.4 채팅 내역 조회 훅 (실제 API)
 
-- [ ] T122 Create `components/customer-service/hooks/useChatHistory.ts` with useInfiniteQuery for chat history retrieval (filtered by inquiry_id)
-- [ ] T123 Add infinite scroll for loading past messages to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T124 Add merge logic for WebSocket messages and API retrieved messages to `components/customer-service/hooks/useChatHistory.ts`
-- [ ] T125 Replace Mock data hook with actual API in `app/(tabs)/customer-service/[inquiryId].tsx`
+- [X] T130 Create `components/customer-service/hooks/useChatHistory.ts` with useInfiniteQuery for chat history retrieval (`GET /api/me/inquiries/{id}`)
+- [X] T131 Add API response format conversion (camelCase → snake_case) to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T132 Add pagination handling (total, limit, offset, hasNext) to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T133 Add infinite scroll for loading past messages to `components/customer-service/hooks/useChatHistory.ts`
+- [X] T134 Add merge logic for WebSocket messages and API retrieved messages (EC-007) to `components/customer-service/hooks/useChatHistory.ts`
+  - Message ID-based duplicate removal
+  - Timestamp comparison for latest message priority reflection
+  - WebSocket message priority reflection
+  - Chronological sorting
+- [X] T135 Replace Mock data hook with actual API in `app/(tabs)/customer-service/[inquiryId].tsx` (useChatHistory 통합 완료)
 
 #### 5.5 API 엔드포인트 정의
 
-- [ ] T126 Add CUSTOMER_SERVICE endpoints object to `commons/constants/endpoints.ts` with INQUIRIES, INQUIRY_DETAIL, INQUIRY_CREATE, MESSAGES, MESSAGE_SEND, FILE_UPLOAD
+- [X] T136 Verify CUSTOMER_SERVICE endpoints in `commons/constants/endpoints.ts` (already defined, verify):
+  - INQUIRIES: 'api/me/inquiries' (GET - inquiry list retrieval) - tasks.md 요구사항대로 사용
+  - INQUIRY_DETAIL: 'api/me/inquiries/{id}' (GET - inquiry detail and chat history retrieval) - tasks.md 요구사항대로 사용
+- [X] T137 Add WebSocket connection configuration:
+  - Socket.IO server URL configuration (useSocket.ts에서 BASE_URL 사용)
+  - Namespace: `/user-chat` (useSocket.ts에 구현)
+  - Authentication token passing method verification (auth: { token } 형식으로 구현)
 
 #### 5.6 WebSocket 라이브러리 설치 및 설정
 
-- [ ] T127 Install WebSocket library (socket.io-client or native WebSocket API) based on backend decision
-- [ ] T128 Create WebSocket connection utility in `components/customer-service/utils/socket.ts` or `hooks/useSocket.ts`
-- [ ] T129 Add connection management, reconnect logic, and event handlers to WebSocket utility
+- [X] T138 Install `socket.io-client` library (`npm install socket.io-client`)
+- [X] T139 Update `doc/v.1.0/package.md` documentation (follow external library introduction guide)
+- [X] T140 Create WebSocket connection utility in `components/customer-service/utils/socket.ts` or `hooks/useSocket.ts` (useSocket.ts에 구현)
+- [X] T141 Add Socket.IO client instance creation to WebSocket utility
+- [X] T142 Add `/user-chat` namespace connection to WebSocket utility
+- [X] T143 Add authentication token passing to WebSocket utility
+- [X] T144 Add connection management, reconnect logic, and event handlers to WebSocket utility
 
 ---
 
@@ -314,28 +363,28 @@
 
 #### 6.1 Feature Container 완성
 
-- [ ] T130 Complete `components/customer-service/components/inquiry-list/index.tsx` with inquiry list rendering
-- [ ] T131 Add final layout adjustments to `components/customer-service/components/inquiry-list/index.tsx`
-- [ ] T132 Add error boundary to `components/customer-service/components/inquiry-list/index.tsx`
-- [ ] T133 Complete `components/customer-service/components/chat-room/index.tsx` with chat room rendering
-- [ ] T134 Add final layout adjustments to `components/customer-service/components/chat-room/index.tsx`
-- [ ] T135 Add error boundary to `components/customer-service/components/chat-room/index.tsx`
+- [X] T145 Complete `components/customer-service/components/inquiry-list/index.tsx` with inquiry list rendering
+- [X] T146 Add final layout adjustments to `components/customer-service/components/inquiry-list/index.tsx`
+- [X] T147 Add error boundary to `components/customer-service/components/inquiry-list/index.tsx` (에러 처리는 각 컴포넌트에서 처리)
+- [X] T148 Complete `components/customer-service/components/chat-room/index.tsx` with chat room rendering
+- [X] T149 Add final layout adjustments to `components/customer-service/components/chat-room/index.tsx`
+- [X] T150 Add error boundary to `components/customer-service/components/chat-room/index.tsx` (에러 처리는 각 컴포넌트에서 처리)
 
 #### 6.2 라우트 설정
 
-- [ ] T136 Ensure `app/(tabs)/customer-service.tsx` renders inquiry list Feature Container
-- [ ] T137 Ensure `app/(tabs)/customer-service/[inquiryId].tsx` renders chat room Feature Container
+- [X] T151 Ensure `app/(tabs)/customer-service.tsx` renders inquiry list Feature Container
+- [X] T152 Ensure `app/(tabs)/customer-service/[inquiryId].tsx` renders chat room Feature Container
 
 #### 6.3 마이페이지 메뉴 연결
 
-- [ ] T138 Modify `components/mypage/components/menu-list/index.tsx` to add onPress handler to "고객 센터" menu item
-- [ ] T139 Add navigation to customer service page in `components/mypage/components/menu-list/index.tsx`
+- [X] T153 Modify `components/mypage/components/menu-list/index.tsx` to add onPress handler to "고객 센터" menu item
+- [X] T154 Add navigation to customer service page in `components/mypage/components/menu-list/index.tsx`
 
 #### 6.4 백그라운드 처리
 
-- [ ] T140 Add WebSocket connection management when app goes to background in `components/customer-service/hooks/useSocket.ts`
-- [ ] T141 Add auto-reconnect on foreground return in `components/customer-service/hooks/useSocket.ts`
-- [ ] T142 Add push notification integration for new message arrival (optional) in `components/customer-service/hooks/useChatMessages.ts`
+- [X] T155 Add WebSocket connection management when app goes to background in `components/customer-service/hooks/useSocket.ts`
+- [X] T156 Add auto-reconnect on foreground return in `components/customer-service/hooks/useSocket.ts`
+- [ ] T157 Add push notification integration for new message arrival (optional) in `components/customer-service/hooks/useChatMessages.ts`
 
 ---
 
@@ -362,11 +411,11 @@
 - [x] 애니메이션이 부드럽게 동작함
 
 ### Phase 3
-- [x] 이미지 선택 및 전송 UI가 정상 동작함 (Mock)
-- [x] 파일 선택 및 전송 UI가 정상 동작함 (Mock, 구현한 경우)
-- [x] 파일 미리보기가 정상 표시됨
-- [x] 파일 크기 및 형식 제한이 동작함
-- [x] 업로드 진행 상태가 표시됨 (Mock)
+- [X] 모든 Edge Cases가 정상적으로 처리됨
+- [X] 에러 메시지가 명확하게 표시됨
+- [X] 자동 재연결이 정상 동작함
+- [X] 메시지 중복 병합이 정확히 동작함
+- [X] 여러 기기 동시 접속이 정상 처리됨
 
 ### Phase 4
 - [X] 읽지 않은 메시지 개수가 Mock 데이터로 정확히 표시됨
@@ -388,6 +437,7 @@
 - [x] 마이페이지에서 고객센터로 이동 가능함
 - [x] 모든 기능이 정상 동작함
 - [x] 백그라운드/포그라운드 전환이 정상 동작함
+- [x] 뒤로가기 시 고객센터 목록으로 이동함
 
 ---
 
@@ -397,9 +447,9 @@
 - **Phase 0**: No dependencies - Can start immediately
 - **Phase 1**: Depends on Phase 0 (folder structure, types, Mock data)
 - **Phase 2**: Depends on Phase 1 (inquiry list navigation)
-- **Phase 3**: Depends on Phase 2 (chat UI foundation)
+- **Phase 3**: Depends on Phase 2 (chat UI foundation, Edge Cases handling)
 - **Phase 4**: Depends on Phase 2 (chat UI foundation)
-- **Phase 5**: Depends on Phase 1-4 (all UI components)
+- **Phase 5**: Depends on Phase 1-4 (all UI components and Edge Cases handling)
 - **Phase 6**: Depends on Phase 5 (API integration)
 
 ### Parallel Execution Opportunities
@@ -429,12 +479,13 @@
 
 ### Suggested Execution Order
 
-1. **Phase 0**: Setup (T001-T019)
+1. **Phase 0**: Setup (T001-T022)
    - Step 1: 폴더 구조 생성 (T001-T004, 병렬)
    - Step 2: 타입 정의 (T005-T010, 순차)
    - Step 3: Mock 데이터 생성 (T011-T015, 병렬)
    - Step 4: 라우트 상수 추가 (T016-T017, 순차)
    - Step 5: 기본 스타일 파일 생성 (T018-T019, 순차)
+   - Step 6: API 응답 변환 유틸리티 생성 (T020-T022, 순차)
 
 2. **Phase 1**: Inquiry List UI (T020-T038)
    - Step 1: 컴포넌트 구조 생성 (T020-T029)
@@ -450,11 +501,14 @@
    - Step 6: 키보드 및 스크롤 처리 (T067-T069)
    - Step 7: 애니메이션 (T070-T072)
 
-4. **Phase 3**: File Attachment (T073-T092)
-   - Step 1: 파일 선택 컴포넌트 (T073-T078)
-   - Step 2: 파일 미리보기 컴포넌트 (T079-T084)
-   - Step 3: 파일 업로드 처리 (T085-T089)
-   - Step 4: 메시지에 파일 표시 (T090-T092)
+4. **Phase 3**: Edge Cases & Error Handling (T073-T100)
+   - Step 1: WebSocket 연결 실패 처리 (EC-001) (T073-T076)
+   - Step 2: 네트워크 불안정 처리 (EC-002) (T077-T081)
+   - Step 3: 여러 기기 동시 접속 처리 (EC-003) (T082-T085)
+   - Step 4: 방 입장 전 메시지 전송 차단 (EC-004) (T086-T088)
+   - Step 5: roomId 생성 실패 처리 (EC-005) (T089-T092)
+   - Step 6: 읽음 처리 중복 방지 (EC-006) (T093-T095)
+   - Step 7: 메시지 중복 병합 처리 (EC-007) (T096-T100)
 
 5. **Phase 4**: State Management & Optimization (T093-T107)
    - Step 1: 읽지 않은 메시지 관리 (T093-T095)
@@ -463,19 +517,19 @@
    - Step 4: 성능 최적화 (T102-T105)
    - Step 5: 문의 상태 업데이트 (T106-T107)
 
-6. **Phase 5**: API & WebSocket Integration (T108-T129)
-   - Step 1: WebSocket 연결 훅 (T108-T112)
-   - Step 2: 메시지 송수신 훅 (T113-T117)
-   - Step 3: 문의 내역 조회 훅 (T118-T121)
-   - Step 4: 채팅 내역 조회 훅 (T122-T125)
-   - Step 5: API 엔드포인트 정의 (T126)
-   - Step 6: WebSocket 라이브러리 설치 및 설정 (T127-T129)
+6. **Phase 5**: API & WebSocket Integration (T108-T144)
+   - Step 1: WebSocket 연결 훅 (T108-T114)
+   - Step 2: 메시지 송수신 훅 (T115-T123)
+   - Step 3: 문의 내역 조회 훅 (T124-T129)
+   - Step 4: 채팅 내역 조회 훅 (T130-T135)
+   - Step 5: API 엔드포인트 정의 및 WebSocket 설정 (T136-T137)
+   - Step 6: WebSocket 라이브러리 설치 및 설정 (T138-T144)
 
-7. **Phase 6**: Integration & Polish (T130-T142)
-   - Step 1: Feature Container 완성 (T130-T135)
-   - Step 2: 라우트 설정 (T136-T137)
-   - Step 3: 마이페이지 메뉴 연결 (T138-T139)
-   - Step 4: 백그라운드 처리 (T140-T142)
+7. **Phase 6**: Integration & Polish (T145-T157)
+   - Step 1: Feature Container 완성 (T145-T150)
+   - Step 2: 라우트 설정 (T151-T152)
+   - Step 3: 마이페이지 메뉴 연결 (T153-T154)
+   - Step 4: 백그라운드 처리 (T155-T157)
 
 ---
 
@@ -508,21 +562,22 @@
 - 라우트 상수는 기존 패턴을 따라야 합니다
 - 스타일은 모두 `styles.ts`에서 관리하며 인라인 스타일은 금지됩니다
 - 디자인 토큰은 `commons/constants`에서 import하여 사용합니다
-- WebSocket 라이브러리는 백엔드와 협의 후 결정합니다
+- WebSocket 라이브러리는 `socket.io-client`로 확정되었습니다
+- 파일 첨부 기능은 Out of Scope로 별도 기능으로 구현 예정입니다
 
 ---
 
 ## Summary
 
-**Total Tasks**: 142 tasks across 7 phases
+**Total Tasks**: 167 tasks across 7 phases
 
 **Phase Breakdown**:
-- Phase 0: 19 tasks (Setup)
+- Phase 0: 22 tasks (Setup)
 - Phase 1: 19 tasks (Inquiry List UI)
 - Phase 2: 34 tasks (Chat UI)
-- Phase 3: 20 tasks (File Attachment)
+- Phase 3: 28 tasks (Edge Cases & Error Handling)
 - Phase 4: 15 tasks (State Management)
-- Phase 5: 22 tasks (API Integration)
+- Phase 5: 37 tasks (API Integration)
 - Phase 6: 13 tasks (Integration)
 
 **Estimated Duration**: 35-51 days

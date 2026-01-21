@@ -41,5 +41,11 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     color: Colors.darkGrey[600],
     textAlign: 'center',
+    marginBottom: Spacing.xl, // 텍스트와 버튼 사이 간격
+  },
+  emptyButtonWrapper: {
+    width: '100%',
+    maxWidth: 300, // 버튼 최대 너비 제한
+    marginTop: Spacing.lg,
   },
 });

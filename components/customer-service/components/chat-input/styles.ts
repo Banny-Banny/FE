@@ -5,7 +5,7 @@
  * 네이버 톡톡 스타일의 입력창 UI
  */
 
-import { Colors, Typography, Spacing, BorderRadius } from '@/commons/constants';
+import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
@@ -80,5 +80,23 @@ export const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: Colors.grey[300],
+  },
+
+  // ============================================
+  // Error Message (EC-004)
+  // ============================================
+  errorContainer: {
+    backgroundColor: Colors.red[50],
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Colors.red[200],
+  },
+  errorText: {
+    ...Typography.body.body6,
+    fontSize: 12,
+    lineHeight: 16,
+    color: Colors.red[500],
+    textAlign: 'center',
   },
 });

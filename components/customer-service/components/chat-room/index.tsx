@@ -3,58 +3,113 @@
  * 채팅방 전체 레이아웃 컴포넌트
  */
 
-import React, { useState, useRef, useEffect } from 'react';
-import { View, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { View, KeyboardAvoidingView, Platform, Keyboard, Text } from 'react-native';
 import { ChatHeader } from '../chat-header';
 import { ChatMessageList } from '../chat-message-list';
 import { ChatInput } from '../chat-input';
 import { selectFile } from '../file-picker';
-import { useMockMessages } from '../../hooks/useMockMessages';
 import { useMockFileUpload } from '../../hooks/useMockFileUpload';
+import { useSocket } from '../../hooks/useSocket';
+import { useChatMessages } from '../../hooks/useChatMessages';
+import { useChatHistory } from '../../hooks/useChatHistory';
 import { MessageAttachment } from '../../types';
 import { FilePickerResult } from '../file-picker/types';
+import { Colors, Spacing, Typography } from '@/commons/constants';
+import { Toast } from '@/commons/components/toast';
 import { styles } from './styles';
-import { ConnectionStatus } from '../../types';
 
 interface ChatRoomProps {
-  inquiryId: string;
   inquiryTitle?: string;
   onBack?: () => void;
 }
 
 /**
- * 채팅방 컴포넌트
- * 
- * @description
- * - 메시지 리스트, 입력창, 헤더 통합
- * - KeyboardAvoidingView로 키보드 처리
- * - 키보드가 올라올 때 자동 스크롤
- * - 파일 첨부 기능 통합
- * - 네이버 톡톡 스타일 구현
+ * 채팅방 컴포넌트 (단순화)
+ * - 한 유저당 채팅방 1개만 존재
  */
-export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
-  const { messages, addMessage, isLoading } = useMockMessages({ inquiryId });
+export function ChatRoom({ inquiryTitle, onBack }: ChatRoomProps) {
   const { uploadFile, uploadProgress, resetProgress } = useMockFileUpload();
-  const [connectionStatus] = useState<ConnectionStatus>('connected'); // Mock: 연결 상태
+  
+  const { 
+    connectionStatus, 
+    roomId,
+    isRoomEntered, 
+    joinRoom,
+    socket
+  } = useSocket({ 
+    onRoomIdReceived: (roomId) => {
+      console.log('roomId 수신:', roomId);
+    },
+    onError: (message) => {
+      showToast(message);
+    },
+  });
+
+  const { 
+    messages: wsMessages, 
+    addMessage, 
+    sendReadAlert,
+    isLoading: messagesLoading 
+  } = useChatMessages({ 
+    roomId,
+    socket,
+    isRoomEntered,
+    connectionStatus 
+  });
+
+  const {
+    messages: allMessages,
+    isLoading: historyLoading,
+    hasNext,
+    loadMore,
+  } = useChatHistory({
+    webSocketMessages: wsMessages,
+  });
+
   const [attachments, setAttachments] = useState<MessageAttachment[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const messageListRef = useRef<any>(null);
 
-  const handleSendMessage = (message: string, messageAttachments?: MessageAttachment[]) => {
-    // 첨부파일이 있으면 함께 전송
-    const finalAttachments = messageAttachments && messageAttachments.length > 0 
-      ? messageAttachments 
-      : attachments.length > 0 
-        ? attachments 
-        : undefined;
-    
-    addMessage(message, finalAttachments);
-    
-    // 첨부파일 초기화
-    setAttachments([]);
-    resetProgress();
-    
-    // 메시지 전송 후 키보드 닫기
-    Keyboard.dismiss();
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  // 방 입장 시도
+  useEffect(() => {
+    if (connectionStatus === 'connected' && !isRoomEntered) {
+      joinRoom().catch((error) => {
+        console.error('방 입장 실패:', error);
+        setErrorMessage('채팅방 입장에 실패했습니다.');
+      });
+    }
+  }, [connectionStatus, isRoomEntered, joinRoom]);
+
+  const handleSendMessage = async (message: string, messageAttachments?: MessageAttachment[]) => {
+    try {
+      if (!isRoomEntered) {
+        setErrorMessage('먼저 채팅방에 입장해주세요.');
+        return;
+      }
+
+      const finalAttachments = messageAttachments && messageAttachments.length > 0 
+        ? messageAttachments 
+        : attachments.length > 0 
+          ? attachments 
+          : undefined;
+      
+      await addMessage(message, finalAttachments);
+      setErrorMessage('');
+      setAttachments([]);
+      resetProgress();
+      Keyboard.dismiss();
+      sendReadAlert();
+    } catch (error: any) {
+      setErrorMessage(error.message || '메시지 전송에 실패했습니다.');
+    }
   };
 
   const handleAttachFile = async () => {
@@ -77,8 +132,14 @@ export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
   };
 
   const handleLoadMore = () => {
-    // Mock: 과거 메시지 로드 (Phase 4에서 구현)
+    loadMore();
   };
+
+  useEffect(() => {
+    if (allMessages.length > 0 && isRoomEntered) {
+      sendReadAlert();
+    }
+  }, [allMessages.length, isRoomEntered, sendReadAlert]);
 
   // 키보드가 올라올 때 자동 스크롤
   useEffect(() => {
@@ -109,23 +170,30 @@ export function ChatRoom({ inquiryId, inquiryTitle, onBack }: ChatRoomProps) {
         onBack={onBack}
       />
 
-      {/* 메시지 리스트 */}
       <View style={styles.messageListContainer}>
         <ChatMessageList
           ref={messageListRef}
-          messages={messages}
+          messages={allMessages}
           onLoadMore={handleLoadMore}
-          isLoading={isLoading}
+          isLoading={messagesLoading || historyLoading}
         />
       </View>
 
-      {/* 입력창 */}
       <ChatInput
         onSendMessage={handleSendMessage}
         onAttachFile={handleAttachFile}
         attachments={attachments}
         onRemoveAttachment={handleRemoveAttachment}
-        isLoading={isLoading || uploadProgress.status === 'uploading'}
+        isLoading={messagesLoading || uploadProgress.status === 'uploading'}
+        isRoomEntered={isRoomEntered}
+        errorMessage={errorMessage && errorMessage.trim() !== '' ? errorMessage : undefined}
+      />
+
+      {/* Toast 메시지 */}
+      <Toast
+        message={toastMessage}
+        visible={toastVisible}
+        onHide={() => setToastVisible(false)}
       />
     </KeyboardAvoidingView>
   );
