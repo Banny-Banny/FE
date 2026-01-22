@@ -20,9 +20,10 @@ import { styles } from './styles';
 interface MenuListProps {
   onPaymentHistoryPress?: () => void;
   onCustomerServicePress?: () => void;
+  onNoticePress?: () => void;
 }
 
-export function MenuList({ onPaymentHistoryPress, onCustomerServicePress }: MenuListProps) {
+export function MenuList({ onPaymentHistoryPress, onCustomerServicePress, onNoticePress }: MenuListProps) {
   return (
     <View style={styles.container}>
       {/* 설정 메뉴 */}
@@ -41,9 +42,17 @@ export function MenuList({ onPaymentHistoryPress, onCustomerServicePress }: Menu
         </View>
       </Pressable>
 
-      {/* 고객 센터 메뉴 (마지막 항목 - 구분선 없음) */}
-      <Pressable style={styles.menuItemLast} onPress={onCustomerServicePress}>
+      {/* 고객 센터 메뉴 */}
+      <Pressable style={styles.menuItem} onPress={onCustomerServicePress}>
         <Text style={styles.menuText}>고객 센터</Text>
+        <View style={styles.iconContainer} collapsable={false}>
+          <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
+        </View>
+      </Pressable>
+
+      {/* 공지사항 메뉴 (마지막 항목 - 구분선 없음) */}
+      <Pressable style={styles.menuItemLast} onPress={onNoticePress}>
+        <Text style={styles.menuText}>공지사항</Text>
         <View style={styles.iconContainer} collapsable={false}>
           <Icon name="arrow-right-s-line" size={20} color={Colors.black[500]} />
         </View>

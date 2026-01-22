@@ -38,6 +38,10 @@ export const ROUTES = {
 
   // 고객센터
   CUSTOMER_SERVICE: '/(tabs)/customer-service',
+
+  // 공지사항
+  NOTICES: '/(tabs)/notices',
+  NOTICE_DETAIL: '/(tabs)/notices/[id]',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

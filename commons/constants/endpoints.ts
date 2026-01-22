@@ -74,6 +74,12 @@ export const API_ENDPOINTS = {
     MESSAGE_SEND: 'api/customer-service/inquiries/{inquiryId}/messages', // 메시지 전송 (POST) - {inquiryId} 파라미터 필요
     FILE_UPLOAD: 'api/customer-service/chat/upload', // 파일 업로드 (POST)
   },
+
+  // 공지사항 (Notices)
+  NOTICES: {
+    LIST: 'api/notices', // 공지사항 목록 조회 (GET)
+    DETAIL: 'api/notices/{id}', // 공지사항 상세 조회 (GET) - {id} 파라미터 필요
+  },
 } as const;
 
 export type ApiEndpointKey = keyof typeof API_ENDPOINTS;

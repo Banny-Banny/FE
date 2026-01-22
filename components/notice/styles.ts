@@ -1,23 +1,14 @@
 /**
- * components/customer-service/styles.ts
- * 고객센터 기능 스타일 정의
+ * 공지사항 Feature 스타일 정의
  */
 
 import { Colors, Spacing, Typography } from '@/commons/constants';
 import { StyleSheet } from 'react-native';
 
-/**
- * 기본 컨테이너 스타일
- */
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.white[500],
-  },
-  contentContainer: {
-    flex: 1,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
   },
   // 헤더
   header: {
@@ -50,5 +41,29 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: Spacing.xs,
+  },
+  // 에러 처리
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  errorText: {
+    ...Typography.body.body4,
+    color: Colors.red[500],
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  retryButton: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    backgroundColor: Colors.red[500],
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    ...Typography.body.body3,
+    color: Colors.white[500],
+    fontWeight: '600',
   },
 });
