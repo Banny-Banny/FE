@@ -241,9 +241,9 @@
 
 ---
 
-## Phase 6: 공지사항 페이지네이션 (User Story 4 - P2)
+## Phase 6: 공지사항 무한 스크롤 (User Story 4 - P2)
 
-**Goal**: 공지사항 목록을 스크롤하여 더 많은 공지사항을 불러올 수 있습니다.
+**Goal**: 공지사항 목록을 스크롤하여 더 많은 공지사항을 자동으로 불러올 수 있습니다.
 
 **Duration**: 2-3일
 
@@ -253,15 +253,15 @@
 
 ### Tasks for Phase 6
 
-#### 6.1 페이지네이션 로직 구현
+#### 6.1 Mock Data 기반 무한 스크롤 구현
 
 - [ ] T100 [US4] Update useNotices hook to support offset parameter in `components/notice/hooks/useNotices.ts`
 - [ ] T101 [US4] Add offset state management to `components/notice/index.tsx`
 - [ ] T102 [US4] Add hasNext calculation logic in `components/notice/index.tsx`
-- [ ] T103 [US4] Add handleLoadMore function for pagination in `components/notice/index.tsx`
+- [ ] T103 [US4] Add handleLoadMore function for infinite scroll in `components/notice/index.tsx`
 - [ ] T104 [US4] Update Mock Data to support pagination (limit: 10) in `components/notice/hooks/useNotices.ts`
 
-#### 6.2 무한 스크롤 구현
+#### 6.2 무한 스크롤 UI 구현
 
 - [ ] T105 [US4] Add onEndReached handler to FlatList in `components/notice/components/notice-list/index.tsx`
 - [ ] T106 [US4] Add onEndReachedThreshold prop (0.5) to FlatList in `components/notice/components/notice-list/index.tsx`
@@ -305,31 +305,32 @@
 - [ ] T126 [P] Add error handling and transformation in `components/notice/hooks/useNoticeDetail.ts`
 - [ ] T127 [P] Add refetch function to return value in `components/notice/hooks/useNoticeDetail.ts`
 
-#### 7.3 무한 스크롤 API 연동
+#### 7.3 무한 스크롤 API 연동 (useInfiniteQuery)
 
-- [ ] T128 [US4] Update useNotices to use useInfiniteQuery for pagination in `components/notice/hooks/useNotices.ts`
+- [ ] T128 [US4] Update useNotices to use useInfiniteQuery for infinite scroll in `components/notice/hooks/useNotices.ts`
 - [ ] T129 [US4] Import useInfiniteQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
-- [ ] T130 [US4] Implement getNextPageParam logic in `components/notice/hooks/useNotices.ts`
+- [ ] T130 [US4] Implement getNextPageParam logic (offset 기반) in `components/notice/hooks/useNotices.ts`
 - [ ] T131 [US4] Update return value to flatten pages data in `components/notice/hooks/useNotices.ts`
 - [ ] T132 [US4] Update handleLoadMore to use fetchNextPage in `components/notice/index.tsx`
+- [ ] T133 [US4] Add isFetchingNextPage state handling in `components/notice/index.tsx`
 
 #### 7.4 에러 처리 및 재시도
 
-- [ ] T133 [P] Add error message display component to `components/notice/components/notice-list/index.tsx`
-- [ ] T134 [P] Add retry button functionality to error display in `components/notice/components/notice-list/index.tsx`
-- [ ] T135 [P] Add error message display component to `components/notice/components/notice-detail/index.tsx`
-- [ ] T136 [P] Add retry button functionality to error display in `components/notice/components/notice-detail/index.tsx`
-- [ ] T137 [P] Handle pagination error state in `components/notice/components/notice-list/index.tsx`
+- [ ] T134 [P] Add error message display component to `components/notice/components/notice-list/index.tsx`
+- [ ] T135 [P] Add retry button functionality to error display in `components/notice/components/notice-list/index.tsx`
+- [ ] T136 [P] Add error message display component to `components/notice/components/notice-detail/index.tsx`
+- [ ] T137 [P] Add retry button functionality to error display in `components/notice/components/notice-detail/index.tsx`
+- [ ] T138 [P] Handle infinite scroll error state in `components/notice/components/notice-list/index.tsx`
 
 #### 7.5 로딩 상태 개선
 
-- [ ] T138 [P] Add loading indicator component to `components/notice/components/notice-list/index.tsx`
-- [ ] T139 [P] Add loading indicator component to `components/notice/components/notice-detail/index.tsx`
-- [ ] T140 [P] Add skeleton UI for notice list items (optional) in `components/notice/components/notice-list/index.tsx`
+- [ ] T139 [P] Add loading indicator component to `components/notice/components/notice-list/index.tsx`
+- [ ] T140 [P] Add loading indicator component to `components/notice/components/notice-detail/index.tsx`
+- [ ] T141 [P] Add skeleton UI for notice list items (optional) in `components/notice/components/notice-list/index.tsx`
 
 #### 7.6 고정 공지사항 정렬
 
-- [ ] T141 [US1] Add isPinned sorting logic (pinned items first) in `components/notice/hooks/useNotices.ts` (API 응답에서 정렬된 데이터를 받거나 클라이언트에서 정렬)
+- [ ] T142 [US1] Add isPinned sorting logic (pinned items first) in `components/notice/hooks/useNotices.ts` (API 응답에서 정렬된 데이터를 받거나 클라이언트에서 정렬)
 
 ---
 
@@ -342,7 +343,7 @@
 3. **Phase 3 (US1 - 목록 조회)** → 독립적으로 완료 가능, MVP 범위
 4. **Phase 4 (US3 - 상세 조회)** → Phase 3 완료 필요
 5. **Phase 5 (US2 - 검색)** → Phase 3 완료 필요
-6. **Phase 6 (US4 - 페이지네이션)** → Phase 3 완료 필요
+6. **Phase 6 (US4 - 무한 스크롤)** → Phase 3 완료 필요
 7. **Phase 7 (API 연동)** → Phase 3, 4, 5, 6 완료 필요
 
 ### Parallel Execution Opportunities
@@ -370,7 +371,8 @@
 **Phase 7 내에서:**
 - T109-T118: 목록 API 연동 (Mock Data 제거 포함, 병렬 가능)
 - T119-T127: 상세 API 연동 (Mock Data 제거 포함, 병렬 가능)
-- T133-T141: 에러 처리 및 로딩 상태 (병렬 가능)
+- T128-T133: 무한 스크롤 API 연동 (useInfiniteQuery, 병렬 가능)
+- T134-T142: 에러 처리 및 로딩 상태 (병렬 가능)
 
 ---
 
@@ -397,14 +399,14 @@
 
 ## Task Summary
 
-- **Total Tasks**: 142 tasks
+- **Total Tasks**: 143 tasks
 - **Phase 1 (Setup)**: 15 tasks
 - **Phase 2 (Foundational)**: 6 tasks
 - **Phase 3 (US1 - 목록 조회)**: 32 tasks
 - **Phase 4 (US3 - 상세 조회)**: 25 tasks
 - **Phase 5 (US2 - 검색)**: 21 tasks
-- **Phase 6 (US4 - 페이지네이션)**: 9 tasks
-- **Phase 7 (API 연동)**: 34 tasks (Mock Data 제거 포함)
+- **Phase 6 (US4 - 무한 스크롤)**: 9 tasks
+- **Phase 7 (API 연동)**: 35 tasks (Mock Data 제거 포함)
 
 ### Independent Test Criteria
 
@@ -413,7 +415,7 @@
 - **Phase 3**: 공지사항 목록 UI 컴포넌트가 하드코딩 데이터로 먼저 표시되고, 이후 Mock Data로 정상 표시되는지 확인
 - **Phase 4**: 공지사항 상세 UI 컴포넌트가 하드코딩 데이터로 먼저 표시되고, 이후 Mock Data로 정상 표시되는지 확인
 - **Phase 5**: 검색어 입력 시 필터링된 결과가 표시되는지 확인
-- **Phase 6**: 스크롤 시 다음 페이지가 자동으로 로드되는지 확인
+- **Phase 6**: 무한 스크롤 시 다음 페이지가 자동으로 로드되는지 확인
 - **Phase 7**: 실제 API 호출이 정상 동작하고 에러 처리가 되는지 확인
 
 ---
