@@ -3,8 +3,8 @@
  * 공지사항 항목 컴포넌트 스타일 정의
  *
  * 프로젝트 디자인 시스템에 맞춘 스타일
- * - my-egg-list의 item 스타일을 참고하여 일관성 유지
- * - customer-service의 inquiry-item 스타일 참고
+ * - 미니멀하고 깔끔한 디자인
+ * - 최신 모바일 UI 트렌드 반영
  */
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
@@ -17,18 +17,28 @@ export const styles = StyleSheet.create({
   container: {
     width: '100%',
     backgroundColor: Colors.white[500],
-    borderWidth: 1,
-    borderColor: Colors.border.light,
-    borderRadius: 18, // 프로젝트 표준
-    overflow: 'hidden',
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md + 4,
+    // 미묘한 그림자
+    shadowColor: Colors.black[500],
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   containerPinned: {
-    borderLeftWidth: 4,
+    backgroundColor: Colors.white[500],
+    borderLeftWidth: 3,
     borderLeftColor: Colors.red[500],
-    backgroundColor: Colors.red[50],
+    paddingLeft: Spacing.lg - 3,
   },
   containerPressed: {
-    opacity: 0.9,
+    opacity: 0.85,
+    transform: [{ scale: 0.998 }],
   },
 
   // ============================================
@@ -37,9 +47,7 @@ export const styles = StyleSheet.create({
   content: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingHorizontal: 20, // 프로젝트 표준
-    paddingVertical: 16, // 프로젝트 표준
-    gap: 16, // 프로젝트 표준
+    gap: Spacing.sm,
   },
 
   // ============================================
@@ -50,31 +58,31 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     width: '100%',
-    gap: 12,
+    gap: Spacing.sm,
   },
   titleRow: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: Spacing.xs + 2,
     minWidth: 0,
   },
   pinnedIconContainer: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 1,
     flexShrink: 0,
   },
   title: {
     flex: 1,
-    fontFamily: Typography.header.h3.fontFamily,
-    fontSize: 18, // 프로젝트 표준
-    lineHeight: 22, // 프로젝트 표준
-    fontWeight: Typography.header.h5.fontWeight, // ExtraBold (800)
+    ...Typography.body.body1,
+    fontSize: 17,
+    lineHeight: 24,
+    fontWeight: '600',
     color: Colors.black[500],
-    letterSpacing: -0.5, // 자연스러운 간격
+    letterSpacing: -0.3,
   },
 
   // ============================================
@@ -85,36 +93,35 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.lighter,
+    marginTop: 2,
   },
   metaContainer: {
     flex: 1,
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: Spacing.xs,
     minWidth: 0,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
     minWidth: 0,
   },
   createdAt: {
-    fontFamily: Typography.body.body8.fontFamily,
+    ...Typography.body.body7,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: Typography.body.body8.fontWeight, // SemiBold (600)
-    color: Colors.darkGrey[600],
+    fontWeight: '400',
+    color: Colors.grey[600],
   },
   arrowContainer: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
+    marginLeft: Spacing.xs,
   },
 });
