@@ -44,6 +44,7 @@ const getNotificationIcon = (type: NotificationType): string => {
     FRIEND_INVITE: '👥',
     FRIEND_ACCEPTED: '🎉',
     EASTER_EGG_VIEWED: '🥚',
+    SYSTEM: '📢', // 관리자 시스템 알림
   };
   return iconMap[type] || '🔔';
 };
