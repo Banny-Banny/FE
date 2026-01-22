@@ -34,31 +34,31 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
       onPress={handlePress}
     >
       <View style={styles.content}>
-        {/* Header Row */}
-        <View style={styles.headerRow}>
+        {/* Left: 고정 배지 */}
+        {notice.isPinned && (
+          <View style={styles.badgeContainer}>
+            <View style={styles.pinnedBadge}>
+              <Text style={styles.pinnedBadgeText}>공지</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Center: 텍스트 컨텐츠 */}
+        <View style={styles.textContainer}>
           <View style={styles.titleRow}>
-            {notice.isPinned && (
-              <View style={styles.pinnedIconContainer}>
-                <Icon name="pushpin-fill" size={12} color={Colors.red[600]} />
-              </View>
-            )}
             <Text style={styles.title} numberOfLines={2}>
               {notice.title}
             </Text>
           </View>
+          <View style={styles.dateContainer}>
+            <Icon name="time-line" size={11} color={Colors.grey[500]} />
+            <Text style={styles.createdAt}>{formattedDate}</Text>
+          </View>
         </View>
 
-        {/* Footer Row */}
-        <View style={styles.footerRow}>
-          <View style={styles.metaContainer}>
-            <View style={styles.dateContainer}>
-              <Icon name="time-line" size={11} color={Colors.grey[500]} />
-              <Text style={styles.createdAt}>{formattedDate}</Text>
-            </View>
-          </View>
-          <View style={styles.arrowContainer}>
-            <Icon name="arrow-right-s-line" size={16} color={Colors.grey[400]} />
-          </View>
+        {/* Right: 화살표 */}
+        <View style={styles.arrowContainer}>
+          <Icon name="arrow-right-s-line" size={18} color={Colors.grey[400]} />
         </View>
       </View>
     </Pressable>

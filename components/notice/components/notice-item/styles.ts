@@ -2,9 +2,8 @@
  * components/notice/components/notice-item/styles.ts
  * 공지사항 항목 컴포넌트 스타일 정의
  *
- * 프로젝트 디자인 시스템에 맞춘 스타일
- * - 미니멀하고 깔끔한 디자인
- * - 최신 모바일 UI 트렌드 반영
+ * 일반적인 공지사항 리스트 디자인 패턴 적용
+ * - 프로젝트 색상 토큰 사용
  */
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/commons/constants';
@@ -17,97 +16,74 @@ export const styles = StyleSheet.create({
   container: {
     width: '100%',
     backgroundColor: Colors.white[500],
-    borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md + 4,
-    // 미묘한 그림자
-    shadowColor: Colors.black[500],
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.lighter,
   },
   containerPinned: {
     backgroundColor: Colors.white[500],
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.red[500],
-    paddingLeft: Spacing.lg - 3,
   },
   containerPressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.998 }],
+    backgroundColor: Colors.whiteGrey[50],
   },
 
   // ============================================
   // Content
   // ============================================
   content: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.sm,
   },
 
   // ============================================
-  // Header Row
+  // Left: Badge (고정 공지사항)
   // ============================================
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    width: '100%',
-    gap: Spacing.sm,
+  badgeContainer: {
+    marginTop: 2,
+    flexShrink: 0,
   },
-  titleRow: {
+  pinnedBadge: {
+    backgroundColor: Colors.red[500],
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.xs,
+  },
+  pinnedBadgeText: {
+    ...Typography.body.body8,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '600',
+    color: Colors.white[50],
+  },
+
+  // ============================================
+  // Center: Text Content
+  // ============================================
+  textContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.xs + 2,
+    gap: Spacing.xs,
     minWidth: 0,
   },
-  pinnedIconContainer: {
-    width: 18,
-    height: 18,
-    justifyContent: 'center',
+  titleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 1,
-    flexShrink: 0,
+    gap: Spacing.xs,
   },
   title: {
     flex: 1,
     ...Typography.body.body1,
-    fontSize: 17,
-    lineHeight: 24,
-    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 22,
+    fontWeight: '400',
     color: Colors.black[500],
-    letterSpacing: -0.3,
-  },
-
-  // ============================================
-  // Footer Row
-  // ============================================
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 2,
-  },
-  metaContainer: {
-    flex: 1,
-    flexShrink: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    minWidth: 0,
+    letterSpacing: -0.2,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    minWidth: 0,
+    gap: 4,
   },
   createdAt: {
     ...Typography.body.body7,
@@ -116,12 +92,16 @@ export const styles = StyleSheet.create({
     fontWeight: '400',
     color: Colors.grey[600],
   },
+
+  // ============================================
+  // Right: Arrow
+  // ============================================
   arrowContainer: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
-    marginLeft: Spacing.xs,
+    marginTop: 2,
   },
 });
