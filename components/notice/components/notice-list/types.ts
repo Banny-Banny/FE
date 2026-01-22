@@ -12,4 +12,10 @@ export interface NoticeListProps {
   onNoticePress: (noticeId: string) => void;
   /** 빈 상태 컴포넌트 */
   ListEmptyComponent?: React.ComponentType;
+  /** 다음 페이지 로드 핸들러 */
+  onLoadMore?: () => void;
+  /** 다음 페이지 존재 여부 */
+  hasNext?: boolean;
+  /** 추가 데이터 로딩 중 여부 */
+  isLoadingMore?: boolean;
 }

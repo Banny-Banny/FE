@@ -20,4 +20,9 @@ export const styles = StyleSheet.create({
   contentContainer: {
     // 리스트 아이템은 각자 borderBottom을 가지고 있어서 gap 불필요
   },
+  footerLoader: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

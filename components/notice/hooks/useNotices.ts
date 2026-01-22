@@ -1,189 +1,144 @@
 /**
  * components/notice/hooks/useNotices.ts
- * 공지사항 목록 조회 훅 (Mock Data)
+ * 공지사항 목록 조회 훅 (React Query)
  *
  * @description
- * - UI 우선 접근 방식으로 Mock Data를 사용
- * - 이후 실제 API로 교체 예정
+ * - React Query useInfiniteQuery를 사용하여 무한 스크롤 지원
+ * - 실제 API 호출로 Mock Data 제거
  */
 
-import { useMemo, useState } from 'react';
-import type { NoticeItem, NoticeListParams, NoticeListResponse, NoticeListState } from '../types';
-
-/**
- * Mock Data: 공지사항 목록 응답
- */
-const mockNoticeListResponse: NoticeListResponse = {
-  success: true,
-  data: {
-    items: [
-      {
-        id: 'b6803a41-08be-40d5-95c7-68d54c4daf24',
-        title: '고정 공지사항',
-        imageUrl: null,
-        isPinned: true,
-        createdAt: '2026-01-21T15:33:13.226Z',
-      },
-      {
-        id: 'a2782d8f-4834-4e88-ae48-7e9da25ad150',
-        title: '테스트 제목',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-21T15:30:23.803Z',
-      },
-      {
-        id: 'c3893e9f-5945-5f99-bf59-8f0eb36be261',
-        title: '새로운 기능 업데이트 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-20T10:15:00.000Z',
-      },
-      {
-        id: 'd4904f0a-6a56-6g00-cg60-9g1fc47cf372',
-        title: '서비스 점검 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-19T14:20:00.000Z',
-      },
-      {
-        id: 'e5a15g1b-7b67-7h11-dh71-ah2gd58dg483',
-        title: '이벤트 공지사항',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-18T09:30:00.000Z',
-      },
-      {
-        id: 'f6b26h2c-8c78-8i22-ei82-bi3he69eh594',
-        title: '버그 수정 완료 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-17T16:45:00.000Z',
-      },
-      {
-        id: 'g7c37i3d-9d89-9j33-fj93-cj4if70fi6a5',
-        title: '정책 변경 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-16T11:00:00.000Z',
-      },
-      {
-        id: 'h8d48j4e-0e90-0k44-gk04-dk5jg81gj7b6',
-        title: '시스템 업그레이드 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-15T13:15:00.000Z',
-      },
-      {
-        id: 'i9e59k5f-1f01-1l55-hl15-el6kh92hk8c7',
-        title: '새로운 업데이트',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-14T08:20:00.000Z',
-      },
-      {
-        id: 'j0f60l6g-2g12-2m66-im26-fm7li03il9d8',
-        title: '앱 업데이트 안내',
-        imageUrl: null,
-        isPinned: false,
-        createdAt: '2026-01-13T15:30:00.000Z',
-      },
-    ],
-    total: 21,
-    limit: 10,
-    offset: 0,
-  },
-};
-
-/**
- * 빈 목록 Mock Data
- */
-const emptyNoticeListResponse: NoticeListResponse = {
-  success: true,
-  data: {
-    items: [],
-    total: 0,
-    limit: 10,
-    offset: 0,
-  },
-};
+import { queryKeys } from '@/commons/constants';
+import { API_ENDPOINTS } from '@/commons/constants/endpoints';
+import { apiClient } from '@/utils/apiClient';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import type { NoticeItem, NoticeListParams, NoticeListResponse } from '../types';
 
 /**
  * 공지사항 목록 조회 훅 반환 타입
  */
 export interface UseNoticesReturn {
-  /** 공지사항 목록 */
+  /** 공지사항 목록 (모든 페이지 병합) */
   notices: NoticeItem[];
   /** 전체 개수 */
   total: number;
   /** 페이지 크기 */
   limit: number;
-  /** 오프셋 */
+  /** 현재 오프셋 */
   offset: number;
   /** 다음 페이지 존재 여부 */
   hasNext: boolean;
   /** 로딩 상태 */
   isLoading: boolean;
+  /** 다음 페이지 로딩 상태 */
+  isFetchingNextPage: boolean;
   /** 에러 메시지 */
   error: string | null;
+  /** 다음 페이지 로드 함수 */
+  fetchNextPage: () => void;
+  /** 재시도 함수 */
+  refetch: () => void;
 }
 
 /**
  * 공지사항 목록 조회 훅
  *
- * @param params 조회 파라미터 (search, limit, offset)
+ * @param params 조회 파라미터 (search, limit)
  * @returns 공지사항 목록 상태
  */
 export function useNotices(params?: NoticeListParams): UseNoticesReturn {
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
+  const search = params?.search?.trim();
+  const limit = params?.limit ?? 10;
 
-  // Mock Data 필터링 및 페이지네이션 로직
-  const result = useMemo(() => {
-    const search = params?.search?.trim();
-    const limit = params?.limit ?? 10;
-    const offset = params?.offset ?? 0;
+  // React Query useInfiniteQuery 사용
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    fetchNextPage,
+    refetch,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: queryKeys.notices({ search, limit }),
+    queryFn: async ({ pageParam = 0 }) => {
+      // 쿼리 파라미터 구성
+      const queryParams = new URLSearchParams();
+      if (search) {
+        queryParams.append('search', search);
+      }
+      queryParams.append('limit', limit.toString());
+      queryParams.append('offset', pageParam.toString());
 
-    // 검색어가 있는 경우 필터링
-    let filteredItems = mockNoticeListResponse.data.items;
-    if (search) {
-      filteredItems = filteredItems.filter(
-        (item) =>
-          item.title.toLowerCase().includes(search.toLowerCase()),
+      // API 호출
+      const response = await apiClient.get<NoticeListResponse>(
+        `${API_ENDPOINTS.NOTICES.LIST}?${queryParams.toString()}`,
       );
+
+      if (!response.data.success) {
+        throw new Error('공지사항 목록을 불러오는데 실패했습니다.');
+      }
+
+      return response.data.data;
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      const currentOffset = allPages.reduce((sum, page) => sum + page.items.length, 0);
+      // 다음 페이지가 있는지 확인
+      if (currentOffset < lastPage.total) {
+        return currentOffset;
+      }
+      return undefined;
+    },
+    initialPageParam: 0,
+    staleTime: 60 * 1000, // 60초
+    gcTime: 5 * 60 * 1000, // 5분
+  });
+
+  // 모든 페이지의 공지사항을 병합하고 고정 공지사항을 상단에 정렬
+  const notices = useMemo(() => {
+    if (!data?.pages) {
+      return [];
     }
 
-    // 빈 목록인 경우
-    if (filteredItems.length === 0) {
-      return {
-        items: [],
-        total: 0,
-        limit,
-        offset,
-        hasNext: false,
-      };
-    }
+    // 모든 페이지의 items를 병합
+    const allItems = data.pages.flatMap((page) => page.items);
 
-    // 페이지네이션 적용
-    const paginatedItems = filteredItems.slice(offset, offset + limit);
-    const total = filteredItems.length;
-    const hasNext = offset + limit < total;
+    // 고정 공지사항(isPinned: true)을 먼저 정렬하고, 그 다음 일반 공지사항을 정렬
+    const sortedItems = [...allItems].sort((a, b) => {
+      // 고정 공지사항 우선
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      // 둘 다 고정이거나 둘 다 일반인 경우, createdAt 기준 내림차순 (최신순)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
 
-    return {
-      items: paginatedItems,
-      total,
-      limit,
-      offset,
-      hasNext,
-    };
-  }, [params?.search, params?.limit, params?.offset]);
+    return sortedItems;
+  }, [data?.pages]);
+
+  // 전체 개수는 첫 번째 페이지의 total 사용
+  const total = data?.pages[0]?.total ?? 0;
+  // 현재 오프셋은 모든 페이지의 items 길이 합계
+  const offset = notices.length;
+  // 다음 페이지 존재 여부
+  const hasNext = hasNextPage ?? false;
+
+  // 에러 메시지 변환
+  const errorMessage = error
+    ? error instanceof Error
+      ? error.message
+      : '공지사항 목록을 불러오는데 실패했습니다.'
+    : null;
 
   return {
-    notices: result.items,
-    total: result.total,
-    limit: result.limit,
-    offset: result.offset,
-    hasNext: result.hasNext,
+    notices,
+    total,
+    limit,
+    offset,
+    hasNext,
     isLoading,
-    error,
+    isFetchingNextPage,
+    error: errorMessage,
+    fetchNextPage,
+    refetch,
   };
 }

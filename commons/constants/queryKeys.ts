@@ -63,5 +63,24 @@ export const queryKeys = {
    * invalidateQueries에서 prefix 매칭에 사용
    */
   capsulesAll: () => ['capsules'] as const,
+
+  /**
+   * 공지사항 목록 조회
+   * GET /api/notices?search={search}&limit={limit}&offset={offset}
+   */
+  notices: (params?: { search?: string; limit?: number; offset?: number }) =>
+    ['notices', params?.search, params?.limit, params?.offset] as const,
+
+  /**
+   * 공지사항 상세 조회
+   * GET /api/notices/{id}
+   */
+  noticeDetail: (noticeId: string) => ['noticeDetail', noticeId] as const,
+
+  /**
+   * 공지사항 목록 쿼리 무효화용 prefix
+   * 모든 공지사항 목록 쿼리를 무효화할 때 사용
+   */
+  noticesAll: () => ['notices'] as const,
 } as const;
 

@@ -13,12 +13,34 @@ import { Pressable, Text, View } from 'react-native';
 import Icon from 'react-native-remix-icon';
 import { NoticeEmpty } from './components/notice-empty';
 import { NoticeList } from './components/notice-list';
+import { NoticeSearch } from './components/notice-search';
+import { useNoticeSearch } from './hooks/useNoticeSearch';
 import { useNotices } from './hooks/useNotices';
 import { styles } from './styles';
 
 export default function NoticeFeature() {
   const navigation = useNavigation();
-  const { notices, total, limit, offset, hasNext, isLoading, error } = useNotices();
+  const { searchTerm, debouncedSearchTerm, setSearchTerm } = useNoticeSearch();
+
+  const {
+    notices,
+    total,
+    hasNext,
+    isLoading,
+    isFetchingNextPage,
+    error,
+    fetchNextPage,
+    refetch,
+  } = useNotices({
+    search: debouncedSearchTerm,
+    limit: 10,
+  });
+
+  const handleLoadMore = () => {
+    if (hasNext && !isFetchingNextPage && !isLoading) {
+      fetchNextPage();
+    }
+  };
 
   const handleNoticePress = (noticeId: string) => {
     // 동적 라우트로 이동: /(tabs)/notices/[id]
@@ -47,8 +69,7 @@ export default function NoticeFeature() {
   }
 
   // 에러 상태 처리
-  if (error) {
-    // TODO: 에러 메시지 컴포넌트 추가
+  if (error && !isLoading) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -57,6 +78,12 @@ export default function NoticeFeature() {
           </View>
           <Pressable style={styles.headerCloseButton} onPress={handleClose}>
             <Icon name="ri-close-line" size={24} color={Colors.black[500]} />
+          </Pressable>
+        </View>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Pressable style={styles.retryButton} onPress={() => refetch()}>
+            <Text style={styles.retryButtonText}>다시 시도</Text>
           </Pressable>
         </View>
       </View>
@@ -78,11 +105,21 @@ export default function NoticeFeature() {
         </Pressable>
       </View>
 
+      {/* 검색 입력 */}
+      <NoticeSearch searchTerm={searchTerm} onChangeText={setSearchTerm} />
+
       {/* 공지사항 목록 */}
       <NoticeList
         notices={notices}
         onNoticePress={handleNoticePress}
-        ListEmptyComponent={() => <NoticeEmpty />}
+        ListEmptyComponent={() => (
+          <NoticeEmpty
+            isSearchEmpty={debouncedSearchTerm.length > 0 && notices.length === 0}
+          />
+        )}
+        onLoadMore={handleLoadMore}
+        hasNext={hasNext}
+        isLoadingMore={isFetchingNextPage}
       />
     </View>
   );

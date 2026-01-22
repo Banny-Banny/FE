@@ -9,18 +9,33 @@
  * - [✓] 피그마 디자인 1:1 대응
  */
 
+import { Spinner } from '@/commons/components/spinner';
+import { Colors } from '@/commons/constants';
 import React from 'react';
 import { FlatList, View } from 'react-native';
 import { NoticeItem } from '../notice-item';
 import { styles } from './styles';
 import type { NoticeListProps } from './types';
 
-export function NoticeList({ notices, onNoticePress, ListEmptyComponent }: NoticeListProps) {
+export function NoticeList({
+  notices,
+  onNoticePress,
+  ListEmptyComponent,
+  onLoadMore,
+  hasNext,
+  isLoadingMore,
+}: NoticeListProps) {
   const renderItem = ({ item }: { item: typeof notices[0] }) => {
     return <NoticeItem notice={item} onPress={onNoticePress} />;
   };
 
   const keyExtractor = (item: typeof notices[0]) => item.id;
+
+  const handleEndReached = () => {
+    if (hasNext && !isLoadingMore && onLoadMore) {
+      onLoadMore();
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -32,6 +47,15 @@ export function NoticeList({ notices, onNoticePress, ListEmptyComponent }: Notic
         contentContainerStyle={styles.contentContainer}
         ListEmptyComponent={ListEmptyComponent}
         showsVerticalScrollIndicator={false}
+        onEndReached={hasNext ? handleEndReached : undefined}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isLoadingMore && hasNext ? (
+            <View style={styles.footerLoader}>
+              <Spinner size="small" color={Colors.grey[500]} />
+            </View>
+          ) : null
+        }
       />
     </View>
   );

@@ -154,43 +154,43 @@
 
 #### 4.1 공지사항 상세 컴포넌트 (UI 우선 - 하드코딩 데이터)
 
-- [ ] T060 [P] [US3] Create `components/notice/components/notice-detail/` directory
-- [ ] T061 [P] [US3] Create `components/notice/components/notice-detail/types.ts` with NoticeDetailProps type
-- [ ] T062 [P] [US3] Create `components/notice/components/notice-detail/styles.ts` with StyleSheet definitions
-- [ ] T063 [P] [US3] Create `components/notice/components/notice-detail/index.tsx` with title display (하드코딩 샘플 데이터 사용)
-- [ ] T064 [P] [US3] Add content display to `components/notice/components/notice-detail/index.tsx`
-- [ ] T065 [P] [US3] Add createdAt date formatting to `components/notice/components/notice-detail/index.tsx`
-- [ ] T066 [P] [US3] Add updatedAt date display (if exists) to `components/notice/components/notice-detail/index.tsx`
-- [ ] T067 [P] [US3] Add imageUrl display (if exists) to `components/notice/components/notice-detail/index.tsx`
-- [ ] T068 [P] [US3] Add loading state display to `components/notice/components/notice-detail/index.tsx`
-- [ ] T069 [P] [US3] Add error state display to `components/notice/components/notice-detail/index.tsx`
+- [X] T060 [P] [US3] Create `components/notice/components/notice-detail/` directory
+- [X] T061 [P] [US3] Create `components/notice/components/notice-detail/types.ts` with NoticeDetailProps type
+- [X] T062 [P] [US3] Create `components/notice/components/notice-detail/styles.ts` with StyleSheet definitions
+- [X] T063 [P] [US3] Create `components/notice/components/notice-detail/index.tsx` with title display (하드코딩 샘플 데이터 사용)
+- [X] T064 [P] [US3] Add content display to `components/notice/components/notice-detail/index.tsx`
+- [X] T065 [P] [US3] Add createdAt date formatting to `components/notice/components/notice-detail/index.tsx`
+- [X] T066 [P] [US3] Add updatedAt date display (if exists) to `components/notice/components/notice-detail/index.tsx`
+- [X] T067 [P] [US3] Add imageUrl display (if exists) to `components/notice/components/notice-detail/index.tsx`
+- [X] T068 [P] [US3] Add loading state display to `components/notice/components/notice-detail/index.tsx`
+- [X] T069 [P] [US3] Add error state display to `components/notice/components/notice-detail/index.tsx`
 
 #### 4.2 Mock Data 생성 (디자인 확인 후 데이터 연결)
 
-- [ ] T054 [P] [US3] Create mock data for NoticeDetailResponse in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T055 [P] [US3] Add various notice detail samples (with/without imageUrl, with/without updatedAt) to mock data in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T054 [P] [US3] Create mock data for NoticeDetailResponse in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T055 [P] [US3] Add various notice detail samples (with/without imageUrl, with/without updatedAt) to mock data in `components/notice/hooks/useNoticeDetail.ts`
 
 #### 4.3 Mock Data 기반 훅 구현 (UI와 데이터 연결)
 
-- [ ] T056 [US3] Create `components/notice/hooks/useNoticeDetail.ts` with Mock Data implementation
-- [ ] T057 [US3] Add noticeId parameter to `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T058 [US3] Add return type interface (notice, isLoading, error) to `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T059 [US3] Implement Mock Data return logic based on noticeId in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T056 [US3] Create `components/notice/hooks/useNoticeDetail.ts` with Mock Data implementation
+- [X] T057 [US3] Add noticeId parameter to `components/notice/hooks/useNoticeDetail.ts`
+- [X] T058 [US3] Add return type interface (notice, isLoading, error) to `components/notice/hooks/useNoticeDetail.ts`
+- [X] T059 [US3] Implement Mock Data return logic based on noticeId in `components/notice/hooks/useNoticeDetail.ts`
 
 #### 4.4 Feature Container 구현 (Mock Data 연결)
 
-- [ ] T070 [US3] Create `components/notice/components/notice-detail-container/index.tsx` as Feature Container for notice detail
-- [ ] T071 [US3] Import useNoticeDetail hook in `components/notice/components/notice-detail-container/index.tsx`
-- [ ] T072 [US3] Get noticeId from route params in `components/notice/components/notice-detail-container/index.tsx`
-- [ ] T073 [US3] Import NoticeDetail component in `components/notice/components/notice-detail-container/index.tsx`
-- [ ] T074 [US3] Add loading state handling in `components/notice/components/notice-detail-container/index.tsx`
-- [ ] T075 [US3] Add error state handling in `components/notice/components/notice-detail-container/index.tsx`
+- [X] T070 [US3] Create `components/notice/components/notice-detail-container/index.tsx` as Feature Container for notice detail
+- [X] T071 [US3] Import useNoticeDetail hook in `components/notice/components/notice-detail-container/index.tsx`
+- [X] T072 [US3] Get noticeId from route params in `components/notice/components/notice-detail-container/index.tsx`
+- [X] T073 [US3] Import NoticeDetail component in `components/notice/components/notice-detail-container/index.tsx`
+- [X] T074 [US3] Add loading state handling in `components/notice/components/notice-detail-container/index.tsx`
+- [X] T075 [US3] Add error state handling in `components/notice/components/notice-detail-container/index.tsx`
 
 #### 4.5 라우팅 설정
 
-- [ ] T076 [US3] Create `app/(tabs)/notices/[id].tsx` with routing to NoticeDetailContainer component
-- [ ] T077 [US3] Add proper imports and default export to `app/(tabs)/notices/[id].tsx`
-- [ ] T078 [US3] Update handleNoticePress in `components/notice/index.tsx` to navigate with notice id
+- [X] T076 [US3] Create `app/(tabs)/notices/[id].tsx` with routing to NoticeDetailContainer component
+- [X] T077 [US3] Add proper imports and default export to `app/(tabs)/notices/[id].tsx`
+- [X] T078 [US3] Update handleNoticePress in `components/notice/index.tsx` to navigate with notice id
 
 ---
 
@@ -208,36 +208,36 @@
 
 #### 5.1 검색 디바운싱 훅 구현
 
-- [ ] T079 [P] [US2] Create `components/notice/hooks/useNoticeSearch.ts` with debounce logic
-- [ ] T080 [P] [US2] Add searchTerm state to `components/notice/hooks/useNoticeSearch.ts`
-- [ ] T081 [P] [US2] Add debouncedSearchTerm state to `components/notice/hooks/useNoticeSearch.ts`
-- [ ] T082 [P] [US2] Implement 300ms debounce using useEffect in `components/notice/hooks/useNoticeSearch.ts`
-- [ ] T083 [P] [US2] Add return interface (searchTerm, debouncedSearchTerm, setSearchTerm) to `components/notice/hooks/useNoticeSearch.ts`
+- [X] T079 [P] [US2] Create `components/notice/hooks/useNoticeSearch.ts` with debounce logic
+- [X] T080 [P] [US2] Add searchTerm state to `components/notice/hooks/useNoticeSearch.ts`
+- [X] T081 [P] [US2] Add debouncedSearchTerm state to `components/notice/hooks/useNoticeSearch.ts`
+- [X] T082 [P] [US2] Implement 300ms debounce using useEffect in `components/notice/hooks/useNoticeSearch.ts`
+- [X] T083 [P] [US2] Add return interface (searchTerm, debouncedSearchTerm, setSearchTerm) to `components/notice/hooks/useNoticeSearch.ts`
 
 #### 5.2 검색 입력 컴포넌트
 
-- [ ] T084 [P] [US2] Create `components/notice/components/notice-search/` directory
-- [ ] T085 [P] [US2] Create `components/notice/components/notice-search/types.ts` with NoticeSearchProps type
-- [ ] T086 [P] [US2] Create `components/notice/components/notice-search/styles.ts` with StyleSheet definitions
-- [ ] T087 [P] [US2] Create `components/notice/components/notice-search/index.tsx` with TextInput implementation
-- [ ] T088 [P] [US2] Add placeholder text to `components/notice/components/notice-search/index.tsx`
-- [ ] T089 [P] [US2] Add onChangeText handler to `components/notice/components/notice-search/index.tsx`
-- [ ] T090 [P] [US2] Add clear button functionality to `components/notice/components/notice-search/index.tsx`
+- [X] T084 [P] [US2] Create `components/notice/components/notice-search/` directory
+- [X] T085 [P] [US2] Create `components/notice/components/notice-search/types.ts` with NoticeSearchProps type
+- [X] T086 [P] [US2] Create `components/notice/components/notice-search/styles.ts` with StyleSheet definitions
+- [X] T087 [P] [US2] Create `components/notice/components/notice-search/index.tsx` with TextInput implementation
+- [X] T088 [P] [US2] Add placeholder text to `components/notice/components/notice-search/index.tsx`
+- [X] T089 [P] [US2] Add onChangeText handler to `components/notice/components/notice-search/index.tsx`
+- [X] T090 [P] [US2] Add clear button functionality to `components/notice/components/notice-search/index.tsx`
 
 #### 5.3 검색 기능 통합
 
-- [ ] T091 [US2] Import useNoticeSearch hook in `components/notice/index.tsx`
-- [ ] T092 [US2] Import NoticeSearch component in `components/notice/index.tsx`
-- [ ] T093 [US2] Add NoticeSearch component above NoticeList in `components/notice/index.tsx`
-- [ ] T094 [US2] Pass searchTerm and setSearchTerm to NoticeSearch component in `components/notice/index.tsx`
-- [ ] T095 [US2] Update useNotices hook call to include search parameter in `components/notice/index.tsx`
-- [ ] T096 [US2] Update Mock Data filtering logic to support search in `components/notice/hooks/useNotices.ts`
+- [X] T091 [US2] Import useNoticeSearch hook in `components/notice/index.tsx`
+- [X] T092 [US2] Import NoticeSearch component in `components/notice/index.tsx`
+- [X] T093 [US2] Add NoticeSearch component above NoticeList in `components/notice/index.tsx`
+- [X] T094 [US2] Pass searchTerm and setSearchTerm to NoticeSearch component in `components/notice/index.tsx`
+- [X] T095 [US2] Update useNotices hook call to include search parameter in `components/notice/index.tsx`
+- [X] T096 [US2] Update Mock Data filtering logic to support search in `components/notice/hooks/useNotices.ts`
 
 #### 5.4 검색 결과 없음 처리
 
-- [ ] T097 [US2] Add search empty state message to `components/notice/components/notice-empty/index.tsx`
-- [ ] T098 [US2] Add isSearchEmpty prop to NoticeEmptyProps in `components/notice/components/notice-empty/types.ts`
-- [ ] T099 [US2] Update NoticeList to pass isSearchEmpty prop to NoticeEmpty in `components/notice/components/notice-list/index.tsx`
+- [X] T097 [US2] Add search empty state message to `components/notice/components/notice-empty/index.tsx`
+- [X] T098 [US2] Add isSearchEmpty prop to NoticeEmptyProps in `components/notice/components/notice-empty/types.ts`
+- [X] T099 [US2] Update NoticeList to pass isSearchEmpty prop to NoticeEmpty in `components/notice/components/notice-list/index.tsx`
 
 ---
 
@@ -255,18 +255,18 @@
 
 #### 6.1 Mock Data 기반 무한 스크롤 구현
 
-- [ ] T100 [US4] Update useNotices hook to support offset parameter in `components/notice/hooks/useNotices.ts`
-- [ ] T101 [US4] Add offset state management to `components/notice/index.tsx`
-- [ ] T102 [US4] Add hasNext calculation logic in `components/notice/index.tsx`
-- [ ] T103 [US4] Add handleLoadMore function for infinite scroll in `components/notice/index.tsx`
-- [ ] T104 [US4] Update Mock Data to support pagination (limit: 10) in `components/notice/hooks/useNotices.ts`
+- [X] T100 [US4] Update useNotices hook to support offset parameter in `components/notice/hooks/useNotices.ts`
+- [X] T101 [US4] Add offset state management to `components/notice/index.tsx`
+- [X] T102 [US4] Add hasNext calculation logic in `components/notice/index.tsx`
+- [X] T103 [US4] Add handleLoadMore function for infinite scroll in `components/notice/index.tsx`
+- [X] T104 [US4] Update Mock Data to support pagination (limit: 10) in `components/notice/hooks/useNotices.ts`
 
 #### 6.2 무한 스크롤 UI 구현
 
-- [ ] T105 [US4] Add onEndReached handler to FlatList in `components/notice/components/notice-list/index.tsx`
-- [ ] T106 [US4] Add onEndReachedThreshold prop (0.5) to FlatList in `components/notice/components/notice-list/index.tsx`
-- [ ] T107 [US4] Pass onLoadMore and hasNext props to NoticeList component in `components/notice/index.tsx`
-- [ ] T108 [US4] Add loading indicator at bottom when loading more in `components/notice/components/notice-list/index.tsx`
+- [X] T105 [US4] Add onEndReached handler to FlatList in `components/notice/components/notice-list/index.tsx`
+- [X] T106 [US4] Add onEndReachedThreshold prop (0.5) to FlatList in `components/notice/components/notice-list/index.tsx`
+- [X] T107 [US4] Pass onLoadMore and hasNext props to NoticeList component in `components/notice/index.tsx`
+- [X] T108 [US4] Add loading indicator at bottom when loading more in `components/notice/components/notice-list/index.tsx`
 
 ---
 
@@ -282,55 +282,55 @@
 
 #### 7.1 React Query 훅 구현 (목록)
 
-- [ ] T109 [P] Remove Mock Data from `components/notice/hooks/useNotices.ts`
-- [ ] T110 [P] Update `components/notice/hooks/useNotices.ts` to use React Query useQuery
-- [ ] T111 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
-- [ ] T112 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNotices.ts`
-- [ ] T113 [P] Add queryKey with search, limit, offset parameters in `components/notice/hooks/useNotices.ts`
-- [ ] T114 [P] Implement queryFn with GET /api/notices API call in `components/notice/hooks/useNotices.ts`
-- [ ] T115 [P] Add query parameter building logic (search, limit, offset) in `components/notice/hooks/useNotices.ts`
-- [ ] T116 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNotices.ts`
-- [ ] T117 [P] Add error handling and transformation in `components/notice/hooks/useNotices.ts`
-- [ ] T118 [P] Add refetch function to return value in `components/notice/hooks/useNotices.ts`
+- [X] T109 [P] Remove Mock Data from `components/notice/hooks/useNotices.ts`
+- [X] T110 [P] Update `components/notice/hooks/useNotices.ts` to use React Query useQuery
+- [X] T111 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
+- [X] T112 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNotices.ts`
+- [X] T113 [P] Add queryKey with search, limit, offset parameters in `components/notice/hooks/useNotices.ts`
+- [X] T114 [P] Implement queryFn with GET /api/notices API call in `components/notice/hooks/useNotices.ts`
+- [X] T115 [P] Add query parameter building logic (search, limit, offset) in `components/notice/hooks/useNotices.ts`
+- [X] T116 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNotices.ts`
+- [X] T117 [P] Add error handling and transformation in `components/notice/hooks/useNotices.ts`
+- [X] T118 [P] Add refetch function to return value in `components/notice/hooks/useNotices.ts`
 
 #### 7.2 React Query 훅 구현 (상세)
 
-- [ ] T119 [P] Remove Mock Data from `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T120 [P] Update `components/notice/hooks/useNoticeDetail.ts` to use React Query useQuery
-- [ ] T121 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T122 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T123 [P] Add queryKey with noticeId parameter in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T124 [P] Implement queryFn with GET /api/notices/{id} API call in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T125 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T126 [P] Add error handling and transformation in `components/notice/hooks/useNoticeDetail.ts`
-- [ ] T127 [P] Add refetch function to return value in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T119 [P] Remove Mock Data from `components/notice/hooks/useNoticeDetail.ts`
+- [X] T120 [P] Update `components/notice/hooks/useNoticeDetail.ts` to use React Query useQuery
+- [X] T121 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T122 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T123 [P] Add queryKey with noticeId parameter in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T124 [P] Implement queryFn with GET /api/notices/{id} API call in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T125 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T126 [P] Add error handling and transformation in `components/notice/hooks/useNoticeDetail.ts`
+- [X] T127 [P] Add refetch function to return value in `components/notice/hooks/useNoticeDetail.ts`
 
 #### 7.3 무한 스크롤 API 연동 (useInfiniteQuery)
 
-- [ ] T128 [US4] Update useNotices to use useInfiniteQuery for infinite scroll in `components/notice/hooks/useNotices.ts`
-- [ ] T129 [US4] Import useInfiniteQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
-- [ ] T130 [US4] Implement getNextPageParam logic (offset 기반) in `components/notice/hooks/useNotices.ts`
-- [ ] T131 [US4] Update return value to flatten pages data in `components/notice/hooks/useNotices.ts`
-- [ ] T132 [US4] Update handleLoadMore to use fetchNextPage in `components/notice/index.tsx`
-- [ ] T133 [US4] Add isFetchingNextPage state handling in `components/notice/index.tsx`
+- [X] T128 [US4] Update useNotices to use useInfiniteQuery for infinite scroll in `components/notice/hooks/useNotices.ts`
+- [X] T129 [US4] Import useInfiniteQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
+- [X] T130 [US4] Implement getNextPageParam logic (offset 기반) in `components/notice/hooks/useNotices.ts`
+- [X] T131 [US4] Update return value to flatten pages data in `components/notice/hooks/useNotices.ts`
+- [X] T132 [US4] Update handleLoadMore to use fetchNextPage in `components/notice/index.tsx`
+- [X] T133 [US4] Add isFetchingNextPage state handling in `components/notice/index.tsx`
 
 #### 7.4 에러 처리 및 재시도
 
-- [ ] T134 [P] Add error message display component to `components/notice/components/notice-list/index.tsx`
-- [ ] T135 [P] Add retry button functionality to error display in `components/notice/components/notice-list/index.tsx`
-- [ ] T136 [P] Add error message display component to `components/notice/components/notice-detail/index.tsx`
-- [ ] T137 [P] Add retry button functionality to error display in `components/notice/components/notice-detail/index.tsx`
-- [ ] T138 [P] Handle infinite scroll error state in `components/notice/components/notice-list/index.tsx`
+- [X] T134 [P] Add error message display component to `components/notice/components/notice-list/index.tsx`
+- [X] T135 [P] Add retry button functionality to error display in `components/notice/components/notice-list/index.tsx`
+- [X] T136 [P] Add error message display component to `components/notice/components/notice-detail/index.tsx`
+- [X] T137 [P] Add retry button functionality to error display in `components/notice/components/notice-detail/index.tsx`
+- [X] T138 [P] Handle infinite scroll error state in `components/notice/components/notice-list/index.tsx`
 
 #### 7.5 로딩 상태 개선
 
-- [ ] T139 [P] Add loading indicator component to `components/notice/components/notice-list/index.tsx`
-- [ ] T140 [P] Add loading indicator component to `components/notice/components/notice-detail/index.tsx`
-- [ ] T141 [P] Add skeleton UI for notice list items (optional) in `components/notice/components/notice-list/index.tsx`
+- [X] T139 [P] Add loading indicator component to `components/notice/components/notice-list/index.tsx`
+- [X] T140 [P] Add loading indicator component to `components/notice/components/notice-detail/index.tsx`
+- [X] T141 [P] Add skeleton UI for notice list items (optional) in `components/notice/components/notice-list/index.tsx`
 
 #### 7.6 고정 공지사항 정렬
 
-- [ ] T142 [US1] Add isPinned sorting logic (pinned items first) in `components/notice/hooks/useNotices.ts` (API 응답에서 정렬된 데이터를 받거나 클라이언트에서 정렬)
+- [X] T142 [US1] Add isPinned sorting logic (pinned items first) in `components/notice/hooks/useNotices.ts` (API 응답에서 정렬된 데이터를 받거나 클라이언트에서 정렬)
 
 ---
 

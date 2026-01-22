@@ -44,6 +44,8 @@ const HIDDEN_SCREENS = [
   'room/join',
   'customer-service',
   'customer-service/chat',
+  'notices/index',
+  'notices/[id]',
 ] as const;
 
 export interface TabScreenItem {
