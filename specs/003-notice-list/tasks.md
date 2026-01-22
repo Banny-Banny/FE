@@ -20,33 +20,33 @@
 
 #### 1.1 폴더 구조 생성
 
-- [ ] T001 [P] Create `components/notice/` directory
-- [ ] T002 [P] Create `components/notice/components/` directory
-- [ ] T003 [P] Create `components/notice/hooks/` directory
-- [ ] T004 [P] Create `app/(tabs)/notices/` directory
+- [X] T001 [P] Create `components/notice/` directory
+- [X] T002 [P] Create `components/notice/components/` directory
+- [X] T003 [P] Create `components/notice/hooks/` directory
+- [X] T004 [P] Create `app/(tabs)/notices/` directory
 
 #### 1.2 타입 정의
 
-- [ ] T005 Create `components/notice/types.ts` with NoticeItem type (id, title, imageUrl, isPinned, createdAt)
-- [ ] T006 Create `components/notice/types.ts` with NoticeDetail type (id, title, content, imageUrl, isPinned, createdAt, updatedAt)
-- [ ] T007 Create `components/notice/types.ts` with NoticeListResponse type (success, data: { items, total, limit, offset })
-- [ ] T008 Create `components/notice/types.ts` with NoticeDetailResponse type (success, data: NoticeDetail)
-- [ ] T009 Create `components/notice/types.ts` with NoticeListParams type (search?, limit?, offset?)
-- [ ] T010 Create `components/notice/types.ts` with NoticeListState type (items, total, limit, offset, hasNext, isLoading, error)
+- [X] T005 Create `components/notice/types.ts` with NoticeItem type (id, title, imageUrl, isPinned, createdAt)
+- [X] T006 Create `components/notice/types.ts` with NoticeDetail type (id, title, content, imageUrl, isPinned, createdAt, updatedAt)
+- [X] T007 Create `components/notice/types.ts` with NoticeListResponse type (success, data: { items, total, limit, offset })
+- [X] T008 Create `components/notice/types.ts` with NoticeDetailResponse type (success, data: NoticeDetail)
+- [X] T009 Create `components/notice/types.ts` with NoticeListParams type (search?, limit?, offset?)
+- [X] T010 Create `components/notice/types.ts` with NoticeListState type (items, total, limit, offset, hasNext, isLoading, error)
 
 #### 1.3 라우트 상수 추가
 
-- [ ] T011 Add `NOTICES: '/(tabs)/notices'` to `commons/constants/routes.ts`
-- [ ] T012 Add `NOTICE_DETAIL: '/(tabs)/notices/[id]'` to `commons/constants/routes.ts`
-- [ ] T013 Update RouteKey and RoutePath types in `commons/constants/routes.ts` to include NOTICES and NOTICE_DETAIL
+- [X] T011 Add `NOTICES: '/(tabs)/notices'` to `commons/constants/routes.ts`
+- [X] T012 Add `NOTICE_DETAIL: '/(tabs)/notices/[id]'` to `commons/constants/routes.ts`
+- [X] T013 Update RouteKey and RoutePath types in `commons/constants/routes.ts` to include NOTICES and NOTICE_DETAIL
 
 #### 1.4 API 엔드포인트 상수 추가
 
-- [ ] T014 Add `NOTICES: { LIST: 'api/notices', DETAIL: 'api/notices/{id}' }` to `commons/constants/endpoints.ts`
+- [X] T014 Add `NOTICES: { LIST: 'api/notices', DETAIL: 'api/notices/{id}' }` to `commons/constants/endpoints.ts`
 
 #### 1.5 기본 스타일 파일 생성
 
-- [ ] T015 Create `components/notice/styles.ts` with StyleSheet.create()
+- [X] T015 Create `components/notice/styles.ts` with StyleSheet.create()
 
 ---
 
