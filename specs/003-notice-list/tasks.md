@@ -87,56 +87,56 @@
 
 #### 3.1 공지사항 항목 컴포넌트 (UI 우선 - 하드코딩 데이터)
 
-- [ ] T028 [P] [US1] Create `components/notice/components/notice-item/` directory
-- [ ] T029 [P] [US1] Create `components/notice/components/notice-item/types.ts` with NoticeItemProps type
-- [ ] T030 [P] [US1] Create `components/notice/components/notice-item/styles.ts` with StyleSheet definitions
-- [ ] T031 [P] [US1] Create `components/notice/components/notice-item/index.tsx` with title display (하드코딩 샘플 데이터 사용)
-- [ ] T032 [P] [US1] Add createdAt date formatting to `components/notice/components/notice-item/index.tsx`
-- [ ] T033 [P] [US1] Add isPinned indicator display to `components/notice/components/notice-item/index.tsx`
-- [ ] T034 [P] [US1] Add onPress handler to `components/notice/components/notice-item/index.tsx`
+- [X] T028 [P] [US1] Create `components/notice/components/notice-item/` directory
+- [X] T029 [P] [US1] Create `components/notice/components/notice-item/types.ts` with NoticeItemProps type
+- [X] T030 [P] [US1] Create `components/notice/components/notice-item/styles.ts` with StyleSheet definitions
+- [X] T031 [P] [US1] Create `components/notice/components/notice-item/index.tsx` with title display (하드코딩 샘플 데이터 사용)
+- [X] T032 [P] [US1] Add createdAt date formatting to `components/notice/components/notice-item/index.tsx`
+- [X] T033 [P] [US1] Add isPinned indicator display to `components/notice/components/notice-item/index.tsx`
+- [X] T034 [P] [US1] Add onPress handler to `components/notice/components/notice-item/index.tsx`
 
 #### 3.2 공지사항 목록 컴포넌트 (UI 우선 - 하드코딩 데이터)
 
-- [ ] T035 [P] [US1] Create `components/notice/components/notice-list/` directory
-- [ ] T036 [P] [US1] Create `components/notice/components/notice-list/types.ts` with NoticeListProps type
-- [ ] T037 [P] [US1] Create `components/notice/components/notice-list/styles.ts` with StyleSheet definitions
-- [ ] T038 [P] [US1] Create `components/notice/components/notice-list/index.tsx` with FlatList implementation (하드코딩 샘플 배열 사용)
-- [ ] T039 [P] [US1] Add renderItem function using NoticeItem component to `components/notice/components/notice-list/index.tsx`
-- [ ] T040 [P] [US1] Add keyExtractor using notice id to `components/notice/components/notice-list/index.tsx`
+- [X] T035 [P] [US1] Create `components/notice/components/notice-list/` directory
+- [X] T036 [P] [US1] Create `components/notice/components/notice-list/types.ts` with NoticeListProps type
+- [X] T037 [P] [US1] Create `components/notice/components/notice-list/styles.ts` with StyleSheet definitions
+- [X] T038 [P] [US1] Create `components/notice/components/notice-list/index.tsx` with FlatList implementation (하드코딩 샘플 배열 사용)
+- [X] T039 [P] [US1] Add renderItem function using NoticeItem component to `components/notice/components/notice-list/index.tsx`
+- [X] T040 [P] [US1] Add keyExtractor using notice id to `components/notice/components/notice-list/index.tsx`
 
 #### 3.3 빈 상태 컴포넌트 (UI 우선)
 
-- [ ] T041 [P] [US1] Create `components/notice/components/notice-empty/` directory
-- [ ] T042 [P] [US1] Create `components/notice/components/notice-empty/types.ts` with NoticeEmptyProps type
-- [ ] T043 [P] [US1] Create `components/notice/components/notice-empty/styles.ts` with StyleSheet definitions
-- [ ] T044 [P] [US1] Create `components/notice/components/notice-empty/index.tsx` with empty state message display
-- [ ] T045 [P] [US1] Add ListEmptyComponent using NoticeEmpty to `components/notice/components/notice-list/index.tsx`
+- [X] T041 [P] [US1] Create `components/notice/components/notice-empty/` directory
+- [X] T042 [P] [US1] Create `components/notice/components/notice-empty/types.ts` with NoticeEmptyProps type
+- [X] T043 [P] [US1] Create `components/notice/components/notice-empty/styles.ts` with StyleSheet definitions
+- [X] T044 [P] [US1] Create `components/notice/components/notice-empty/index.tsx` with empty state message display
+- [X] T045 [P] [US1] Add ListEmptyComponent using NoticeEmpty to `components/notice/components/notice-list/index.tsx`
 
 #### 3.4 Mock Data 생성 (디자인 확인 후 데이터 연결)
 
-- [ ] T022 [P] [US1] Create mock data for NoticeListResponse in `components/notice/hooks/useNotices.ts`
-- [ ] T023 [P] [US1] Add multiple notice items with various isPinned values to mock data in `components/notice/hooks/useNotices.ts`
-- [ ] T024 [P] [US1] Add empty list mock data case to `components/notice/hooks/useNotices.ts`
+- [X] T022 [P] [US1] Create mock data for NoticeListResponse in `components/notice/hooks/useNotices.ts`
+- [X] T023 [P] [US1] Add multiple notice items with various isPinned values to mock data in `components/notice/hooks/useNotices.ts`
+- [X] T024 [P] [US1] Add empty list mock data case to `components/notice/hooks/useNotices.ts`
 
 #### 3.5 Mock Data 기반 훅 구현 (UI와 데이터 연결)
 
-- [ ] T025 [US1] Create `components/notice/hooks/useNotices.ts` with Mock Data implementation
-- [ ] T026 [US1] Add return type interface (notices, total, limit, offset, hasNext, isLoading, error) to `components/notice/hooks/useNotices.ts`
-- [ ] T027 [US1] Implement Mock Data return logic in `components/notice/hooks/useNotices.ts`
+- [X] T025 [US1] Create `components/notice/hooks/useNotices.ts` with Mock Data implementation
+- [X] T026 [US1] Add return type interface (notices, total, limit, offset, hasNext, isLoading, error) to `components/notice/hooks/useNotices.ts`
+- [X] T027 [US1] Implement Mock Data return logic in `components/notice/hooks/useNotices.ts`
 
 #### 3.6 Feature Container 구현 (Mock Data 연결)
 
-- [ ] T046 [US1] Create `components/notice/index.tsx` as Feature Container for notice list
-- [ ] T047 [US1] Import useNotices hook in `components/notice/index.tsx`
-- [ ] T048 [US1] Import NoticeList and NoticeEmpty components in `components/notice/index.tsx`
-- [ ] T049 [US1] Add loading state handling in `components/notice/index.tsx`
-- [ ] T050 [US1] Add error state handling in `components/notice/index.tsx`
-- [ ] T051 [US1] Add handleNoticePress handler for navigation to detail page in `components/notice/index.tsx`
+- [X] T046 [US1] Create `components/notice/index.tsx` as Feature Container for notice list
+- [X] T047 [US1] Import useNotices hook in `components/notice/index.tsx`
+- [X] T048 [US1] Import NoticeList and NoticeEmpty components in `components/notice/index.tsx`
+- [X] T049 [US1] Add loading state handling in `components/notice/index.tsx`
+- [X] T050 [US1] Add error state handling in `components/notice/index.tsx`
+- [X] T051 [US1] Add handleNoticePress handler for navigation to detail page in `components/notice/index.tsx`
 
 #### 3.7 라우팅 설정
 
-- [ ] T052 [US1] Create `app/(tabs)/notices/index.tsx` with routing to NoticeFeature component
-- [ ] T053 [US1] Add proper imports and default export to `app/(tabs)/notices/index.tsx`
+- [X] T052 [US1] Create `app/(tabs)/notices/index.tsx` with routing to NoticeFeature component
+- [X] T053 [US1] Add proper imports and default export to `app/(tabs)/notices/index.tsx`
 
 ---
 
