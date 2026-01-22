@@ -392,7 +392,7 @@
 ### Incremental Delivery
 
 1. **Week 1**: Phase 1-3 완료 (MVP)
-2. **Week 2**: Phase 4-6 완료 (검색, 페이지네이션 추가)
+2. **Week 2**: Phase 4-6 완료 (검색, 무한 스크롤 추가)
 3. **Week 3**: Phase 7 완료 (실제 API 연동)
 
 ---
