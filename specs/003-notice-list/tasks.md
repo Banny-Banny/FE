@@ -64,12 +64,12 @@
 
 #### 2.1 메뉴 리스트 수정
 
-- [ ] T016 [US1] Update `components/mypage/components/menu-list/index.tsx` to change "고객 센터" from menuItemLast to menuItem (add divider)
-- [ ] T017 [US1] Add "공지사항" menu item as menuItemLast (last item, no divider) to `components/mypage/components/menu-list/index.tsx`
-- [ ] T018 [US1] Add onNoticePress prop to MenuListProps interface in `components/mypage/components/menu-list/index.tsx`
-- [ ] T019 [US1] Add Pressable handler for notice menu item in `components/mypage/components/menu-list/index.tsx`
-- [ ] T020 [US1] Update `components/mypage/index.tsx` to add handleNoticePress handler that navigates to notices page
-- [ ] T021 [US1] Pass onNoticePress prop to MenuList component in `components/mypage/index.tsx`
+- [X] T016 [US1] Update `components/mypage/components/menu-list/index.tsx` to change "고객 센터" from menuItemLast to menuItem (add divider)
+- [X] T017 [US1] Add "공지사항" menu item as menuItemLast (last item, no divider) to `components/mypage/components/menu-list/index.tsx`
+- [X] T018 [US1] Add onNoticePress prop to MenuListProps interface in `components/mypage/components/menu-list/index.tsx`
+- [X] T019 [US1] Add Pressable handler for notice menu item in `components/mypage/components/menu-list/index.tsx`
+- [X] T020 [US1] Update `components/mypage/index.tsx` to add handleNoticePress handler that navigates to notices page
+- [X] T021 [US1] Pass onNoticePress prop to MenuList component in `components/mypage/index.tsx`
 
 ---
 
