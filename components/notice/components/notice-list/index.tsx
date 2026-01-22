@@ -29,7 +29,9 @@ export function NoticeList({ notices, onNoticePress, ListEmptyComponent }: Notic
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         style={styles.list}
+        contentContainerStyle={styles.contentContainer}
         ListEmptyComponent={ListEmptyComponent}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );

@@ -13,10 +13,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing['4xl'],
     paddingHorizontal: Spacing.lg,
+    minHeight: 300,
   },
   message: {
     ...Typography.body.body4,
-    color: Colors.grey[500],
+    color: Colors.grey[600],
     textAlign: 'center',
+    lineHeight: 24,
   },
 });

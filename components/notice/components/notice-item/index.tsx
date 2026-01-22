@@ -23,7 +23,10 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
   const formattedDate = formatRelativeTime(notice.createdAt);
 
   return (
-    <Pressable style={styles.container} onPress={handlePress}>
+    <Pressable
+      style={[styles.container, notice.isPinned && styles.containerPinned]}
+      onPress={handlePress}
+    >
       <View style={styles.content}>
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
@@ -31,9 +34,7 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
               {notice.title}
             </Text>
             {notice.isPinned && (
-              <View>
-                <Text style={styles.pinnedIndicator}>고정</Text>
-              </View>
+              <Text style={styles.pinnedIndicator}>고정</Text>
             )}
           </View>
           <Text style={styles.createdAt}>{formattedDate}</Text>
