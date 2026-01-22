@@ -1,0 +1,424 @@
+# Tasks: 공지사항 페이지
+
+## Feature: 공지사항 페이지
+
+**Status**: 📋 **PLANNING** — 전체 구현 작업 목록
+
+**Overview**: TimeEgg 앱의 공지사항 페이지 구현. 마이페이지 메뉴 리스트에서 공지사항 메뉴를 통해 공지사항 목록을 확인하고, 상세 내용을 조회할 수 있습니다. 검색 및 페이지네이션 기능을 지원합니다. UI 우선 접근 방식으로 Mock 데이터를 사용하여 먼저 UI를 구현하고, 이후 실제 API로 교체합니다.
+
+---
+
+## Phase 1: 기반 구조 및 타입 정의 (Setup)
+
+**Goal**: 공지사항 기능의 기본 구조 및 타입 정의 (UI 우선, Mock 데이터 사용)
+
+**Duration**: 1-2일
+
+**Independent Test**: 폴더 구조가 생성되고, 타입 정의가 완료되며, Mock 데이터가 준비되고, 라우트 상수가 추가됨
+
+### Tasks for Phase 1
+
+#### 1.1 폴더 구조 생성
+
+- [ ] T001 [P] Create `components/notice/` directory
+- [ ] T002 [P] Create `components/notice/components/` directory
+- [ ] T003 [P] Create `components/notice/hooks/` directory
+- [ ] T004 [P] Create `app/(tabs)/notices/` directory
+
+#### 1.2 타입 정의
+
+- [ ] T005 Create `components/notice/types.ts` with NoticeItem type (id, title, imageUrl, isPinned, createdAt)
+- [ ] T006 Create `components/notice/types.ts` with NoticeDetail type (id, title, content, imageUrl, isPinned, createdAt, updatedAt)
+- [ ] T007 Create `components/notice/types.ts` with NoticeListResponse type (success, data: { items, total, limit, offset })
+- [ ] T008 Create `components/notice/types.ts` with NoticeDetailResponse type (success, data: NoticeDetail)
+- [ ] T009 Create `components/notice/types.ts` with NoticeListParams type (search?, limit?, offset?)
+- [ ] T010 Create `components/notice/types.ts` with NoticeListState type (items, total, limit, offset, hasNext, isLoading, error)
+
+#### 1.3 라우트 상수 추가
+
+- [ ] T011 Add `NOTICES: '/(tabs)/notices'` to `commons/constants/routes.ts`
+- [ ] T012 Add `NOTICE_DETAIL: '/(tabs)/notices/[id]'` to `commons/constants/routes.ts`
+- [ ] T013 Update RouteKey and RoutePath types in `commons/constants/routes.ts` to include NOTICES and NOTICE_DETAIL
+
+#### 1.4 API 엔드포인트 상수 추가
+
+- [ ] T014 Add `NOTICES: { LIST: 'api/notices', DETAIL: 'api/notices/{id}' }` to `commons/constants/endpoints.ts`
+
+#### 1.5 기본 스타일 파일 생성
+
+- [ ] T015 Create `components/notice/styles.ts` with StyleSheet.create()
+
+---
+
+## Phase 2: 마이페이지 메뉴 추가 (Foundational)
+
+**Goal**: 마이페이지 메뉴 리스트에 공지사항 메뉴 추가
+
+**Duration**: 0.5일
+
+**Independent Test**: 마이페이지에서 공지사항 메뉴가 표시되고, 클릭 시 공지사항 목록 페이지로 이동함
+
+**Dependencies**: Phase 1 완료 필요
+
+### Tasks for Phase 2
+
+#### 2.1 메뉴 리스트 수정
+
+- [ ] T016 [US1] Update `components/mypage/components/menu-list/index.tsx` to change "고객 센터" from menuItemLast to menuItem (add divider)
+- [ ] T017 [US1] Add "공지사항" menu item as menuItemLast (last item, no divider) to `components/mypage/components/menu-list/index.tsx`
+- [ ] T018 [US1] Add onNoticePress prop to MenuListProps interface in `components/mypage/components/menu-list/index.tsx`
+- [ ] T019 [US1] Add Pressable handler for notice menu item in `components/mypage/components/menu-list/index.tsx`
+- [ ] T020 [US1] Update `components/mypage/index.tsx` to add handleNoticePress handler that navigates to notices page
+- [ ] T021 [US1] Pass onNoticePress prop to MenuList component in `components/mypage/index.tsx`
+
+---
+
+## Phase 3: 공지사항 목록 조회 (User Story 1 - P1)
+
+**Goal**: 마이페이지에서 공지사항 메뉴를 통해 공지사항 목록을 확인할 수 있습니다.
+
+**Duration**: 3-4일
+
+**Independent Test**: 마이페이지에서 공지사항 메뉴를 탭하여 공지사항 목록 페이지로 이동하고, 공지사항 목록이 표시되는지 확인할 수 있습니다.
+
+**Dependencies**: Phase 1, Phase 2 완료 필요
+
+### Tasks for Phase 3
+
+#### 3.1 Mock Data 생성
+
+- [ ] T022 [P] [US1] Create mock data for NoticeListResponse in `components/notice/hooks/useNotices.ts`
+- [ ] T023 [P] [US1] Add multiple notice items with various isPinned values to mock data in `components/notice/hooks/useNotices.ts`
+- [ ] T024 [P] [US1] Add empty list mock data case to `components/notice/hooks/useNotices.ts`
+
+#### 3.2 Mock Data 기반 훅 구현
+
+- [ ] T025 [US1] Create `components/notice/hooks/useNotices.ts` with Mock Data implementation
+- [ ] T026 [US1] Add return type interface (notices, total, limit, offset, hasNext, isLoading, error) to `components/notice/hooks/useNotices.ts`
+- [ ] T027 [US1] Implement Mock Data return logic in `components/notice/hooks/useNotices.ts`
+
+#### 3.3 공지사항 항목 컴포넌트
+
+- [ ] T028 [P] [US1] Create `components/notice/components/notice-item/` directory
+- [ ] T029 [P] [US1] Create `components/notice/components/notice-item/types.ts` with NoticeItemProps type
+- [ ] T030 [P] [US1] Create `components/notice/components/notice-item/styles.ts` with StyleSheet definitions
+- [ ] T031 [P] [US1] Create `components/notice/components/notice-item/index.tsx` with title display
+- [ ] T032 [P] [US1] Add createdAt date formatting to `components/notice/components/notice-item/index.tsx`
+- [ ] T033 [P] [US1] Add isPinned indicator display to `components/notice/components/notice-item/index.tsx`
+- [ ] T034 [P] [US1] Add onPress handler to `components/notice/components/notice-item/index.tsx`
+
+#### 3.4 공지사항 목록 컴포넌트
+
+- [ ] T035 [P] [US1] Create `components/notice/components/notice-list/` directory
+- [ ] T036 [P] [US1] Create `components/notice/components/notice-list/types.ts` with NoticeListProps type
+- [ ] T037 [P] [US1] Create `components/notice/components/notice-list/styles.ts` with StyleSheet definitions
+- [ ] T038 [P] [US1] Create `components/notice/components/notice-list/index.tsx` with FlatList implementation
+- [ ] T039 [P] [US1] Add renderItem function using NoticeItem component to `components/notice/components/notice-list/index.tsx`
+- [ ] T040 [P] [US1] Add keyExtractor using notice id to `components/notice/components/notice-list/index.tsx`
+
+#### 3.5 빈 상태 컴포넌트
+
+- [ ] T041 [P] [US1] Create `components/notice/components/notice-empty/` directory
+- [ ] T042 [P] [US1] Create `components/notice/components/notice-empty/types.ts` with NoticeEmptyProps type
+- [ ] T043 [P] [US1] Create `components/notice/components/notice-empty/styles.ts` with StyleSheet definitions
+- [ ] T044 [P] [US1] Create `components/notice/components/notice-empty/index.tsx` with empty state message display
+- [ ] T045 [P] [US1] Add ListEmptyComponent using NoticeEmpty to `components/notice/components/notice-list/index.tsx`
+
+#### 3.6 Feature Container 구현
+
+- [ ] T046 [US1] Create `components/notice/index.tsx` as Feature Container for notice list
+- [ ] T047 [US1] Import useNotices hook in `components/notice/index.tsx`
+- [ ] T048 [US1] Import NoticeList and NoticeEmpty components in `components/notice/index.tsx`
+- [ ] T049 [US1] Add loading state handling in `components/notice/index.tsx`
+- [ ] T050 [US1] Add error state handling in `components/notice/index.tsx`
+- [ ] T051 [US1] Add handleNoticePress handler for navigation to detail page in `components/notice/index.tsx`
+
+#### 3.7 라우팅 설정
+
+- [ ] T052 [US1] Create `app/(tabs)/notices/index.tsx` with routing to NoticeFeature component
+- [ ] T053 [US1] Add proper imports and default export to `app/(tabs)/notices/index.tsx`
+
+---
+
+## Phase 4: 공지사항 상세 조회 (User Story 3 - P1)
+
+**Goal**: 공지사항 목록에서 특정 공지사항을 선택하여 상세 내용을 확인할 수 있습니다.
+
+**Duration**: 2-3일
+
+**Independent Test**: 공지사항 목록에서 공지사항 항목을 탭하여 상세 페이지로 이동하고, 공지사항의 제목과 본문이 표시되는지 확인할 수 있습니다.
+
+**Dependencies**: Phase 3 완료 필요
+
+### Tasks for Phase 4
+
+#### 4.1 Mock Data 생성
+
+- [ ] T054 [P] [US3] Create mock data for NoticeDetailResponse in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T055 [P] [US3] Add various notice detail samples (with/without imageUrl, with/without updatedAt) to mock data in `components/notice/hooks/useNoticeDetail.ts`
+
+#### 4.2 Mock Data 기반 훅 구현
+
+- [ ] T056 [US3] Create `components/notice/hooks/useNoticeDetail.ts` with Mock Data implementation
+- [ ] T057 [US3] Add noticeId parameter to `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T058 [US3] Add return type interface (notice, isLoading, error) to `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T059 [US3] Implement Mock Data return logic based on noticeId in `components/notice/hooks/useNoticeDetail.ts`
+
+#### 4.3 공지사항 상세 컴포넌트
+
+- [ ] T060 [P] [US3] Create `components/notice/components/notice-detail/` directory
+- [ ] T061 [P] [US3] Create `components/notice/components/notice-detail/types.ts` with NoticeDetailProps type
+- [ ] T062 [P] [US3] Create `components/notice/components/notice-detail/styles.ts` with StyleSheet definitions
+- [ ] T063 [P] [US3] Create `components/notice/components/notice-detail/index.tsx` with title display
+- [ ] T064 [P] [US3] Add content display to `components/notice/components/notice-detail/index.tsx`
+- [ ] T065 [P] [US3] Add createdAt date formatting to `components/notice/components/notice-detail/index.tsx`
+- [ ] T066 [P] [US3] Add updatedAt date display (if exists) to `components/notice/components/notice-detail/index.tsx`
+- [ ] T067 [P] [US3] Add imageUrl display (if exists) to `components/notice/components/notice-detail/index.tsx`
+- [ ] T068 [P] [US3] Add loading state display to `components/notice/components/notice-detail/index.tsx`
+- [ ] T069 [P] [US3] Add error state display to `components/notice/components/notice-detail/index.tsx`
+
+#### 4.4 Feature Container 구현
+
+- [ ] T070 [US3] Create `components/notice/components/notice-detail-container/index.tsx` as Feature Container for notice detail
+- [ ] T071 [US3] Import useNoticeDetail hook in `components/notice/components/notice-detail-container/index.tsx`
+- [ ] T072 [US3] Get noticeId from route params in `components/notice/components/notice-detail-container/index.tsx`
+- [ ] T073 [US3] Import NoticeDetail component in `components/notice/components/notice-detail-container/index.tsx`
+- [ ] T074 [US3] Add loading state handling in `components/notice/components/notice-detail-container/index.tsx`
+- [ ] T075 [US3] Add error state handling in `components/notice/components/notice-detail-container/index.tsx`
+
+#### 4.5 라우팅 설정
+
+- [ ] T076 [US3] Create `app/(tabs)/notices/[id].tsx` with routing to NoticeDetailContainer component
+- [ ] T077 [US3] Add proper imports and default export to `app/(tabs)/notices/[id].tsx`
+- [ ] T078 [US3] Update handleNoticePress in `components/notice/index.tsx` to navigate with notice id
+
+---
+
+## Phase 5: 공지사항 검색 (User Story 2 - P2)
+
+**Goal**: 공지사항 목록에서 검색 키워드를 입력하여 제목 또는 본문에 해당 키워드가 포함된 공지사항을 찾을 수 있습니다.
+
+**Duration**: 2-3일
+
+**Independent Test**: 공지사항 목록 페이지에서 검색어를 입력하고 검색 결과가 필터링되어 표시되는지 확인할 수 있습니다.
+
+**Dependencies**: Phase 3 완료 필요
+
+### Tasks for Phase 5
+
+#### 5.1 검색 디바운싱 훅 구현
+
+- [ ] T079 [P] [US2] Create `components/notice/hooks/useNoticeSearch.ts` with debounce logic
+- [ ] T080 [P] [US2] Add searchTerm state to `components/notice/hooks/useNoticeSearch.ts`
+- [ ] T081 [P] [US2] Add debouncedSearchTerm state to `components/notice/hooks/useNoticeSearch.ts`
+- [ ] T082 [P] [US2] Implement 300ms debounce using useEffect in `components/notice/hooks/useNoticeSearch.ts`
+- [ ] T083 [P] [US2] Add return interface (searchTerm, debouncedSearchTerm, setSearchTerm) to `components/notice/hooks/useNoticeSearch.ts`
+
+#### 5.2 검색 입력 컴포넌트
+
+- [ ] T084 [P] [US2] Create `components/notice/components/notice-search/` directory
+- [ ] T085 [P] [US2] Create `components/notice/components/notice-search/types.ts` with NoticeSearchProps type
+- [ ] T086 [P] [US2] Create `components/notice/components/notice-search/styles.ts` with StyleSheet definitions
+- [ ] T087 [P] [US2] Create `components/notice/components/notice-search/index.tsx` with TextInput implementation
+- [ ] T088 [P] [US2] Add placeholder text to `components/notice/components/notice-search/index.tsx`
+- [ ] T089 [P] [US2] Add onChangeText handler to `components/notice/components/notice-search/index.tsx`
+- [ ] T090 [P] [US2] Add clear button functionality to `components/notice/components/notice-search/index.tsx`
+
+#### 5.3 검색 기능 통합
+
+- [ ] T091 [US2] Import useNoticeSearch hook in `components/notice/index.tsx`
+- [ ] T092 [US2] Import NoticeSearch component in `components/notice/index.tsx`
+- [ ] T093 [US2] Add NoticeSearch component above NoticeList in `components/notice/index.tsx`
+- [ ] T094 [US2] Pass searchTerm and setSearchTerm to NoticeSearch component in `components/notice/index.tsx`
+- [ ] T095 [US2] Update useNotices hook call to include search parameter in `components/notice/index.tsx`
+- [ ] T096 [US2] Update Mock Data filtering logic to support search in `components/notice/hooks/useNotices.ts`
+
+#### 5.4 검색 결과 없음 처리
+
+- [ ] T097 [US2] Add search empty state message to `components/notice/components/notice-empty/index.tsx`
+- [ ] T098 [US2] Add isSearchEmpty prop to NoticeEmptyProps in `components/notice/components/notice-empty/types.ts`
+- [ ] T099 [US2] Update NoticeList to pass isSearchEmpty prop to NoticeEmpty in `components/notice/components/notice-list/index.tsx`
+
+---
+
+## Phase 6: 공지사항 페이지네이션 (User Story 4 - P2)
+
+**Goal**: 공지사항 목록을 스크롤하여 더 많은 공지사항을 불러올 수 있습니다.
+
+**Duration**: 2-3일
+
+**Independent Test**: 공지사항 목록을 스크롤하여 하단에 도달하면 다음 페이지의 공지사항이 자동으로 로드되는지 확인할 수 있습니다.
+
+**Dependencies**: Phase 3 완료 필요
+
+### Tasks for Phase 6
+
+#### 6.1 페이지네이션 로직 구현
+
+- [ ] T100 [US4] Update useNotices hook to support offset parameter in `components/notice/hooks/useNotices.ts`
+- [ ] T101 [US4] Add offset state management to `components/notice/index.tsx`
+- [ ] T102 [US4] Add hasNext calculation logic in `components/notice/index.tsx`
+- [ ] T103 [US4] Add handleLoadMore function for pagination in `components/notice/index.tsx`
+- [ ] T104 [US4] Update Mock Data to support pagination (limit: 10) in `components/notice/hooks/useNotices.ts`
+
+#### 6.2 무한 스크롤 구현
+
+- [ ] T105 [US4] Add onEndReached handler to FlatList in `components/notice/components/notice-list/index.tsx`
+- [ ] T106 [US4] Add onEndReachedThreshold prop (0.5) to FlatList in `components/notice/components/notice-list/index.tsx`
+- [ ] T107 [US4] Pass onLoadMore and hasNext props to NoticeList component in `components/notice/index.tsx`
+- [ ] T108 [US4] Add loading indicator at bottom when loading more in `components/notice/components/notice-list/index.tsx`
+
+---
+
+## Phase 7: 실제 API 연동 (Polish & Cross-cutting)
+
+**Goal**: Mock Data를 실제 API 호출로 교체하고 에러 처리 및 로딩 상태를 개선합니다.
+
+**Duration**: 3-4일
+
+**Dependencies**: Phase 3, Phase 4, Phase 5, Phase 6 완료 필요
+
+### Tasks for Phase 7
+
+#### 7.1 React Query 훅 구현 (목록)
+
+- [ ] T109 [P] Update `components/notice/hooks/useNotices.ts` to use React Query useQuery
+- [ ] T110 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
+- [ ] T111 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNotices.ts`
+- [ ] T112 [P] Add queryKey with search, limit, offset parameters in `components/notice/hooks/useNotices.ts`
+- [ ] T113 [P] Implement queryFn with GET /api/notices API call in `components/notice/hooks/useNotices.ts`
+- [ ] T114 [P] Add query parameter building logic (search, limit, offset) in `components/notice/hooks/useNotices.ts`
+- [ ] T115 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNotices.ts`
+- [ ] T116 [P] Add error handling and transformation in `components/notice/hooks/useNotices.ts`
+- [ ] T117 [P] Add refetch function to return value in `components/notice/hooks/useNotices.ts`
+
+#### 7.2 React Query 훅 구현 (상세)
+
+- [ ] T118 [P] Update `components/notice/hooks/useNoticeDetail.ts` to use React Query useQuery
+- [ ] T119 [P] Import useQuery from @tanstack/react-query in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T120 [P] Import apiClient from @/utils/apiClient in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T121 [P] Add queryKey with noticeId parameter in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T122 [P] Implement queryFn with GET /api/notices/{id} API call in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T123 [P] Add staleTime (60s) and gcTime (5min) configuration in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T124 [P] Add error handling and transformation in `components/notice/hooks/useNoticeDetail.ts`
+- [ ] T125 [P] Add refetch function to return value in `components/notice/hooks/useNoticeDetail.ts`
+
+#### 7.3 무한 스크롤 API 연동
+
+- [ ] T126 [US4] Update useNotices to use useInfiniteQuery for pagination in `components/notice/hooks/useNotices.ts`
+- [ ] T127 [US4] Import useInfiniteQuery from @tanstack/react-query in `components/notice/hooks/useNotices.ts`
+- [ ] T128 [US4] Implement getNextPageParam logic in `components/notice/hooks/useNotices.ts`
+- [ ] T129 [US4] Update return value to flatten pages data in `components/notice/hooks/useNotices.ts`
+- [ ] T130 [US4] Update handleLoadMore to use fetchNextPage in `components/notice/index.tsx`
+
+#### 7.4 에러 처리 및 재시도
+
+- [ ] T131 [P] Add error message display component to `components/notice/components/notice-list/index.tsx`
+- [ ] T132 [P] Add retry button functionality to error display in `components/notice/components/notice-list/index.tsx`
+- [ ] T133 [P] Add error message display component to `components/notice/components/notice-detail/index.tsx`
+- [ ] T134 [P] Add retry button functionality to error display in `components/notice/components/notice-detail/index.tsx`
+- [ ] T135 [P] Handle pagination error state in `components/notice/components/notice-list/index.tsx`
+
+#### 7.5 로딩 상태 개선
+
+- [ ] T136 [P] Add loading indicator component to `components/notice/components/notice-list/index.tsx`
+- [ ] T137 [P] Add loading indicator component to `components/notice/components/notice-detail/index.tsx`
+- [ ] T138 [P] Add skeleton UI for notice list items (optional) in `components/notice/components/notice-list/index.tsx`
+
+#### 7.6 고정 공지사항 정렬
+
+- [ ] T139 [US1] Add isPinned sorting logic (pinned items first) in `components/notice/hooks/useNotices.ts`
+- [ ] T140 [US1] Update Mock Data to demonstrate pinned items sorting in `components/notice/hooks/useNotices.ts`
+
+---
+
+## Dependencies
+
+### User Story Completion Order
+
+1. **Phase 1 (Setup)** → 모든 Phase의 기반
+2. **Phase 2 (Foundational)** → Phase 3의 전제 조건
+3. **Phase 3 (US1 - 목록 조회)** → 독립적으로 완료 가능, MVP 범위
+4. **Phase 4 (US3 - 상세 조회)** → Phase 3 완료 필요
+5. **Phase 5 (US2 - 검색)** → Phase 3 완료 필요
+6. **Phase 6 (US4 - 페이지네이션)** → Phase 3 완료 필요
+7. **Phase 7 (API 연동)** → Phase 3, 4, 5, 6 완료 필요
+
+### Parallel Execution Opportunities
+
+**Phase 1 내에서:**
+- T001-T004: 폴더 구조 생성 (병렬 가능)
+- T005-T010: 타입 정의 (순차적이지만 빠르게 완료 가능)
+
+**Phase 3 내에서:**
+- T022-T024: Mock Data 생성 (병렬 가능)
+- T028-T034: NoticeItem 컴포넌트 (병렬 가능)
+- T035-T040: NoticeList 컴포넌트 (병렬 가능)
+- T041-T045: NoticeEmpty 컴포넌트 (병렬 가능)
+
+**Phase 4 내에서:**
+- T054-T055: Mock Data 생성 (병렬 가능)
+- T060-T069: NoticeDetail 컴포넌트 (병렬 가능)
+
+**Phase 5 내에서:**
+- T079-T083: 검색 훅 (병렬 가능)
+- T084-T090: 검색 컴포넌트 (병렬 가능)
+
+**Phase 7 내에서:**
+- T109-T117: 목록 API 연동 (병렬 가능)
+- T118-T125: 상세 API 연동 (병렬 가능)
+- T131-T138: 에러 처리 및 로딩 상태 (병렬 가능)
+
+---
+
+## Implementation Strategy
+
+### MVP Scope (Minimum Viable Product)
+
+**Phase 1 + Phase 2 + Phase 3만 구현하면 MVP 완성**
+
+- ✅ 기본 구조 및 타입 정의
+- ✅ 마이페이지 메뉴 추가
+- ✅ 공지사항 목록 조회 (Mock Data)
+- ✅ 공지사항 상세 조회 (Mock Data)
+
+이 MVP로 사용자는 공지사항을 확인할 수 있으며, 디자인 컨펌을 받을 수 있습니다.
+
+### Incremental Delivery
+
+1. **Week 1**: Phase 1-3 완료 (MVP)
+2. **Week 2**: Phase 4-6 완료 (검색, 페이지네이션 추가)
+3. **Week 3**: Phase 7 완료 (실제 API 연동)
+
+---
+
+## Task Summary
+
+- **Total Tasks**: 140 tasks
+- **Phase 1 (Setup)**: 15 tasks
+- **Phase 2 (Foundational)**: 6 tasks
+- **Phase 3 (US1 - 목록 조회)**: 32 tasks
+- **Phase 4 (US3 - 상세 조회)**: 25 tasks
+- **Phase 5 (US2 - 검색)**: 21 tasks
+- **Phase 6 (US4 - 페이지네이션)**: 9 tasks
+- **Phase 7 (API 연동)**: 32 tasks
+
+### Independent Test Criteria
+
+- **Phase 1**: 폴더 구조 생성 및 타입 정의 완료 확인
+- **Phase 2**: 마이페이지에서 공지사항 메뉴 표시 및 네비게이션 동작 확인
+- **Phase 3**: 공지사항 목록이 Mock Data로 정상 표시되는지 확인
+- **Phase 4**: 공지사항 상세 내용이 Mock Data로 정상 표시되는지 확인
+- **Phase 5**: 검색어 입력 시 필터링된 결과가 표시되는지 확인
+- **Phase 6**: 스크롤 시 다음 페이지가 자동으로 로드되는지 확인
+- **Phase 7**: 실제 API 호출이 정상 동작하고 에러 처리가 되는지 확인
+
+---
+
+## Notes
+
+- 모든 컴포넌트는 StyleSheet.create()를 사용하여 스타일을 정의합니다.
+- 모든 색상은 `@/commons/constants`의 Colors 토큰을 사용합니다.
+- 모든 스타일은 인라인 스타일을 사용하지 않습니다.
+- Feature Slice Architecture 패턴을 엄격히 따릅니다.
+- Mock Data 기반 UI 개발 후 실제 API 연동으로 전환합니다.
