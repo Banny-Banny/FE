@@ -11,6 +11,7 @@ export type NotificationType =
   | 'FRIEND_INVITE' // 친구 요청
   | 'FRIEND_ACCEPTED' // 친구 요청 수락
   | 'EASTER_EGG_VIEWED' // 누군가 내 이스터에그를 봤을 때
+  | 'SYSTEM' // 관리자 시스템 알림
   | string;
 
 /**

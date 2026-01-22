@@ -94,6 +94,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  // TODO: 알림이 꺼져있을 때 사용할 스타일 (현재 미사용)
   notificationOffIcon: {
     width: 24,
     height: 24,

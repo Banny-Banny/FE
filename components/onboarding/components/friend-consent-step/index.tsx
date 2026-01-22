@@ -7,8 +7,8 @@ import { Button } from '@/commons/components/button';
 import { Colors } from '@/commons/constants';
 import { Image } from 'expo-image';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon, { IconName } from 'react-native-remix-icon';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 
 // 이미지 리소스
@@ -71,7 +71,7 @@ export function FriendConsentStep({ isLoading, onConsent, onSkip }: FriendConsen
             {/* 첫 번째 카드: 내 친구 자동 매칭 */}
             <View style={styles.card}>
               <View style={styles.cardIconContainer}>
-                <Icon name={'team-line' as IconName} size={20} color={Colors.grey[500]} />
+                <Icon name={'team-line' as IconName} size={20} color={Colors.black[500]} />
               </View>
               <View style={styles.cardTextContainer}>
                 <Text style={styles.cardTitle}>내 친구 자동 매칭</Text>

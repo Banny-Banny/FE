@@ -1,13 +1,16 @@
 /**
  * Notifications API Hook
- * Version: 2.0.0 (React Query)
+ * Version: 2.0.0
  * Created: 2025-01-XX
  *
  * [Business Logic] 알림 목록 조회 API 통신
  * - 알림 목록 조회 (GET /api/me/notifications)
  * - 최신순 정렬 (서버에서 처리)
  * - 페이지네이션 지원 (limit, offset)
- * - React Query로 캐싱 및 중복 요청 방지
+ * - useState와 useEffect를 사용한 상태 관리
+ * - 앱 포그라운드 복귀 시 자동 새로고침
+ * - 푸시 알림 수신 시 자동 새로고침
+ * - 30초마다 주기적 새로고침
  */
 
 import { API_ENDPOINTS } from '@/commons/constants';
@@ -44,6 +47,7 @@ const getNotificationIcon = (type: NotificationType): string => {
     FRIEND_INVITE: '👥',
     FRIEND_ACCEPTED: '🎉',
     EASTER_EGG_VIEWED: '🥚',
+    SYSTEM: '📢', // 관리자 시스템 알림
   };
   return iconMap[type] || '🔔';
 };
@@ -64,7 +68,8 @@ const mapApiResponseToNotification = (item: NotificationApiResponse): Notificati
 };
 
 /**
- * 알림 목록 조회 함수 (React Query용)
+ * 알림 목록 조회 함수
+ * @deprecated 현재 사용되지 않음 (refreshNotifications에서 직접 처리)
  */
 const fetchNotifications = async (): Promise<Notification[]> => {
   const endpoint = `/${API_ENDPOINTS.AUTH.NOTIFICATIONS}`;
@@ -79,14 +84,15 @@ const fetchNotifications = async (): Promise<Notification[]> => {
 };
 
 /**
- * 알림 목록을 관리하는 Hook (React Query)
+ * 알림 목록을 관리하는 Hook
  *
  * @description
  * - GET /api/me/notifications API를 통해 알림 목록 조회
- * - React Query로 캐싱 및 중복 요청 방지
+ * - useState와 useEffect를 사용한 상태 관리
  * - 페이지네이션 파라미터: limit (기본값: 20), offset (기본값: 0)
  * - 최신순 정렬 (서버에서 처리)
  * - 읽지 않은 알림과 읽은 알림으로 구분
+ * - 앱 포그라운드 복귀, 푸시 알림 수신, 주기적 새로고침 지원
  */
 export function useNotifications(): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -120,6 +126,9 @@ export function useNotifications(): UseNotificationsReturn {
       const mappedNotifications = response.data.items.map(mapApiResponseToNotification);
 
       setNotifications(mappedNotifications);
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||
@@ -189,6 +198,7 @@ export function useNotifications(): UseNotificationsReturn {
    * @description
    * - PATCH /api/me/notifications/read-all
    * - 성공 시 로컬 상태의 모든 알림을 읽음 처리
+   * - 읽지 않은 알림 개수도 자동으로 새로고침
    */
   const markAllAsRead = useCallback(async () => {
     try {
@@ -202,6 +212,9 @@ export function useNotifications(): UseNotificationsReturn {
           isRead: true,
         })),
       );
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
@@ -216,6 +229,7 @@ export function useNotifications(): UseNotificationsReturn {
    * @description
    * - POST /api/me/notifications/{notificationId}/read
    * - 성공 시 로컬 상태의 해당 알림을 읽음 처리
+   * - 읽지 않은 알림 개수도 자동으로 새로고침
    */
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
@@ -230,6 +244,9 @@ export function useNotifications(): UseNotificationsReturn {
             : notification,
         ),
       );
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';

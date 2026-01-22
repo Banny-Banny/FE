@@ -81,6 +81,10 @@ export function usePushNotifications() {
         if (__DEV__) {
         }
 
+        // 알림 탭 시 즉시 알림 목록 새로고침 이벤트 발생
+        // 백그라운드에서 알림을 받고 탭한 경우에도 최신 알림 목록을 가져오기 위함
+        notificationEvents.emit();
+
         // 알림 타입에 따라 화면 이동
         if (notificationType === 'FRIEND_INVITE' || notificationType === 'FRIEND_ACCEPTED') {
           // 친구 관련 알림 → 마이페이지로 이동
@@ -97,6 +101,19 @@ export function usePushNotifications() {
         }
       },
     );
+
+    // 앱 시작 시 마지막 알림 확인 (앱이 종료된 상태에서 알림을 받은 경우)
+    // 앱이 백그라운드나 종료 상태에서 알림을 받았을 때, 앱을 다시 열면 마지막 알림을 확인하여 새로고침
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) {
+          // 마지막 알림이 있으면 알림 목록 새로고침
+          notificationEvents.emit();
+        }
+      })
+      .catch(() => {
+        // 에러는 무시 (앱 시작 시 실패해도 치명적이지 않음)
+      });
 
     return () => {
       subscription.remove();

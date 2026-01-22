@@ -159,8 +159,6 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
       paddingLeft: 10 * scale, // Figma: 좌측 패딩
       paddingRight: 10 * scale, // Figma: 우측 패딩
       gap: 4 * scale, // Figma: 텍스트와 아이콘 간격
-      borderWidth: 2, // 보더 두께
-    borderColor: 'yellow'
     },
     cardIconRight: {
       width: 40 * scale, // Figma: 아이콘 컨테이너 크기
@@ -261,7 +259,7 @@ export function createResponsiveStyles(screenWidth: number, screenHeight: number
        opacity: 0.95,
     },
     kakaoButtonDisabled: {
-      opacity: 0.1,
+      opacity: 0.9,
     },
     kakaoButtonContent: {
       flexDirection: 'row',
