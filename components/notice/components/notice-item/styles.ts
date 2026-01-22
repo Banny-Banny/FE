@@ -13,57 +13,74 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border.light,
     marginHorizontal: Spacing.lg,
-    marginVertical: Spacing.xs,
+    marginVertical: Spacing.sm,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    // 그림자 효과
+    paddingVertical: Spacing.md + 2,
+    // 더 부드러운 그림자 효과
     shadowColor: Colors.black[500],
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2, // Android
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3, // Android
   },
   containerPinned: {
     borderColor: Colors.red[200],
     borderWidth: 1.5,
     backgroundColor: Colors.red[50],
+    shadowColor: Colors.red[500],
+    shadowOpacity: 0.12,
+  },
+  containerPressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
   },
   content: {
-    flexDirection: 'column',
-    gap: Spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
   },
   textContainer: {
     flex: 1,
-    gap: Spacing.xs,
+    gap: Spacing.xs + 2,
   },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
+    gap: Spacing.xs + 2,
+    marginBottom: 4,
+  },
+  pinnedIconContainer: {
+    marginTop: 2,
+    paddingTop: 2,
   },
   title: {
     ...Typography.body.body1,
     color: Colors.black[500],
     flex: 1,
-    lineHeight: 22,
+    lineHeight: 24,
+    letterSpacing: -0.2,
   },
-  pinnedIndicator: {
-    ...Typography.body.body8,
-    color: Colors.red[600],
-    backgroundColor: Colors.red[100],
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.sm,
-    overflow: 'hidden',
-    fontWeight: '600',
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   createdAt: {
     ...Typography.body.body7,
     color: Colors.grey[600],
-    marginTop: 2,
+    fontSize: 11,
+  },
+  arrowContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingLeft: Spacing.xs,
   },
 });

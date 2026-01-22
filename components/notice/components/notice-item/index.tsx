@@ -9,9 +9,11 @@
  * - [✓] 피그마 디자인 1:1 대응
  */
 
+import { Colors } from '@/commons/constants';
 import { formatRelativeTime } from '@/utils/format';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
 import { styles } from './styles';
 import type { NoticeItemProps } from './types';
 
@@ -24,20 +26,34 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
 
   return (
     <Pressable
-      style={[styles.container, notice.isPinned && styles.containerPinned]}
+      style={({ pressed }) => [
+        styles.container,
+        notice.isPinned && styles.containerPinned,
+        pressed && styles.containerPressed,
+      ]}
       onPress={handlePress}
     >
       <View style={styles.content}>
         <View style={styles.textContainer}>
           <View style={styles.titleRow}>
+            {notice.isPinned && (
+              <View style={styles.pinnedIconContainer}>
+                <Icon name="pushpin-fill" size={14} color={Colors.red[600]} />
+              </View>
+            )}
             <Text style={styles.title} numberOfLines={2}>
               {notice.title}
             </Text>
-            {notice.isPinned && (
-              <Text style={styles.pinnedIndicator}>고정</Text>
-            )}
           </View>
-          <Text style={styles.createdAt}>{formattedDate}</Text>
+          <View style={styles.metaRow}>
+            <View style={styles.dateContainer}>
+              <Icon name="time-line" size={12} color={Colors.grey[500]} />
+              <Text style={styles.createdAt}>{formattedDate}</Text>
+            </View>
+          </View>
+        </View>
+        <View style={styles.arrowContainer}>
+          <Icon name="arrow-right-s-line" size={20} color={Colors.grey[400]} />
         </View>
       </View>
     </Pressable>
