@@ -38,7 +38,7 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
           <View style={styles.titleRow}>
             {notice.isPinned && (
               <View style={styles.pinnedIconContainer}>
-                <Icon name="pushpin-fill" size={14} color={Colors.red[600]} />
+                <Icon name="pushpin-fill" size={12} color={Colors.red[600]} />
               </View>
             )}
             <Text style={styles.title} numberOfLines={2}>
@@ -47,13 +47,13 @@ export function NoticeItem({ notice, onPress }: NoticeItemProps) {
           </View>
           <View style={styles.metaRow}>
             <View style={styles.dateContainer}>
-              <Icon name="time-line" size={12} color={Colors.grey[500]} />
+              <Icon name="time-line" size={11} color={Colors.darkGrey[500]} />
               <Text style={styles.createdAt}>{formattedDate}</Text>
             </View>
           </View>
         </View>
         <View style={styles.arrowContainer}>
-          <Icon name="arrow-right-s-line" size={20} color={Colors.grey[400]} />
+          <Icon name="arrow-right-s-line" size={16} color={Colors.darkGrey[500]} />
         </View>
       </View>
     </Pressable>
