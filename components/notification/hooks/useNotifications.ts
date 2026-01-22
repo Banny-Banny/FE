@@ -121,6 +121,9 @@ export function useNotifications(): UseNotificationsReturn {
       const mappedNotifications = response.data.items.map(mapApiResponseToNotification);
 
       setNotifications(mappedNotifications);
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message ||
@@ -190,6 +193,7 @@ export function useNotifications(): UseNotificationsReturn {
    * @description
    * - PATCH /api/me/notifications/read-all
    * - 성공 시 로컬 상태의 모든 알림을 읽음 처리
+   * - 읽지 않은 알림 개수도 자동으로 새로고침
    */
   const markAllAsRead = useCallback(async () => {
     try {
@@ -203,6 +207,9 @@ export function useNotifications(): UseNotificationsReturn {
           isRead: true,
         })),
       );
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
@@ -217,6 +224,7 @@ export function useNotifications(): UseNotificationsReturn {
    * @description
    * - POST /api/me/notifications/{notificationId}/read
    * - 성공 시 로컬 상태의 해당 알림을 읽음 처리
+   * - 읽지 않은 알림 개수도 자동으로 새로고침
    */
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
@@ -231,6 +239,9 @@ export function useNotifications(): UseNotificationsReturn {
             : notification,
         ),
       );
+
+      // 읽지 않은 알림 개수 새로고침을 위한 이벤트 발생
+      notificationEvents.emit();
     } catch (err: any) {
       const errorMessage =
         err.response?.data?.message || err.message || '알림 읽음 처리 중 오류가 발생했습니다.';
