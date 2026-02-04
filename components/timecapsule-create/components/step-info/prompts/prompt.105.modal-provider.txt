@@ -1,0 +1,216 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/02-wireframe.mdc
+            - @.cursor/rules/03-ui.mdc
+            - @.cursor/rules/figma.mdc
+
+==============================================
+
+조건-피그마) 활용할MCP: Figma Desktop MCP
+조건-피그마) 구현될 모달 디자인 링크: [여기에 피그마 모달 링크 입력]
+
+조건-파일경로) 모달 프로바이더: commons/contexts/ModalProvider.tsx
+조건-파일경로) 공통 모달 컴포넌트: commons/components/Modal/index.tsx
+조건-파일경로) 공통 모달 스타일: commons/components/Modal/styles.ts
+조건-파일경로) 모달 타입 정의: commons/components/Modal/types.ts
+조건-파일경로) useModal 훅: commons/hooks/useModal.ts
+
+==============================================
+
+조건-스타일시스템) React Native StyleSheet 사용할 것
+조건-스타일시스템) StyleSheet.create() 방식으로 styles.ts 작성
+조건-스타일시스템) 인라인 스타일 금지 (style={{...}} 금지)
+조건-스타일시스템) 모든 스타일은 styles.ts에서만 선언하고 index.tsx에서 import하여 사용
+
+==============================================
+
+조건-색상토큰) globals.css에 명시된 색상 변수 토큰 활용
+조건-색상토큰) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+조건-색상토큰) hex, rgb, hsl 직접 입력 금지
+
+조건-타이포그래피) globals.css에 명시된 타이포그래피 변수 토큰 활용
+조건-타이포그래피) 비슷한 토큰 선택하여 사용 (하드코딩 금지)
+
+==============================================
+
+조건-재사용성) 모달은 전역에서 재사용 가능해야 함
+조건-재사용성) 사용자가 커스터마이징할 수 있는 props만 노출
+조건-재사용성) 내부 구현은 감추고 인터페이스만 제공
+
+조건-커스터마이징) 사용자가 조정 가능한 속성:
+                - content: ReactNode (모달 내용)
+                - width?: number | string (모달 너비, 기본값: '80%')
+                - height?: number | string (모달 높이, 기본값: 'auto')
+                - onClose?: () => void (닫기 콜백)
+                - closeOnOverlay?: boolean (배경 클릭시 닫기, 기본값: true)
+
+조건-고정사항) 사용자가 수정 불가능한 속성 (공통 디자인):
+             - backgroundColor (배경 오버레이 색상)
+             - overlayOpacity (배경 투명도)
+             - borderRadius (모달 모서리 둥글기)
+             - modalPadding (모달 내부 여백)
+             - shadow (그림자 효과)
+             - animation (등장/퇴장 애니메이션)
+
+==============================================
+
+핵심요구사항-프로바이더) Context API를 활용한 ModalProvider 구현
+핵심요구사항-프로바이더) App.tsx 최상위에서 감싸서 전역 사용 가능하게 설정
+핵심요구사항-프로바이더) 여러 모달 동시 표시 가능하도록 큐 시스템 구현
+
+핵심요구사항-컴포넌트) 피그마 디자인과 동일한 모달 UI 구현
+핵심요구사항-컴포넌트) 배경 오버레이 + 모달 박스 구조
+핵심요구사항-컴포넌트) 닫기 버튼 포함 (우측 상단 X 버튼)
+
+핵심요구사항-사용성) useModal() 훅을 통한 간편한 모달 제어
+핵심요구사항-사용성) openModal(), closeModal() 메서드 제공
+
+==============================================
+
+사전분석단계)
+1. package.json 확인하여 추가 설치 필요한 라이브러리 파악
+2. 피그마 모달 구조 전체 분석 (오버레이 → 모달박스 → 내용 순)
+3. globals.css의 색상/타이포그래피 토큰 목록 확인
+4. 기존 프로젝트에 Context API 사용 패턴 확인
+5. commons 폴더 구조 확인 및 기존 공통 컴포넌트 패턴 파악
+
+==============================================
+
+구현단계)
+
+1단계) 타입 정의 (commons/components/Modal/types.ts)
+   - ModalProps 인터페이스 정의
+   - ModalContextType 인터페이스 정의
+   - 필수/선택 props 명확히 구분
+
+2단계) 모달 프로바이더 (commons/contexts/ModalProvider.tsx)
+   - ModalContext 생성
+   - useState로 모달 상태 관리
+   - openModal, closeModal 메서드 구현
+   - 모달 큐 관리 (다중 모달 대응)
+
+3단계) useModal 훅 (commons/hooks/useModal.ts)
+   - ModalContext consume
+   - 타입 안전성 보장
+   - Provider 없을 때 에러 처리
+
+4단계) 공통 모달 컴포넌트 (commons/components/Modal/index.tsx)
+   - View + Pressable로 오버레이 구현
+   - View로 모달 박스 구현
+   - 닫기 버튼 구현 (assets/icons 활용)
+   - props로 받은 content 렌더링
+   - Animated API로 등장/퇴장 애니메이션
+
+5단계) 모달 스타일 (commons/components/Modal/styles.ts)
+   - overlay: 전체화면 배경
+   - modalBox: 중앙 정렬 모달 박스
+   - closeButton: 닫기 버튼
+   - 피그마 디자인 완벽 재현
+
+6단계) App 통합
+   - App.tsx 최상위에 ModalProvider 추가
+   - 전역에서 useModal() 사용 가능하도록 설정
+
+==============================================
+
+사용예시코드)
+
+```tsx
+// App.tsx
+import { ModalProvider } from '@/commons/contexts/ModalProvider';
+
+export default function App() {
+  return (
+    <ModalProvider>
+      {/* 나머지 앱 컴포넌트들 */}
+    </ModalProvider>
+  );
+}
+```
+
+```tsx
+// 사용하는 곳에서
+import { useModal } from '@/commons/hooks/useModal';
+
+function MyComponent() {
+  const { openModal, closeModal } = useModal();
+
+  const handleOpenModal = () => {
+    openModal({
+      content: (
+        <View>
+          <Text>모달 내용</Text>
+          <Button title="확인" onPress={closeModal} />
+        </View>
+      ),
+      width: '80%',
+      height: 'auto',
+      closeOnOverlay: true,
+      onClose: () => {
+        console.log('모달 닫힘');
+      },
+    });
+  };
+
+  return <Button title="모달 열기" onPress={handleOpenModal} />;
+}
+```
+
+==============================================
+
+최종검토) 아래 체크리스트를 모두 통과해야 완료
+
+공통 디자인:
+- [ ] 피그마 모달 디자인과 동일하게 구현됨
+- [ ] 배경 오버레이 색상/투명도 globals.css 토큰 사용
+- [ ] 모달 박스 배경색, 모서리, 그림자 globals.css 토큰 사용
+- [ ] 닫기 버튼 디자인 피그마와 동일 (assets/icons 사용)
+
+코드 품질:
+- [ ] 색상 하드코딩 0건 (토큰만 사용)
+- [ ] 인라인 스타일 0건
+- [ ] index.tsx는 구조만, styles.ts는 스타일만 분리
+- [ ] TypeScript 타입 정의 완벽
+
+재사용성:
+- [ ] ModalProvider가 App.tsx 최상위에 적용됨
+- [ ] useModal() 훅으로 어디서든 모달 제어 가능
+- [ ] content, width, height, onClose, closeOnOverlay만 props로 받음
+- [ ] 공통 스타일은 내부에 고정되어 일관성 유지
+
+파일 구조:
+- [ ] commons/components/Modal 폴더에 모달 컴포넌트 위치
+- [ ] commons/contexts/ModalProvider.tsx에 프로바이더 위치
+- [ ] commons/hooks/useModal.ts에 훅 위치
+- [ ] commons 폴더 구조 규칙 준수
+
+기능성:
+- [ ] 배경 클릭시 닫기 동작 (closeOnOverlay: true일 때)
+- [ ] X 버튼 클릭시 닫기 동작
+- [ ] 등장/퇴장 애니메이션 적용
+- [ ] 여러 모달 동시 표시 가능 (큐 시스템)
+
+안정성:
+- [ ] 외부 라이브러리 설치 최소화 (기본 React Native API 활용)
+- [ ] 타입 안전성 보장 (TS strict mode 통과)
+- [ ] Context 사용시 Provider 없을 때 에러 처리
+
+==============================================
+
+참고) 모달 배경 오버레이 기본값 (피그마 디자인 기준):
+- backgroundColor: rgba(0, 0, 0, 0.5) 또는 globals.css의 --overlay-bg 토큰
+- justifyContent: 'center'
+- alignItems: 'center'
+
+참고) 모달 박스 기본값 (피그마 디자인 기준):
+- backgroundColor: --background-primary 또는 유사 토큰
+- borderRadius: 12 또는 --radius-lg 토큰
+- padding: 24 또는 --spacing-lg 토큰
+- shadow: elevation 또는 --shadow-lg 토큰
+
+==============================================

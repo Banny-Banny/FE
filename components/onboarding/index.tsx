@@ -1,0 +1,232 @@
+/**
+ * components/onboarding/index.tsx
+ * 온보딩 플로우 Feature Container
+ * - 로그인 → 친구 연동 동의 → 위치 연동 동의 순서로 진행
+ */
+
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { getUserFromToken } from '@/utils';
+import { useEffect, useRef } from 'react';
+import { Linking, Platform } from 'react-native';
+import { EmailLogin } from './components/login-step/email-login';
+import { FriendConsentStep } from './components/friend-consent-step';
+import { LocationConsentStep } from './components/location-consent-step';
+import { SocialLogin } from './components/login-step/social-login';
+import { useOnboardingFlow } from './hooks/useOnboardingFlow';
+
+/**
+ * 온보딩 Feature Container
+ * - 비즈니스 로직(Hook) + UI 컴포넌트 연결
+ * - AuthProvider 상태에 따라 현재 단계 자동 결정
+ */
+export default function OnboardingFeature() {
+  const { currentStep, login, friendConsent, locationConsent, setCurrentStep } = useOnboardingFlow();
+  const { login: authLogin } = useAuth();
+  const isProcessingDeepLink = useRef(false);
+
+  // Android 딥링크 처리 (외부 브라우저에서 돌아올 때)
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const handleDeepLink = async (event: { url: string }) => {
+      const url = event.url;
+
+      if (__DEV__) {
+      }
+
+      /**
+       * Expo Go(개발 환경)에서는 정상 OAuth 리다이렉트도 `exp://.../--/auth/callback?...` 형태로 들어옵니다.
+       * 기존 로직처럼 exp://를 전부 무시하면 Android에서 로그인 완료 후 토큰 처리가 막힙니다.
+       *
+       * 따라서 "그냥 개발 서버 루트(exp://...)"만 무시하고,
+       * auth/callback(토큰/코드 포함) 형태는 허용합니다.
+       */
+      const isExpoDevUrl = url.startsWith('exp://') || url.startsWith('exps://');
+      if (isExpoDevUrl) {
+        const looksLikeAuthCallback =
+          url.includes('/auth/callback') || url.includes('/api/auth/kakao/callback');
+        const hasAuthParams = url.includes('token=') || url.includes('code=');
+
+        if (__DEV__) {
+        }
+
+        if (!looksLikeAuthCallback && !hasAuthParams) {
+          if (__DEV__) {
+          }
+          return;
+        }
+
+        if (__DEV__) {
+        }
+      }
+
+      // 이미 처리 중이면 무시
+      if (isProcessingDeepLink.current) {
+        if (__DEV__) {
+        }
+        return;
+      }
+
+      try {
+        const urlObj = new URL(url);
+
+        /**
+         * 콜백 URL 예시
+         * - 프로덕션/개발빌드: timeegg://auth/callback?token=...
+         * - Expo Go: exp://<ip>:<port>/--/auth/callback?token=...
+         * - 백엔드 임시 콜백: /api/auth/kakao/callback?token=...
+         */
+        const isAuthCallbackPath =
+          urlObj.pathname.includes('/auth/callback') ||
+          urlObj.pathname.includes('/api/auth/kakao/callback');
+
+        if (isAuthCallbackPath) {
+          isProcessingDeepLink.current = true;
+
+          const token = urlObj.searchParams.get('token');
+          const isNewUser = urlObj.searchParams.get('isNewUser') === 'true';
+
+          if (!token) {
+            if (__DEV__) {
+            }
+            return;
+          }
+
+          if (__DEV__) {
+          }
+
+          // 토큰으로 유저 정보 추출
+          const userData = getUserFromToken(token);
+          if (!userData) {
+            if (__DEV__) {
+            }
+            return;
+          }
+
+          // 로그인 처리
+          await authLogin(token, userData);
+
+          if (__DEV__) {
+          }
+        }
+      } catch (error) {
+        if (__DEV__) {
+        }
+      } finally {
+        isProcessingDeepLink.current = false;
+      }
+    };
+
+    // 딥링크 리스너 등록
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // 앱이 딥링크로 시작된 경우 처리
+    Linking.getInitialURL().then((url) => {
+      if (url) {
+        handleDeepLink({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [authLogin]);
+
+  // 로그인 핸들러 (토큰 처리 포함)
+  const handleKakaoLogin = async () => {
+    const result = await login.loginWithKakao();
+
+    // Android는 딥링크로 처리되므로 여기서 null이 정상
+    // 웹 환경이거나 취소/에러인 경우
+    if (!result || !result.token) {
+      if (__DEV__) {
+      }
+      return;
+    }
+
+    if (__DEV__) {
+    }
+
+    // 토큰으로 유저 정보 추출
+    const userData = getUserFromToken(result.token);
+    if (!userData) {
+      if (__DEV__) {
+      }
+      return;
+    }
+
+    if (__DEV__) {
+    }
+
+    // 로그인 처리 (Provider가 자동으로 다음 단계로 리다이렉트)
+    await authLogin(result.token, userData);
+
+    if (__DEV__) {
+    }
+  };
+
+  // 이메일 로그인 핸들러
+  const handleEmailLogin = () => {
+    setCurrentStep('email-login');
+  };
+
+  // 이메일 로그인 뒤로가기 핸들러
+  const handleEmailLoginBack = () => {
+    setCurrentStep('login');
+  };
+
+  // 이메일 로그인 성공 핸들러
+  const handleEmailLoginSuccess = async (token: string, userData: any) => {
+    await authLogin(token, userData);
+    // 로그인 성공 후 자동으로 다음 단계로 진행 (AuthProvider가 처리)
+  };
+
+  // 단계별 컴포넌트 렌더링
+  let stepComponent = null;
+  switch (currentStep) {
+    case 'login':
+      stepComponent = (
+        <SocialLogin
+          isLoading={login.isLoading}
+          onKakaoLogin={handleKakaoLogin}
+          onEmailLogin={handleEmailLogin}
+        />
+      );
+      break;
+    case 'email-login':
+      stepComponent = (
+        <EmailLogin
+          isLoading={login.isLoading}
+          onLoginSuccess={handleEmailLoginSuccess}
+          onBack={handleEmailLoginBack}
+        />
+      );
+      break;
+    case 'friend-consent':
+      stepComponent = (
+        <FriendConsentStep
+          isLoading={friendConsent.isLoading}
+          onConsent={friendConsent.handleConsent}
+          onSkip={friendConsent.handleSkip}
+        />
+      );
+      break;
+    case 'location-consent':
+      stepComponent = (
+        <LocationConsentStep
+          isLoading={locationConsent.isLoading}
+          onConsent={locationConsent.handleConsent}
+          onSkip={locationConsent.handleSkip}
+        />
+      );
+      break;
+    case 'complete':
+      // 완료 시 AuthProvider가 자동으로 메인으로 리다이렉트
+      stepComponent = null;
+      break;
+    default:
+      stepComponent = null;
+  }
+
+  return <>{stepComponent}</>;
+}

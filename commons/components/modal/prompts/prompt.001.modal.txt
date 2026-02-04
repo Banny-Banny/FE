@@ -1,0 +1,419 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-피그마) 활용할MCP: CursorTalkToFigmaMCP(채널명:rpz2us7q )
+조건-피그마) 구현된 컴포넌트 참고 노드ID: 370:3126
+
+==============================================
+
+조건-파일경로) 구현될 PROVIDER 파일경로: commons/layout/provider/modal/modal.provider.tsx
+조건-파일경로) 구현될 CONTEXT 파일경로: commons/layout/provider/modal/modal.context.tsx
+조건-파일경로) 구현될 MODAL 컴포넌트 파일경로: commons/components/modal/index.tsx
+조건-파일경로) 구현될 MODAL 스타일 파일경로: commons/components/modal/styles.ts
+조건-파일경로) 구현될 MODAL 타입 파일경로: commons/components/modal/types.ts
+조건-파일경로) 구현될 MODAL CONSTANTS 파일경로: commons/components/modal/constants.ts
+조건-파일경로) 구현될 HOOK 파일경로: commons/components/modal/hooks/useModal.ts
+
+==============================================
+
+조건-디자인시스템) 기존 디자인 시스템 사용
+                  - 색상: @commons/constants/color.ts의 Colors 사용
+                  - 타이포그래피: @commons/constants/typography.ts의 Typography 사용
+                  - 새로운 색상이나 타이포 정의 금지
+
+==============================================
+
+핵심요구사항) 공통 모달 시스템 구현을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) 라이브러리 조건
+                - UI Framework: React Native 기본 컴포넌트 사용
+                - 애니메이션: 이미 설치되어있는 react-native-reanimated 사용 가능 (선택사항)
+                - 상태관리: React Context API + hooks (useState, useCallback, useMemo) 사용할 것
+
+            2) 유저시나리오 (모달 사용)
+                1. 컴포넌트에서 useModal hook 사용
+                2. openModal 함수 호출로 모달 표시
+                   - 전달 파라미터: children (ReactNode), width, height, closeOnBackdropPress 등
+                3. 모달 뒷배경 클릭 시 모달 닫기 (옵션)
+                4. 모달 내부 컨텐츠는 각 사용처에서 자유롭게 구성
+                   - 버튼, 텍스트, 이미지 등 모든 컨텐츠는 children으로 전달
+
+            3) 디자인 시스템 (피그마 기준)
+                CRITICAL: 피그마 노드 (370:3126)를 반드시 확인하여 아래 값을 가져올 것
+
+                1. 뒷배경 (Backdrop) - 피그마에서 확인 후 고정
+                   - 색상: 피그마에서 확인한 배경 색상 사용 (Colors에서 매칭)
+                   - 전체 화면 커버
+                   - 터치 시 모달 닫기 옵션 제공 (closeOnBackdropPress)
+
+                2. 모달 컨테이너 - 피그마에서 확인 후 고정
+                   - 배경색: 피그마에서 확인한 모달 배경색 (Colors에서 매칭)
+                   - 테두리: 피그마에서 확인한 border 스타일
+                   - 모서리: 피그마에서 확인한 borderRadius 값
+                   - 그림자: 피그마에서 확인한 shadow 값
+                   - padding: 피그마에서 확인한 내부 여백
+
+                3. 모달 크기 - 유연하게 조절 가능
+                   - width: number | string (예: 300, '80%', 'auto')
+                   - height: number | string (예: 200, '50%', 'auto')
+                   - 기본값은 피그마에서 확인한 크기 사용
+                   - 사용처에서 props로 커스터마이징 가능
+
+            4) Modal Provider 구현
+                1. ModalContext 생성
+                   - openModal(config): 모달 열기 함수
+                   - closeModal(): 모달 닫기 함수
+                   - modalState: 현재 모달 상태
+
+                2. ModalProvider 컴포넌트
+                   - children을 감싸는 Provider
+                   - 모달 상태 관리
+                   - 모달 렌더링 로직
+                   - App.tsx 또는 _layout.tsx에서 최상위에 배치
+
+            5) useModal Hook 구현
+                1. Context에서 모달 제어 함수 가져오기
+                2. 간편한 인터페이스 제공
+                   - openModal(config)
+                   - closeModal()
+                3. TypeScript 타입 안정성 보장
+
+            6) Modal 컴포넌트 구조
+                1. Backdrop (뒷배경)
+                   - Pressable 또는 TouchableOpacity
+                   - 피그마에서 확인한 배경색 적용
+                   - onPress로 모달 닫기 (closeOnBackdropPress 옵션)
+
+                2. Modal Container
+                   - 중앙 정렬
+                   - 피그마에서 확인한 배경색, borderRadius, shadow, padding 적용
+                   - width/height는 props로 받아서 유연하게 설정
+
+                3. Modal Content
+                   - children (ReactNode)를 그대로 렌더링
+                   - 내부 컨텐츠는 사용처에서 자유롭게 구성
+
+            7) Props/Config 타입 정의
+                1. ModalConfig 타입
+                   - children: ReactNode (필수) - 모달 내부에 표시할 컨텐츠
+                   - width?: number | string (선택) - 모달 가로 크기
+                   - height?: number | string (선택) - 모달 세로 크기
+                   - closeOnBackdropPress?: boolean (선택, 기본값: true) - 뒷배경 클릭시 닫기
+                   - onClose?: () => void (선택) - 모달 닫힐 때 콜백
+
+==============================================
+
+구현 가이드라인
+
+1. 피그마 확인 및 Constants 파일 생성
+   - 파일: commons/components/modal/constants.ts
+   - CRITICAL: 먼저 피그마 노드 (370:3126)를 확인하여 디자인 값 추출
+   - 디자인 시스템 상수 정의 (피그마 기준)
+     - MODAL_STYLES:
+       - backdropColor: 피그마에서 확인한 뒷배경 색상 (Colors에서 매칭)
+       - backgroundColor: 피그마에서 확인한 모달 배경색 (Colors에서 매칭)
+       - borderRadius: 피그마에서 확인한 모서리 값
+       - padding: 피그마에서 확인한 내부 여백
+       - shadow: 피그마에서 확인한 그림자 값 (있다면)
+       - borderWidth: 피그마에서 확인한 테두리 두께 (있다면)
+       - borderColor: 피그마에서 확인한 테두리 색상 (있다면, Colors에서 매칭)
+     - DEFAULT_CONFIG:
+       - defaultWidth: 피그마에서 확인한 기본 가로 크기
+       - defaultHeight: 피그마에서 확인한 기본 세로 크기 (또는 'auto')
+       - closeOnBackdropPress: true
+   - IMPORTANT: 색상은 commons/constants에서 import하여 사용
+     - import { Colors } from '@/commons/constants/color';
+     - 피그마 색상을 Colors에서 가장 가까운 값으로 매칭
+
+2. Types 파일 생성
+   - 파일: commons/components/modal/types.ts
+   - ModalConfig: 모달 설정 타입
+     - children: ReactNode
+     - width?: number | string
+     - height?: number | string
+     - closeOnBackdropPress?: boolean
+     - onClose?: () => void
+   - ModalContextType: Context 타입
+     - openModal: (config: ModalConfig) => void
+     - closeModal: () => void
+   - ModalState: 모달 상태 타입
+     - isVisible: boolean
+     - config: ModalConfig | null
+
+3. ModalContext 구현
+   - 파일: commons/layout/provider/modal/modal.context.tsx
+   - createContext로 ModalContext 생성
+   - 초기값: null
+   - 타입 안정성을 위한 타입 정의
+
+4. ModalProvider 구현
+   - 파일: commons/layout/provider/modal/modal.provider.tsx
+   - useState로 모달 상태 관리
+   - openModal 함수: config 받아서 모달 상태 업데이트
+   - closeModal 함수: 모달 상태 초기화
+   - Modal 컴포넌트 렌더링
+   - Context.Provider로 children 감싸기
+
+5. useModal Hook 구현
+   - 파일: commons/components/modal/hooks/useModal.ts
+   - useContext로 ModalContext 가져오기
+   - context가 null이면 에러 throw (Provider 밖에서 사용 시)
+   - openModal, closeModal 함수 반환
+
+6. Modal 컴포넌트 구현
+   - 파일: commons/components/modal/index.tsx
+   - ModalConfig props 받기
+   - Backdrop:
+     - Pressable로 전체 화면 커버
+     - Constants에 정의한 backdropColor 사용
+     - closeOnBackdropPress가 true일 때만 onPress로 모달 닫기
+   - Modal Container:
+     - 중앙 정렬
+     - Constants에 정의한 backgroundColor, borderRadius, padding, shadow 적용
+     - props로 받은 width/height 적용 (없으면 defaultWidth/defaultHeight 사용)
+   - Content 영역:
+     - children (ReactNode)를 그대로 렌더링
+     - 내부 컨텐츠(버튼, 텍스트 등)는 사용처에서 구성하므로 여기서는 아무것도 하지 않음
+   - 애니메이션 (선택사항):
+     - FadeIn/FadeOut for backdrop
+     - SlideUp/SlideDown or Scale for modal container
+
+7. Styles 파일 구현
+   - 파일: commons/components/modal/styles.ts
+   - StyleSheet.create 사용
+   - Constants에서 MODAL_STYLES import하여 사용
+   - backdrop:
+     - position: 'absolute'
+     - full screen (top: 0, left: 0, right: 0, bottom: 0)
+     - backgroundColor: MODAL_STYLES.backdropColor
+     - justifyContent: 'center', alignItems: 'center'
+   - modalContainer:
+     - backgroundColor: MODAL_STYLES.backgroundColor
+     - borderRadius: MODAL_STYLES.borderRadius
+     - padding: MODAL_STYLES.padding
+     - shadow: MODAL_STYLES.shadow (있다면)
+     - borderWidth, borderColor (있다면)
+   - CRITICAL: 버튼, 텍스트 등 내부 컨텐츠 스타일은 정의하지 않음 (사용처에서 처리)
+
+==============================================
+
+구현 순서
+
+1. 피그마 노드 (370:3126) 확인하여 디자인 값 추출
+2. Constants 파일 작성 (피그마 기준, Colors import)
+3. Types 파일 작성 (타입 정의)
+4. ModalContext 생성
+5. ModalProvider 구현
+6. Modal 컴포넌트 구현
+7. Styles 파일 작성 (Constants 사용)
+8. useModal Hook 구현
+9. 최상위 레이아웃에 ModalProvider 추가
+10. 테스트 (샘플 페이지에서 useModal 사용해보기)
+11. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 디자인 시스템 준수
+   - CRITICAL: 반드시 피그마 노드 (370:3126)를 먼저 확인할 것
+   - CRITICAL: commons/constants/color.ts의 Colors만 사용
+   - CRITICAL: 피그마 색상을 Colors에서 가장 가까운 값으로 매칭
+   - 새로운 색상 코드 직접 정의 금지
+   - 모달 컨테이너(뒷배경, 배경, border, shadow 등)만 스타일 정의
+   - 내부 컨텐츠(버튼, 텍스트 등) 스타일 정의 금지
+
+2. 타입 안정성
+   - 모든 props와 config에 타입 정의
+   - useModal을 Provider 밖에서 사용하면 에러 발생
+   - TypeScript strict mode 준수
+
+3. 접근성 (Accessibility)
+   - 모달이 열릴 때 포커스 관리
+   - 닫기 버튼에 명확한 label
+   - 스크린 리더 지원 고려
+
+4. 성능 최적화
+   - useCallback으로 이벤트 핸들러 최적화
+   - useMemo로 스타일 계산 최적화
+   - 불필요한 리렌더링 방지
+
+5. 사용자 경험
+   - 모달 열림/닫힘 시 부드러운 애니메이션 (선택사항)
+   - 뒷배경 클릭으로 닫기 옵션 (closeOnBackdropPress)
+   - onClose 콜백 지원
+
+6. 확장성
+   - children (ReactNode) 지원으로 완전한 커스터마이징 가능
+   - width/height props로 유연한 크기 조절
+   - 모든 내부 컨텐츠는 사용처에서 자유롭게 구성
+   - 추가 옵션 쉽게 확장 가능한 구조
+
+7. 코드 품질
+   - 명확한 함수명 및 변수명
+   - 재사용 가능한 컴포넌트 구조
+   - Props drilling 최소화 (Context 활용)
+   - 주석으로 복잡한 로직 설명
+
+==============================================
+
+사용 예시
+
+```typescript
+// 페이지나 컴포넌트에서 사용
+import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { View, Text, Pressable } from 'react-native';
+import { Typography } from '@/commons/constants/typography';
+import { Colors } from '@/commons/constants/color';
+
+function MyComponent() {
+  const { openModal, closeModal } = useModal();
+
+  // 예시 1: 간단한 확인 모달
+  const handleSimpleModal = () => {
+    openModal({
+      width: 300,
+      children: (
+        <View>
+          <Text style={Typography.header.h2}>알림</Text>
+          <Text style={Typography.body.body4}>작업이 완료되었습니다.</Text>
+          <Pressable onPress={closeModal} style={{ backgroundColor: Colors.red[500], padding: 12 }}>
+            <Text style={[Typography.caption.button, { color: Colors.white[50] }]}>확인</Text>
+          </Pressable>
+        </View>
+      ),
+    });
+  };
+
+  // 예시 2: 버튼 2개 있는 모달
+  const handleConfirmModal = () => {
+    openModal({
+      width: 320,
+      children: (
+        <View>
+          <Text style={Typography.header.h2}>삭제 확인</Text>
+          <Text style={Typography.body.body6}>정말로 삭제하시겠습니까?</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={closeModal} style={{ flex: 1, backgroundColor: Colors.grey[100] }}>
+              <Text style={Typography.caption.button}>취소</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                // 삭제 로직
+                deleteItem();
+                closeModal();
+              }}
+              style={{ flex: 1, backgroundColor: Colors.red[500] }}
+            >
+              <Text style={[Typography.caption.button, { color: Colors.white[50] }]}>삭제</Text>
+            </Pressable>
+          </View>
+        </View>
+      ),
+    });
+  };
+
+  // 예시 3: 커스텀 컨텐츠 모달 (버튼 없음)
+  const handleCustomModal = () => {
+    openModal({
+      width: '90%',
+      height: 500,
+      closeOnBackdropPress: true,
+      children: <CustomModalContent />,
+    });
+  };
+
+  return (
+    <View>
+      <Pressable onPress={handleSimpleModal}>
+        <Text>간단한 모달</Text>
+      </Pressable>
+      <Pressable onPress={handleConfirmModal}>
+        <Text>확인 모달</Text>
+      </Pressable>
+      <Pressable onPress={handleCustomModal}>
+        <Text>커스텀 모달</Text>
+      </Pressable>
+    </View>
+  );
+}
+```
+
+```typescript
+// App.tsx 또는 _layout.tsx
+import { ModalProvider } from '@/commons/layout/provider/modal/modal.provider';
+
+export default function App() {
+  return (
+    <ModalProvider>
+      {/* 나머지 앱 컴포넌트 */}
+      <YourAppContent />
+    </ModalProvider>
+  );
+}
+```
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] 피그마 노드 (370:3126)를 확인하여 디자인 값 추출함
+- [ ] Constants 파일에 피그마 기준 디자인 시스템 상수 정의됨
+- [ ] Constants에서 Colors를 import하여 사용함
+- [ ] 피그마 색상을 Colors에서 가장 가까운 값으로 매칭함
+- [ ] 새로운 색상 코드를 직접 정의하지 않았음
+- [ ] Types 파일에 모든 타입 정의됨 (ModalConfig, ModalContextType, ModalState)
+- [ ] ModalConfig 타입에 children, width, height, closeOnBackdropPress, onClose 정의됨
+- [ ] ModalContext 생성 및 타입 지정됨
+- [ ] ModalProvider 구현 완료
+- [ ] Modal 컴포넌트 구현 완료
+- [ ] Backdrop에 피그마 기준 backdropColor 적용됨
+- [ ] Modal Container에 피그마 기준 backgroundColor, borderRadius, padding, shadow 적용됨
+- [ ] Styles 파일에서 Constants의 MODAL_STYLES 사용함
+- [ ] 버튼, 텍스트 등 내부 컨텐츠 스타일을 정의하지 않았음
+- [ ] useModal Hook 구현 완료
+- [ ] Provider 밖에서 useModal 사용 시 에러 발생 확인
+- [ ] openModal 함수 정상 작동
+- [ ] closeModal 함수 정상 작동
+- [ ] 뒷배경 클릭 시 모달 닫기 작동 (closeOnBackdropPress: true)
+- [ ] 뒷배경 클릭 시 모달 안 닫힘 확인 (closeOnBackdropPress: false)
+- [ ] width/height props로 모달 크기 조절 정상 작동
+- [ ] width/height 미전달 시 기본값 사용 정상 작동
+- [ ] children (ReactNode) 렌더링 정상 작동
+- [ ] onClose 콜백 정상 작동
+- [ ] TypeScript 타입 에러 0건
+- [ ] 애니메이션 부드럽게 작동 (구현한 경우)
+- [ ] 코드 가독성 및 유지보수성 확보
+- [ ] 최상위 레이아웃에 ModalProvider 추가됨
+- [ ] 샘플 테스트 완료 (버튼 1개, 2개, 커스텀 컨텐츠 모두 테스트)
+
+==============================================
+
+추가 고려사항
+
+1) 여러 모달 동시 표시 지원 (Stack 방식)
+   - 현재는 한 번에 하나의 모달만 표시
+   - 필요시 모달 스택으로 여러 모달 관리 가능하도록 확장
+   - modalState를 배열로 관리
+
+2) 모달 닫기 애니메이션 완료 후 상태 초기화
+   - 애니메이션 사용 시 애니메이션 완료를 기다린 후 상태 초기화
+   - react-native-reanimated의 withTiming 콜백 활용
+
+3) 키보드 회피 (Keyboard Avoiding)
+   - 모달 내부에 TextInput이 있는 경우
+   - KeyboardAvoidingView 사용 고려
+
+4) Portal 패턴 고려
+   - react-native-portal 또는 자체 구현
+   - 현재는 Provider 내부에서 렌더링하는 방식으로 충분
+
+==============================================

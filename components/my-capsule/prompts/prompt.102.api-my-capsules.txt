@@ -1,0 +1,752 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수
+- 페이지네이션 지원 (limit, offset)
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 구현할 파일:
+            - components/my-capsule/api/capsule.ts (API 함수)
+            - components/my-capsule/types/index.ts (타입 정의)
+            - components/my-capsule/hooks/useMyCapsules.ts (Hook)
+조건-파일경로) 수정할 파일:
+            - components/my-capsule/index.tsx (UI 연동)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 하드코딩된 데이터는 API 데이터로 교체
+조건-기능유지) 에러 발생 시 빈 배열로 폴백 처리 (UI 깨짐 방지)
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 참여중인 타임캡슐 리스트 조회 API:
+  GET /api/me/capsules
+  - Query Parameters: limit (기본값: 20), offset (기본값: 0)
+  - 사용자가 소유하거나 참여중인 타임캡슐 목록 반환
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수
+조건-API명세) 응답 형식: JSON (camelCase)
+
+==============================================
+
+핵심요구사항) 참여중인 타임캡슐 리스트 조회 API 연동
+핵심요구사항-1) GET /api/me/capsules로 참여중인 캡슐 목록 조회
+핵심요구사항-2) status 필드로 3가지 상태 분류:
+                - "WAITING": 캡슐 대기실 (아직 모든 참여자가 작성 안 함)
+                - 그 외 + openDate가 과거: 열린 캡슐
+                - 그 외 + openDate가 미래: 잠긴 캡슐
+핵심요구사항-3) 각 섹션에 데이터 매핑:
+                - 캡슐 대기실 (가로 스크롤): status === "WAITING"
+                - 열린 캡슐 (세로 리스트): status !== "WAITING" && 개봉날짜 과거
+                - 잠긴 캡슐 (세로 리스트): status !== "WAITING" && 개봉날짜 미래
+핵심요구사항-4) 에러 처리 및 폴백 로직 구현
+핵심요구사항-5) TypeScript 타입 안정성 보장
+핵심요구사항-6) ⭐ JWT 토큰 인증 처리 (Bearer 헤더)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+참여중인 타임캡슐 리스트 조회 API
+엔드포인트: GET /api/me/capsules
+인증: Bearer {JWT_TOKEN} (필수)
+Content-Type: application/json
+
+Query Parameters:
+- limit: number (기본값: 20) - 한 페이지에 표시할 아이템 수
+- offset: number (기본값: 0) - 건너뛸 아이템 수
+
+성공 응답 (200 OK):
+{
+  "items": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "title": "2024년 추억",
+      "status": "WAITING",
+      "openDate": "2025-12-31T00:00:00.000Z",
+      "participantCount": 3,
+      "myWriteStatus": true,
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
+
+에러 응답:
+- 401 Unauthorized: JWT 토큰 없음 또는 유효하지 않음
+- 500 Internal Server Error: 서버 내부 오류
+
+주의:
+- 응답 구조는 MyCapsuleListResponse 타입 (camelCase)
+- items 배열에 캡슐 정보가 담김
+- status 값으로 대기실/열린캡슐/잠긴캡슐 구분
+- openDate는 ISO 8601 형식 (YYYY-MM-DDTHH:mm:ss.sssZ)
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. id (string, UUID)
+   - 캡슐 고유 ID
+   - 대기실 진입 또는 상세 보기 시 사용
+   - 예: "550e8400-e29b-41d4-a716-446655440000"
+
+2. title (string)
+   - 캡슐 제목
+   - UI 카드에 표시
+   - 예: "2024년 추억", "강동구 불주먹들👊"
+
+3. status (string)
+   - 캡슐 상태
+   - "WAITING": 대기실 (참여자 작성 대기 중)
+   - "OPENED": 개봉됨
+   - "LOCKED": 잠김
+   - 예: "WAITING"
+
+4. openDate (string, ISO 8601)
+   - 캡슐 개봉 날짜
+   - 잠긴 캡슐의 D-day 계산에 사용
+   - 열린/잠긴 구분 기준
+   - 예: "2025-12-31T00:00:00.000Z"
+
+5. participantCount (number)
+   - 총 참여 인원 수
+   - UI 정보 표시
+   - 예: 3
+
+6. myWriteStatus (boolean)
+   - 내가 이 캡슐에 작성했는지 여부
+   - true: 작성 완료
+   - false: 아직 작성 안 함
+   - 예: true
+
+7. createdAt (string, ISO 8601)
+   - 캡슐 생성 날짜
+   - 정렬 또는 정보 표시용
+   - 예: "2024-01-01T00:00:00.000Z"
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/my-capsule/types/index.ts
+
+// 참여중인 타임캡슐 리스트 조회 API 응답 타입 (camelCase)
+export interface MyCapsuleItem {
+  id: string;                       // 캡슐 ID (UUID)
+  title: string;                    // 캡슐 제목
+  status: 'WAITING' | 'OPENED' | 'LOCKED'; // 캡슐 상태
+  openDate: string;                 // 개봉 날짜 (ISO 8601)
+  participantCount: number;         // 참여 인원 수
+  myWriteStatus: boolean;           // 내 작성 여부
+  createdAt: string;                // 생성 날짜 (ISO 8601)
+}
+
+export interface MyCapsuleListResponse {
+  items: MyCapsuleItem[];           // 캡슐 리스트
+}
+
+// 분류된 캡슐 타입
+export interface CategorizedCapsules {
+  waitingRooms: MyCapsuleItem[];    // 대기실 (status === "WAITING")
+  openedCapsules: MyCapsuleItem[];  // 열린 캡슐 (status !== "WAITING" && 개봉날짜 과거)
+  lockedCapsules: MyCapsuleItem[];  // 잠긴 캡슐 (status !== "WAITING" && 개봉날짜 미래)
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/my-capsule/api/capsule.ts
+
+목적:
+- 참여중인 타임캡슐 리스트 조회 API 호출 함수 제공
+- GET /api/me/capsules 호출
+- 페이지네이션 지원
+- 에러 처리
+- ⭐ JWT 토큰 인증 처리
+
+기능:
+1. getMyCapsules(limit?: number, offset?: number): Promise<MyCapsuleListResponse>
+   - GET /api/me/capsules 호출
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - Query Parameters: limit (기본값: 20), offset (기본값: 0)
+   - 응답을 그대로 반환 (camelCase 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { MyCapsuleListResponse } from '../types';
+
+/**
+ * 참여중인 타임캡슐 리스트 조회 API
+ * @param limit 한 페이지에 표시할 아이템 수 (기본값: 20)
+ * @param offset 건너뛸 아이템 수 (기본값: 0)
+ * @returns 참여중인 타임캡슐 리스트 (camelCase)
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getMyCapsules(
+  limit: number = 20,
+  offset: number = 0
+): Promise<MyCapsuleListResponse> {
+  try {
+    console.log('🔄 [API] 참여중인 캡슐 리스트 조회 시작 - limit:', limit, 'offset:', offset);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
+    const response = await apiClient.get<MyCapsuleListResponse>(
+      '/api/me/capsules',
+      {
+        params: { limit, offset }
+      }
+    );
+
+    console.log('✅ [API] 참여중인 캡슐 리스트 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 참여중인 캡슐 리스트 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) Custom Hook 작성
+
+파일: components/my-capsule/hooks/useMyCapsules.ts
+
+목적:
+- API 호출 및 데이터 분류 로직 캡슐화
+- status와 openDate로 3가지 상태 분류
+- 로딩 상태 및 에러 상태 관리
+- UI 컴포넌트에서 쉽게 사용 가능
+
+기능:
+1. getMyCapsules() 호출
+2. 응답 데이터를 3가지로 분류:
+   - waitingRooms: status === "WAITING"
+   - openedCapsules: status !== "WAITING" && openDate < 현재시각
+   - lockedCapsules: status !== "WAITING" && openDate >= 현재시각
+3. 로딩/에러 상태 관리
+4. 에러 발생 시 빈 배열 반환 (UI 깨짐 방지)
+
+구현 예시:
+```typescript
+import { useState, useEffect } from 'react';
+import { getMyCapsules } from '../api/capsule';
+import type { CategorizedCapsules, MyCapsuleItem } from '../types';
+
+export function useMyCapsules() {
+  const [capsules, setCapsules] = useState<CategorizedCapsules>({
+    waitingRooms: [],
+    openedCapsules: [],
+    lockedCapsules: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadCapsules();
+  }, []);
+
+  const loadCapsules = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      console.log('🔄 [useMyCapsules] 캡슐 리스트 로드 시작');
+      const response = await getMyCapsules();
+
+      // 현재 시각
+      const now = new Date();
+
+      // status와 openDate로 3가지 상태 분류
+      const waitingRooms: MyCapsuleItem[] = [];
+      const openedCapsules: MyCapsuleItem[] = [];
+      const lockedCapsules: MyCapsuleItem[] = [];
+
+      response.items.forEach((capsule) => {
+        if (capsule.status === 'WAITING') {
+          // 대기실
+          waitingRooms.push(capsule);
+        } else {
+          // 개봉 날짜 기준으로 열린/잠긴 구분
+          const openDate = new Date(capsule.openDate);
+          if (openDate <= now) {
+            // 열린 캡슐
+            openedCapsules.push(capsule);
+          } else {
+            // 잠긴 캡슐
+            lockedCapsules.push(capsule);
+          }
+        }
+      });
+
+      setCapsules({ waitingRooms, openedCapsules, lockedCapsules });
+      console.log('✅ [useMyCapsules] 캡슐 리스트 로드 성공', {
+        대기실: waitingRooms.length,
+        열린캡슐: openedCapsules.length,
+        잠긴캡슐: lockedCapsules.length,
+      });
+    } catch (err: any) {
+      console.error('❌ [useMyCapsules] 캡슐 리스트 로드 실패:', err.message);
+      setError(err.message || '캡슐 리스트를 불러오는데 실패했습니다.');
+      // 에러 발생 시 빈 배열 유지 (UI 깨짐 방지)
+      setCapsules({
+        waitingRooms: [],
+        openedCapsules: [],
+        lockedCapsules: [],
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    capsules,
+    isLoading,
+    error,
+    refetch: loadCapsules, // 새로고침용
+  };
+}
+```
+
+==============================================
+
+구현가이드-3) UI 컴포넌트 연동
+
+파일: components/my-capsule/index.tsx
+
+수정 사항:
+1. useMyCapsules Hook import 및 사용
+2. 하드코딩된 데이터를 API 데이터로 교체
+3. 각 섹션에 올바른 데이터 매핑:
+   - 캡슐 대기실 (100-260번 줄): capsules.waitingRooms
+   - 열린 캡슐 (297-391번 줄): capsules.openedCapsules
+   - 잠긴 캡슐 (394-590번 줄): capsules.lockedCapsules
+4. 헤더 카운트 동적 업데이트
+5. 탭 카운트 동적 업데이트
+6. 섹션 카운트 동적 업데이트
+7. 로딩 상태 처리 (선택사항)
+8. 에러 상태 처리 (선택사항)
+
+구현 예시:
+```typescript
+import { useMyCapsules } from './hooks/useMyCapsules';
+
+export default function MyCapsule() {
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'opened' | 'locked'>('opened');
+  const [selectedCapsuleId, setSelectedCapsuleId] = useState<string | null>(null);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isStepRoomVisible, setIsStepRoomVisible] = useState(false);
+  const [stepRoomCapsuleId, setStepRoomCapsuleId] = useState<string | null>(null);
+
+  // ⭐ API 데이터 로드
+  const { capsules, isLoading, error, refetch } = useMyCapsules();
+
+  // 기존 핸들러 함수들...
+
+  return (
+    <View style={styles.container}>
+      {/* 헤더 섹션 - 동적 카운트 */}
+      <View style={styles.headerContainer}>
+        <View style={styles.headerTopRow}>
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>캡슐보관함</Text>
+          </View>
+          <TouchableOpacity style={styles.headerCloseButton} onPress={handleClose}>
+            <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.headerSubtitle}>
+          <Text style={styles.headerSubtitleText}>
+            열린 캡슐 {capsules.openedCapsules.length}개 · 잠긴 캡슐 {capsules.lockedCapsules.length}개
+          </Text>
+        </View>
+      </View>
+
+      {/* 캡슐 대기실 섹션 - 동적 데이터 */}
+      <View style={styles.openCapsulesSection}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.sectionTitleContainer}>
+            <Text style={styles.sectionTitle}>캡슐 대기실</Text>
+          </View>
+          <View style={styles.sectionCount}>
+            <Text style={styles.sectionCountText}>{capsules.waitingRooms.length}개</Text>
+          </View>
+        </View>
+
+        {/* 가로 스크롤 카드 리스트 - API 데이터 매핑 */}
+        <View style={styles.horizontalScrollContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.cardListContainer}>
+              {capsules.waitingRooms.map((capsule) => (
+                <TouchableOpacity
+                  key={capsule.id}
+                  style={styles.capsuleCard}
+                  onPress={() => handleWaitingRoomPress(capsule.id)}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardTitleContainer}>
+                      <Text style={styles.cardTitle}>{capsule.title}</Text>
+                    </View>
+                  </View>
+
+                  {/* TODO: 진행 상황, 이모지 등 추가 UI 데이터 매핑 */}
+                  {/* 현재는 제목만 표시, 추가 데이터 필요 시 API 확장 */}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+
+      {/* 탭 섹션 - 동적 카운트 */}
+      <View style={styles.tabContainer}>
+        <View style={styles.tabInner}>
+          <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => handleTabPress('opened')}>
+            <View style={styles.tabTextContainer}>
+              <Text
+                style={
+                  activeTab === 'opened' ? styles.tabTextActive : styles.tabTextInactive
+                }>
+                열린 캡슐 ({capsules.openedCapsules.length})
+              </Text>
+            </View>
+            {activeTab === 'opened' && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.tabButton}
+            onPress={() => handleTabPress('locked')}>
+            <View style={styles.tabTextContainer}>
+              <Text
+                style={
+                  activeTab === 'locked' ? styles.tabTextActive : styles.tabTextInactive
+                }>
+                잠긴 캡슐 ({capsules.lockedCapsules.length})
+              </Text>
+            </View>
+            {activeTab === 'locked' && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* 열린 캡슐 리스트 - API 데이터 매핑 */}
+      {activeTab === 'opened' && (
+        <ScrollView style={styles.lockedCapsulesSection}>
+          <View style={styles.lockedCapsulesList}>
+            {capsules.openedCapsules.map((capsule) => (
+              <TouchableOpacity
+                key={capsule.id}
+                style={styles.openedCapsuleCard}
+                onPress={() => handleOpenedCapsulePress(capsule.id)}>
+                <View style={styles.openedCardContent}>
+                  {/* TODO: 아이콘, 위치, 참여자, 날짜 등 추가 UI 데이터 매핑 */}
+                  <View style={styles.openedCardInfo}>
+                    <View style={styles.openedCardTitleContainer}>
+                      <Text style={styles.openedCardTitle}>{capsule.title}</Text>
+                    </View>
+                    {/* 추가 정보 표시 */}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      )}
+
+      {/* 잠긴 캡슐 리스트 - API 데이터 매핑 */}
+      {activeTab === 'locked' && (
+        <ScrollView style={styles.lockedCapsulesSection}>
+          <View style={styles.lockedCapsulesList}>
+            {capsules.lockedCapsules.map((capsule) => (
+              <View key={capsule.id} style={styles.lockedCapsuleCard}>
+                <View style={styles.lockedCardImageContainer}>
+                  <View style={styles.lockedCardGradient} />
+                  <View style={styles.lockedCardContent}>
+                    {/* TODO: 아이콘, 위치, 참여자, 날짜 등 추가 UI 데이터 매핑 */}
+                    <View style={styles.lockedCardInfo}>
+                      <View style={styles.lockedCardTitleContainer}>
+                        <Text style={styles.lockedCardTitle}>{capsule.title}</Text>
+                      </View>
+                      {/* 추가 정보 표시 */}
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.lockedCardFooter}>
+                  {/* D-day 계산 및 표시 */}
+                  {/* TODO: openDate로 D-day 계산 */}
+                  <View style={styles.lockedBadge}>
+                    <Text style={styles.lockedBadgeText}>잠김</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      )}
+
+      {/* 기존 모달들... */}
+    </View>
+  );
+}
+```
+
+==============================================
+
+활용시나리오) 참여중인 캡슐 리스트 조회 플로우
+
+1. 컴포넌트 마운트
+   - useMyCapsules Hook 실행
+   - getMyCapsules() API 호출
+
+2. API 호출 성공
+   - Authorization: Bearer {JWT_TOKEN} 헤더 포함
+   - GET /api/me/capsules 응답 수신
+   - items 배열 파싱
+
+3. 데이터 분류
+   - status === "WAITING": waitingRooms 배열에 추가
+   - status !== "WAITING" && openDate <= 현재시각: openedCapsules 배열에 추가
+   - status !== "WAITING" && openDate > 현재시각: lockedCapsules 배열에 추가
+
+4. UI 렌더링
+   - 헤더: 열린/잠긴 캡슐 개수 표시
+   - 캡슐 대기실: waitingRooms 가로 스크롤                                            
+   - 열린 캡슐 탭: openedCapsules 세로 리스트
+   - 잠긴 캡슐 탭: lockedCapsules 세로 리스트
+
+5. 사용자 인터랙션
+   - 대기실 카드 클릭: handleWaitingRoomPress(capsule.id) → StepRoom 열림
+   - 열린 캡슐 카드 클릭: handleOpenedCapsulePress(capsule.id) → 상세 모달 열림
+
+6. 새로고침
+   - refetch() 호출로 최신 데이터 다시 로드
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 401 Unauthorized (JWT 토큰 없음 또는 유효하지 않음)
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: 빈 배열 반환 (UI 깨짐 방지)
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+   - 추가: 로그인 페이지로 리다이렉트 고려
+
+2. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: 빈 배열 반환 (UI 깨짐 방지)
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+3. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: 빈 배열 반환 (UI 깨짐 방지)
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. 빈 배열 반환 (UI 깨짐 방지)
+2. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+3. 사용자 피드백 제공 (토스트, 모달 등) (선택사항)
+
+==============================================
+
+추가기능-D-day계산) 잠긴 캡슐의 남은 일수 계산
+
+파일: components/my-capsule/utils/dateUtils.ts (선택사항)
+
+목적:
+- openDate로부터 현재까지 남은 일수 계산
+- "D-350일 남음" 형식으로 반환
+
+구현 예시:
+```typescript
+/**
+ * D-day 계산
+ * @param openDate ISO 8601 날짜 문자열
+ * @returns "D-350일 남음" 형식 문자열
+ */
+export function calculateDday(openDate: string): string {
+  const now = new Date();
+  const target = new Date(openDate);
+  const diffTime = target.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return '개봉됨';
+  } else if (diffDays === 0) {
+    return '오늘 개봉';
+  } else {
+    return `D-${diffDays}일 남음`;
+  }
+}
+```
+
+사용:
+```typescript
+import { calculateDday } from './utils/dateUtils';
+
+<Text style={styles.lockedCardFooterTextContent}>
+  {calculateDday(capsule.openDate)}
+</Text>
+```
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 camelCase로 응답
+   - 프론트엔드는 camelCase를 그대로 사용
+   - 타입 불일치 방지
+
+2. status 값 정확히 확인
+   - "WAITING": 대기실
+   - "OPENED": 개봉됨
+   - "LOCKED": 잠김
+   - status !== "WAITING"인 경우 openDate로 추가 분류 필요
+
+3. openDate 파싱
+   - ISO 8601 형식 (YYYY-MM-DDTHH:mm:ss.sssZ)
+   - new Date()로 파싱하여 비교
+   - 시간대(timezone) 고려
+
+4. Fallback 전략
+   - API 실패 시 빈 배열 반환
+   - UI가 깨지지 않도록
+   - 에러 메시지는 console.error로 로깅
+
+5. TypeScript 타입 안정성
+   - API 응답 타입 명시 (MyCapsuleListResponse, camelCase)
+   - any 사용 금지
+
+6. 에러 처리
+   - try-catch 블록 필수
+   - 에러 로깅 (console.error)
+   - 사용자 피드백 (선택사항)
+
+7. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트 고려
+
+8. 페이지네이션
+   - 기본값: limit=20, offset=0
+   - 현재는 첫 페이지만 로드
+   - 추후 무한 스크롤 또는 페이지네이션 구현 가능
+
+9. UI 데이터 부족
+   - 현재 API는 기본 정보만 제공 (id, title, status, openDate 등)
+   - 위치, 참여자 이름, 이모지, 진행 상황 등은 현재 API에 없음
+   - 추후 API 확장 필요 또는 별도 API 호출 필요
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] components/my-capsule/types/index.ts 파일 생성됨
+- [ ] MyCapsuleItem 인터페이스 정의됨 (camelCase)
+- [ ] MyCapsuleListResponse 인터페이스 정의됨
+- [ ] CategorizedCapsules 인터페이스 정의됨
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+API 함수:
+- [ ] components/my-capsule/api/capsule.ts 파일 생성됨
+- [ ] ⭐ getMyCapsules(limit?, offset?) 함수 구현됨
+- [ ] ⭐ GET /api/me/capsules 호출 구현됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] Query Parameters (limit, offset) 전달됨
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (401, 500)
+- [ ] 각 에러별 적절한 메시지 반환
+
+Hook:
+- [ ] components/my-capsule/hooks/useMyCapsules.ts 파일 생성됨
+- [ ] useMyCapsules Hook 구현됨
+- [ ] getMyCapsules() 호출
+- [ ] ⭐ status 기준 분류 구현됨 ("WAITING" = 대기실)
+- [ ] ⭐ openDate 기준 분류 구현됨 (과거 = 열린, 미래 = 잠긴)
+- [ ] CategorizedCapsules 반환 (waitingRooms, openedCapsules, lockedCapsules)
+- [ ] isLoading 상태 관리
+- [ ] error 상태 관리
+- [ ] refetch 함수 제공
+- [ ] ⭐ Fallback 로직 구현됨 (빈 배열 반환)
+- [ ] 에러 로깅 추가됨 (console.error)
+
+UI 연동:
+- [ ] components/my-capsule/index.tsx 수정됨
+- [ ] useMyCapsules Hook import 및 사용
+- [ ] 헤더 카운트 동적 업데이트 (열린/잠긴 캡슐 개수)
+- [ ] 캡슐 대기실 섹션 카운트 동적 업데이트
+- [ ] 캡슐 대기실 카드 리스트 API 데이터로 교체 (capsules.waitingRooms)
+- [ ] 열린 캡슐 탭 카운트 동적 업데이트
+- [ ] 열린 캡슐 리스트 API 데이터로 교체 (capsules.openedCapsules)
+- [ ] 잠긴 캡슐 탭 카운트 동적 업데이트
+- [ ] 잠긴 캡슐 리스트 API 데이터로 교체 (capsules.lockedCapsules)
+- [ ] 각 카드 클릭 시 올바른 capsule.id 전달
+- [ ] 기존 UI/스타일 수정 0건
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+
+에러 처리:
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.error)
+- [ ] ⭐ Fallback 동작 확인됨 (빈 배열 반환, UI 깨짐 방지)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ API 호출 성공 케이스 테스트됨
+- [ ] ⭐ 데이터 분류 정확성 확인됨 (WAITING, 열린, 잠긴)
+- [ ] ⭐ 401 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] ⭐ Fallback 동작 확인됨 (빈 배열, UI 정상)
+- [ ] UI에 데이터가 올바르게 표시됨
+- [ ] 각 섹션 카운트가 정확함
+- [ ] 대기실 카드 클릭 시 StepRoom 열림
+- [ ] 열린 캡슐 카드 클릭 시 모달 열림
+
+==============================================

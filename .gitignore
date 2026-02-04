@@ -10,9 +10,7 @@ web-build/
 expo-env.d.ts
 
 # Native
-.kotlin/
 *.orig.*
-*.jks
 *.p8
 *.p12
 *.key
@@ -38,6 +36,7 @@ ehthumbs.db
 # Editor (Android Studio, Vim)
 .idea/
 *.swp
+.history/
 
 # local env files (Security)
 .env
@@ -49,8 +48,9 @@ ehthumbs.db
 
 # generated native folders (Expo Prebuild)
 /ios
-/android
 
 # others
 coverage/
 app-example/
+
+.cursor/.mcp_settings.json

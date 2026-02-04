@@ -1,0 +1,68 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰)
+아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+
+- @01-common.mdc
+- @04-func.mdc
+- @project-structure.mdc
+
+==============================================
+
+조건-환경)
+- 프레임워크: React Native (Expo Router 사용)
+- 언어: TypeScript
+- HTTP 클라이언트: axios (모든 API 요청 및 S3 업로드에 사용)
+- 작업 파일: `src/hooks/useMediaUpload.ts` (이 파일 내부에 로직 구현 및 export)
+- 사용 파일:
+- `FE/components/map/components/egg-form/hooks/useFileUpload.ts`
+- `FE/components/map/components/egg-form/hooks/useEggForm.ts`
+- `FE/components/map/components/egg-form/hooks/useCreateCapsule.ts`
+
+- 필수 라이브러리: `expo-image-manipulator`, `expo-file-system` (파일 정보 확인용)
+
+==============================================
+
+핵심요구사항) 미디어 업로드 통합 로직 (`uploadMedia`)
+
+0. 사전 유틸리티 구현
+
+- MIME Type 추론: 파일 확장자를 기반으로 정확한 Content-Type을 반환하는 헬퍼 함수 구현.
+- 검증(Validation) 가드: 아래 규칙을 위반할 경우 즉시 Error를 throw 할 것.
+- 화이트리스트:
+  - IMAGE: jpeg, png, webp
+  - VIDEO: mp4
+  - AUDIO: mpeg, mp4, aac
+- 용량 제한:
+  - IMAGE ≤ 5MB
+  - VIDEO ≤ 200MB
+  - AUDIO ≤ 20MB
+
+1. 로직 상세 흐름 (순차 실행)
+함수 시그니처: `uploadMedia(uri: string, type: 'IMAGE'|'VIDEO'|'AUDIO', token: string) => Promise<string>`
+
+- Step 1: 전처리 (압축 및 검증)
+  - IMAGE: `expo-image-manipulator`를 사용하여 `width: 1080`, `quality: 0.7`, `format: JPEG`로 압축 수행.
+  - VIDEO/AUDIO: 현재는 압축 없이 원본 사용 (추후 라이브러리 도입 예정).
+  - 공통: 압축된 결과물(또는 원본)의 최종 용량(byte)을 `expo-file-system`으로 확인하고, 위 검증 가드를 통과시켜야 함.
+
+- Step 2: Presigned URL 발급 (Axios, POST /api/media/presign)
+  - Body: `{ type, filename, content_type, size }`
+  - 인증: Header에 Bearer Token 포함.
+  - 응답: `upload_url`, `object_key` 수신.
+
+- Step 3: S3 직접 업로드 (Axios, PUT)
+  - `fetch`를 사용하여 파일을 `Blob`으로 변환.
+  - Presigned URL로 `PUT` 요청.
+  - 중요: Header의 `Content-Type`은 Step 2에서 보낸 것과 반드시 일치해야 함.
+
+- Step 4: 업로드 완료 등록 (Axios, POST /api/media/complete)
+  - Body: `{ object_key, content_type, size }`
+  - 응답으로 받은 `media_id`(String)를 반환.
+
+2. 에러 핸들링
+
+- AxiosError 처리를 포함하여 단계별 명확한 에러 메시지 throw.

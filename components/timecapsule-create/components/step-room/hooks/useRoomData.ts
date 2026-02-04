@@ -1,0 +1,236 @@
+/**
+ * components/timecapsule-create/components/step-room/hooks/useRoomData.ts
+ * 캡슐대기실 기본 정보, 진행률 계산 Hook
+ */
+
+import { useEffect, useMemo, useState } from 'react';
+import { createRoomAndGetSettings, getRoomDetail, getRoomSettings } from '../api/capsule';
+import type { CreateRoomResponse, Participant, Progress, RoomDetailResponse, RoomSettingsResponse } from '../types';
+
+// ============================================
+// 타입 정의
+// ============================================
+
+/** useRoomData Hook 반환 타입 */
+interface UseRoomDataReturn {
+  /** 캡슐대기실 설정값 (snake_case) - 1단계 API 응답 */
+  roomSettings: RoomSettingsResponse | null;
+  /** 대기실 생성 응답 (실제 API 응답, 추가 필드 포함) */
+  createRoomResponse: CreateRoomResponse | null;
+  /** 대기실 상세 정보 (게스트 모드용) */
+  roomDetailResponse: RoomDetailResponse | null;
+  /** 캡슐 ID (참여자 조회용) */
+  capsuleId: string | null;
+  /** 로딩 상태 */
+  isLoading: boolean;
+  /** 에러 */
+  error: Error | null;
+  /** 진행률 계산 (참여자 목록 기반) */
+  calculateProgress: (participants: Participant[]) => Progress;
+  /** 최종 제출 가능 여부 확인 */
+  canSubmit: (participants: Participant[]) => boolean;
+}
+
+// ============================================
+// Hook
+// ============================================
+
+/**
+ * 캡슐대기실 데이터 관리 Hook
+ *
+ * 기능:
+ * 1. loadRoomData(): 대기실 데이터 가져오기
+ *    - 방장 모드: createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+ *    - 게스트 모드: getRoomSettings(capsuleId) → 대기실 설정값만 조회
+ *    - 실패 시 목데이터로 폴백
+ * 2. calculateProgress(): 진행률 계산 (완료 인원 / 전체 인원)
+ * 3. canSubmit(): 최종 제출 가능 여부 확인 (진행률 100%)
+ *
+ * @param orderId 주문 ID (UUID, 방장용)
+ * @param guestCapsuleId 캡슐 ID (UUID, 게스트용 - 딥링크로 입장 시)
+ * @returns {UseRoomDataReturn} Hook 반환값
+ */
+export function useRoomData(orderId?: string, guestCapsuleId?: string): UseRoomDataReturn {
+  // ============================================
+  // 상태 관리
+  // ============================================
+
+  const [roomSettings, setRoomSettings] = useState<RoomSettingsResponse | null>(null);
+  const [createRoomResponse, setCreateRoomResponse] = useState<CreateRoomResponse | null>(null);
+  const [roomDetailResponse, setRoomDetailResponse] = useState<RoomDetailResponse | null>(null);
+  const [capsuleId, setCapsuleId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  // ============================================
+  // 데이터 가져오기 (API 우선, 목데이터 폴백)
+  // ============================================
+
+  useEffect(() => {
+    /**
+     * 캡슐대기실 설정값 가져오기
+     * - 방장 모드: createRoomAndGetSettings(orderId) → 대기실 생성 및 설정값 조회
+     * - 게스트 모드: getRoomSettings(capsuleId) → 대기실 설정값만 조회
+     * - 실패 시 목데이터로 폴백
+     */
+    async function loadRoomData() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // ⭐ 방장 모드: orderId로 대기실 생성
+        if (orderId) {
+          const roomData = await createRoomAndGetSettings(orderId);
+
+          // 실제 API 응답 저장
+          setCreateRoomResponse(roomData);
+          const extractedCapsuleId = roomData.capsule_id;
+          setCapsuleId(extractedCapsuleId);
+
+          // 🔍 백엔드 변경사항 확인용 상세 로그
+          // ⭐ 2단계: 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
+          try {
+            const settingsData = await getRoomSettings(extractedCapsuleId);
+
+            // ⭐ 디버깅: 백엔드가 반환한 설정값 확인
+            // CreateRoomResponse의 추가 정보와 병합
+            // getRoomSettings의 capsule_name이 orders에서 설정한 정확한 제목이므로 우선 사용
+            const mergedSettings: RoomSettingsResponse = {
+              ...settingsData,
+              // CreateRoomResponse에서 가져온 정보로 덮어쓰기
+              room_id: roomData.capsule_id,
+              // capsule_name은 getRoomSettings에서 가져온 값 사용 (orders에서 설정한 제목)
+              open_date: roomData.open_date.split('T')[0], // ISO 8601에서 YYYY-MM-DD 추출
+              max_participants: roomData.max_participants,
+              // ⭐ invite_code 보존 (settingsData에 있으면 사용, 없으면 createRoomResponse에서)
+              invite_code: settingsData.invite_code || roomData.invite_code,
+            };
+            setRoomSettings(mergedSettings);
+
+          } catch (settingsError) {
+            // 설정값 조회 실패 시 CreateRoomResponse만으로 구성
+            // title을 capsule_name으로 사용 (fallback)
+            const fallbackSettings: RoomSettingsResponse = {
+              room_id: roomData.capsule_id,
+              capsule_name: roomData.title, // fallback: CreateRoomResponse의 title 사용
+              open_date: roomData.open_date.split('T')[0],
+              max_participants: roomData.max_participants,
+              max_images_per_person: 3, // 기본값
+              has_music: false, // 기본값
+              has_video: false, // 기본값
+              invite_code: roomData.invite_code, // ⭐ CreateRoomResponse의 invite_code 사용
+            };
+            setRoomSettings(fallbackSettings);
+          }
+        }
+        // ⭐ 게스트 모드: capsuleId로 대기실 상세 정보 조회
+        else if (guestCapsuleId) {
+          setCapsuleId(guestCapsuleId);
+
+          // 대기실 상세 정보 조회 (deadline 포함)
+          const detailData = await getRoomDetail(guestCapsuleId);
+          setRoomDetailResponse(detailData);
+
+          // 대기실 설정값 조회 (max_images_per_person, has_music, has_video 포함)
+          const settingsData = await getRoomSettings(guestCapsuleId);
+          setRoomSettings(settingsData);
+        }
+        // orderId도 capsuleId도 없으면 에러 처리
+        else {
+          setError(new Error('대기실 정보를 불러올 수 없습니다'));
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('API 호출 실패'));
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadRoomData();
+  }, [orderId, guestCapsuleId]);
+
+  // ============================================
+  // 진행률 계산 (useMemo로 최적화)
+  // ============================================
+
+  /**
+   * 진행률 계산
+   *
+   * 계산 로직:
+   * - 완료 인원: status === 'completed'인 참여자 수
+   * - 전체 인원: max_participants (캡슐보관함 API와 동일하게)
+   * - 진행률: (완료 인원 / 전체 인원) × 100
+   *
+   * @param {Participant[]} participants 참여자 목록
+   * @returns {Progress} 진행률 데이터
+   */
+  const calculateProgress = useMemo(() => {
+    return (participants: Participant[]): Progress => {
+      // ⭐ 실제 배정된 참여자만 필터링 (빈 슬롯 제외: name이 있는 참여자만)
+      const assignedParticipants = participants.filter((p) => p.name !== '');
+
+      // 완료한 참여자 수
+      const completed = assignedParticipants.filter((p) => p.status === 'completed').length;
+
+      // ⭐ 전체 참여자 수: max_participants 사용 (캡슐보관함 API와 동일)
+      const total = roomSettings?.max_participants || assignedParticipants.length;
+
+      // 진행률 계산 (0-100)
+      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+      // ⭐ 디버깅: 진행률 계산 로그
+      return {
+        completed,
+        total,
+        percentage,
+      };
+    };
+  }, [roomSettings]);
+
+  // ============================================
+  // 최종 제출 가능 여부 확인
+  // ============================================
+
+  /**
+   * 최종 제출 가능 여부 확인
+   *
+   * 조건:
+   * 1. 모든 슬롯이 채워져야 함 (max_participants만큼 참여자 입장)
+   * 2. 모든 참여자가 작성 완료해야 함 (status === 'completed')
+   *
+   * @param {Participant[]} participants 참여자 목록
+   * @returns {boolean} 제출 가능 여부
+   */
+  const canSubmit = useMemo(() => {
+    return (participants: Participant[]): boolean => {
+      // ⭐ 1. 실제 참여한 인원 (name이 있는 참여자)
+      const assignedParticipants = participants.filter((p) => p.name !== '');
+
+      // ⭐ 2. 모든 슬롯이 채워졌는지 확인 (max_participants와 비교)
+      const maxParticipants = roomSettings?.max_participants || 4;
+      const allSlotsFilled = assignedParticipants.length === maxParticipants;
+
+      // ⭐ 3. 모든 참여자가 작성 완료했는지 확인
+      const allCompleted = assignedParticipants.length > 0 &&
+                          assignedParticipants.every((p) => p.status === 'completed');
+
+      // ⭐ 4. 두 조건 모두 만족해야 제출 가능
+      return allSlotsFilled && allCompleted;
+    };
+  }, [calculateProgress, roomSettings]);
+
+  // ============================================
+  // 반환
+  // ============================================
+
+  return {
+    roomSettings,
+    createRoomResponse,
+    roomDetailResponse,
+    capsuleId,
+    isLoading,
+    error,
+    calculateProgress,
+    canSubmit,
+  };
+}

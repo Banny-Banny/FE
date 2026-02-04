@@ -1,0 +1,856 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수
+- 결제 완료된 캡슐만 조회 가능
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 구현할 파일:
+            - components/my-capsule/api/capsule.ts (API 함수 추가)
+            - components/my-capsule/types/index.ts (타입 정의 추가)
+            - components/my-capsule/hooks/useOpenedCapsuleDetail.ts (Hook)
+조건-파일경로) 수정할 파일:
+            - components/my-capsule/components/unlocked-capsule-detail/index.tsx (UI 연동)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 하드코딩된 USER_DATA는 API 데이터로 교체
+조건-기능유지) 에러 발생 시 빈 데이터로 폴백 처리 (UI 깨짐 방지)
+조건-기능유지) 로딩 상태 처리 (선택사항)
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 타임캡슐 상세 조회 API:
+  GET /api/time-capsules/{id}
+  - Path Parameters: id (캡슐 ID, UUID)
+  - 결제 완료된 캡슐만 조회 가능
+  - headcount만큼 슬롯을 반환하며 각 슬롯의 작성자/작성 여부/콘텐츠/미디어 메타를 제공
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수
+조건-API명세) 응답 형식: JSON (camelCase)
+조건-API명세) 응답 코드:
+  - 200: 조회 성공
+  - 403: 권한 없음 또는 미결제
+  - 404: 캡슐 미존재
+
+==============================================
+
+핵심요구사항) 타임캡슐 상세 조회 API 연동
+핵심요구사항-1) GET /api/time-capsules/{id}로 캡슐 상세 정보 조회
+핵심요구사항-2) 각 슬롯의 작성자 정보 표시 (이름, 이모지)
+핵심요구사항-3) 각 슬롯의 콘텐츠 표시 (텍스트 메시지, 이미지, 비디오, 오디오)
+핵심요구사항-4) 미디어 메타 정보 활용 (이미지 URL, 비디오 썸네일/URL, 오디오 제목/URL)
+핵심요구사항-5) 에러 처리 및 폴백 로직 구현
+핵심요구사항-6) TypeScript 타입 안정성 보장
+핵심요구사항-7) ⭐ JWT 토큰 인증 처리 (Bearer 헤더)
+핵심요구사항-8) ⭐ 결제 완료 여부 확인 (403 에러 처리)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+타임캡슐 상세 조회 API
+엔드포인트: GET /api/time-capsules/{id}
+인증: Bearer {JWT_TOKEN} (필수)
+Content-Type: application/json
+
+Path Parameters:
+- id: string (UUID) - 캡슐 ID
+
+성공 응답 (200 OK):
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "2024년 추억",
+  "headcount": 3,
+  "slots": [
+    {
+      "slotId": "slot-1",
+      "author": {
+        "id": "user-1",
+        "name": "김민수",
+        "emoji": "😊"
+      },
+      "isWritten": true,
+      "content": {
+        "text": "2024년 정말 고생 많았어! 2025년엔 더 멋진 일들만 가득하길 바랄게 ㅎㅎ",
+        "images": [
+          {
+            "id": "img-1",
+            "url": "https://example.com/image1.jpg",
+            "thumbnailUrl": "https://example.com/thumb1.jpg"
+          }
+        ],
+        "video": {
+          "id": "video-1",
+          "url": "https://example.com/video1.mp4",
+          "thumbnailUrl": "https://example.com/video-thumb1.jpg"
+        },
+        "audio": {
+          "id": "audio-1",
+          "title": "Perfect Day - Lou Reed",
+          "url": "https://example.com/audio1.mp3"
+        }
+      }
+    }
+  ]
+}
+
+에러 응답:
+- 403 Forbidden: 권한 없음 또는 미결제
+- 404 Not Found: 캡슐 미존재
+- 401 Unauthorized: JWT 토큰 없음 또는 유효하지 않음
+- 500 Internal Server Error: 서버 내부 오류
+
+주의:
+- 응답 구조는 OpenedCapsuleDetailResponse 타입 (camelCase)
+- slots 배열에 headcount만큼의 슬롯 정보가 담김
+- 각 슬롯은 작성자 정보, 작성 여부, 콘텐츠를 포함
+- 미디어는 선택적 (없을 수 있음)
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. id (string, UUID)
+   - 캡슐 고유 ID
+   - 예: "550e8400-e29b-41d4-a716-446655440000"
+
+2. title (string)
+   - 캡슐 제목
+   - 모달 헤더에 표시
+   - 예: "2024년 추억", "2024 추억 타임캡슐"
+
+3. headcount (number)
+   - 총 참여 인원 수
+   - 슬롯 개수와 동일
+   - 예: 3
+
+4. slots (array)
+   - 각 참여자의 슬롯 정보 배열
+   - headcount만큼의 슬롯 반환
+   - 각 슬롯 구조:
+     - slotId: 슬롯 고유 ID
+     - author: 작성자 정보 (id, name, emoji)
+     - isWritten: 작성 여부 (true/false)
+     - content: 콘텐츠 정보 (작성된 경우만 존재)
+
+5. author (object)
+   - 작성자 정보
+   - id: 사용자 ID
+   - name: 사용자 이름 (UI 아바타에 표시)
+   - emoji: 사용자 이모지 (UI 아바타에 표시)
+
+6. isWritten (boolean)
+   - 해당 슬롯에 작성되었는지 여부
+   - true: 작성 완료 (content 존재)
+   - false: 미작성 (content 없음)
+
+7. content (object, optional)
+   - 작성된 콘텐츠 정보
+   - text: 텍스트 메시지
+   - images: 이미지 배열 (선택적)
+   - video: 비디오 정보 (선택적)
+   - audio: 오디오 정보 (선택적)
+
+8. images (array, optional)
+   - 이미지 배열
+   - 각 이미지: id, url, thumbnailUrl
+
+9. video (object, optional)
+   - 비디오 정보
+   - id, url, thumbnailUrl
+
+10. audio (object, optional)
+    - 오디오 정보
+    - id, title, url
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/my-capsule/types/index.ts
+
+// 타임캡슐 상세 조회 API 응답 타입 (camelCase)
+export interface Author {
+  id: string;                    // 사용자 ID
+  name: string;                  // 사용자 이름
+  emoji: string;                 // 사용자 이모지
+}
+
+export interface ImageMedia {
+  id: string;                    // 이미지 ID
+  url: string;                   // 이미지 URL
+  thumbnailUrl?: string;         // 썸네일 URL (선택적)
+}
+
+export interface VideoMedia {
+  id: string;                    // 비디오 ID
+  url: string;                   // 비디오 URL
+  thumbnailUrl: string;          // 비디오 썸네일 URL
+}
+
+export interface AudioMedia {
+  id: string;                    // 오디오 ID
+  title: string;                 // 오디오 제목
+  url: string;                   // 오디오 URL
+}
+
+export interface SlotContent {
+  text?: string;                 // 텍스트 메시지 (선택적)
+  images?: ImageMedia[];          // 이미지 배열 (선택적)
+  video?: VideoMedia;             // 비디오 정보 (선택적)
+  audio?: AudioMedia;             // 오디오 정보 (선택적)
+}
+
+export interface CapsuleSlot {
+  slotId: string;                // 슬롯 ID
+  author: Author;                // 작성자 정보
+  isWritten: boolean;            // 작성 여부
+  content?: SlotContent;         // 콘텐츠 정보 (작성된 경우만)
+}
+
+export interface OpenedCapsuleDetailResponse {
+  id: string;                     // 캡슐 ID (UUID)
+  title: string;                  // 캡슐 제목
+  headcount: number;              // 참여 인원 수
+  slots: CapsuleSlot[];           // 슬롯 배열 (headcount만큼)
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/my-capsule/api/capsule.ts
+
+목적:
+- 타임캡슐 상세 조회 API 호출 함수 제공
+- GET /api/time-capsules/{id} 호출
+- 에러 처리
+- ⭐ JWT 토큰 인증 처리
+- ⭐ 결제 완료 여부 확인 (403 에러)
+
+기능:
+1. getOpenedCapsuleDetail(id: string): Promise<OpenedCapsuleDetailResponse>
+   - GET /api/time-capsules/{id} 호출
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - Path Parameter: id (캡슐 ID)
+   - 응답을 그대로 반환 (camelCase 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { OpenedCapsuleDetailResponse } from '../types';
+
+/**
+ * 타임캡슐 상세 조회 API
+ * ⭐ 결제 완료된 캡슐만 조회 가능
+ * @param id 캡슐 ID (UUID)
+ * @returns 타임캡슐 상세 정보 (camelCase)
+ * @throws 403: 권한 없음 또는 미결제
+ * @throws 404: 캡슐 미존재
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 500: 서버 내부 오류
+ */
+export async function getOpenedCapsuleDetail(
+  id: string
+): Promise<OpenedCapsuleDetailResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 상세 조회 시작 - id:', id);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킨다
+    const response = await apiClient.get<OpenedCapsuleDetailResponse>(
+      `/api/time-capsules/${id}`
+    );
+
+    console.log('✅ [API] 타임캡슐 상세 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 권한 없음 또는 미결제 (403)');
+      throw new Error('결제가 완료되지 않았거나 권한이 없습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 캡슐 미존재 (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 상세 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) Custom Hook 작성
+
+파일: components/my-capsule/hooks/useOpenedCapsuleDetail.ts
+
+목적:
+- API 호출 및 데이터 관리 로직 캡슐화
+- 로딩 상태 및 에러 상태 관리
+- UI 컴포넌트에서 쉽게 사용 가능
+- @tanstack/react-query 사용 (기존 패턴 준수)
+
+기능:
+1. getOpenedCapsuleDetail(id) 호출
+2. 로딩/에러 상태 관리
+3. 에러 발생 시 빈 데이터 반환 (UI 깨짐 방지)
+4. 작성된 슬롯만 필터링 (선택사항)
+
+구현 예시:
+```typescript
+import { useQuery } from '@tanstack/react-query';
+import { getOpenedCapsuleDetail } from '../api/capsule';
+import type { OpenedCapsuleDetailResponse, CapsuleSlot } from '../types';
+
+/**
+ * 타임캡슐 상세 조회 Hook
+ * ⭐ 결제 완료된 캡슐만 조회 가능
+ * @param id 캡슐 ID (UUID), null이면 조회하지 않음
+ * @returns {object} data, isLoading, error, refetch
+ */
+export function useOpenedCapsuleDetail(id: string | null) {
+  // @tanstack/react-query를 사용한 API 호출
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['openedCapsuleDetail', id],
+    queryFn: () => {
+      if (!id) {
+        throw new Error('캡슐 ID가 필요합니다.');
+      }
+      return getOpenedCapsuleDetail(id);
+    },
+    enabled: !!id, // id가 있을 때만 조회
+    retry: 1,
+  });
+
+  // 작성된 슬롯만 필터링 (선택사항)
+  const writtenSlots: CapsuleSlot[] = data?.slots.filter(slot => slot.isWritten) || [];
+
+  return {
+    data: data || null,
+    writtenSlots, // 작성된 슬롯만 (선택사항)
+    isLoading,
+    error: error ? (error as Error).message : null,
+    refetch,
+  };
+}
+```
+
+==============================================
+
+구현가이드-3) UI 컴포넌트 연동
+
+파일: components/my-capsule/components/unlocked-capsule-detail/index.tsx
+
+수정 사항:
+1. useOpenedCapsuleDetail Hook import 및 사용
+2. 하드코딩된 USER_DATA를 API 데이터로 교체
+3. props에 capsuleId 추가 (필수)
+4. API 데이터로 사용자 아바타 동적 렌더링
+5. API 데이터로 콘텐츠 동적 렌더링 (텍스트, 이미지, 비디오, 오디오)
+6. 로딩 상태 처리 (선택사항)
+7. 에러 상태 처리 (선택사항)
+
+구현 예시:
+```typescript
+import { useOpenedCapsuleDetail } from '../../hooks/useOpenedCapsuleDetail';
+
+interface UnlockedCapsuleDetailProps {
+  /** 모달 표시 여부 */
+  visible: boolean;
+  /** 모달 닫기 함수 */
+  onClose: () => void;
+  /** 캡슐 ID (필수) */
+  capsuleId: string | null;
+}
+
+export default function UnlockedCapsuleDetail({ 
+  visible, 
+  onClose, 
+  capsuleId 
+}: UnlockedCapsuleDetailProps) {
+  // ⭐ API 데이터 로드
+  const { data, isLoading, error } = useOpenedCapsuleDetail(capsuleId);
+
+  // 작성된 슬롯만 필터링
+  const writtenSlots = data?.slots.filter(slot => slot.isWritten) || [];
+  
+  // 첫 번째 작성된 슬롯을 기본 선택
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState(0);
+  const selectedSlot = writtenSlots[selectedSlotIndex];
+
+  // 이미지 인덱스 관리
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // 로딩 또는 에러 상태 처리
+  if (isLoading) {
+    // 로딩 UI (선택사항)
+    return (
+      <Modal visible={visible} onClose={onClose}>
+        <View style={styles.loadingContainer}>
+          <Text>로딩 중...</Text>
+        </View>
+      </Modal>
+    );
+  }
+
+  if (error || !data || !selectedSlot) {
+    // 에러 또는 데이터 없음 처리
+    return (
+      <Modal visible={visible} onClose={onClose}>
+        <View style={styles.errorContainer}>
+          <Text>{error || '데이터를 불러올 수 없습니다.'}</Text>
+        </View>
+      </Modal>
+    );
+  }
+
+  const handleUserSelect = (index: number) => {
+    setSelectedSlotIndex(index);
+    setCurrentImageIndex(0);
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ x: 0, animated: false });
+    }
+  };
+
+  const handleImageScroll = (event: any) => {
+    const scrollPosition = event.nativeEvent.contentOffset.x;
+    const index = Math.round(scrollPosition / IMAGE_WIDTH);
+    setCurrentImageIndex(index);
+  };
+
+  const currentContent = selectedSlot.content;
+  const imageCount = currentContent?.images?.length || 0;
+
+  return (
+    <Modal
+      visible={visible}
+      onClose={onClose}
+      width={345.347}
+      height={724.375}
+      padding={0}
+      closeOnBackdropPress={true}
+      disableAnimation={false}>
+      <View style={styles.modalContainer} pointerEvents="box-none">
+        {/* 닫기 버튼 */}
+        <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7}>
+          <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
+        </TouchableOpacity>
+
+        {/* 헤더 섹션 */}
+        <View style={styles.headerSection}>
+          {/* 제목 - API 데이터 */}
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{data.title}</Text>
+          </View>
+
+          {/* 사용자 아바타 섹션 - API 데이터로 동적 렌더링 */}
+          <View style={styles.userAvatarsContainer}>
+            {writtenSlots.map((slot, index) => (
+              <TouchableOpacity
+                key={slot.slotId}
+                style={styles.userAvatarWrapper}
+                onPress={() => handleUserSelect(index)}
+                activeOpacity={0.7}>
+                <View style={styles.userAvatarContainer}>
+                  <View
+                    style={
+                      selectedSlotIndex === index
+                        ? styles.userAvatarBorderSelected
+                        : styles.userAvatarBorder
+                    }>
+                    <View style={styles.userAvatarInner}>
+                      <Text style={styles.userAvatarEmoji}>{slot.author.emoji}</Text>
+                    </View>
+                  </View>
+                  <Text
+                    style={
+                      selectedSlotIndex === index
+                        ? styles.userAvatarNameSelected
+                        : styles.userAvatarName
+                    }>
+                    {slot.author.name}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* 컨텐츠 섹션 */}
+        <ScrollView
+          style={styles.contentSection}
+          contentContainerStyle={styles.contentScrollContainer}
+          showsVerticalScrollIndicator={false}>
+          {/* 텍스트 메시지 - API 데이터 */}
+          {currentContent?.text && (
+            <View style={styles.textMessagesContainer}>
+              <View style={styles.textMessageCard}>
+                <Text style={styles.textMessageText}>{currentContent.text}</Text>
+              </View>
+            </View>
+          )}
+
+          {/* 이미지 캐러셀 섹션 - API 데이터 */}
+          {imageCount > 0 && (
+            <View style={styles.imageSection}>
+              <View style={styles.imageContainer}>
+                <ScrollView
+                  ref={scrollViewRef}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={handleImageScroll}
+                  style={styles.imageScrollView}>
+                  {currentContent.images!.map((image, index) => (
+                    <View key={image.id} style={styles.imageItem}>
+                      <Image
+                        source={{ uri: image.url }}
+                        style={styles.imagePlaceholder}
+                        contentFit="cover"
+                      />
+                    </View>
+                  ))}
+                </ScrollView>
+                {/* 이미지 인디케이터 */}
+                {imageCount > 1 && (
+                  <View style={styles.imageIndicator}>
+                    <Text style={styles.imageIndicatorText}>
+                      {currentImageIndex + 1}/{imageCount}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              {/* 페이지네이션 인디케이터 */}
+              {imageCount > 1 && (
+                <View style={styles.paginationContainer}>
+                  {currentContent.images!.map((image, index) => (
+                    <View
+                      key={image.id}
+                      style={
+                        index === currentImageIndex
+                          ? styles.paginationDotActive
+                          : styles.paginationDotInactive
+                      }
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* 동영상 섹션 - API 데이터 */}
+          {currentContent?.video && (
+            <View style={styles.videoSection}>
+              <View style={styles.videoContainer}>
+                <Image
+                  source={{ uri: currentContent.video.thumbnailUrl }}
+                  style={styles.videoThumbnail}
+                  contentFit="cover"
+                />
+                {/* 오버레이 및 재생 버튼 */}
+                <View style={styles.videoOverlay} pointerEvents="box-none">
+                  <TouchableOpacity style={styles.playButton} activeOpacity={0.8}>
+                    <Icon name="ri-play-circle-line" size={24} color={Colors.white[500]} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* 오디오 플레이어 섹션 - API 데이터 */}
+          {currentContent?.audio && (
+            <View style={styles.audioSection}>
+              <View style={styles.audioCard}>
+                <View style={styles.audioContent}>
+                  <View style={styles.audioIconContainer}>
+                    <Icon name="ri-music-line" size={20} color={Colors.black[500]} />
+                  </View>
+                  <View style={styles.audioTitleContainer}>
+                    <Text style={styles.audioTitle} numberOfLines={1}>
+                      {currentContent.audio.title}
+                    </Text>
+                  </View>
+                  <TouchableOpacity style={styles.audioPlayButton} activeOpacity={0.8}>
+                    <Icon name="ri-play-line" size={16} color={Colors.white[500]} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+```
+
+==============================================
+
+구현가이드-4) 부모 컴포넌트 수정
+
+파일: components/my-capsule/index.tsx
+
+수정 사항:
+1. UnlockedCapsuleDetail 컴포넌트에 capsuleId prop 전달
+
+구현 예시:
+```typescript
+{/* 열린 캡슐 상세 모달 */}
+<UnlockedCapsuleDetail 
+  visible={isDetailModalVisible} 
+  onClose={handleCloseModal}
+  capsuleId={selectedCapsuleId}  // ⭐ capsuleId prop 추가
+/>
+```
+
+==============================================
+
+활용시나리오) 타임캡슐 상세 조회 플로우
+
+1. 사용자가 열린 캡슐 카드 클릭
+   - handleOpenedCapsulePress(capsule.id) 실행
+   - selectedCapsuleId 설정
+   - isDetailModalVisible = true
+
+2. 모달 열림
+   - UnlockedCapsuleDetail 컴포넌트 마운트
+   - useOpenedCapsuleDetail(capsuleId) Hook 실행
+   - getOpenedCapsuleDetail(id) API 호출
+
+3. API 호출 성공
+   - Authorization: Bearer {JWT_TOKEN} 헤더 포함
+   - GET /api/time-capsules/{id} 응답 수신
+   - slots 배열 파싱
+
+4. 데이터 렌더링
+   - 헤더: 캡슐 제목 표시
+   - 아바타: 작성된 슬롯의 작성자 정보 표시
+   - 콘텐츠: 선택된 슬롯의 콘텐츠 표시 (텍스트, 이미지, 비디오, 오디오)
+
+5. 사용자 인터랙션
+   - 아바타 클릭: 다른 슬롯 선택
+   - 이미지 스와이프: 이미지 캐러셀
+   - 비디오 재생 버튼: 비디오 재생 (추후 구현)
+   - 오디오 재생 버튼: 오디오 재생 (추후 구현)
+
+6. 모달 닫기
+   - onClose 호출
+   - selectedCapsuleId 초기화
+   - isDetailModalVisible = false
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 403 Forbidden (권한 없음 또는 미결제)
+   - 원인: 결제 미완료, 권한 없음
+   - 대응: 에러 메시지 표시
+   - 메시지: "결제가 완료되지 않았거나 권한이 없습니다."
+   - 추가: 결제 페이지로 리다이렉트 고려
+
+2. 404 Not Found (캡슐 미존재)
+   - 원인: 캡슐 ID 오류, 삭제된 캡슐
+   - 대응: 에러 메시지 표시
+   - 메시지: "캡슐을 찾을 수 없습니다."
+
+3. 401 Unauthorized (JWT 토큰 없음 또는 유효하지 않음)
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: 에러 메시지 표시
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+   - 추가: 로그인 페이지로 리다이렉트 고려
+
+4. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: 에러 메시지 표시
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+5. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: 에러 메시지 표시
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. 에러 메시지 표시 (사용자 피드백)
+2. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+3. 모달 닫기 옵션 제공
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 camelCase로 응답
+   - 프론트엔드는 camelCase를 그대로 사용
+   - 타입 불일치 방지
+
+2. 결제 완료 여부 확인
+   - ⭐ 결제 완료된 캡슐만 조회 가능
+   - 403 에러 시 결제 미완료로 처리
+   - 결제 페이지로 리다이렉트 고려
+
+3. 슬롯 필터링
+   - isWritten이 true인 슬롯만 표시
+   - 미작성 슬롯은 아바타에 표시하지 않음 (선택사항)
+   - 또는 모든 슬롯 표시하고 미작성 슬롯은 빈 콘텐츠 표시 (선택사항)
+
+4. 미디어 URL 처리
+   - 이미지 URL: 직접 사용 또는 썸네일 URL 사용
+   - 비디오 URL: 썸네일 표시, 재생 시 URL 사용 (추후 구현)
+   - 오디오 URL: 재생 시 URL 사용 (추후 구현)
+
+5. Fallback 전략
+   - API 실패 시 에러 메시지 표시
+   - 데이터 없음 시 빈 상태 표시
+   - 로딩 상태 표시 (선택사항)
+
+6. TypeScript 타입 안정성
+   - API 응답 타입 명시 (OpenedCapsuleDetailResponse, camelCase)
+   - any 사용 금지
+   - 옵셔널 필드 처리 (content?, images?, video?, audio?)
+
+7. 에러 처리
+   - try-catch 블록 필수
+   - 에러 로깅 (console.error)
+   - 사용자 피드백 (에러 메시지 표시)
+
+8. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트 고려
+
+9. UI 데이터 매핑
+   - 기존 하드코딩된 USER_DATA 구조와 API 응답 구조가 다를 수 있음
+   - API 응답 구조에 맞게 UI 수정 필요
+   - 기존 스타일은 유지
+
+10. 미디어 재생 기능
+    - 현재는 UI만 구현
+    - 비디오/오디오 재생 기능은 추후 구현
+    - URL은 API에서 제공받은 값 사용
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] components/my-capsule/types/index.ts에 타입 추가됨
+- [ ] Author 인터페이스 정의됨 (camelCase)
+- [ ] ImageMedia 인터페이스 정의됨
+- [ ] VideoMedia 인터페이스 정의됨
+- [ ] AudioMedia 인터페이스 정의됨
+- [ ] SlotContent 인터페이스 정의됨
+- [ ] CapsuleSlot 인터페이스 정의됨
+- [ ] OpenedCapsuleDetailResponse 인터페이스 정의됨
+- [ ] 모든 필드 타입이 정확히 정의됨
+- [ ] 옵셔널 필드 처리됨 (content?, images?, video?, audio?)
+
+API 함수:
+- [ ] components/my-capsule/api/capsule.ts에 함수 추가됨
+- [ ] ⭐ getOpenedCapsuleDetail(id) 함수 구현됨
+- [ ] ⭐ GET /api/time-capsules/{id} 호출 구현됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] Path Parameter (id) 전달됨
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (403, 404, 401, 500)
+- [ ] 각 에러별 적절한 메시지 반환
+
+Hook:
+- [ ] components/my-capsule/hooks/useOpenedCapsuleDetail.ts 파일 생성됨
+- [ ] useOpenedCapsuleDetail Hook 구현됨
+- [ ] getOpenedCapsuleDetail(id) 호출
+- [ ] @tanstack/react-query 사용 (기존 패턴 준수)
+- [ ] enabled 옵션으로 id가 있을 때만 조회
+- [ ] 로딩 상태 관리
+- [ ] 에러 상태 관리
+- [ ] refetch 함수 제공
+- [ ] 작성된 슬롯 필터링 (선택사항)
+
+UI 연동:
+- [ ] components/my-capsule/components/unlocked-capsule-detail/index.tsx 수정됨
+- [ ] useOpenedCapsuleDetail Hook import 및 사용
+- [ ] props에 capsuleId 추가됨
+- [ ] 하드코딩된 USER_DATA 제거됨
+- [ ] API 데이터로 캡슐 제목 동적 표시
+- [ ] API 데이터로 사용자 아바타 동적 렌더링 (작성된 슬롯만)
+- [ ] API 데이터로 텍스트 메시지 동적 표시
+- [ ] API 데이터로 이미지 캐러셀 동적 렌더링
+- [ ] API 데이터로 비디오 섹션 동적 렌더링
+- [ ] API 데이터로 오디오 섹션 동적 렌더링
+- [ ] 슬롯 선택 기능 동작 (아바타 클릭)
+- [ ] 이미지 스와이프 기능 동작
+- [ ] 로딩 상태 처리 (선택사항)
+- [ ] 에러 상태 처리
+- [ ] 기존 UI/스타일 수정 0건
+
+부모 컴포넌트:
+- [ ] components/my-capsule/index.tsx 수정됨
+- [ ] UnlockedCapsuleDetail에 capsuleId prop 전달됨
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+
+에러 처리:
+- [ ] ⭐ 403 에러 처리 구현됨 (권한 없음 또는 미결제)
+- [ ] ⭐ 404 에러 처리 구현됨 (캡슐 미존재)
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.error)
+- [ ] 에러 메시지 사용자에게 표시됨
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] any 타입 사용 0건 (필요시 unknown 사용)
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ API 호출 성공 케이스 테스트됨
+- [ ] ⭐ 데이터 렌더링 정확성 확인됨 (제목, 아바타, 콘텐츠)
+- [ ] ⭐ 슬롯 선택 기능 테스트됨
+- [ ] ⭐ 이미지 캐러셀 기능 테스트됨
+- [ ] ⭐ 403 에러 케이스 테스트됨 (미결제)
+- [ ] ⭐ 404 에러 케이스 테스트됨
+- [ ] 401 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] 로딩 상태 표시 확인됨 (선택사항)
+- [ ] 에러 메시지 표시 확인됨
+
+==============================================
+
+

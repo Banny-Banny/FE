@@ -1,0 +1,183 @@
+/**
+ * app/(tabs)/room/join.tsx
+ * 타임캡슐 대기실 입장 (딥링크 초대 또는 내 캡슐에서 입장)
+ *
+ * 케이스 1: 딥링크 초대 (invite_code 파라미터)
+ *   - 딥링크 형식: timeegg://room/join?invite_code=ABC123
+ *   - 플로우: invite_code → fetchRoomByInviteCode() → capsule_id → StepRoom (guest)
+ *
+ * 케이스 2: 내 캡슐에서 입장 (capsuleId 파라미터)
+ *   - URL 형식: /room/join?capsuleId=xxx-xxx-xxx
+ *   - 플로우: capsuleId → StepRoom (host)
+ */
+
+import { TimeCapsuleHeader } from '@/commons/components/timecapsule-header';
+import { Colors, ROUTES, STORAGE_KEYS } from '@/commons/constants';
+import { useAuth } from '@/commons/layout/provider/auth/auth.provider';
+import { useNavigation } from '@/commons/hooks';
+import { fetchRoomByInviteCode, joinRoom } from '@/components/timecapsule-create/components/step-room/api/capsule';
+import StepRoom from '@/components/timecapsule-create/components/step-room';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Text, View, StyleSheet } from 'react-native';
+
+export default function RoomJoinScreen() {
+  const router = useRouter();
+  const navigation = useNavigation();
+  const params = useLocalSearchParams();
+  const { accessToken, isLoading: isAuthLoading } = useAuth();
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [capsuleId, setCapsuleId] = useState<string | null>(null);
+  const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [role, setRole] = useState<'host' | 'guest'>('guest');
+
+  // URL 파라미터 추출
+  useEffect(() => {
+    const directCapsuleId = Array.isArray(params.capsuleId) ? params.capsuleId[0] : params.capsuleId;
+    const code = Array.isArray(params.invite_code) ? params.invite_code[0] : params.invite_code;
+
+    // 케이스 1: 내 캡슐에서 입장 (capsuleId 직접 전달)
+    if (directCapsuleId) {
+      setCapsuleId(directCapsuleId);
+      setRole('host');
+      setIsLoading(false);
+      return;
+    }
+
+    // 케이스 2: 딥링크 초대 (invite_code로 조회)
+    if (code) {
+      setInviteCode(code);
+      setRole('guest');
+
+      // 토큰 확인 - 없으면 초대 코드 저장 후 온보딩으로 리다이렉트
+      if (!accessToken && !isAuthLoading) {
+        AsyncStorage.setItem(STORAGE_KEYS.PENDING_INVITE_CODE, code).then(() => {
+          router.replace(ROUTES.AUTH_ONBOARDING as any);
+        });
+        return;
+      }
+
+      // 토큰이 있으면 초대 코드로 대기실 조회 및 참여
+      const joinRoomFlow = async () => {
+        try {
+          setIsLoading(true);
+
+          // 1단계: 초대 코드로 대기실 조회 (Public API)
+          const response = await fetchRoomByInviteCode(code);
+          const foundCapsuleId = response.room_id;
+
+          // 2단계: 대기실 참여 (슬롯 배정)
+          await joinRoom(foundCapsuleId, code);
+          setCapsuleId(foundCapsuleId);
+          setIsLoading(false);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : '대기실에 참여할 수 없습니다.');
+          setIsLoading(false);
+        }
+      };
+
+      joinRoomFlow();
+      return;
+    }
+
+    // 파라미터가 없는 경우
+    setError('초대 코드 또는 캡슐 ID가 없습니다.');
+    setIsLoading(false);
+  }, [params.invite_code, params.capsuleId, accessToken, isAuthLoading, router]);
+
+  // 로딩 중
+  if (isLoading) {
+    const handleBack = () => {
+      // 캡슐보관함에서 들어온 경우: 마이페이지로 이동
+      const directCapsuleId = Array.isArray(params.capsuleId) ? params.capsuleId[0] : params.capsuleId;
+      if (directCapsuleId) {
+        router.replace(ROUTES.MY_PAGE);
+      } else {
+        navigation.back();
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        <TimeCapsuleHeader title="대기실 참여 중..." onBack={handleBack} />
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={Colors.blue[500]} />
+          <Text style={styles.loadingText}>대기실 정보를 불러오는 중...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 에러 발생
+  if (error) {
+    const handleBack = () => {
+      // 캡슐보관함에서 들어온 경우: 마이페이지로 이동
+      const directCapsuleId = Array.isArray(params.capsuleId) ? params.capsuleId[0] : params.capsuleId;
+      if (directCapsuleId) {
+        router.replace(ROUTES.MY_PAGE);
+      } else {
+        navigation.back();
+      }
+    };
+
+    return (
+      <View style={styles.container}>
+        <TimeCapsuleHeader title="참여 실패" onBack={handleBack} />
+        <View style={styles.centerContent}>
+          <Text style={styles.errorText}>{error}</Text>
+          <Text style={styles.errorDescription}>초대 링크가 올바른지 확인해주세요.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // 대기실 입장 성공 - StepRoom 렌더링
+  if (capsuleId) {
+    return (
+      <StepRoom
+        role={role}
+        capsuleId={capsuleId}
+        inviteCode={inviteCode || undefined}
+        onSubmit={() => {
+          router.replace('/(tabs)/'); // 메인으로 이동
+        }}
+      />
+    );
+  }
+
+  return null;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.grey[50],
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.grey[600],
+  },
+  errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.red[600],
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  errorDescription: {
+    fontSize: 14,
+    color: Colors.grey[500],
+    textAlign: 'center',
+  },
+});
+

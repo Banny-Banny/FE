@@ -1,0 +1,618 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 TSX 파일경로: components/timecapsule-create/components/step-info/index.tsx
+조건-파일경로) 참고할 HOOK 파일경로: components/timecapsule-create/components/step-info/hooks/useDateSelection.ts
+조건-파일경로) 참고할 TYPE 파일경로: components/timecapsule-create/components/step-info/types.ts
+조건-파일경로) 참고할 CONSTANTS 파일경로: components/timecapsule-create/components/step-info/constants.ts
+조건-파일경로) 구현될 API 파일경로: lib/api/orders.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/step-info/hooks/useCreateOrder.ts
+조건-파일경로) 구현될 TYPE 파일경로: lib/api/types/order.ts
+
+==============================================
+
+핵심요구사항) 병렬처리 구현을 위한 작업 방식 조건
+            - 다른 채팅에서 개발중인 파일을 수정 및 삭제 하지 말 것.
+            - 기존 UI 구조(index.tsx, styles.ts, hooks/useDateSelection.ts, hooks/usePriceCalculation.ts)는 최소한으로 수정하고, API 로직 파일만 추가할 것.
+
+==============================================
+
+핵심요구사항) 타임캡슐 주문 생성 API 연결 기능을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) API 엔드포인트
+                - URL: POST /api/orders
+                - 베이스 URL: process.env.EXPO_PUBLIC_API_BASE_URL (http://172.16.2.94:3000/)
+                - 전체 URL: process.env.EXPO_PUBLIC_API_BASE_URL + 'api/orders'
+                - 인증: Bearer JWT (Authorization 헤더)
+                - JWT 토큰: process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN
+
+            2) Request Body 매핑
+                - product_id: process.env.EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID (UUID: 550e8400-e29b-41d4-a716-446655440000)
+                - time_option: DateOption 인덱스 → API 형식 변환
+                  - 인덱스 0 ("1주일 후") → "1_WEEK"
+                  - 인덱스 1 ("1년 후") → "1_YEAR"
+                  - 인덱스 2 ("3년 후") → "CUSTOM" (custom_open_at: 오늘 + 3년)
+                  - 인덱스 3 ("직접 선택") → "CUSTOM" (custom_open_at: 선택된 날짜)
+                - custom_open_at: time_option이 "CUSTOM"일 때 필수
+                  - ISO 8601 형식 (예: "2025-12-25T00:00:00.000Z")
+                  - dayjs().toISOString() 사용
+                  - 미래 시각이어야 함 (백엔드에서 검증)
+                - headcount: 인원 수 (1~10)
+                - photo_count: 이미지 슬롯 수 (0 이상, headcount * 5 이하)
+                - add_music: 음악 옵션 선택 여부 (boolean, 기본값: false)
+                - add_video: 영상 옵션 선택 여부 (boolean, 기본값: false)
+
+            3) Request Body 예시
+                ```json
+                {
+                  "product_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "time_option": "1_WEEK",
+                  "headcount": 2,
+                  "photo_count": 4,
+                  "add_music": true,
+                  "add_video": false
+                }
+                ```
+                또는 CUSTOM 옵션:
+                ```json
+                {
+                  "product_id": "550e8400-e29b-41d4-a716-446655440000",
+                  "time_option": "CUSTOM",
+                  "custom_open_at": "2026-01-15T00:00:00.000Z",
+                  "headcount": 2,
+                  "photo_count": 4,
+                  "add_music": true,
+                  "add_video": false
+                }
+                ```
+
+            4) Response 처리
+                - 성공 (201 Created):
+                  - order_id: 생성된 주문 ID (UUID)
+                  - total_amount: 총 결제 금액
+                  - base_amount: 기본 금액 (1000)
+                  - photo_amount: 사진 금액 (photo_count * 500)
+                  - music_amount: 음악 금액 (add_music ? 1000 : 0)
+                  - video_amount: 영상 금액 (add_video ? 2000 : 0)
+                  - time_option: 선택된 개봉일 옵션
+                  - custom_open_at: 커스텀 개봉일 (또는 null)
+                  - headcount: 인원 수
+                  - photo_count: 사진 개수
+                  - add_music: 음악 옵션 선택 여부
+                  - add_video: 영상 옵션 선택 여부
+                  - status: "PENDING_PAYMENT"
+                - 에러 처리:
+                  - 400 Bad Request:
+                    - PHOTO_COUNT_EXCEEDS_LIMIT: "사진 개수가 인원당 제한(최대 인원 × 5)을 초과했습니다"
+                    - CUSTOM_OPEN_AT_MUST_BE_FUTURE: "개봉일은 현재 시각보다 미래여야 합니다"
+                    - 기타: "입력값이 올바르지 않습니다. 다시 확인해주세요"
+                  - 401 Unauthorized:
+                    - "로그인이 필요한 서비스입니다"
+                  - 404 Not Found:
+                    - PRODUCT_NOT_FOUND_OR_INVALID: "유효하지 않은 상품입니다"
+                  - 500 Internal Server Error:
+                    - "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요"
+                  - 네트워크 에러:
+                    - "네트워크 연결을 확인해주세요"
+
+            5) 유저시나리오
+                1. 사용자가 타임캡슐 정보 입력 완료
+                   - 캡슐 이름, 개봉일, 인원, 이미지 슬롯, 추가 옵션
+                2. "결제하기" 버튼 클릭
+                3. 클라이언트 사이드 유효성 검증
+                   - 캡슐 이름 필수 입력 확인
+                   - 개봉일 선택 확인 (직접 선택 시 날짜 선택 확인)
+                   - 인원 범위 확인 (1~10)
+                   - 이미지 슬롯 범위 확인 (최대 5)
+                4. API 요청 시작
+                   - 로딩 상태로 변경 (isLoading: true)
+                   - "결제하기" 버튼 비활성화
+                   - 로딩 인디케이터 표시 (선택사항)
+                5. JWT 토큰 포함하여 POST 요청
+                   - Authorization: Bearer {EXPO_PUBLIC_TEST_AUTH_TOKEN}
+                   - Content-Type: application/json
+                6. 성공 시 (201):
+                   - 주문 정보를 부모 컴포넌트로 전달 (onSubmit prop)
+                   - 다음 단계(결제 화면)로 이동
+                   - 로딩 상태 해제
+                7. 실패 시:
+                   - 에러 메시지를 Alert로 표시
+                   - 로딩 상태 해제
+                   - "결제하기" 버튼 재활성화
+                   - 사용자가 입력 수정 가능
+
+==============================================
+
+추가요구사항) React Native 환경 설정
+            1) fetch API 사용
+                - React Native에서 기본 제공하는 fetch 사용
+                - async/await 패턴 적용
+                - try-catch로 에러 처리
+
+            2) 환경변수 접근
+                - process.env.EXPO_PUBLIC_API_BASE_URL
+                - process.env.EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID
+                - process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN
+
+            3) Alert 사용
+                - React Native의 Alert 사용
+                - Alert.alert(제목, 메시지)
+
+==============================================
+
+추가요구사항) 로딩 및 에러 상태 관리
+            1) 로딩 상태
+                - isLoading: boolean
+                - 로딩 중:
+                  - "결제하기" 버튼 disabled={isLoading}
+                  - 버튼 텍스트 변경 (선택사항): "처리 중..."
+                  - ActivityIndicator 표시 (선택사항)
+
+            2) 에러 상태
+                - error: string | null
+                - 에러 발생 시 Alert.alert('오류', error)
+                - Alert 닫기 후 에러 상태 클리어
+
+==============================================
+
+구현 가이드라인
+
+1. API Types 파일 생성
+   - 파일: lib/api/types/order.ts
+   - TimeOption: "1_WEEK" | "1_MONTH" | "1_YEAR" | "CUSTOM"
+   - CreateOrderRequest:
+     - product_id: string
+     - time_option: TimeOption
+     - custom_open_at?: string (ISO 8601)
+     - headcount: number
+     - photo_count?: number
+     - add_music?: boolean
+     - add_video?: boolean
+   - CreateOrderResponse:
+     - order_id: string
+     - total_amount: number
+     - base_amount: number
+     - photo_amount: number
+     - music_amount: number
+     - video_amount: number
+     - time_option: TimeOption
+     - custom_open_at: string | null
+     - headcount: number
+     - photo_count: number
+     - add_music: boolean
+     - add_video: boolean
+     - status: "PENDING_PAYMENT"
+   - ApiErrorResponse:
+     - statusCode: number
+     - message: string
+     - error?: string
+
+2. API 함수 작성
+   - 파일: lib/api/orders.ts
+   - createOrder(data: CreateOrderRequest, token: string): Promise<CreateOrderResponse>
+     ```typescript
+     export async function createOrder(
+       data: CreateOrderRequest,
+       token: string
+     ): Promise<CreateOrderResponse> {
+       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+       const response = await fetch(`${baseUrl}api/orders`, {
+         method: 'POST',
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify(data),
+       });
+
+       if (!response.ok) {
+         const errorData = await response.json();
+         throw new Error(errorData.message || '주문 생성에 실패했습니다');
+       }
+
+       return response.json();
+     }
+     ```
+
+3. 폼 데이터 → API 요청 데이터 변환 함수
+   - 파일: lib/api/orders.ts 또는 별도 utils 파일
+   - mapFormToOrderRequest(formData: StepInfoFormData): CreateOrderRequest
+     ```typescript
+     export function mapFormToOrderRequest(
+       formData: StepInfoFormData
+     ): CreateOrderRequest {
+       const productId = process.env.EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID;
+
+       // DateOption 인덱스 → time_option 변환
+       let timeOption: TimeOption;
+       let customOpenAt: string | undefined;
+
+       if (formData.selectedDateOptionIndex === 0) {
+         timeOption = '1_WEEK';
+       } else if (formData.selectedDateOptionIndex === 1) {
+         timeOption = '1_YEAR';
+       } else if (formData.selectedDateOptionIndex === 2) {
+         // "3년 후" → CUSTOM with calculated date
+         timeOption = 'CUSTOM';
+         customOpenAt = dayjs().add(3, 'year').toISOString();
+       } else {
+         // 인덱스 3: "직접 선택" → CUSTOM with selected date
+         timeOption = 'CUSTOM';
+         customOpenAt = formData.selectedDate
+           ? dayjs(formData.selectedDate).toISOString()
+           : undefined;
+       }
+
+       return {
+         product_id: productId!,
+         time_option: timeOption,
+         custom_open_at: customOpenAt,
+         headcount: formData.personnelCount,
+         photo_count: formData.storageCount,
+         add_music: formData.selectedOptions.music || false,
+         add_video: formData.selectedOptions.video || false,
+       };
+     }
+     ```
+
+4. useCreateOrder Hook 구현
+   - 파일: components/timecapsule-create/components/step-info/hooks/useCreateOrder.ts
+   - 상태 관리:
+     ```typescript
+     const [isLoading, setIsLoading] = useState(false);
+     const [error, setError] = useState<string | null>(null);
+     const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
+     ```
+   - submitOrder 함수:
+     ```typescript
+     const submitOrder = useCallback(async (formData: StepInfoFormData) => {
+       try {
+         setIsLoading(true);
+         setError(null);
+
+         const token = process.env.EXPO_PUBLIC_TEST_AUTH_TOKEN;
+         if (!token) {
+           throw new Error('인증 토큰이 없습니다');
+         }
+
+         const requestData = mapFormToOrderRequest(formData);
+         const response = await createOrder(requestData, token);
+
+         setOrderData(response);
+         return response;
+       } catch (err) {
+         const errorMessage = err instanceof Error ? err.message : '주문 생성에 실패했습니다';
+         setError(errorMessage);
+         throw err;
+       } finally {
+         setIsLoading(false);
+       }
+     }, []);
+     ```
+   - 반환값:
+     ```typescript
+     return {
+       isLoading,
+       error,
+       orderData,
+       submitOrder,
+       clearError: () => setError(null),
+     };
+     ```
+
+5. index.tsx 수정
+   - useCreateOrder Hook import 및 사용
+     ```typescript
+     const { isLoading, error, submitOrder } = useCreateOrder();
+     ```
+   - 결제하기 버튼 핸들러 수정:
+     ```typescript
+     const onFormSubmit = useCallback(
+       async (data: StepInfoFormData) => {
+         try {
+           const orderResponse = await submitOrder(data);
+
+           // 성공 시 부모 컴포넌트로 전달
+           if (onSubmit) {
+             onSubmit({
+               ...data,
+               orderData: orderResponse,
+             });
+           }
+         } catch (err) {
+           // 에러는 Hook에서 처리됨
+         }
+       },
+       [submitOrder, onSubmit]
+     );
+     ```
+   - 에러 Alert 추가:
+     ```typescript
+     useEffect(() => {
+       if (error) {
+         Alert.alert('주문 생성 실패', error);
+       }
+     }, [error]);
+     ```
+   - 버튼 비활성화:
+     ```tsx
+     <TouchableOpacity
+       style={[styles.submitButton, (!isValid || isLoading) && styles.submitButtonDisabled]}
+       onPress={handleSubmit(onFormSubmit)}
+       disabled={!isValid || isLoading}
+     >
+       <Text style={styles.submitButtonText}>
+         {isLoading ? '처리 중...' : '결제하기'}
+       </Text>
+     </TouchableOpacity>
+     ```
+
+6. 환경변수 확인
+   - .env 파일에 다음 항목이 있는지 확인:
+     ```
+     EXPO_PUBLIC_API_BASE_URL=http://172.16.2.94:3000/
+     EXPO_PUBLIC_TIMECAPSULE_PRODUCT_ID=550e8400-e29b-41d4-a716-446655440000
+     EXPO_PUBLIC_TEST_AUTH_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+     ```
+
+==============================================
+
+구현 순서
+
+1. lib/api/types/order.ts 작성 (API 타입 정의)
+2. lib/api/orders.ts 작성
+   - createOrder 함수 구현
+   - mapFormToOrderRequest 함수 구현
+3. useCreateOrder Hook 구현
+   - 상태 관리 (isLoading, error, orderData)
+   - submitOrder 함수 구현
+   - clearError 함수 구현
+4. index.tsx에 useCreateOrder Hook 연결
+5. onFormSubmit 핸들러 수정 (submitOrder 호출)
+6. 에러 Alert useEffect 추가
+7. 버튼 로딩 상태 UI 적용
+8. 환경변수 확인
+9. 테스트 (실제 백엔드 API 호출)
+10. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 환경변수 관리
+   - .env 파일의 모든 환경변수는 EXPO_PUBLIC_ 접두사 필요
+   - process.env.EXPO_PUBLIC_XXX로 접근
+   - 환경변수가 undefined일 경우 에러 처리
+
+2. 날짜 처리
+   - ISO 8601 형식 사용 (dayjs().toISOString())
+   - 타임존 고려 (서버와 클라이언트의 시간대 일치 확인)
+   - "3년 후" 옵션은 CUSTOM으로 전송하되 custom_open_at 계산
+
+3. time_option 매핑
+   - 인덱스 0: "1_WEEK"
+   - 인덱스 1: "1_YEAR"
+   - 인덱스 2: "CUSTOM" (3년 후 날짜 계산)
+   - 인덱스 3: "CUSTOM" (사용자 선택 날짜)
+   - 주의: 백엔드에는 "1_MONTH" 옵션도 있지만, 현재 UI에는 없음
+
+4. 에러 처리
+   - 모든 API 호출은 try-catch로 감싸기
+   - 사용자 친화적인 에러 메시지 표시
+   - 네트워크 에러와 서버 에러 구분
+   - 에러 로깅 (console.error)
+
+5. 보안
+   - JWT 토큰을 환경변수에서 가져오기 (임시, 추후 AsyncStorage/SecureStore 사용)
+   - HTTPS 사용 (프로덕션 환경)
+   - 민감한 정보 로깅 금지
+
+6. 성능 최적화
+   - useCallback으로 함수 메모이제이션
+   - 불필요한 API 호출 방지
+   - 중복 요청 방지 (isLoading 상태로 버튼 비활성화)
+
+7. 코드 품질
+   - TypeScript 타입 안정성 확보
+   - async/await 일관성 있게 사용
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+
+8. React Native 환경
+   - fetch API 사용 (axios 설치 불필요)
+   - Alert 사용 (react-native)
+   - ActivityIndicator 사용 가능 (선택사항)
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] lib/api/types/order.ts 타입 정의 완료
+- [ ] lib/api/orders.ts 파일 생성 완료
+- [ ] createOrder 함수 구현 완료
+- [ ] mapFormToOrderRequest 함수 구현 완료
+- [ ] DateOption 인덱스 → time_option 매핑 정확함
+- [ ] "3년 후" 옵션을 CUSTOM으로 처리하며 날짜 계산 정확함
+- [ ] custom_open_at ISO 8601 형식으로 변환
+- [ ] useCreateOrder Hook 구현 완료
+- [ ] isLoading 상태 관리 정상 작동
+- [ ] error 상태 관리 정상 작동
+- [ ] submitOrder 함수 정상 작동
+- [ ] JWT 토큰 환경변수에서 가져오기
+- [ ] Authorization 헤더에 Bearer 토큰 포함
+- [ ] index.tsx에 useCreateOrder Hook 연결
+- [ ] onFormSubmit에서 submitOrder 호출
+- [ ] 성공 시 orderData를 onSubmit prop으로 전달
+- [ ] 에러 발생 시 Alert 표시
+- [ ] "결제하기" 버튼 로딩 중 비활성화
+- [ ] 버튼 텍스트 로딩 상태 반영 ("처리 중...")
+- [ ] 환경변수 3개 모두 확인 (API_BASE_URL, PRODUCT_ID, AUTH_TOKEN)
+- [ ] TypeScript 타입 에러 0건
+- [ ] 실제 백엔드 API 호출 테스트 완료
+- [ ] 성공 케이스 테스트 완료 (201 응답)
+- [ ] 에러 케이스 테스트 완료 (400, 401, 404)
+- [ ] 네트워크 에러 처리 확인
+- [ ] 코드 가독성 및 유지보수성 확보
+
+==============================================
+
+API 응답 예시
+
+성공 (201 Created):
+```json
+{
+  "order_id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+  "total_amount": 5000,
+  "base_amount": 1000,
+  "photo_amount": 2000,
+  "music_amount": 2000,
+  "video_amount": 0,
+  "time_option": "1_WEEK",
+  "custom_open_at": null,
+  "headcount": 2,
+  "photo_count": 4,
+  "add_music": true,
+  "add_video": false,
+  "status": "PENDING_PAYMENT"
+}
+```
+
+성공 - CUSTOM 옵션 (201 Created):
+```json
+{
+  "order_id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+  "total_amount": 8000,
+  "base_amount": 1000,
+  "photo_amount": 2500,
+  "music_amount": 0,
+  "video_amount": 2000,
+  "time_option": "CUSTOM",
+  "custom_open_at": "2028-12-19T00:00:00.000Z",
+  "headcount": 5,
+  "photo_count": 5,
+  "add_music": false,
+  "add_video": true,
+  "status": "PENDING_PAYMENT"
+}
+```
+
+에러 - 사진 개수 초과 (400):
+```json
+{
+  "statusCode": 400,
+  "message": "PHOTO_COUNT_EXCEEDS_LIMIT",
+  "error": "Bad Request"
+}
+```
+
+에러 - 커스텀 개봉일이 과거 (400):
+```json
+{
+  "statusCode": 400,
+  "message": "CUSTOM_OPEN_AT_MUST_BE_FUTURE",
+  "error": "Bad Request"
+}
+```
+
+에러 - 인증 실패 (401):
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+
+에러 - 상품 없음 (404):
+```json
+{
+  "statusCode": 404,
+  "message": "PRODUCT_NOT_FOUND_OR_INVALID",
+  "error": "Not Found"
+}
+```
+
+==============================================
+
+DateOption 인덱스 → time_option 매핑 테이블
+
+| UI 옵션 | 인덱스 | time_option | custom_open_at | 비고 |
+|---------|--------|-------------|----------------|------|
+| "1주일 후" | 0 | "1_WEEK" | undefined | 오늘 + 7일 |
+| "1년 후" | 1 | "1_YEAR" | undefined | 오늘 + 1년 |
+| "3년 후" | 2 | "CUSTOM" | dayjs().add(3, 'year').toISOString() | 오늘 + 3년 |
+| "직접 선택" | 3 | "CUSTOM" | dayjs(selectedDate).toISOString() | 사용자 선택 날짜 |
+
+주의:
+- 백엔드 API에는 "3_YEAR" 옵션이 없으므로, "3년 후"를 CUSTOM으로 처리합니다.
+- custom_open_at은 ISO 8601 형식의 문자열이어야 합니다.
+- 백엔드에서 custom_open_at이 미래 시각인지 검증합니다.
+
+==============================================
+
+추가 개선사항 (선택사항)
+
+1) 재시도 로직
+   - API 호출 실패 시 재시도 버튼 제공
+   - Alert에 "재시도" 버튼 추가
+
+2) 오프라인 대응
+   - NetInfo로 네트워크 연결 상태 확인
+   - 오프라인 시 API 호출 전에 안내 메시지 표시
+
+3) 주문 정보 로컬 저장
+   - API 호출 성공 시 AsyncStorage에 주문 정보 저장
+   - 앱 재시작 시에도 주문 정보 유지
+
+4) 로딩 인디케이터
+   - ActivityIndicator 추가
+   - 버튼 내부 또는 화면 중앙에 표시
+
+5) 응답 금액 검증
+   - 백엔드에서 계산한 total_amount와 프론트엔드에서 계산한 금액 비교
+   - 불일치 시 경고 로그 출력
+
+==============================================
+
+개발 시 참고사항
+
+1. 백엔드 API 문서와 실제 응답이 다를 수 있으므로, 실제 API 테스트 필수
+2. product_id는 환경변수로 관리하되, 추후 상품 선택 기능이 추가될 수 있음
+3. JWT 토큰은 현재 환경변수에서 가져오지만, 추후 인증 시스템 구축 시 AsyncStorage/SecureStore에서 가져오도록 수정 필요
+4. 결제 완료 후 주문 상태 업데이트 로직은 step-payment 컴포넌트에서 처리
+5. 백엔드에서 계산한 total_amount와 프론트엔드에서 계산한 금액이 일치하는지 확인 권장
+6. custom_open_at은 항상 미래 시각이어야 하므로, 클라이언트에서도 검증 추가 고려
+
+==============================================
+
+테스트 시나리오
+
+1. 성공 케이스 - "1주일 후"
+   - 인원: 2명, 이미지: 4장, 음악: true, 영상: false
+   - 예상 응답: order_id, total_amount 등
+
+2. 성공 케이스 - "직접 선택"
+   - 날짜: 2026-01-15
+   - 인원: 5명, 이미지: 5장, 음악: false, 영상: true
+   - 예상 응답: order_id, custom_open_at: "2026-01-15T00:00:00.000Z" 등
+
+3. 에러 케이스 - 사진 개수 초과
+   - 인원: 2명, 이미지: 11장 (2 * 5 = 10 초과)
+   - 예상 응답: 400, PHOTO_COUNT_EXCEEDS_LIMIT
+
+4. 에러 케이스 - 과거 날짜 선택 (서버 시간 기준)
+   - custom_open_at: 과거 날짜
+   - 예상 응답: 400, CUSTOM_OPEN_AT_MUST_BE_FUTURE
+
+5. 에러 케이스 - 잘못된 토큰
+   - 토큰을 의도적으로 잘못된 값으로 변경
+   - 예상 응답: 401, Unauthorized
+
+==============================================

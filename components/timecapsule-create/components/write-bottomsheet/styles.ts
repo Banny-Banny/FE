@@ -1,0 +1,199 @@
+/**
+ * components/timecapsule-create/components/write-bottomsheet/styles.ts
+ * UserBottomSheet 스타일 정의
+ *
+ * 체크리스트:
+ * - [✓] StyleSheet.create() 사용
+ * - [✓] 색상 토큰만 사용 (하드코딩 최소화)
+ * - [✓] 인라인 스타일 금지
+ * - [✓] Figma 디자인 1:1 대응
+ */
+
+import { Colors, Spacing, Typography } from '@/commons/constants';
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  // 메인 컨테이너
+  container: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
+  },
+
+  // 헤더
+  header: {
+    marginBottom: Spacing.lg,
+  },
+
+  title: {
+    ...Typography.header.h1,
+    fontSize: 24,
+    lineHeight: 32,
+    fontWeight: '700' as any,
+    letterSpacing: 0.0703125,
+    color: Colors.black[500],
+  },
+
+  subtitle: {
+    ...Typography.caption.caption1,
+    color: Colors.darkGrey[500],
+    marginTop: Spacing.sm,
+  },
+
+  // 섹션
+  section: {
+    marginBottom: Spacing.lg,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+
+  sectionIcon: {
+    width: 20,
+    height: 20,
+  },
+
+  sectionTitle: {
+    ...Typography.body.body1,
+    color: Colors.black[500],
+  },
+
+  // 텍스트 입력 영역
+  textAreaContainer: {
+    backgroundColor: Colors.whiteGrey[100],
+    borderWidth: 1,
+    borderColor: Colors.grey[200],
+    borderRadius: 16,
+    height: 120,
+  },
+
+  textArea: {
+    flex: 1,
+    padding: Spacing.md,
+    ...Typography.body.body4,
+    color: Colors.black[500],
+  },
+
+  // 하단 힌트 텍스트
+  hintText: {
+    ...Typography.body.body3,
+    color: Colors.grey[500],
+    textAlign: 'center',
+  },
+
+  // 사진 미리보기 - 그리드 배치
+  photoGridContainer: {
+    marginTop: Spacing.md,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+
+  photoPreviewItem: {
+    width: 107,
+    height: 107,
+    position: 'relative',
+  },
+
+  photoPreview: {
+    width: 107,
+    height: 103,
+    backgroundColor: Colors.white[500],
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.grey[100],
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+
+  photoPreviewImage: {
+    width: 32,
+    height: 32,
+  },
+
+  photoPreviewLabel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 24,
+    backgroundColor: Colors.black[500],
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xs,
+  },
+
+  photoPreviewText: {
+    ...Typography.body.body3,
+    color: Colors.white[50],
+  },
+
+  // 삭제 버튼
+  deleteButton: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.black[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white[50],
+  },
+
+  deleteButtonText: {
+    ...Typography.caption.button,
+    fontSize: 18,
+    lineHeight: 18,
+    color: Colors.white[50],
+  },
+
+  // 미디어 파일 표시 (음악, 동영상)
+  mediaFileContainer: {
+    marginTop: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.white[500],
+    borderWidth: 1,
+    borderColor: Colors.grey[100],
+    borderRadius: 16,
+    padding: Spacing.md,
+  },
+
+  mediaFileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+
+  mediaFileIcon: {
+    width: 24,
+    height: 24,
+  },
+
+  mediaFileName: {
+    ...Typography.body.body6,
+    color: Colors.darkGrey[500],
+    flex: 1,
+  },
+
+  mediaDeleteButton: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.darkGrey[500],
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});

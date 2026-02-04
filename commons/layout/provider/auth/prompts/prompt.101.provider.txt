@@ -1,0 +1,56 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc 
+
+==============================================
+
+조건-환경)
+       - 프레임워크: React Native (Expo Router 사용)
+       - 언어: TypeScript
+       - 상태관리: React Context API
+       - 저장소: @react-native-async-storage/async-storage (비동기 스토리지)
+       - 라우팅: expo-router (useRouter, useSegments 등)
+       - 작업 파일경로: src/commons/providers/auth/auth.provider.tsx
+
+==============================================
+
+핵심요구사항 1) AuthProvider 기능 구현
+기본 설정:
+- AuthContext를 생성하고 AuthProvider 컴포넌트를 구현할 것.
+- 전역 상태로 accessToken(String | null), user(User | null), isLoading(Boolean)을 관리할 것.
+- 외부에서 쉽게 사용할 수 있도록 useAuth() 커스텀 훅을 export 할 것.
+
+URL 상수 정의:
+- src/commons/constants/route.ts 아래 상수를 정의하여 사용할 것.
+  - LOGIN_URL: /(auth)/login
+  - MAIN_URL: /(tabs)
+
+주요 액션 구현:
+  로그인 (login):
+    - 인자로 token과 userData를 받음.
+    - AsyncStorage에 토큰과 유저 정보를 저장.
+    - Context 상태(State) 업데이트.
+    - router.replace(MAIN_URL)로 메인 이동.
+  
+  로그아웃 (logout):
+    - AsyncStorage의 토큰과 유저 정보 삭제.
+    - Context 상태 초기화 (null).
+    - router.replace(LOGIN_URL)로 로그인 화면 이동.
+
+  앱 실행 시 검증 (initialize):
+    - useEffect를 사용하여 앱 마운트 시 실행.
+    - AsyncStorage에 저장된 토큰 유무 확인.
+    - 토큰이 있으면 상태 복구(로그인 유지), 없으면 비로그인 상태 처리.
+    - 검증이 끝날 때까지 isLoading 상태 유지.
+
+핵심요구사항 2) Root Layout 연결
+    - 연결 파일: src/app/_layout.tsx
+    
+    구현 내용:
+      - 작성된 AuthProvider를 import 할 것.
+      - Expo Router의 <Stack /> 컴포넌트를 AuthProvider로 감쌀 것.
+      - (참고) 만약 ReactQueryProvider 등 다른 Provider가 있다면, AuthProvider가 가장 최상위(또는 적절한 상위)에 위치하여 하위 컴포넌트들이 Auth 정보를 참조할 수 있도록 할 것.

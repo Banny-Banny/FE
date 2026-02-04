@@ -1,0 +1,41 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @01-common.mdc
+            - @04-func.mdc
+            - @project-structure.mdc
+
+조건-파일경로) 구현될 TSX 파일경로: FE/components/map/components/egg-detail-owner/index.tsx
+조건-파일경로) 구현될 CSS 파일경로: FE/components/map/components/egg-detail-owner/styles.ts
+조건-파일 구현 경로) 구현될 hooks 파일경로: FE/components/map/components/egg-detail-owner/hooks 하위 폴더
+
+조건-환경변수) `process.env.EXPO_PUBLIC_KAKAO_REST_API_KEY` 사용.
+조건-라이브러리) axios와 이미 구현되어 있는 react-query provider 사용
+
+==============================================
+
+핵심요구사항) 아래의 기능 상세를 따를 것(step-by-step)
+
+1. 마커 선택 및 데이터 판별
+  1-1) 기존 데이터 활용
+    - 이미 지도 훅을 통해 받아온 capsules 목록 데이터에서 선택된 마커의 ID를 조회할 것.
+  1-2) 판별 조건
+    - is_mine === true
+    - type === EASTER_EGG
+  1-3) 동작
+    - 위 두 조건이 모두 참일 경우에만 egg-detail-owner 컴포넌트를 렌더링하고 다음 단계의 상세 API를 호출할 것.
+
+2. 상세 데이터 페칭
+  2-1) API
+    - GET /api/capsules/{id}?lat={latitude}&lng={longitude}
+    - 판별 완료 수, 상세 정보를 가져오기 위해 현재 위치 좌표와 함께 상세 API를 호출할 것
+    - 관련 로직은 FE/components/map/components/current-location/hooks/useCurrentLocationAddress.ts 여기에 이미 존재
+
+3. 주소 변환 및 데이터 바인딩
+  3-1) 주소
+    - 응답받은 latitude, longitude 를 useCurrentLocationAddress를 활용해 카카오 API 도로명 주소(`documents[0].road_address.address_name`)로 변환하여 표시
+  3-2) 데이터 바인딩
+    - title, created_at (YYYY.MM.DD 포맷), author.nickname, viewers 리스트를 렌더링

@@ -1,0 +1,107 @@
+import { Tabs } from 'expo-router';
+import React from 'react';
+import { View } from 'react-native';
+import Icon, { IconName } from 'react-native-remix-icon';
+
+import { TABS_SCREEN_OPTIONS } from './styles';
+
+/**
+ * 탭바에 표시할 화면 목록
+ */
+const TAB_SCREENS = [
+  {
+    name: 'alarm',
+    title: '소식',
+    iconName: 'ri-notification-line',
+    iconNameFilled: 'ri-notification-fill',
+  },
+  {
+    name: 'index',
+    title: '홈',
+    iconName: 'ri-map-line',
+    iconNameFilled: 'ri-map-fill',
+  },
+  {
+    name: 'mypage',
+    title: '마이',
+    iconName: 'ri-user-line',
+    iconNameFilled: 'ri-user-fill',
+  },
+] as const;
+
+/**
+ * 탭바에 표시하지 않을 화면 목록 (하단 탭바는 유지)
+ */
+const HIDDEN_SCREENS = [
+  'timecapsule/info',
+  'timecapsule/payment',
+  'timecapsule/payment-callback',
+  'timecapsule/room',
+  'timecapsule/index',
+  'myegglist',
+  'my-capsule',
+  'payment-history',
+  'room/join',
+  'customer-service',
+  'customer-service/chat',
+  'notices/index',
+  'notices/[id]',
+] as const;
+
+export interface TabScreenItem {
+  name: string;
+  title: string;
+  iconName: string;
+  iconNameFilled: string;
+}
+
+/**
+ * Tabs Layout 설정
+ * - TAB_SCREENS에 정의된 화면만 탭바에 표시
+ * - HIDDEN_SCREENS는 탭바 버튼 없이 하단 탭바만 유지
+ */
+export function TabsLayoutConfig() {
+  return (
+    <Tabs screenOptions={TABS_SCREEN_OPTIONS}>
+      {TAB_SCREENS.map((screen) => (
+        <Tabs.Screen
+          key={screen.name}
+          name={screen.name}
+          options={{
+            title: screen.title,
+            tabBarIcon: ({ color, size, focused }) => {
+              // Android View 중복 렌더링 에러 방지: View로 감싸서 완전히 독립적인 컴포넌트 생성
+              if (focused) {
+                return (
+                  <View key={`${screen.name}-focused`} collapsable={false}>
+                    <Icon name={screen.iconNameFilled as IconName} size={size} color={color} />
+                  </View>
+                );
+              }
+              return (
+                <View key={`${screen.name}-unfocused`} collapsable={false}>
+                  <Icon name={screen.iconName as IconName} size={size} color={color} />
+                </View>
+              );
+            },
+          }}
+        />
+      ))}
+
+      {/* 탭바에 표시하지 않을 화면들 */}
+      {HIDDEN_SCREENS.map((screenName) => (
+        <Tabs.Screen
+          key={screenName}
+          name={screenName}
+          options={{
+            href: null, // 탭바 버튼 숨김
+            headerShown: false,
+          }}
+        />
+      ))}
+    </Tabs>
+  );
+}
+
+export { HIDDEN_SCREENS, TAB_SCREENS, TABS_SCREEN_OPTIONS };
+export default TabsLayoutConfig;

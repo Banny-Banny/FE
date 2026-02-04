@@ -1,0 +1,348 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 수정할 TSX 파일경로: components/timecapsule-create/components/write-bottomsheet/index.tsx
+조건-파일경로) 스타일 파일은 필요시에만 수정: components/timecapsule-create/components/write-bottomsheet/styles.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/write-bottomsheet/hooks/useSubmitContent.ts
+조건-파일경로) 구현될 TYPE 파일경로: components/timecapsule-create/components/write-bottomsheet/types.ts (기존 파일에 추가)
+
+==============================================
+
+조건-패키지) 추가 패키지 설치 불필요 (기존 패키지만 사용)
+조건-패키지) react-hook-form 기반 폼 관리 유지
+조건-패키지) FormData API 사용 (파일 업로드 준비)
+
+==============================================
+
+조건-호환성) 기존 UI/UX 100% 유지 (디자인, 스타일, 애니메이션 모두 동일하게)
+조건-호환성) UserBottomSheetProps 인터페이스 변경 금지 (isVisible, onClose, participant)
+조건-호환성) react-hook-form 기반 폼 관리 유지
+조건-호환성) 기존 폼 데이터 타입 (UserContentFormData) 유지
+조건-호환성) BottomSheet 공통 컴포넌트는 그대로 사용
+조건-호환성) footer 렌더링 방식 그대로 유지
+
+==============================================
+
+조건-타입정의) 제출 데이터 타입 정의:
+interface SubmitContentData {
+  participantId: string;
+  textContent: string;
+  photos: File[];
+  music: File | null;
+  video: File | null;
+}
+
+조건-타입정의) useSubmitContent Hook 반환 타입:
+interface UseSubmitContentReturn {
+  submitContent: (data: UserContentFormData) => Promise<void>;
+  isSubmitting: boolean;
+  error: string | null;
+  validateContent: (data: UserContentFormData) => { isValid: boolean; message?: string };
+}
+
+==============================================
+
+핵심요구사항) 데이터 검증 기능 구현
+            1) 유저시나리오
+                1. 사용자가 "저장" 버튼 클릭
+                2. 폼 데이터 검증 실행
+                3. 검증 통과 시 제출 진행
+                4. 검증 실패 시 에러 메시지 표시
+                5. 제출 완료 후 바텀시트 닫기
+
+            2) 검증 규칙
+                - 최소 하나의 콘텐츠 필수 (텍스트, 사진, 음악, 동영상 중 1개 이상)
+                - 텍스트: 최대 500자 제한
+                - 사진: 최대 5개 제한
+                - 음악: 최대 1개 제한
+                - 동영상: 최대 1개 제한
+                - 파일 크기 검증 (선택사항)
+                  - 사진: 각 5MB 이하
+                  - 동영상: 50MB 이하
+                  - 음악: 10MB 이하
+
+            3) 검증 실패 처리
+                - Alert로 명확한 에러 메시지 표시
+                - 어떤 항목이 문제인지 구체적으로 안내
+                - 사용자가 수정할 수 있도록 바텀시트는 유지
+
+==============================================
+
+핵심요구사항) FormData 생성 기능 구현
+            1) 유저시나리오
+                1. 검증 통과된 데이터를 FormData로 변환
+                2. 텍스트 데이터는 JSON으로 추가
+                3. 파일(사진, 동영상, 음악)은 Blob으로 추가
+                4. participantId 포함
+
+            2) FormData 구조
+                - participantId: string
+                - textContent: string
+                - photos[]: File[] (multipart/form-data)
+                - video: File | null
+                - music: File | null
+
+            3) 파일 변환 로직
+                - URI를 File/Blob 객체로 변환
+                - 파일명 자동 생성 또는 원본 파일명 사용
+                - MIME 타입 설정
+                  - 사진: image/jpeg, image/png
+                  - 동영상: video/mp4, video/quicktime
+                  - 음악: audio/mpeg, audio/mp4
+
+==============================================
+
+핵심요구사항) Mock 제출 로직 구현 (백엔드 연동 전)
+            1) 유저시나리오
+                1. FormData 생성 완료
+                2. 콘솔에 제출 데이터 출력
+                3. Alert로 제출 성공 메시지 표시
+                4. 2초 딜레이 후 바텀시트 닫기
+
+            2) 콘솔 출력 내용
+                - 참여자 ID
+                - 텍스트 내용
+                - 사진 개수 및 각 파일 정보 (이름, 크기, 타입)
+                - 동영상 파일 정보 (있는 경우)
+                - 음악 파일 정보 (있는 경우)
+                - 전체 FormData 크기
+
+            3) Mock API 시뮬레이션
+                - setTimeout으로 네트워크 지연 시뮬레이션 (1-2초)
+                - 성공 케이스만 구현 (실패 케이스는 선택사항)
+                - console.log로 상세 정보 출력
+
+==============================================
+
+핵심요구사항) 로딩 상태 관리
+            1) 유저시나리오
+                1. "저장" 버튼 클릭 시 로딩 시작
+                2. 버튼 텍스트 "저장 중..." 으로 변경
+                3. 버튼 비활성화 (중복 제출 방지)
+                4. 제출 완료 시 로딩 종료
+
+            2) 기술 요구사항
+                - isSubmitting 상태로 로딩 관리
+                - 저장 버튼 disabled={isSubmitting}
+                - 로딩 중 취소 버튼도 비활성화
+                - 로딩 인디케이터 표시 (선택사항)
+
+==============================================
+
+핵심요구사항) 에러 처리
+            1) 에러 케이스
+                - 검증 실패 (빈 콘텐츠)
+                - 파일 크기 초과
+                - 파일 변환 실패
+                - 네트워크 에러 (Mock에서는 선택사항)
+
+            2) 에러 메시지
+                - "콘텐츠를 하나 이상 입력해주세요" (빈 콘텐츠)
+                - "사진은 최대 5개까지 추가할 수 있습니다" (사진 초과)
+                - "파일 크기가 너무 큽니다" (파일 크기 초과)
+                - "파일 업로드에 실패했습니다" (파일 변환 실패)
+
+            3) 에러 표시
+                - Alert로 에러 메시지 표시
+                - error 상태로 에러 관리
+                - 에러 발생 시 바텀시트 유지 (수정 가능하도록)
+
+==============================================
+
+추가요구사항) URI를 File/Blob으로 변환
+            1) React Native 환경 고려
+                - expo-file-system 사용 고려
+                - fetch API로 URI에서 Blob 생성
+                - 파일명 추출 또는 생성
+
+            2) 변환 로직
+                ```typescript
+                async function uriToBlob(uri: string): Promise<Blob> {
+                  const response = await fetch(uri);
+                  const blob = await response.blob();
+                  return blob;
+                }
+
+                async function uriToFile(uri: string, name: string, type: string): Promise<File> {
+                  const blob = await uriToBlob(uri);
+                  return new File([blob], name, { type });
+                }
+                ```
+
+            3) 파일명 생성
+                - 타임스탬프 사용: `photo_${Date.now()}.jpg`
+                - 또는 원본 파일명 추출: `uri.split('/').pop()`
+
+==============================================
+
+추가요구사항) 제출 성공 후 처리
+            1) 성공 시나리오
+                1. Alert로 성공 메시지 표시
+                2. 폼 리셋 (선택사항)
+                3. 바텀시트 닫기
+                4. 부모 컴포넌트에 성공 알림 (선택사항)
+
+            2) 성공 메시지
+                - "타임캡슐 내용이 저장되었습니다!"
+                - "나중에도 수정할 수 있어요"
+
+==============================================
+
+구현 가이드라인
+
+1. Types 파일 수정
+   - 파일: components/timecapsule-create/components/write-bottomsheet/types.ts
+   - SubmitContentData 타입 추가
+   - UseSubmitContentReturn 타입 추가
+
+2. useSubmitContent Hook 구현
+   - 파일: components/timecapsule-create/components/write-bottomsheet/hooks/useSubmitContent.ts
+   - validateContent 함수 구현
+   - createFormData 함수 구현
+   - uriToFile 헬퍼 함수 구현
+   - submitContent 함수 구현 (Mock)
+   - 로딩 상태 관리 (isSubmitting)
+   - 에러 상태 관리 (error)
+   - 반환값:
+     - submitContent: (data: UserContentFormData) => Promise<void>
+     - isSubmitting: boolean
+     - error: string | null
+     - validateContent: (data: UserContentFormData) => { isValid: boolean; message?: string }
+
+3. index.tsx 수정
+   - useSubmitContent Hook import 및 사용
+   - 저장 버튼 핸들러 수정
+     - 검증 로직 추가
+     - 제출 로직 연결
+   - 저장 버튼 로딩 상태 반영
+     - disabled={isSubmitting}
+     - 텍스트: isSubmitting ? '저장 중...' : '저장'
+   - 에러 발생 시 Alert 표시
+
+4. 검증 로직 통합
+   - react-hook-form의 기본 검증과 통합
+   - 커스텀 검증 함수 추가
+   - 검증 실패 시 명확한 피드백
+
+5. Mock 제출 로직
+   - console.log로 상세 정보 출력
+   - setTimeout으로 네트워크 지연 시뮬레이션
+   - 성공 메시지 표시
+
+==============================================
+
+구현 순서
+
+1. Types 파일 수정
+   - SubmitContentData 타입 정의
+   - UseSubmitContentReturn 타입 정의
+2. useSubmitContent Hook 구현
+   - validateContent 함수 구현
+   - uriToFile 헬퍼 함수 구현
+   - createFormData 함수 구현
+   - Mock submitContent 함수 구현
+   - 상태 관리 (isSubmitting, error)
+3. index.tsx 수정
+   - useSubmitContent Hook 연결
+   - 저장 버튼 핸들러 수정
+   - 로딩 상태 UI 반영
+4. 검증 로직 테스트
+   - 빈 콘텐츠 검증
+   - 파일 크기 검증 (선택사항)
+   - 에러 메시지 확인
+5. Mock 제출 테스트
+   - 콘솔 출력 확인
+   - FormData 구조 확인
+   - 성공 메시지 확인
+6. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 기존 UI 구조 유지
+   - index.tsx의 기본 구조는 최대한 유지
+   - styles.ts는 필요시에만 수정
+   - 새로운 파일(hooks, types)로 로직 분리
+
+2. react-hook-form 통합
+   - handleSubmit으로 폼 제출 관리
+   - 기본 검증 + 커스텀 검증 조합
+   - setValue, watch 활용
+
+3. 사용자 경험
+   - 명확한 검증 메시지
+   - 로딩 상태 시각적 피드백
+   - 에러 발생 시 수정 가능하도록 바텀시트 유지
+   - 성공 시 명확한 피드백
+
+4. 코드 품질
+   - TypeScript 타입 안정성
+   - 명확한 함수명 및 변수명
+   - 주석으로 복잡한 로직 설명
+   - 에러 처리 완벽 구현
+
+5. Mock 구현
+   - 실제 API 연동 시 쉽게 교체 가능하도록
+   - 상세한 콘솔 로그로 디버깅 용이하게
+   - TODO 주석으로 실제 API 연동 위치 표시
+
+6. 파일 변환
+   - React Native 환경 고려
+   - Blob/File API 사용
+   - 파일명, MIME 타입 정확히 설정
+
+7. 백엔드 연동 준비
+   - FormData 구조를 백엔드 API 스펙에 맞게 설계
+   - TODO 주석으로 API 엔드포인트 표시
+   - 에러 처리 구조를 실제 API 에러와 호환되게
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] SubmitContentData 타입 정의됨
+- [ ] UseSubmitContentReturn 타입 정의됨
+- [ ] useSubmitContent Hook 구현됨
+- [ ] validateContent 함수 정상 작동
+- [ ] 빈 콘텐츠 검증 작동
+- [ ] 텍스트 500자 제한 검증 작동
+- [ ] 사진 5개 제한 검증 작동
+- [ ] 검증 실패 시 Alert 표시됨
+- [ ] uriToFile 헬퍼 함수 구현됨
+- [ ] URI를 File/Blob으로 변환 성공
+- [ ] createFormData 함수 구현됨
+- [ ] FormData 구조 올바름
+- [ ] participantId 포함됨
+- [ ] 텍스트 데이터 포함됨
+- [ ] 사진 파일 배열 포함됨
+- [ ] 동영상 파일 포함됨 (있는 경우)
+- [ ] 음악 파일 포함됨 (있는 경우)
+- [ ] Mock submitContent 함수 구현됨
+- [ ] 콘솔에 제출 데이터 출력됨
+- [ ] 네트워크 지연 시뮬레이션 작동
+- [ ] 저장 버튼 클릭 시 제출 실행됨
+- [ ] isSubmitting 상태 정상 작동
+- [ ] 제출 중 버튼 비활성화됨
+- [ ] 버튼 텍스트 "저장 중..." 표시됨
+- [ ] 제출 완료 시 성공 메시지 표시됨
+- [ ] 제출 완료 후 바텀시트 닫힘
+- [ ] 에러 발생 시 에러 메시지 표시됨
+- [ ] 에러 발생 시 바텀시트 유지됨
+- [ ] react-hook-form과 정상 통합됨
+- [ ] 기존 UI/스타일 100% 유지됨
+- [ ] TypeScript 타입 에러 0건
+- [ ] ESLint 경고 0건
+- [ ] Mock 제출 로직 정상 작동
+- [ ] FormData 콘솔 출력 확인됨
+- [ ] TODO 주석으로 실제 API 연동 위치 표시됨
+
+==============================================

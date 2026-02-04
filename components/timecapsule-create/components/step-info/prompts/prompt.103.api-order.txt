@@ -1,0 +1,361 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 TSX 파일경로: components/timecapsule-create/components/step-info/index.tsx
+조건-파일경로) 참고할 TYPE 파일경로: components/timecapsule-create/components/step-info/types.ts
+조건-파일경로) 구현될 API 파일경로: lib/api/orders.ts
+조건-파일경로) 구현될 HOOK 파일경로: components/timecapsule-create/components/step-info/hooks/useCreateOrder.ts
+조건-파일경로) 구현될 TYPE 파일경로: lib/api/types/order.ts
+
+==============================================
+
+핵심요구사항) 병렬처리 구현을 위한 작업 방식 조건
+            - 다른 채팅에서 개발중인 파일을 수정 및 삭제 하지 말 것.
+            - 기존 UI 구조(index.tsx, styles.ts)는 최소한으로 수정하고, API 로직 파일만 추가할 것.
+
+==============================================
+
+핵심요구사항) 타임캡슐 주문 생성 API 연결 기능을 step-by-step으로 구현하고, 적용 결과를 체크리스트로 반환할 것.
+
+            1) API 엔드포인트
+                - URL: POST /api/orders
+                - 베이스 URL: 환경변수에서 가져오기 (process.env.NEXT_PUBLIC_API_URL)
+                - 인증: Bearer JWT (Authorization 헤더)
+
+            2) Request Body 매핑
+                - product_id: 환경변수에서 가져오기 (process.env.NEXT_PUBLIC_TIMECAPSULE_PRODUCT_ID)
+                - time_option: DateOption → API 형식 변환
+                  - "1주일 후" → "1_WEEK"
+                  - "1년 후" → "1_YEAR"
+                  - "3년 후" → "3_YEAR"
+                  - "직접 선택" → "CUSTOM"
+                - custom_open_at: 직접 선택 시 선택된 날짜 (ISO 8601 형식)
+                - headcount: 인원 수 (1~10)
+                - photo_count: 이미지 슬롯 수 (0 이상, headcount * 5 이하)
+                - add_music: 음악 옵션 선택 여부 (boolean)
+                - add_video: 영상 옵션 선택 여부 (boolean)
+
+            3) Response 처리
+                - 성공 (201):
+                  - order_id: 생성된 주문 ID (UUID)
+                  - total_amount: 총 결제 금액
+                  - status: 주문 상태 (PENDING_PAYMENT)
+                  - 기타 주문 정보 (time_option, headcount, photo_count, add_music, add_video, custom_open_at)
+                - 에러 처리:
+                  - 400: 옵션/범위/시간 검증 실패
+                    - PHOTO_COUNT_EXCEEDS_LIMIT: "사진 개수가 최대 제한을 초과했습니다"
+                    - CUSTOM_OPEN_AT_MUST_BE_FUTURE: "개봉일은 미래 날짜여야 합니다"
+                    - 기타: "입력값이 올바르지 않습니다"
+                  - 401: 인증 실패
+                    - "로그인이 필요합니다"
+                  - 404: 상품 미존재/비활성
+                    - PRODUCT_NOT_FOUND_OR_INVALID: "유효하지 않은 상품입니다"
+                  - 기타: "주문 생성에 실패했습니다"
+
+            4) 유저시나리오
+                1. 사용자가 타임캡슐 정보 입력 완료
+                2. "결제하기" 버튼 클릭
+                3. 입력값 유효성 검증 (프론트엔드)
+                4. API 요청 시작 (로딩 상태 표시)
+                5. JWT 토큰 자동 포함하여 POST 요청
+                6. 성공 시:
+                   - 주문 ID 및 정보 저장
+                   - 다음 단계(결제 화면)로 이동
+                   - 주문 정보 전달
+                7. 실패 시:
+                   - 에러 메시지 Alert로 표시
+                   - 로딩 상태 해제
+                   - 사용자가 입력 수정 가능
+
+==============================================
+
+추가요구사항) JWT 토큰 관리
+            1) 토큰 저장 위치
+                - AsyncStorage 또는 SecureStore 사용
+                - 키명: "auth_token"
+
+            2) 토큰 가져오기
+                - API 요청 전 토큰 존재 여부 확인
+                - 토큰이 없으면 로그인 페이지로 이동
+
+            3) 토큰 헤더 포함
+                - Authorization: Bearer {token}
+                - Content-Type: application/json
+
+==============================================
+
+추가요구사항) 로딩 및 에러 상태 관리
+            1) 로딩 상태
+                - isLoading: boolean
+                - 로딩 중 버튼 비활성화
+                - 로딩 인디케이터 표시
+
+            2) 에러 상태
+                - error: string | null
+                - 에러 발생 시 Alert 표시
+                - 에러 클리어 기능
+
+==============================================
+
+구현 가이드라인
+
+1. API Types 파일 생성
+   - 파일: lib/api/types/order.ts
+   - CreateOrderRequest: API 요청 타입
+     - product_id: string (UUID)
+     - time_option: "1_WEEK" | "1_MONTH" | "1_YEAR" | "CUSTOM"
+     - custom_open_at?: string (ISO 8601)
+     - headcount: number
+     - photo_count?: number
+     - add_music?: boolean
+     - add_video?: boolean
+   - CreateOrderResponse: API 응답 타입
+     - order_id: string (UUID)
+     - total_amount: number
+     - base_amount: number
+     - photo_amount: number
+     - music_amount: number
+     - video_amount: number
+     - time_option: string
+     - custom_open_at: string | null
+     - headcount: number
+     - photo_count: number
+     - add_music: boolean
+     - add_video: boolean
+     - status: "PENDING_PAYMENT"
+   - ApiError: 에러 응답 타입
+     - statusCode: number
+     - message: string
+     - error?: string
+
+2. API 함수 작성
+   - 파일: lib/api/orders.ts
+   - createOrder(data: CreateOrderRequest, token: string): Promise<CreateOrderResponse>
+     - fetch를 사용하여 POST 요청
+     - Authorization 헤더에 Bearer 토큰 포함
+     - Content-Type: application/json
+     - 응답 상태 코드 확인 및 에러 처리
+     - JSON 파싱 및 반환
+
+3. useCreateOrder Hook 구현
+   - 파일: components/timecapsule-create/components/step-info/hooks/useCreateOrder.ts
+   - 상태 관리:
+     - isLoading: boolean
+     - error: string | null
+     - orderData: CreateOrderResponse | null
+   - 함수:
+     - submitOrder(formData: StepInfoFormData): Promise<void>
+       - 폼 데이터 → API 요청 데이터 변환
+       - JWT 토큰 가져오기
+       - createOrder API 호출
+       - 성공/실패 처리
+     - clearError(): void
+   - 반환값:
+     - isLoading
+     - error
+     - orderData
+     - submitOrder
+     - clearError
+
+4. 폼 데이터 변환 함수 작성
+   - 파일: components/timecapsule-create/components/step-info/utils/formToApiMapper.ts (또는 useCreateOrder.ts 내부)
+   - mapFormToApiRequest(formData: StepInfoFormData, productId: string): CreateOrderRequest
+     - DateOption → time_option 변환
+     - 날짜 포맷 변환 (dayjs 사용)
+     - 추가 옵션 boolean 변환
+
+5. index.tsx 수정
+   - useCreateOrder Hook import 및 사용
+   - 결제하기 버튼 클릭 시 submitOrder 호출
+   - 로딩 상태 표시
+   - 에러 Alert 표시
+   - 성공 시 다음 단계로 이동 (onNext prop 호출)
+
+6. 환경변수 설정
+   - .env 파일에 추가:
+     - NEXT_PUBLIC_API_URL=http://localhost:3000
+     - NEXT_PUBLIC_TIMECAPSULE_PRODUCT_ID=550e8400-e29b-41d4-a716-446655440000
+
+==============================================
+
+구현 순서
+
+1. lib/api/types/order.ts 작성 (API 타입 정의)
+2. lib/api/orders.ts 작성 (API 함수 구현)
+3. 폼 데이터 변환 함수 작성
+4. useCreateOrder Hook 구현
+5. index.tsx에 Hook 연결
+6. 결제하기 버튼 핸들러 수정
+7. 로딩 상태 UI 추가
+8. 에러 Alert 추가
+9. 성공 시 다음 단계 이동 로직 추가
+10. 환경변수 설정
+11. 테스트 (Mock API 또는 실제 백엔드)
+12. 체크리스트 작성
+
+==============================================
+
+주의사항
+
+1. 환경변수 관리
+   - .env 파일에 민감한 정보 저장하지 않기
+   - .gitignore에 .env 추가
+   - .env.example 파일 제공
+
+2. 에러 처리
+   - 모든 에러 케이스 처리
+   - 사용자 친화적인 에러 메시지
+   - 네트워크 에러 처리
+   - 타임아웃 처리 (선택사항)
+
+3. 보안
+   - JWT 토큰 안전하게 저장
+   - HTTPS 사용 (프로덕션)
+   - API 요청 시 토큰 검증
+
+4. 성능 최적화
+   - 불필요한 API 호출 방지
+   - 중복 요청 방지
+   - 로딩 상태 최적화
+
+5. 코드 품질
+   - TypeScript 타입 안정성
+   - async/await 에러 처리
+   - 명확한 함수명 및 변수명
+   - try-catch 블록 사용
+
+6. 날짜 처리
+   - ISO 8601 형식 사용
+   - 타임존 고려
+   - dayjs를 사용하여 날짜 포맷팅
+
+7. 테스트
+   - API 호출 성공 케이스
+   - 각 에러 코드별 케이스 (400, 401, 404)
+   - 네트워크 에러 케이스
+   - 로딩 상태 표시 확인
+
+==============================================
+
+최종검토 체크리스트
+
+- [ ] lib/api/types/order.ts 타입 정의 완료
+- [ ] lib/api/orders.ts API 함수 구현 완료
+- [ ] 폼 데이터 → API 요청 데이터 변환 함수 작성
+- [ ] useCreateOrder Hook 구현 완료
+- [ ] JWT 토큰 가져오기 구현
+- [ ] Authorization 헤더에 토큰 포함
+- [ ] 결제하기 버튼 클릭 시 API 호출
+- [ ] 로딩 상태 표시 (버튼 비활성화, 인디케이터)
+- [ ] 성공 시 주문 정보 저장 및 다음 단계 이동
+- [ ] 400 에러 처리 (에러 메시지 Alert)
+- [ ] 401 에러 처리 (로그인 필요 Alert)
+- [ ] 404 에러 처리 (상품 없음 Alert)
+- [ ] 네트워크 에러 처리
+- [ ] 환경변수 설정 (.env 파일)
+- [ ] TypeScript 타입 에러 0건
+- [ ] API 요청/응답 로깅 (개발 환경)
+- [ ] 코드 가독성 및 유지보수성 확보
+
+==============================================
+
+API 응답 예시
+
+성공 (201):
+```json
+{
+  "order_id": "a1b2c3d4-e5f6-4789-a012-3456789abcde",
+  "total_amount": 5000,
+  "base_amount": 1000,
+  "photo_amount": 2000,
+  "music_amount": 2000,
+  "video_amount": 0,
+  "time_option": "1_WEEK",
+  "custom_open_at": null,
+  "headcount": 2,
+  "photo_count": 4,
+  "add_music": true,
+  "add_video": false,
+  "status": "PENDING_PAYMENT"
+}
+```
+
+에러 (400):
+```json
+{
+  "statusCode": 400,
+  "message": "PHOTO_COUNT_EXCEEDS_LIMIT",
+  "error": "Bad Request"
+}
+```
+
+에러 (401):
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+
+에러 (404):
+```json
+{
+  "statusCode": 404,
+  "message": "PRODUCT_NOT_FOUND_OR_INVALID",
+  "error": "Not Found"
+}
+```
+
+==============================================
+
+DateOption 매핑 테이블
+
+| 프론트엔드 (한글) | 백엔드 API | 계산 기간 |
+|-----------------|-----------|---------|
+| "1주일 후" | "1_WEEK" | +7일 |
+| "1년 후" | "1_YEAR" | +1년 |
+| "3년 후" | "3_YEAR" | +3년 |
+| "직접 선택" | "CUSTOM" | custom_open_at 사용 |
+
+주의: 백엔드 문서에는 "1_MONTH"가 있지만, 현재 프론트엔드에서는 "1개월 후" 옵션이 없습니다.
+백엔드와 협의하여 옵션을 맞추거나, 프론트엔드에 "1개월 후" 옵션을 추가할 수 있습니다.
+
+==============================================
+
+추가 개선사항 (선택사항)
+
+1) 재시도 로직
+   - API 호출 실패 시 재시도 옵션 제공
+   - 최대 3회 재시도
+
+2) 오프라인 대응
+   - 네트워크 연결 상태 확인
+   - 오프라인 시 안내 메시지 표시
+
+3) 주문 정보 로컬 저장
+   - API 호출 성공 시 AsyncStorage에 주문 정보 저장
+   - 앱 재시작 시에도 주문 정보 유지
+
+4) 분석 이벤트 전송
+   - 주문 생성 성공/실패 이벤트 로깅
+   - 에러 타입별 분석
+
+==============================================
+
+개발 시 참고사항
+
+1. 백엔드 API 문서와 실제 응답이 다를 수 있으므로, 실제 API 테스트 필수
+2. product_id는 환경변수로 관리하되, 추후 상품 선택 기능이 추가될 수 있음
+3. JWT 토큰 만료 시 갱신 로직 필요 (추후 구현)
+4. 결제 완료 후 주문 상태 업데이트 로직 필요 (step-payment에서 처리)
+5. 백엔드에서 계산한 total_amount와 프론트엔드에서 계산한 금액이 일치하는지 검증 필요
+
+==============================================

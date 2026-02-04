@@ -1,0 +1,69 @@
+/**
+ * EggSlot Component Styles
+ * Version: 1.0.0
+ * Created: 2025-01-XX
+ *
+ * Checklist:
+ * - [x] tailwind.config.js 수정 안 함
+ * - [x] 색상값 직접 입력 0건 (Colors 토큰만 사용)
+ * - [x] 인라인 스타일 0건
+ * - [x] 모든 스타일은 styles.ts에만 정의
+ * - [x] 토큰 기반 스타일 사용
+ */
+
+import { Colors } from '@/commons/constants';
+import { Platform, StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  // Pressable wrapper 스타일 (absolute positioning)
+  pressableWrapper: {
+    position: 'absolute',
+    top: 48,
+    right: 18,
+    zIndex: 10, // 지도 위에 표시되도록
+  },
+  container: {
+    height: 44,
+    backgroundColor: Colors.black[900], // #040404 (Figma #111827에 가장 가까운 토큰)
+    borderWidth: 2,
+    borderColor: Colors.black[900],
+    borderRadius: 9999, // full
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 2,
+    gap: 8,
+    shadowColor: Colors.black[500],
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0,
+    shadowRadius: 6,
+    elevation: 10, // Android shadow
+  },
+  eggSlotItem: {
+    height: 24,
+    width: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  eggSlotIcon: {
+    width: 20,
+    height: 24,
+    ...Platform.select({
+      default: {
+        tintColor: Colors.white[50], // 채워진 알은 하양색 (네이티브용)
+      },
+      web: {
+        // 웹 환경에서 하양색으로 표시하기 위한 CSS filter
+        // @ts-ignore - 웹 전용 CSS 속성
+        filter: 'brightness(0) saturate(100%) invert(1)',
+      },
+    }),
+  },
+  eggSlotIconEmpty: {
+    width: 20,
+    height: 24,
+  },
+});

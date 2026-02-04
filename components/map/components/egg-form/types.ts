@@ -1,0 +1,68 @@
+/**
+ * components/map/components/egg-form/types.ts
+ * 이스터에그 작성 폼 타입 정의
+ */
+
+import { MediaType } from '@/commons/constants/media';
+
+// Props 인터페이스 정의
+export interface EggFormProps {
+  isVisible: boolean;
+  onClose: () => void;
+}
+
+// 폼 데이터 타입 정의
+export interface EggFormData {
+  title: string;
+  content: string;
+  attachments: AttachmentFile[];
+}
+
+// 첨부파일 타입 정의
+export interface AttachmentFile {
+  id: string;
+  type: MediaType;
+  name: string;
+  uri?: string; // 실제 파일 URI (선택적)
+  thumbnailUri?: string; // 동영상 썸네일 URI (동영상만, 선택적)
+}
+
+// API 요청 타입 정의
+export interface CreateCapsuleRequest {
+  latitude: number;
+  longitude: number;
+  title: string;
+  content?: string;
+  /** @note 백엔드 요청에 따라 언제든 변경될 수 있음 (예: media_item_ids[] 등) */
+  media_ids: string[];
+  media_types: MediaType[];
+  open_at?: string; // ISO-8601 string (future only)
+  view_limit?: number;
+  product_id?: string;
+}
+
+// API 응답 타입 정의
+export interface CreateCapsuleResponse {
+  id: string;
+  title: string;
+  content?: string;
+  media_urls: string[];
+  media_types: MediaType[];
+  open_at?: string;
+  view_limit?: number;
+  product_id?: string;
+  created_at: string;
+}
+
+// 에러 응답 타입 정의
+export interface ApiErrorResponse {
+  error?: string;
+  message?: string;
+  code?: string;
+  details?: {
+    max_slots?: number;
+    used_slots?: number;
+    remaining_slots?: number;
+    [key: string]: unknown;
+  };
+}

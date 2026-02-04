@@ -1,0 +1,413 @@
+# GET /api/capsules/step-rooms/{capsuleId}/my-content - 본인 작성 콘텐츠 조회 API 연동
+
+## 📋 요구사항
+
+대기실에서 본인이 작성한 콘텐츠를 조회할 때, 기존에 사용하던 AsyncStorage/sessionStorage 대신 백엔드 API를 통해 직접 가져오도록 수정합니다.
+
+### 현재 상황
+- 대기실 진입 시 본인이 작성한 콘텐츠가 사라지는 문제
+- 임시방편으로 AsyncStorage/sessionStorage에 저장하여 불러오고 있음
+- 새로운 GET 엔드포인트가 생성되어 백엔드에서 직접 조회 가능
+
+### 목표
+- GET `/api/capsules/step-rooms/{capsuleId}/my-content` 엔드포인트를 사용하여 본인 작성 콘텐츠를 백엔드에서 직접 조회
+- AsyncStorage/sessionStorage 의존성 제거
+
+---
+
+## 🔌 API 명세
+
+### 엔드포인트
+```
+GET /api/capsules/step-rooms/{capsuleId}/my-content
+```
+
+### 목적
+본인이 작성한 콘텐츠 조회. 대기실을 나갔다가 다시 들어올 때 이전에 작성한 내용을 확인할 수 있습니다.
+
+### Parameters
+- `capsuleId` (path, string, required): 캡슐 ID
+
+### Responses
+
+#### 200 OK - 콘텐츠 조회 성공
+```json
+{
+  "success": true,
+  "data": {
+    "slot_id": "string",
+    "user_id": "string",
+    "text_message": {},
+    "status": "COMPLETED",
+    "images": [
+      {
+        "media_id": "string",
+        "url": "string",
+        "order": 0
+      }
+    ],
+    "music": {
+      "media_id": "string",
+      "url": "string",
+      "order": 0
+    },
+    "video": {
+      "media_id": "string",
+      "url": "string",
+      "order": 0
+    },
+    "created_at": "2026-01-10T07:20:22.848Z",
+    "updated_at": "2026-01-10T07:20:22.848Z"
+  }
+}
+```
+
+#### 401 Unauthorized - 인증 실패
+```json
+{
+  "statusCode": 401,
+  "message": "Unauthorized"
+}
+```
+
+#### 403 Forbidden - 참여자가 아님
+```json
+{
+  "success": false,
+  "error": "NOT_PARTICIPANT",
+  "message": "이 캡슐의 참여자가 아닙니다"
+}
+```
+
+#### 404 Not Found - 콘텐츠를 작성하지 않음
+```json
+{
+  "success": false,
+  "error": "CONTENT_NOT_FOUND",
+  "message": "아직 작성하지 않았습니다"
+}
+```
+
+---
+
+## 📝 구현 가이드
+
+### Step 1: API 함수 생성
+
+**파일**: `components/timecapsule-create/components/write-bottomsheet/api/content.ts`
+
+기존 `submitMyContent` 함수 아래에 새로운 함수 추가:
+
+```typescript
+/**
+ * 본인이 작성한 콘텐츠 조회 API
+ * @param capsuleId 캡슐 ID (UUID)
+ * @returns 본인이 작성한 콘텐츠 정보
+ * @throws 401: 인증 실패
+ * @throws 403: 참여자가 아님
+ * @throws 404: 콘텐츠를 작성하지 않음
+ */
+export async function fetchMyContent(
+  capsuleId: string,
+): Promise<MyContentResponse> {
+  try {
+    console.log('🔄 [API] 본인 작성 콘텐츠 조회 시작 - capsuleId:', capsuleId);
+
+    const response = await apiClient.get<MyContentResponse>(
+      `/api/capsules/step-rooms/${capsuleId}/my-content`,
+    );
+
+    console.log('✅ [API] 본인 작성 콘텐츠 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // 401: 인증 실패
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    // 403: 참여자가 아님
+    if (error.response?.status === 403) {
+      const errorMessage = error.response?.data?.message || '이 캡슐의 참여자가 아닙니다.';
+      console.error('❌ [API] 참여자 아님 (403):', errorMessage);
+      throw new Error(errorMessage);
+    }
+    // 404: 콘텐츠를 작성하지 않음 (정상적인 경우, 에러로 처리하지 않음)
+    if (error.response?.status === 404) {
+      console.log('ℹ️ [API] 작성한 콘텐츠 없음 (404) - 새로 작성 가능');
+      throw new NotFoundError('아직 작성하지 않았습니다');
+    }
+    // 500: 서버 내부 오류
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 본인 작성 콘텐츠 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+
+/**
+ * 404 에러를 구분하기 위한 커스텀 에러 클래스
+ */
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'NotFoundError';
+  }
+}
+```
+
+**타입 정의 추가** (같은 파일 또는 `types.ts`에):
+
+```typescript
+/**
+ * 본인 작성 콘텐츠 조회 API 응답 타입
+ */
+export interface MyContentResponse {
+  success: boolean;
+  data: {
+    slot_id: string;
+    user_id: string;
+    text_message: Record<string, any>; // 또는 실제 텍스트 메시지 타입
+    status: 'COMPLETED' | 'PENDING' | 'WAITING';
+    images: Array<{
+      media_id: string;
+      url: string;
+      order: number;
+    }>;
+    music: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    video: {
+      media_id: string;
+      url: string;
+      order: number;
+    } | null;
+    created_at: string;
+    updated_at: string;
+  };
+}
+```
+
+### Step 2: useParticipants Hook 수정
+
+**파일**: `components/timecapsule-create/components/step-room/hooks/useParticipants.ts`
+
+#### 2-1. Import 추가
+
+```typescript
+import { fetchMyContent, NotFoundError } from '../../write-bottomsheet/api/content';
+```
+
+#### 2-2. fetchParticipants 함수 수정
+
+기존 AsyncStorage에서 콘텐츠를 불러오는 부분(352-365번 라인)을 API 호출로 변경:
+
+```typescript
+// ⭐ 수정 전: AsyncStorage에서 불러오기
+let savedContent: ParticipantContent | undefined;
+if (isMe) {
+  try {
+    const storageKey = `capsule_content_${capsuleId}_${slot.user_id}`;
+    const savedContentStr = await AsyncStorage.getItem(storageKey);
+    if (savedContentStr) {
+      savedContent = JSON.parse(savedContentStr);
+      console.log('📖 [useParticipants] AsyncStorage에서 콘텐츠 불러오기 성공:', storageKey);
+    }
+  } catch (err) {
+    console.warn('⚠️ [useParticipants] AsyncStorage 콘텐츠 불러오기 실패:', err);
+  }
+}
+
+// ⭐ 수정 후: API에서 불러오기
+let savedContent: ParticipantContent | undefined;
+if (isMe) {
+  try {
+    console.log('🔄 [useParticipants] 본인 작성 콘텐츠 조회 시작 - capsuleId:', capsuleId);
+    const myContentResponse = await fetchMyContent(capsuleId);
+    
+    // API 응답을 ParticipantContent 형식으로 변환
+    const apiData = myContentResponse.data;
+    savedContent = {
+      text: typeof apiData.text_message === 'string' 
+        ? apiData.text_message 
+        : JSON.stringify(apiData.text_message),
+      images: apiData.images?.map(img => img.url) || [],
+      voiceRecording: apiData.music?.url || null,
+      video: apiData.video?.url || null,
+    };
+    
+    console.log('✅ [useParticipants] API에서 콘텐츠 불러오기 성공');
+    console.log('  📝 텍스트:', savedContent.text?.substring(0, 30) + '...');
+    console.log('  🖼️  이미지:', savedContent.images?.length || 0, '개');
+    console.log('  🎵 음악:', savedContent.voiceRecording ? '있음' : '없음');
+    console.log('  🎬 비디오:', savedContent.video ? '있음' : '없음');
+  } catch (err) {
+    // 404 에러는 정상적인 경우 (아직 작성하지 않음)
+    if (err instanceof NotFoundError) {
+      console.log('ℹ️ [useParticipants] 작성한 콘텐츠 없음 - 새로 작성 가능');
+      savedContent = undefined;
+    } else {
+      console.warn('⚠️ [useParticipants] API 콘텐츠 조회 실패:', err);
+      // 에러가 발생해도 참여자 목록은 표시 (콘텐츠만 비어있음)
+      savedContent = undefined;
+    }
+  }
+}
+```
+
+#### 2-3. saveContent 함수 수정
+
+AsyncStorage 저장 부분 제거 (640-643번 라인):
+
+```typescript
+// ⭐ 제거: AsyncStorage에 저장하는 코드 삭제
+// const storageKey = `capsule_content_${capsuleId}_${participantId}`;
+// await AsyncStorage.setItem(storageKey, JSON.stringify(content));
+// console.log('💾 [useParticipants] AsyncStorage에 콘텐츠 저장 완료:', storageKey);
+
+// ⭐ 백엔드에 저장되었으므로 추가 저장 불필요
+// (이미 submitMyContent API 호출로 백엔드에 저장됨)
+```
+
+**주석 업데이트**:
+
+```typescript
+/**
+ * 참여자 작성 내용 저장 (본인만)
+ *
+ * 프라이버시 보호:
+ * - 본인 것만 저장 가능
+ * - 저장 성공 시 상태를 'completed'로 업데이트
+ *
+ * ⭐ FormData 방식 사용:
+ * - multipart/form-data 형식으로 파일을 직접 전송
+ * - 백엔드 API 명세에 맞게 구현
+ *
+ * ⭐ 백엔드 저장:
+ * - POST /api/capsules/step-rooms/:capsuleId/my-content로 백엔드에 저장
+ * - 저장된 콘텐츠는 GET /api/capsules/step-rooms/:capsuleId/my-content로 조회 가능
+ *
+ * @param {string} participantId 참여자 ID
+ * @param {ParticipantContent} content 작성 내용
+ */
+```
+
+### Step 3: UserBottomSheet 컴포넌트 확인
+
+**파일**: `components/timecapsule-create/components/write-bottomsheet/index.tsx`
+
+현재 코드가 이미 `participant.content`를 사용하고 있으므로, `useParticipants`에서 올바르게 불러온 데이터가 전달되면 자동으로 작동합니다.
+
+다만, 초기화 로직 확인 (61-81번 라인):
+
+```typescript
+// ⭐ 바텀시트가 열릴 때 participant의 기존 콘텐츠로 폼 초기화
+React.useEffect(() => {
+  if (isVisible && participant?.content) {
+    console.log('🔄 [UserBottomSheet] 기존 콘텐츠 불러오기:', participant.content);
+    reset({
+      textContent: participant.content.text || '',
+      photos: participant.content.images || [],
+      music: participant.content.voiceRecording || null,
+      video: participant.content.video || null,
+    });
+  } else if (isVisible && !participant?.content) {
+    // 새로 작성하는 경우 빈 값으로 초기화
+    console.log('📝 [UserBottomSheet] 새로운 콘텐츠 작성');
+    reset({
+      textContent: '',
+      photos: [],
+      music: null,
+      video: null,
+    });
+  }
+}, [isVisible, participant, reset]);
+```
+
+이 로직은 그대로 유지 (participant.content가 API에서 불러온 데이터로 채워지면 자동으로 작동).
+
+---
+
+## ✅ 체크리스트
+
+### API 함수
+- [ ] `fetchMyContent` 함수 구현 (`api/content.ts`)
+- [ ] `MyContentResponse` 타입 정의
+- [ ] `NotFoundError` 커스텀 에러 클래스 추가
+- [ ] 401, 403, 404, 500 에러 처리 구현
+- [ ] 적절한 로깅 추가
+
+### useParticipants Hook
+- [ ] `fetchMyContent` import 추가
+- [ ] AsyncStorage에서 콘텐츠 불러오기 코드 제거
+- [ ] API 호출로 콘텐츠 불러오기 구현
+- [ ] API 응답을 ParticipantContent 형식으로 변환
+- [ ] 404 에러를 정상 케이스로 처리 (NotFoundError 체크)
+- [ ] saveContent 함수에서 AsyncStorage 저장 코드 제거
+- [ ] 주석 업데이트 (백엔드 저장 명시)
+
+### 테스트
+- [ ] 대기실 진입 시 작성한 콘텐츠가 올바르게 표시되는지 확인
+- [ ] 콘텐츠를 작성하지 않은 경우 빈 폼이 표시되는지 확인
+- [ ] 콘텐츠 수정 후 재진입 시 수정된 내용이 표시되는지 확인
+- [ ] 네트워크 에러 시 적절한 에러 처리 확인
+
+---
+
+## 🎯 예상 동작
+
+### 시나리오 1: 작성한 콘텐츠가 있는 경우
+1. 사용자가 대기실에 진입
+2. `useParticipants` Hook이 `fetchMyContent` API 호출
+3. 백엔드에서 작성한 콘텐츠 조회 성공 (200 OK)
+4. API 응답을 `ParticipantContent` 형식으로 변환
+5. `participant.content`에 저장
+6. 바텀시트 열기 시 기존 콘텐츠로 폼 초기화
+7. 사용자가 작성한 내용 확인 및 수정 가능
+
+### 시나리오 2: 작성한 콘텐츠가 없는 경우
+1. 사용자가 대기실에 진입
+2. `useParticipants` Hook이 `fetchMyContent` API 호출
+3. 백엔드에서 404 응답 (CONTENT_NOT_FOUND)
+4. `NotFoundError`로 처리하여 정상 케이스로 인식
+5. `participant.content`는 `undefined`
+6. 바텀시트 열기 시 빈 폼으로 초기화
+7. 사용자가 새로 작성 가능
+
+### 시나리오 3: 콘텐츠 수정 후 재진입
+1. 사용자가 콘텐츠 작성 및 저장
+2. `submitMyContent` API 호출로 백엔드에 저장
+3. 대기실에서 나감
+4. 다시 대기실 진입
+5. `fetchMyContent` API 호출로 최신 콘텐츠 조회
+6. 수정된 내용이 바텀시트에 표시됨
+
+---
+
+## 📌 참고사항
+
+1. **에러 처리**: 404 에러는 "아직 작성하지 않음"을 의미하므로 정상적인 케이스입니다. `NotFoundError`를 사용하여 일반 에러와 구분합니다.
+
+2. **API 응답 형식 변환**: 백엔드 API 응답 형식(`MyContentResponse`)을 클라이언트에서 사용하는 형식(`ParticipantContent`)으로 변환해야 합니다.
+
+3. **이미지/음악/비디오 URL**: API 응답에는 `url` 필드가 포함되어 있습니다. 이 URL을 그대로 사용하면 됩니다.
+
+4. **text_message 처리**: API 응답의 `text_message`가 객체 형태일 수 있으므로, 문자열로 변환하는 로직이 필요할 수 있습니다.
+
+5. **AsyncStorage 완전 제거**: 콘텐츠 조회 및 저장 모두 백엔드 API를 사용하므로, AsyncStorage 관련 코드는 완전히 제거합니다.
+
+6. **sessionStorage (웹 환경)**: 현재 웹 환경에서 `sessionStorage`를 사용하는 코드가 있다면(`components/timecapsule-create/index.tsx` 등), 해당 부분도 확인하여 제거해야 합니다.
+
+---
+
+## 🔗 관련 파일
+
+- `components/timecapsule-create/components/write-bottomsheet/api/content.ts` - API 함수
+- `components/timecapsule-create/components/step-room/hooks/useParticipants.ts` - 참여자 Hook
+- `components/timecapsule-create/components/write-bottomsheet/index.tsx` - 바텀시트 컴포넌트
+- `components/timecapsule-create/components/step-room/types.ts` - 타입 정의 (필요시)
+
+

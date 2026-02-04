@@ -1,0 +1,584 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수
+- ⭐ capsuleId는 1단계 API (POST /api/capsules/step-rooms/create)에서 추출한 값 사용
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (기존 API 함수)
+            - components/timecapsule-create/components/step-room/types.ts (기존 타입 정의)
+            - components/timecapsule-create/components/step-room/hooks/useParticipants.ts (Hook)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (API 함수 추가)
+            - components/timecapsule-create/components/step-room/types.ts (응답 타입 확인)
+            - components/timecapsule-create/components/step-room/hooks/useParticipants.ts (Hook 수정)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 목데이터 로직은 유지하되, API 연동 로직 추가
+조건-기능유지) 에러 발생 시 목데이터로 폴백 처리
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 대기실 상세 조회 API:
+  GET /api/capsules/step-rooms/:capsuleId
+  - Path Parameter: capsuleId (UUID)
+  - 대기실 상세 정보 및 참여자 슬롯 정보 반환
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수
+조건-API명세) 응답 형식: JSON (snake_case)
+
+==============================================
+
+핵심요구사항) 대기실 상세 조회 API 연동 (참여자 슬롯 정보)
+핵심요구사항-1) capsuleId로 GET 요청하여 대기실 상세 정보 조회
+핵심요구사항-2) 참여자 슬롯 정보(slots[])를 Participant[] 형식으로 변환
+핵심요구사항-3) 본인 여부 판단 (user_id와 현재 사용자 ID 비교)
+핵심요구사항-4) 슬롯 상태 매핑 (ACCEPTED → pending, PENDING → waiting)
+핵심요구사항-5) 빈 슬롯 처리 (maxParticipants까지)
+핵심요구사항-6) 에러 처리 및 폴백 로직 구현
+핵심요구사항-7) TypeScript 타입 안정성 보장
+핵심요구사항-8) ⭐ JWT 토큰 인증 처리 (Bearer 헤더)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+대기실 상세 조회 API
+엔드포인트: GET /api/capsules/step-rooms/:capsuleId
+인증: Bearer {JWT_TOKEN} (필수)
+Content-Type: application/json
+
+Path Parameter:
+- capsuleId: 캡슐 ID (UUID) - 1단계 API에서 추출한 capsule_id
+
+성공 응답 (200 OK):
+{
+  "room_id": "3dc6c7ee-f26f-41b7-aee3-1daaac34a46e",
+  "capsule_name": "나의 타임캡슐",
+  "open_date": "2026-01-12T08:27:08.324Z",
+  "deadline": "2026-01-06T08:27:08.324Z",
+  "status": "WAITING",
+  "slots": [
+    {
+      "slot_number": 1,
+      "user_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "is_host": true,
+      "status": "ACCEPTED",
+      "nickname": "홍길동"
+    },
+    {
+      "slot_number": 2,
+      "user_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "is_host": false,
+      "status": "ACCEPTED",
+      "nickname": "김철수"
+    },
+    {
+      "slot_number": 3,
+      "user_id": null,
+      "is_host": false,
+      "status": "PENDING",
+      "nickname": null
+    }
+  ]
+}
+
+에러 응답:
+- 400 Bad Request: 잘못된 UUID 형식
+- 401 Unauthorized: JWT 토큰 없음 또는 유효하지 않음
+- 403 Forbidden: 참여자가 아닌 사용자의 접근
+- 404 Not Found: 존재하지 않는 capsuleId
+- 500 Internal Server Error: 서버 내부 오류
+
+주의:
+- 응답 구조는 RoomDetailResponse 타입 (snake_case)
+- slots[] 배열은 slot_number 순서대로 정렬됨
+- 첫 번째 슬롯(slot_number=1)이 방장
+- user_id가 null이면 아직 배정되지 않은 슬롯
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. room_id (string, UUID)
+   - 대기실 고유 ID
+   - capsuleId와 동일한 값
+
+2. capsule_name (string)
+   - 캡슐 이름
+   - UI 정보 카드에 표시
+
+3. open_date (string, ISO 8601)
+   - 캡슐 개봉 날짜
+   - 예: "2026-01-12T08:27:08.324Z"
+
+4. deadline (string, ISO 8601)
+   - 작성 마감 시한
+   - 예: "2026-01-06T08:27:08.324Z"
+
+5. status (string)
+   - 대기실 상태
+   - 값: "WAITING" | "COMPLETED" | "EXPIRED"
+
+6. slots[] (array)
+   - 참여자 슬롯 배열
+   - slot_number 순서대로 정렬됨
+   - 각 슬롯 정보:
+     - slot_number: 슬롯 번호 (1부터 시작)
+     - user_id: 사용자 ID (UUID, null이면 아직 배정되지 않음)
+     - is_host: 방장 여부
+     - status: 슬롯 상태 ("ACCEPTED" | "PENDING")
+     - nickname: 참여자 닉네임 (null이면 아직 배정되지 않음)
+
+==============================================
+
+데이터구조-응답타입) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+// 슬롯 정보 타입
+export interface Slot {
+  slot_number: number;                 // 슬롯 번호 (1부터 시작)
+  user_id: string | null;              // 사용자 ID (UUID, null이면 아직 배정되지 않음)
+  is_host: boolean;                    // 방장 여부
+  status: 'ACCEPTED' | 'PENDING';      // 슬롯 상태
+  nickname: string | null;             // 참여자 닉네임 (null이면 아직 배정되지 않음)
+}
+
+// 대기실 상세 조회 API 응답 타입 (snake_case)
+export interface RoomDetailResponse {
+  room_id: string;                     // 대기실 ID (UUID)
+  capsule_name: string;                // 캡슐 이름
+  open_date: string;                   // 개봉 날짜 (ISO 8601)
+  deadline: string;                    // 작성 마감 시한 (ISO 8601)
+  status: 'WAITING' | 'COMPLETED' | 'EXPIRED';  // 대기실 상태
+  slots: Slot[];                       // 참여자 슬롯 목록
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/timecapsule-create/components/step-room/api/capsule.ts
+
+목적:
+- 대기실 상세 조회 API 호출 함수 제공
+- GET /api/capsules/step-rooms/:capsuleId 호출
+- 에러 처리
+- 재사용 가능한 API 함수 제공
+- ⭐ JWT 토큰 인증 처리
+
+기능:
+1. getRoomDetail(capsuleId: string): Promise<RoomDetailResponse>
+   - GET /api/capsules/step-rooms/:capsuleId 호출
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - 응답을 그대로 반환 (snake_case 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { RoomDetailResponse } from '../types';
+
+/**
+ * 대기실 상세 조회 API (참여자 슬롯 정보 포함)
+ * @param capsuleId 캡슐 ID (UUID)
+ * @returns 대기실 상세 정보 (슬롯 정보 포함)
+ * @throws 400: 잘못된 UUID 형식
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 403: 참여자가 아닌 사용자의 접근
+ * @throws 404: 존재하지 않는 capsuleId
+ * @throws 500: 서버 내부 오류
+ */
+export async function getRoomDetail(capsuleId: string): Promise<RoomDetailResponse> {
+  try {
+    console.log('🔄 [API] 대기실 상세 조회 시작 - capsuleId:', capsuleId);
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.get<RoomDetailResponse>(
+      `/api/capsules/step-rooms/${capsuleId}`
+    );
+
+    console.log('✅ [API] 대기실 상세 조회 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    if (error.response?.status === 400) {
+      console.error('❌ [API] 잘못된 UUID 형식 (400)');
+      throw new Error('잘못된 캡슐 ID 형식입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 권한 없음 (403)');
+      throw new Error('참여자만 조회할 수 있습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 capsuleId (404)');
+      throw new Error('대기실을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 대기실 상세 조회 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) useParticipants Hook 수정
+
+파일: components/timecapsule-create/components/step-room/hooks/useParticipants.ts
+
+수정 사항:
+1. API 호출 함수 import (getRoomDetail)
+2. fetchParticipants() 수정 - ⭐ 실제 API 연동
+   - capsuleId로 GET 요청하여 대기실 상세 정보 조회
+   - slots[] 배열을 Participant[] 형식으로 변환
+   - 본인 여부 판단 (user_id와 현재 사용자 ID 비교)
+   - 슬롯 상태 매핑 (ACCEPTED → pending, PENDING → waiting)
+   - 빈 슬롯 처리 (maxParticipants까지)
+3. 현재 사용자 ID 가져오기 (AsyncStorage에서 토큰 추출)
+4. 로딩 및 에러 상태 관리
+
+기능:
+1. 슬롯 정보 변환
+   - slots[] → Participant[] 변환
+   - slot_number → 참여자 순서
+   - nickname → name
+   - status → ParticipantStatus 매핑 (ACCEPTED → pending, PENDING → waiting)
+   - is_host → isHost
+   - user_id → 본인 여부 판단 (isMe)
+2. 빈 슬롯 처리
+   - maxParticipants까지 빈 슬롯 추가
+   - name: '', emoji: EMPTY_SLOT_EMOJI, status: WAITING
+3. 에러 처리
+   - API 호출 실패 시 목데이터로 폴백
+
+구현 예시:
+```typescript
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getRoomDetail } from '../api/capsule';
+import { DEFAULT_EMOJI, EMPTY_SLOT_EMOJI, PARTICIPANT_STATUS } from '../constants';
+import { getUserFromToken } from '@/utils/auth';
+import { STORAGE_KEYS } from '@/commons/constants/storage';
+import type { Participant } from '../types';
+
+export function useParticipants({
+  capsuleId,
+  maxParticipants,
+}: UseParticipantsParams): UseParticipantsReturn {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    async function fetchParticipants() {
+      // capsuleId가 없으면 아무것도 하지 않음 (로딩 상태 유지)
+      if (!capsuleId) {
+        return;
+      }
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        // ⭐ API 호출: 대기실 상세 조회
+        console.log('🔄 [useParticipants] 참여자 슬롯 정보 조회 시작 - capsuleId:', capsuleId);
+        const roomDetail = await getRoomDetail(capsuleId);
+
+        // 현재 사용자 ID 가져오기 (본인 여부 판단용)
+        const token = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+        const currentUser = token ? getUserFromToken(token) : null;
+        const currentUserId = currentUser?.id || null;
+
+        // slots[] 배열을 Participant[] 형식으로 변환
+        const participantsList: Participant[] = [];
+
+        // 실제 슬롯 정보 변환
+        for (const slot of roomDetail.slots) {
+          if (slot.user_id && slot.nickname) {
+            // 배정된 슬롯
+            const isMe = slot.user_id === currentUserId;
+            participantsList.push({
+              id: slot.user_id,
+              name: slot.nickname,
+              emoji: DEFAULT_EMOJI, // 기본 이모지 (추후 사용자 프로필에서 가져올 수 있음)
+              status:
+                slot.status === 'ACCEPTED'
+                  ? PARTICIPANT_STATUS.PENDING
+                  : PARTICIPANT_STATUS.WAITING,
+              isHost: slot.is_host,
+              isMe,
+              // 작성 완료 여부는 별도 API로 확인 필요 (현재는 PENDING으로 설정)
+              // 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+            });
+          }
+        }
+
+        // 빈 슬롯 추가 (maxParticipants까지)
+        const filledSlots = roomDetail.slots.length;
+        for (let i = filledSlots; i < maxParticipants; i++) {
+          participantsList.push({
+            id: `slot-${i + 1}`,
+            name: '',
+            emoji: EMPTY_SLOT_EMOJI,
+            status: PARTICIPANT_STATUS.WAITING,
+          });
+        }
+
+        setParticipants(participantsList);
+        console.log('✅ [useParticipants] 참여자 슬롯 정보 조회 성공:', participantsList);
+      } catch (err) {
+        console.warn('⚠️ [useParticipants] API 호출 실패, 목데이터 사용:', err);
+        setError(err instanceof Error ? err : new Error('API 호출 실패'));
+        // 목데이터로 폴백
+        setParticipants(mockParticipants);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchParticipants();
+  }, [capsuleId, maxParticipants]);
+
+  return {
+    participants,
+    myParticipant,
+    isLoading,
+    error,
+    updateStatus,
+    saveContent,
+    canEdit,
+  };
+}
+```
+
+==============================================
+
+활용시나리오) 참여자 슬롯 정보 조회 플로우
+
+1. 1단계: 대기실 생성 완료
+   - POST /api/capsules/step-rooms/create 호출 성공
+   - capsule_id 추출 (예: "3dc6c7ee-f26f-41b7-aee3-1daaac34a46e")
+
+2. ⭐ 대기실 상세 조회
+   - GET /api/capsules/step-rooms/:capsuleId 호출
+   - Path Parameter: capsuleId (1단계에서 추출한 값)
+   - Authorization: Bearer {JWT_TOKEN} 헤더 포함
+   - 응답 데이터 수신 (slots[] 배열 포함)
+
+3. 슬롯 정보 변환
+   - slots[] → Participant[] 변환
+   - 본인 여부 판단 (user_id와 현재 사용자 ID 비교)
+   - 슬롯 상태 매핑 (ACCEPTED → pending, PENDING → waiting)
+   - 빈 슬롯 추가 (maxParticipants까지)
+
+4. UI 동적 구성
+   - 참여자 카드: 실제 참여자 정보 표시
+   - 빈 슬롯: "친구를 초대해 남은 슬롯을 채워주세요!" 메시지 표시
+   - 본인 카드: 클릭 가능, 편집 가능
+   - 다른 사람 카드: 클릭 불가, 편집 불가
+
+5. 상태 관리
+   - 작성 완료 여부는 별도 API로 확인 필요
+   - 현재는 ACCEPTED 상태를 pending으로 매핑
+   - 추후 콘텐츠 저장 API 응답에서 COMPLETED 상태로 업데이트
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 400 Bad Request (잘못된 UUID 형식)
+   - 원인: 잘못된 capsuleId 형식
+   - 대응: 목데이터 폴백
+   - 메시지: "잘못된 캡슐 ID 형식입니다."
+
+2. 401 Unauthorized (JWT 토큰 없음 또는 유효하지 않음)
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: 목데이터 폴백
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+
+3. 403 Forbidden (참여자가 아닌 사용자의 접근)
+   - 원인: 참여자가 아닌 사용자가 조회 시도
+   - 대응: 목데이터 폴백
+   - 메시지: "참여자만 조회할 수 있습니다."
+
+4. 404 Not Found (존재하지 않는 capsuleId)
+   - 원인: 잘못된 capsuleId, 삭제된 대기실
+   - 대응: 목데이터 폴백
+   - 메시지: "대기실을 찾을 수 없습니다."
+
+5. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: 목데이터 폴백
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+6. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: 목데이터 폴백
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. 목데이터로 폴백 (앱 사용 가능하도록)
+2. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+3. 사용자 피드백 제공 (토스트, 모달 등) (선택사항)
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 snake_case로 응답
+   - 프론트엔드는 snake_case를 그대로 사용 (프로젝트 일관성)
+   - 타입 불일치 방지
+
+2. 슬롯 상태 매핑
+   - ACCEPTED → pending (작성 중/미작성)
+   - PENDING → waiting (아직 입장 안함)
+   - 작성 완료 여부는 별도 API로 확인 필요
+
+3. 본인 여부 판단
+   - user_id와 현재 사용자 ID 비교
+   - AsyncStorage에서 토큰 추출 후 getUserFromToken으로 사용자 ID 가져오기
+   - isMe 필드 설정
+
+4. 빈 슬롯 처리
+   - maxParticipants까지 빈 슬롯 추가
+   - name: '', emoji: EMPTY_SLOT_EMOJI, status: WAITING
+
+5. 목데이터 폴백 전략
+   - API 호출 실패 시 앱이 멈추지 않도록
+   - 개발 환경에서도 정상 작동
+   - 프로덕션에서는 에러 로깅 필수
+
+6. TypeScript 타입 안정성
+   - API 응답 타입 명시 (RoomDetailResponse, Slot, snake_case)
+   - any 사용 금지
+
+7. 에러 처리
+   - try-catch 블록 필수
+   - 에러 로깅 (console.warn)
+   - 사용자 피드백 (선택사항)
+
+8. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트 고려
+
+9. ⭐ capsuleId 의존성
+   - capsuleId가 없으면 API 호출하지 않음
+   - useEffect의 의존성 배열에 capsuleId 포함
+   - capsuleId가 설정될 때까지 대기
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] Slot 인터페이스 확인됨 (snake_case)
+- [ ] RoomDetailResponse 인터페이스 확인됨 (snake_case)
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+API 함수:
+- [ ] components/timecapsule-create/components/step-room/api/capsule.ts 파일 수정됨
+- [ ] ⭐ getRoomDetail(capsuleId) 함수 구현됨
+- [ ] ⭐ GET /api/capsules/step-rooms/:capsuleId 호출 구현됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (400, 401, 403, 404, 500)
+- [ ] 각 에러별 적절한 메시지 반환
+
+Hook 수정:
+- [ ] useParticipants Hook에 ⭐ 실제 API 연동 추가됨
+- [ ] ⭐ getRoomDetail(capsuleId) 호출
+- [ ] ⭐ slots[] → Participant[] 변환 로직 구현됨
+- [ ] ⭐ 본인 여부 판단 로직 구현됨 (user_id 비교)
+- [ ] ⭐ 슬롯 상태 매핑 구현됨 (ACCEPTED → pending, PENDING → waiting)
+- [ ] ⭐ 빈 슬롯 처리 로직 구현됨 (maxParticipants까지)
+- [ ] ⭐ 현재 사용자 ID 가져오기 구현됨 (AsyncStorage + getUserFromToken)
+- [ ] API 우선, 목데이터 폴백 전략 구현됨
+- [ ] 로딩 상태 관리됨 (isLoading)
+- [ ] 에러 상태 관리됨 (error)
+- [ ] ⭐ capsuleId가 없을 때 대기 로직 구현됨
+
+UI 연동:
+- [ ] 참여자 카드에 실제 참여자 정보 표시됨
+- [ ] 빈 슬롯에 "친구를 초대해 남은 슬롯을 채워주세요!" 메시지 표시됨
+- [ ] 본인 카드 클릭 가능, 편집 가능
+- [ ] 다른 사람 카드 클릭 불가, 편집 불가
+- [ ] 방장 표시 (👑) 정확히 표시됨
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+- [ ] AsyncStorage import 확인됨
+- [ ] STORAGE_KEYS import 확인됨
+
+에러 처리:
+- [ ] ⭐ capsuleId 400 에러 처리 구현됨 (잘못된 형식)
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] ⭐ 403 에러 처리 구현됨 (권한 없음)
+- [ ] ⭐ capsuleId 404 에러 처리 구현됨
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.warn)
+- [ ] 목데이터 폴백 동작 확인됨
+- [ ] 사용자 피드백 제공됨 (선택사항)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ API 호출 성공 케이스 테스트됨
+- [ ] ⭐ 슬롯 정보 변환 로직 테스트됨
+- [ ] ⭐ 본인 여부 판단 로직 테스트됨
+- [ ] ⭐ 슬롯 상태 매핑 테스트됨
+- [ ] ⭐ 빈 슬롯 처리 테스트됨
+- [ ] ⭐ capsuleId 400 에러 케이스 테스트됨
+- [ ] ⭐ 401 에러 케이스 테스트됨
+- [ ] ⭐ 403 에러 케이스 테스트됨
+- [ ] ⭐ capsuleId 404 에러 케이스 테스트됨
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] 목데이터 폴백 동작 확인됨
+- [ ] UI에 참여자 정보가 올바르게 표시됨
+- [ ] 본인 카드 클릭 가능 확인됨
+- [ ] 다른 사람 카드 클릭 불가 확인됨
+- [ ] 빈 슬롯 표시 확인됨
+
+==============================================
+
+
+

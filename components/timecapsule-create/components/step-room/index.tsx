@@ -1,0 +1,670 @@
+/**
+ * components/timecapsule-create/components/step-room/index.tsx
+ * StepRoom 컴포넌트 - 타임캡슐 대기실 화면
+ *
+ * 체크리스트:
+ * - [✓] Props 인터페이스 정의 (role: 'host' | 'guest')
+ * - [✓] 조건부 렌더링 구현 (호스트/게스트)
+ * - [✓] 인라인 스타일 금지
+ * - [✓] 색상 토큰만 사용
+ * - [✓] Figma 디자인 1:1 대응
+ * - [✓] Hooks 연결 (useRoomData, useParticipants)
+ * - [✓] 데이터 바인딩 (roomData, participants, progress)
+ */
+
+import { Button } from '@/commons/components/button';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { Colors, ROUTES, Typography } from '@/commons/constants';
+import { useMapLocation } from '@/components/map/components/map-view/hooks/useMapLocation';
+import dayjs from 'dayjs';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Share,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Icon from 'react-native-remix-icon';
+import SubmitCompleteModal from '../../modals/submit-complete-modal';
+import SubmitConfirmModal from '../../modals/submit-confirm-modal';
+import UserBottomSheet from '../write-bottomsheet';
+import { useParticipants } from './hooks/useParticipants';
+import { useRoomData } from './hooks/useRoomData';
+import { useRoomSubmit } from './hooks/useRoomSubmit';
+import { styles } from './styles';
+import type { Participant } from './types';
+
+// Props 인터페이스 정의
+interface StepRoomProps {
+  role: 'host' | 'guest';
+  orderId?: string; // 주문 ID (방장용 - 대기실 생성)
+  capsuleId?: string; // 캡슐 ID (게스트용 - 딥링크로 입장)
+  inviteCode?: string; // 초대 코드 (게스트용 - 콘텐츠 제출 시 필요)
+  onSubmit?: () => void; // 타임캡슐 묻기 완료 핸들러 (테스트용)
+}
+
+export default function StepRoom({
+  role,
+  orderId: propsOrderId,
+  capsuleId: propsCapsuleId,
+  inviteCode: propsInviteCode,
+  onSubmit,
+}: StepRoomProps) {
+  // ============================================
+  // Hooks
+  // ============================================
+
+  /** 라우터 */
+  const router = useRouter();
+
+  /** 모달 제어 Hook */
+  const { openModal, closeModal } = useModal();
+
+  /**
+   * ⭐ orderId 우선순위 (방장용):
+   * 1. Props로 전달받은 orderId
+   * 2. URL 파라미터 (추후 구현 가능)
+   * 3. 백엔드 제공 테스트 ID (하드코딩)
+   *
+   * 초기 진입 경로(role)를 기반으로 orderId 설정
+   * ⚠️ propsCapsuleId가 있으면(보관함에서 진입) orderId를 사용하지 않음
+   */
+  const TEST_ORDER_ID = '77fd8584-7877-4b70-a720-b7042a355125'; // 백엔드 제공 테스트 orderId
+  const initialIsHost = role === 'host';
+  const orderId = propsCapsuleId
+    ? undefined
+    : initialIsHost
+    ? propsOrderId || TEST_ORDER_ID
+    : undefined;
+
+  /** 캡슐대기실 데이터 Hook - ⭐ 방장: orderId → 게스트: capsuleId */
+  const {
+    roomSettings,
+    createRoomResponse,
+    roomDetailResponse,
+    capsuleId,
+    isLoading: isRoomLoading,
+    error: roomError,
+    calculateProgress,
+    canSubmit,
+  } = useRoomData(orderId, propsCapsuleId);
+
+  /** 참여자 목록 Hook */
+  // ⭐ 수정: roomSettings가 로드된 후에만 올바른 maxParticipants 전달
+  // roomSettings가 null이면 capsuleId도 없으므로 useParticipants가 실행되지 않음
+  const {
+    participants,
+    myParticipant,
+    isLoading: isParticipantsLoading,
+    error: participantsError,
+    saveContent,
+    canEdit,
+    refetchParticipants,
+  } = useParticipants({
+    capsuleId,
+    maxParticipants: roomSettings?.max_participants || 4, // roomSettings가 로드되면 올바른 값 사용
+  });
+
+  /**
+   * ⭐ 실제 호스트 여부 확인
+   * - 백엔드에서 받은 is_host 값 우선 사용 (myParticipant?.isHost)
+   * - 백엔드 데이터 로딩 전에는 초기 role 값으로 폴백 (initialIsHost)
+   * - 초대링크로 입장해도 백엔드가 방장 여부를 정확하게 판단
+   */
+  const isHost = myParticipant?.isHost ?? initialIsHost;
+
+  // ⭐ 디버깅: 호스트 여부 판단 로그
+  React.useEffect(() => {
+    if (myParticipant) {
+    }
+  }, [myParticipant, isHost, role]);
+
+  // ⭐ 디버깅: maxParticipants 값 확인
+  React.useEffect(() => {
+    if (roomSettings) {
+    }
+  }, [roomSettings]);
+
+  /** 타임캡슐 최종 제출 Hook */
+  const {
+    submitTimeCapsule,
+    isSubmitting: isSubmittingCapsule,
+    error: submitError,
+  } = useRoomSubmit();
+
+  /** 현재 위치 Hook (타임캡슐 매장 위치로 사용) */
+  const { location, isLoading: isLocationLoading, error: locationError } = useMapLocation();
+
+  // ============================================
+  // 상태 관리
+  // ============================================
+
+  /** 바텀시트 상태 관리 */
+  const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
+  const [isBottomSheetVisible, setIsBottomSheetVisible] = useState(false);
+
+  // ============================================
+  // 계산된 값 (useMemo로 최적화)
+  // ============================================
+
+  /** 진행 상황 계산 (완료 인원 / 전체 인원) */
+  const progress = useMemo(() => {
+    // ⭐ 디버깅: 참가자 목록 확인
+    const result = calculateProgress(participants);
+
+    return result;
+  }, [calculateProgress, participants]);
+
+  /** 최종 제출 가능 여부 (진행률 100%) */
+  const isSubmitEnabled = useMemo(() => {
+    return canSubmit(participants);
+  }, [canSubmit, participants]);
+
+  // ============================================
+  // 프로그레스바 애니메이션
+  // ============================================
+
+  /** 프로그레스바 width 애니메이션 값 */
+  const progressWidth = useSharedValue(0);
+
+  /** progress 변경 시 애니메이션 트리거 */
+  useEffect(() => {
+    // Width 애니메이션 (Spring으로 부드럽게)
+    progressWidth.value = withSpring(progress.percentage, {
+      damping: 15,
+      stiffness: 100,
+    });
+  }, [progress.percentage]);
+
+  /** 프로그레스바 Fill 애니메이션 스타일 */
+  const progressBarAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      width: `${progressWidth.value}%`,
+    };
+  });
+
+  /** 실시간 카운트다운을 위한 현재 시간 상태 */
+  const [currentTime, setCurrentTime] = useState(dayjs());
+
+  /** 1초마다 현재 시간 업데이트 (실시간 카운트다운) */
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(dayjs());
+    }, 1000); // 1초마다 업데이트
+
+    return () => clearInterval(interval);
+  }, []);
+
+  /** 작성 마감까지 남은 시간 계산 (실시간 초단위) */
+  const remainingTime = useMemo(() => {
+    // 방장: createRoomResponse.deadline, 게스트: roomDetailResponse.deadline
+    const deadlineStr = createRoomResponse?.deadline || roomDetailResponse?.deadline;
+
+    if (!deadlineStr) {
+      return '계산 중...';
+    }
+
+    const deadline = dayjs(deadlineStr);
+    const now = currentTime;
+
+    if (deadline.isBefore(now)) {
+      return '마감되어 자동 제출됩니다';
+    }
+
+    const diffDays = deadline.diff(now, 'day');
+    const diffHours = deadline.diff(now, 'hour') % 24;
+    const diffMinutes = deadline.diff(now, 'minute') % 60;
+    const diffSeconds = deadline.diff(now, 'second') % 60;
+
+    if (diffDays > 0) {
+      return `${diffDays}일 ${diffHours}시간 ${diffMinutes}분 이후 자동 제출됩니다`;
+    } else if (diffHours > 0) {
+      return `${diffHours}시간 ${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
+    } else if (diffMinutes > 0) {
+      return `${diffMinutes}분 ${diffSeconds}초 이후 자동 제출됩니다`;
+    } else {
+      return `${diffSeconds}초 이후 자동 제출됩니다`;
+    }
+  }, [createRoomResponse?.deadline, roomDetailResponse?.deadline, currentTime]);
+
+  // ============================================
+  // 이벤트 핸들러
+  // ============================================
+
+  /** 공유 기능 */
+  const handleShare = async () => {
+    try {
+      // ⭐ 초대코드 우선순위:
+      // 1. 방장이 처음 생성한 경우: createRoomResponse.invite_code
+      // 2. 방장이 재진입한 경우: roomSettings.invite_code
+      const inviteCode = createRoomResponse?.invite_code || roomSettings?.invite_code || '';
+      const capsuleName = createRoomResponse?.title || roomSettings?.capsule_name || '타임캡슐';
+
+      // 초대코드가 없으면 공유 불가
+      if (!inviteCode) {
+        return;
+      }
+
+      // 딥링크 URL 생성
+      const inviteUrl = `timeegg://room-join?invite_code=${inviteCode}`;
+
+      const result = await Share.share({
+        title: '타임캡슐에 초대합니다',
+        message: `타임캡슐 이름: ${capsuleName}\n\n함께 추억을 남겨보세요!\n\n초대 링크: ${inviteUrl}`,
+      });
+
+      // iOS에서 공유 성공/취소 여부 확인 가능 (선택사항)
+      if (result.action === Share.sharedAction) {
+        // 공유 완료
+      } else if (result.action === Share.dismissedAction) {
+        // 사용자가 취소
+      }
+    } catch (error) {
+    }
+  };
+
+  /** 바텀시트 저장 핸들러 */
+  const handleBottomSheetSave = async (content: any) => {
+    if (!selectedParticipant) {
+      throw new Error('참여자 정보가 없습니다.');
+    }
+
+    try {
+      await saveContent(selectedParticipant.id, content);
+      // ⭐ 저장 성공 후 참여자 목록 새로고침 (다른 참가자들의 완료 상태 업데이트)
+      await refetchParticipants();
+      setIsBottomSheetVisible(false);
+    } catch (err) {
+      // ⭐ 에러를 다시 throw하여 UserBottomSheet에서 처리할 수 있도록 함
+      throw err;
+    }
+  };
+
+  // ============================================
+  // 참여자 카드 렌더링
+  // ============================================
+
+  const renderParticipantCard = (participant: Participant, index: number) => {
+    const isActive = participant.isMe || participant.status === 'completed';
+    const showCheckbox = participant.name !== '';
+    const isEditable = canEdit(participant.id);
+    const isMyContent = participant.isMe; // 본인의 콘텐츠인지
+
+    return (
+      <Pressable
+        key={participant.id}
+        style={[
+          styles.participantCard,
+          isMyContent ? styles.participantCardMe : styles.participantCardOther,
+        ]}
+        onPress={() => {
+          // ⭐ 본인의 콘텐츠만 클릭 가능 (작성 완료 후에도 조회 가능)
+          if (participant.name && isMyContent) {
+            setSelectedParticipant(participant);
+            setIsBottomSheetVisible(true);
+          } else if (participant.name && !isMyContent) {
+          }
+        }}>
+        <View style={styles.participantInfo}>
+          {/* 아바타 */}
+          <View style={[styles.avatar, isActive && styles.avatarActive]}>
+            {/* TODO: 프로필 이미지 URL 추가 시 Image 컴포넌트로 표시 */}
+            <Icon name="user-line" size={24} color={Colors.grey[400]} />
+          </View>
+
+          {/* 참여자 정보 */}
+          <View style={styles.participantDetails}>
+            {participant.name ? (
+              <>
+                <View style={styles.participantNameRow}>
+                  <Text style={styles.participantName}>{participant.name}</Text>
+                </View>
+                <Text
+                  style={[
+                    styles.participantStatus,
+                    participant.status === 'completed' && styles.statusCompleted,
+                    participant.status === 'pending' && styles.statusPending,
+                    participant.status === 'waiting' && styles.statusWaiting,
+                  ]}>
+                  {/* ⭐ 본인: 클릭 유도 메시지, 다른 사람: 작성 여부만 표시 */}
+                  {participant.status === 'completed' && '작성 완료'}
+                  {participant.status === 'pending' &&
+                    (isMyContent ? '클릭하여 작성하기' : '작성 대기 중')}
+                  {participant.status === 'waiting' && '아직 작성하지 않았어요'}
+                </Text>
+              </>
+            ) : (
+              <Text style={styles.emptySlotText}>친구를 초대해 남은 슬롯을 채워주세요!</Text>
+            )}
+          </View>
+        </View>
+
+        {/* 체크박스 또는 공유 아이콘 */}
+        {participant.name ? (
+          showCheckbox && (
+            <View
+              style={[
+                styles.checkbox,
+                participant.status === 'completed'
+                  ? styles.checkboxChecked
+                  : isActive
+                  ? styles.checkboxActive
+                  : styles.checkboxInactive,
+              ]}>
+              {participant.status === 'completed' && (
+                <Text style={styles.checkboxCheckmark}>✓</Text>
+              )}
+            </View>
+          )
+        ) : (
+          <Pressable onPress={handleShare}>
+            <Icon name="share-line" size={24} color={Colors.black[500]} />
+          </Pressable>
+        )}
+      </Pressable>
+    );
+  };
+
+  // ============================================
+  // 로딩 및 에러 처리
+  // ============================================
+
+  /** 로딩 상태 */
+  if (isRoomLoading || isParticipantsLoading || !roomSettings) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={Colors.black[500]} />
+          <Text style={{ marginTop: 16, textAlign: 'center', color: Colors.grey[500] }}>
+            캡슐대기실 정보를 불러오는 중...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  /** 에러 상태 */
+  if (roomError || participantsError) {
+    const errorMessage = roomError?.message || participantsError?.message || '알 수 없는 오류';
+    return (
+      <View style={styles.container}>
+        <View style={styles.centerContent}>
+          <Text style={{ textAlign: 'center', color: Colors.red[500] }}>
+            에러가 발생했습니다: {errorMessage}
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  // ============================================
+  // 렌더링
+  // ============================================
+
+  // X 버튼 핸들러: 진입 경로에 따라 다른 동작
+  const handleClose = () => {
+    // 캡슐보관함에서 들어온 경우: 캡슐보관함으로 명시적 이동
+    if (propsCapsuleId) {
+      router.replace(ROUTES.MY_CAPSULE);
+    }
+    // 결제 후 들어온 경우: 메인화면으로 이동 + 토스트 메시지 표시
+    else {
+      // URL 파라미터로 토스트 메시지 표시 여부 전달
+      router.replace(`${ROUTES.MAIN}?showToast=true` as any);
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* 헤더 */}
+      <View style={styles.headerContainer}>
+        <View style={styles.headerInnerContainer}>
+          {/* 제목 */}
+          <View style={styles.headerTitleContainer}>
+            <Text style={styles.headerTitle}>캡슐 대기실</Text>
+          </View>
+          {/* 닫기 버튼 (캡슐보관함과 동일한 스타일) */}
+          <TouchableOpacity style={styles.headerCloseButton} onPress={handleClose}>
+            <Icon name="ri-close-line" size={20} color={Colors.black[500]} />
+          </TouchableOpacity>
+        </View>
+        {/* 하단 보더 */}
+        <View style={styles.headerBorder} />
+      </View>
+
+      <ScrollView
+        style={styles.scrollContent}
+        contentContainerStyle={styles.scrollContentContainer}
+        showsVerticalScrollIndicator={false}>
+        {/* 정보 카드 */}
+        <View style={styles.infoCard}>
+          <View>
+            <Text style={styles.infoCardLabel}>캡슐 이름</Text>
+            <Text style={styles.infoCardValue}>{roomSettings.capsule_name}</Text>
+          </View>
+
+          <View style={styles.infoCardDetails}>
+            {/* 개봉일 */}
+            <View style={styles.infoCardDetailItem}>
+              <View style={styles.infoCardIconWrapper}>
+                <Icon name="calendar-line" size={28} color={Colors.grey[500]} />
+              </View>
+              <View>
+                <Text style={styles.infoCardDetailLabel}>개봉일</Text>
+                <Text style={styles.infoCardDetailValue}>
+                  {createRoomResponse?.open_date
+                    ? dayjs(createRoomResponse.open_date).format('YYYY-MM-DD')
+                    : roomSettings.open_date}
+                </Text>
+              </View>
+            </View>
+
+            {/* 참여자 */}
+            <View style={styles.infoCardDetailItem}>
+              <View style={styles.infoCardIconWrapper}>
+                <Icon name="user-3-line" size={37} color={Colors.grey[500]} />
+              </View>
+              <View>
+                <Text style={styles.infoCardDetailLabel}>참여자</Text>
+                <Text style={styles.infoCardDetailValue}>
+                  {createRoomResponse?.current_participants !== undefined
+                    ? `${createRoomResponse.current_participants}/${roomSettings.max_participants}명`
+                    : `${roomSettings.max_participants}명`}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* 친구 초대하기 버튼 */}
+        <View style={styles.inviteButtonWrapper}>
+          <Button
+            label="친구 초대하기"
+            variant="outline"
+            size="M"
+            icon="share-line"
+            iconPosition="left"
+            onPress={handleShare}
+          />
+        </View>
+
+        {/* 프로그래스바 */}
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBarHeader}>
+            <Text style={styles.progressBarLabel}>진행 상황</Text>
+            <Text style={styles.progressBarText}>
+              {progress.completed}/{progress.total}
+            </Text>
+          </View>
+          <View style={styles.progressBarWrapper}>
+            <Animated.View style={[styles.progressBarFill, progressBarAnimatedStyle]} />
+          </View>
+        </View>
+
+        {/* 참여자 목록 */}
+        <View style={styles.participantSection}>
+          <Text style={styles.participantLabel}>참여자 목록</Text>
+          <View style={styles.participantList}>
+            {participants.map((participant, index) => renderParticipantCard(participant, index))}
+          </View>
+        </View>
+
+        {/* 하단 정보 */}
+        <View style={styles.bottomSection}>
+          <View style={styles.deadlineContainer}>
+            <View style={styles.deadlineContent}>
+              <Icon name="time-line" size={16} color={Colors.grey[500]} />
+              <Text style={styles.deadlineText}>{remainingTime || '계산 중...'}</Text>
+            </View>
+          </View>
+
+          {/* 타임캡슐 묻기 버튼 (호스트만, 진행률 100%일 때 활성화) */}
+          {isHost && (
+            <View style={styles.buttonSection}>
+              <Button
+                label={
+                  isLocationLoading
+                    ? '위치 확인 중...'
+                    : isSubmittingCapsule
+                    ? '제출 중...'
+                    : '타임캡슐 묻기'
+                }
+                variant="primary"
+                size="M"
+                disabled={!isSubmitEnabled || isSubmittingCapsule || isLocationLoading || !location}
+                onPress={() => {
+                  // 1단계: 정말 묻겠습니까?
+                  openModal({
+                    width: 344,
+                    height: 'auto',
+                    closeOnBackdropPress: false,
+                    children: (
+                      <SubmitConfirmModal
+                        openDate={roomSettings.open_date}
+                        onConfirm={async () => {
+                          closeModal();
+
+                          try {
+                            // 백엔드로 최종 제출
+                            // 현재 위치 확인
+                            if (!location) {
+                              throw new Error(
+                                locationError ||
+                                  '위치 정보를 가져올 수 없습니다. GPS를 활성화하고 위치 권한을 허용해주세요.',
+                              );
+                            }
+
+                            const latitude = location.lat;
+                            const longitude = location.lng;
+                            await submitTimeCapsule(roomSettings.room_id, latitude, longitude);
+                            // D-Day 계산
+                            const now = dayjs();
+                            const openDateObj = dayjs(roomSettings.open_date, 'YYYY-MM-DD');
+                            const dDay = openDateObj.diff(now, 'day');
+
+                            // 2단계: 제출 완료!
+                            openModal({
+                              width: 344,
+                              height: 'auto',
+                              closeOnBackdropPress: true,
+                              children: (
+                                <SubmitCompleteModal
+                                  capsuleName={roomSettings.capsule_name}
+                                  openDate={roomSettings.open_date}
+                                  dDay={dDay}
+                                  participantCount={progress.total}
+                                  onConfirm={() => {
+                                    closeModal();
+                                    if (onSubmit) {
+                                      onSubmit();
+                                    }
+                                    // ⭐ 진입 경로에 따라 다른 화면으로 이동
+                                    // - 마이페이지(캡슐 보관함)에서 진입한 경우: 캡슐 보관함으로 이동
+                                    // - 결제 후 진입한 경우: 메인 화면으로 이동
+                                    if (propsCapsuleId) {
+                                      router.replace(ROUTES.MY_CAPSULE as any);
+                                    } else {
+                                      router.replace(ROUTES.MAIN as any);
+                                    }
+                                  }}
+                                />
+                              ),
+                            });
+                          } catch (err) {
+                            // 제출 실패 시 에러 모달 표시
+                            openModal({
+                              width: 344,
+                              height: 'auto',
+                              closeOnBackdropPress: true,
+                              children: (
+                                <View style={{ padding: 24 }}>
+                                  <Text
+                                    style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>
+                                    제출 실패
+                                  </Text>
+                                  <Text
+                                    style={{
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                      marginBottom: 24,
+                                    }}>
+                                    {err instanceof Error
+                                      ? err.message
+                                      : '타임캡슐 제출에 실패했습니다.'}
+                                  </Text>
+                                  <TouchableOpacity
+                                    style={{
+                                      backgroundColor: Colors.black[500],
+                                      padding: 16,
+                                      borderRadius: 8,
+                                      alignItems: 'center',
+                                    }}
+                                    onPress={closeModal}>
+                                    <Text style={{ color: Colors.white[500], fontWeight: 'bold' }}>
+                                      확인
+                                    </Text>
+                                  </TouchableOpacity>
+                                </View>
+                              ),
+                            });
+                          }
+                        }}
+                        onCancel={() => {
+                          closeModal();
+                        }}
+                      />
+                    ),
+                  });
+                }}
+              />
+              {!isSubmitEnabled && (
+                <Text style={styles.buttonHint}>모든 참여자 작성 완료 시 활성화</Text>
+              )}
+              {locationError && (
+                <Text style={[styles.buttonHint, { color: Colors.red[500] }]}>{locationError}</Text>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* 바텀시트 */}
+        {selectedParticipant && capsuleId && (
+          <UserBottomSheet
+            isVisible={isBottomSheetVisible}
+            onClose={() => setIsBottomSheetVisible(false)}
+            participant={selectedParticipant}
+            capsuleId={capsuleId}
+            inviteCode={propsInviteCode} // 게스트용 (처음 참여 시 필요)
+            onSave={handleBottomSheetSave}
+            roomSettings={roomSettings}
+          />
+        )}
+      </ScrollView>
+    </View>
+  );
+}

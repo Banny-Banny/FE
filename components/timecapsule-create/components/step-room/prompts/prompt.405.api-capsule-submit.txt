@@ -1,0 +1,621 @@
+아래의 조건을 모두 적용하여, 아래의 요구사항을 모두 구현할 것.
+구현 결과를 체크리스트로 반환할 것.
+
+==============================================
+
+사전준비-환경변수) .env 파일 설정 확인
+
+현재 .env에 설정된 환경변수:
+1. EXPO_PUBLIC_API_BASE_URL (✅ 이미 설정됨)
+   - 현재값: https://be-production-8aa2.up.railway.app/
+   - API 서버 주소로 사용
+
+중요:
+- API URL은 이미 설정되어 있어 바로 구현 가능
+- ⭐ 인증 필요: Bearer {JWT_TOKEN} 헤더 필수
+- ⭐ roomId는 1단계 API (POST /api/capsules/step-rooms/create)에서 추출한 capsule_id 사용
+- ⭐ 방장(캡슐 소유자)만 제출 가능
+
+==============================================
+
+조건-커서룰) 아래의 커서룰을 적용하여 작업하고, 이 작업이 끝나면 해당 rules 적용 결과를 체크리스트로 반환할 것.
+            - @.cursor/rules/01-common.mdc
+            - @.cursor/rules/04-func.mdc
+
+==============================================
+
+조건-파일경로) 참고할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (기존 API 함수)
+            - components/timecapsule-create/components/step-room/types.ts (기존 타입 정의)
+            - components/timecapsule-create/components/step-room/hooks/useRoomData.ts (Hook)
+조건-파일경로) 수정할 파일:
+            - components/timecapsule-create/components/step-room/api/capsule.ts (API 함수 추가)
+            - components/timecapsule-create/components/step-room/types.ts (요청/응답 타입 추가)
+
+==============================================
+
+조건-기능유지) 기존 UI/스타일은 절대 수정하지 말 것
+조건-기능유지) 기존 API 함수는 유지하고 새로운 함수만 추가
+조건-기능유지) 기존 타입 정의는 유지하고 새로운 타입만 추가
+
+==============================================
+
+조건-API명세) 백엔드 API 명세를 정확히 준수할 것
+조건-API명세) 타임캡슐 최종 제출 API:
+  POST /api/capsules/step-rooms/:roomId/submit
+  - Path Parameter: roomId (UUID) - capsule_id
+  - Body: { latitude: number, longitude: number }
+  - 캡슐을 지정된 위치에 매장하고 상태를 BURIED로 변경
+조건-API명세) 인증: ⭐ Bearer {JWT_TOKEN} 헤더 필수
+조건-API명세) 권한: ⭐ 방장(캡슐 소유자)만 제출 가능
+조건-API명세) 응답 형식: JSON (snake_case)
+
+==============================================
+
+핵심요구사항) 타임캡슐 최종 제출 API 연동
+핵심요구사항-1) roomId로 POST 요청하여 캡슐 매장
+핵심요구사항-2) latitude, longitude를 Body에 전달
+핵심요구사항-3) 위치 검증 (-90~90, -180~180)
+핵심요구사항-4) 방장 권한 확인 (403 에러 처리)
+핵심요구사항-5) 모든 참여자 작성 완료 확인 (400 에러 처리)
+핵심요구사항-6) 중복 제출 방지 (409 에러 처리)
+핵심요구사항-7) 에러 처리 및 타입 안정성 보장
+핵심요구사항-8) ⭐ JWT 토큰 인증 처리 (Bearer 헤더)
+
+==============================================
+
+API응답명세) 백엔드 응답 구조
+
+타임캡슐 최종 제출 API
+엔드포인트: POST /api/capsules/step-rooms/:roomId/submit
+인증: Bearer {JWT_TOKEN} (필수)
+권한: 방장(캡슐 소유자)만 가능
+Content-Type: application/json
+
+Path Parameter:
+- roomId: 캡슐 ID (UUID) - 1단계 API에서 추출한 capsule_id
+
+Request Body:
+{
+  "latitude": 37.5665,    // 위도 (-90 ~ 90)
+  "longitude": 126.978    // 경도 (-180 ~ 180)
+}
+
+성공 응답 (201 Created):
+{
+  "success": true,
+  "data": {
+    "capsule_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "BURIED",
+    "location": {
+      "latitude": 37.5665,
+      "longitude": 126.978,
+      "address": "서울특별시 중구 세종대로 110"
+    },
+    "buried_at": "2025-01-02T17:30:00.000Z",
+    "open_date": "2026-01-16T00:00:00.000Z",
+    "participants": 4,
+    "is_auto_submitted": false
+  }
+}
+
+에러 응답:
+- 400 Bad Request:
+  * INCOMPLETE_PARTICIPANTS: 모든 참여자가 작성을 완료하지 않음
+  * INVALID_LOCATION: 유효하지 않은 위도/경도
+  * PAYMENT_NOT_COMPLETED: 결제가 완료되지 않음
+- 401 Unauthorized: JWT 토큰 없음 또는 유효하지 않음
+- 403 Forbidden: 방장이 아닌 사용자의 제출 시도
+- 404 Not Found: 존재하지 않는 roomId
+- 409 Conflict: 이미 제출된 캡슐 (중복 제출)
+- 500 Internal Server Error: 서버 내부 오류
+
+주의:
+- 응답 구조는 CapsuleSubmitResponse 타입 (snake_case)
+- is_auto_submitted는 크론잡 자동 제출 여부 (false: 수동 제출)
+- address는 서버에서 역지오코딩으로 계산됨
+
+==============================================
+
+응답필드설명) 각 필드의 의미 및 활용
+
+1. success (boolean)
+   - API 성공 여부
+   - true: 매장 성공
+
+2. data.capsule_id (string, UUID)
+   - 매장된 캡슐 ID
+   - roomId와 동일한 값
+
+3. data.status (string)
+   - 캡슐 상태
+   - 값: "BURIED" (매장됨)
+
+4. data.location (object)
+   - 매장 위치 정보
+   - latitude: 위도
+   - longitude: 경도
+   - address: 주소 (역지오코딩 결과)
+
+5. data.buried_at (string, ISO 8601)
+   - 매장 시각
+   - 예: "2025-01-02T17:30:00.000Z"
+
+6. data.open_date (string, ISO 8601)
+   - 개봉 예정일
+   - 주문 시 선택한 time_option에 따라 자동 계산됨
+   - 예: "2026-01-16T00:00:00.000Z"
+
+7. data.participants (number)
+   - 참여자 수
+   - 예: 4
+
+8. data.is_auto_submitted (boolean)
+   - 자동 제출 여부
+   - false: 수동 제출 (사용자가 직접 제출)
+   - true: 자동 제출 (크론잡이 마감 24시간 후 자동 제출)
+
+==============================================
+
+데이터구조-요청타입) TypeScript 타입 정의
+
+파일: components/timecapsule-create/components/step-room/types.ts
+
+// 타임캡슐 제출 요청 Body 타입
+export interface CapsuleSubmitRequest {
+  latitude: number;      // 위도 (-90 ~ 90)
+  longitude: number;     // 경도 (-180 ~ 180)
+}
+
+// 매장 위치 정보
+export interface BuriedLocation {
+  latitude: number;      // 위도
+  longitude: number;     // 경도
+  address: string;       // 주소 (역지오코딩 결과)
+}
+
+// 타임캡슐 제출 응답 타입 (snake_case)
+export interface CapsuleSubmitResponse {
+  success: boolean;
+  data: {
+    capsule_id: string;               // 캡슐 ID (UUID)
+    status: 'BURIED';                 // 캡슐 상태
+    location: BuriedLocation;         // 매장 위치 정보
+    buried_at: string;                // 매장 시각 (ISO 8601)
+    open_date: string;                // 개봉 예정일 (ISO 8601)
+    participants: number;             // 참여자 수
+    is_auto_submitted: boolean;       // 자동 제출 여부
+  };
+}
+
+==============================================
+
+구현가이드-1) API 호출 함수 작성
+
+파일: components/timecapsule-create/components/step-room/api/capsule.ts
+
+목적:
+- 타임캡슐 최종 제출 API 호출 함수 제공
+- POST /api/capsules/step-rooms/:roomId/submit 호출
+- 위치 검증
+- 에러 처리
+- 재사용 가능한 API 함수 제공
+- ⭐ JWT 토큰 인증 처리
+
+기능:
+1. submitCapsule(roomId: string, location: CapsuleSubmitRequest): Promise<CapsuleSubmitResponse>
+   - POST /api/capsules/step-rooms/:roomId/submit 호출
+   - Authorization: Bearer {token} 헤더 포함 (apiClient가 자동 처리)
+   - Body에 latitude, longitude 전달
+   - 위치 검증 (latitude: -90~90, longitude: -180~180)
+   - 응답을 그대로 반환 (snake_case 유지)
+   - 에러 처리 및 예외 던지기
+
+구현 예시:
+```typescript
+import { apiClient } from '@/utils/apiClient';
+import type { CapsuleSubmitRequest, CapsuleSubmitResponse } from '../types';
+
+/**
+ * 타임캡슐 최종 제출 API (위치 지정 및 매장)
+ * @param roomId 캡슐 ID (UUID)
+ * @param location 매장 위치 (latitude, longitude)
+ * @returns 매장 결과 정보
+ * @throws 400: INCOMPLETE_PARTICIPANTS (미완료 참여자), INVALID_LOCATION (유효하지 않은 위치), PAYMENT_NOT_COMPLETED (결제 미완료)
+ * @throws 401: JWT 토큰 없음 또는 유효하지 않음
+ * @throws 403: 방장이 아닌 사용자의 제출 시도
+ * @throws 404: 존재하지 않는 roomId
+ * @throws 409: 이미 제출된 캡슐 (중복 제출)
+ * @throws 500: 서버 내부 오류
+ */
+export async function submitCapsule(
+  roomId: string,
+  location: CapsuleSubmitRequest
+): Promise<CapsuleSubmitResponse> {
+  try {
+    console.log('🔄 [API] 타임캡슐 제출 시작 - roomId:', roomId, 'location:', location);
+
+    // 클라이언트 측 위치 검증
+    if (
+      location.latitude < -90 ||
+      location.latitude > 90 ||
+      location.longitude < -180 ||
+      location.longitude > 180
+    ) {
+      throw new Error('유효하지 않은 위도 또는 경도입니다.');
+    }
+
+    // apiClient는 자동으로 JWT 토큰을 헤더에 포함시킴
+    const response = await apiClient.post<CapsuleSubmitResponse>(
+      `/api/capsules/step-rooms/${roomId}/submit`,
+      location
+    );
+
+    console.log('✅ [API] 타임캡슐 제출 성공:', response.data);
+    return response.data;
+  } catch (error: any) {
+    // 400 에러 상세 처리
+    if (error.response?.status === 400) {
+      const errorCode = error.response?.data?.error;
+      if (errorCode === 'INCOMPLETE_PARTICIPANTS') {
+        console.error('❌ [API] 모든 참여자가 작성을 완료하지 않음 (400)');
+        throw new Error('모든 참여자가 저장을 완료해야 제출할 수 있습니다.');
+      }
+      if (errorCode === 'INVALID_LOCATION') {
+        console.error('❌ [API] 유효하지 않은 위치 (400)');
+        throw new Error('유효하지 않은 위도 또는 경도입니다.');
+      }
+      if (errorCode === 'PAYMENT_NOT_COMPLETED') {
+        console.error('❌ [API] 결제가 완료되지 않음 (400)');
+        throw new Error('결제를 완료해주세요.');
+      }
+      console.error('❌ [API] 잘못된 요청 (400)');
+      throw new Error('잘못된 요청입니다.');
+    }
+    if (error.response?.status === 401) {
+      console.error('❌ [API] 인증 실패 (401)');
+      throw new Error('인증이 필요합니다. 로그인 후 다시 시도해주세요.');
+    }
+    if (error.response?.status === 403) {
+      console.error('❌ [API] 방장이 아닌 사용자의 제출 시도 (403)');
+      throw new Error('방장만 최종 제출할 수 있습니다.');
+    }
+    if (error.response?.status === 404) {
+      console.error('❌ [API] 존재하지 않는 roomId (404)');
+      throw new Error('캡슐을 찾을 수 없습니다.');
+    }
+    if (error.response?.status === 409) {
+      console.error('❌ [API] 이미 제출된 캡슐 (409)');
+      throw new Error('이미 제출된 캡슐입니다.');
+    }
+    if (error.response?.status === 500) {
+      console.error('❌ [API] 서버 내부 오류 (500)');
+      throw new Error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+    }
+    console.error('❌ [API] 타임캡슐 제출 실패:', error.message);
+    throw new Error(`API 호출 실패: ${error.response?.status || 'Network Error'}`);
+  }
+}
+```
+
+==============================================
+
+구현가이드-2) 위치 검증
+
+위치 좌표 유효 범위:
+- latitude (위도): -90 ~ 90
+  * -90: 남극
+  * 0: 적도
+  * 90: 북극
+- longitude (경도): -180 ~ 180
+  * -180 ~ 180: 동/서경
+
+검증 로직:
+1. 클라이언트에서 기본 범위 검증
+2. 서버에서 추가 검증 및 역지오코딩
+3. 유효하지 않은 좌표는 400 에러 반환
+
+주요 도시 좌표 예시:
+- 서울시청: 37.5665, 126.978
+- 남산타워: 37.5512, 126.9882
+- 경복궁: 37.5796, 126.9770
+- 부산 해운대: 35.1587, 129.1603
+- 제주 한라산: 33.3617, 126.5292
+
+==============================================
+
+활용시나리오) 타임캡슐 제출 플로우
+
+시나리오 A) 정상 제출 플로우
+1. 방장이 모든 참여자의 작성 완료를 확인
+   - 대기실 상세 조회 API로 각 참여자의 작성 상태 확인
+   - 모든 참여자가 COMPLETED 상태여야 함
+
+2. 위치 선택
+   - 현재 위치(GPS) 또는 지도에서 특정 장소 선택
+   - 위도/경도 값 추출
+
+3. 제출 버튼 클릭
+   - submitCapsule(roomId, { latitude, longitude }) 호출
+   - POST /api/capsules/step-rooms/:roomId/submit 호출
+
+4. 성공 응답 수신
+   - status: "BURIED"
+   - 매장 위치, 매장 시각, 개봉일 등 정보 표시
+   - 완료 화면으로 이동
+
+시나리오 B) 현재 위치로 제출
+1. GPS로 현재 위치 가져오기
+   - expo-location 사용
+   - 위치 권한 요청
+   - getCurrentPositionAsync() 호출
+
+2. 위도/경도 추출
+   - coords.latitude, coords.longitude
+
+3. API 호출
+   - submitCapsule(roomId, { latitude, longitude })
+
+시나리오 C) 특정 장소 선택
+1. 지도 UI 표시
+   - react-native-maps 사용
+   - 초기 위치: 서울시청 또는 현재 위치
+
+2. 지도에서 장소 선택
+   - 마커 드래그 또는 탭으로 선택
+   - 선택한 좌표 표시
+
+3. API 호출
+   - submitCapsule(roomId, { latitude, longitude })
+
+시나리오 D) 자동 제출 (크론잡)
+1. 마감시한(deadline) 24시간 경과
+2. 서버 크론잡이 자동으로 제출
+3. 기본 위치(서울시청)로 매장
+4. is_auto_submitted: true
+
+==============================================
+
+에러처리가이드) 에러별 대응 전략
+
+1. 400 Bad Request - INCOMPLETE_PARTICIPANTS
+   - 원인: 일부 참여자가 아직 작성을 완료하지 않음
+   - 대응: 참여자 작성 상태 확인 UI 표시
+   - 메시지: "모든 참여자가 저장을 완료해야 제출할 수 있습니다."
+   - UI 예시:
+     ```
+     완료: 2/4 명
+     미완료 참여자:
+     - 참여자2
+     - 참여자3
+     ```
+
+2. 400 Bad Request - INVALID_LOCATION
+   - 원인: 유효하지 않은 위도/경도 (범위 초과)
+   - 대응: 위치 재선택 안내
+   - 메시지: "유효하지 않은 위도 또는 경도입니다."
+
+3. 400 Bad Request - PAYMENT_NOT_COMPLETED
+   - 원인: 결제가 완료되지 않음
+   - 대응: 결제 페이지로 이동
+   - 메시지: "결제를 완료해주세요."
+
+4. 401 Unauthorized
+   - 원인: 로그인하지 않음, 토큰 만료
+   - 대응: 로그인 페이지로 리다이렉트
+   - 메시지: "인증이 필요합니다. 로그인 후 다시 시도해주세요."
+
+5. 403 Forbidden
+   - 원인: 방장이 아닌 사용자가 제출 시도
+   - 대응: 권한 안내
+   - 메시지: "방장만 최종 제출할 수 있습니다."
+   - UI 예시: 참여자에게는 제출 버튼 비활성화
+
+6. 404 Not Found
+   - 원인: 존재하지 않는 roomId, 삭제된 캡슐
+   - 대응: 대기실 목록으로 이동
+   - 메시지: "캡슐을 찾을 수 없습니다."
+
+7. 409 Conflict
+   - 원인: 이미 제출된 캡슐 (중복 제출)
+   - 대응: 매장된 캡슐 정보 표시
+   - 메시지: "이미 제출된 캡슐입니다."
+
+8. 500 Internal Server Error
+   - 원인: 서버 장애, DB 오류
+   - 대응: 에러 토스트 + 재시도 버튼
+   - 메시지: "일시적인 오류가 발생했습니다."
+
+9. Network Error
+   - 원인: 인터넷 연결 끊김, 서버 다운
+   - 대응: 에러 토스트 + 재시도 버튼
+   - 메시지: "네트워크 연결을 확인해주세요."
+
+에러 처리 우선순위:
+1. 클라이언트 검증 (위치 범위, 방장 권한 등)
+2. API 에러 처리 (400, 401, 403, 404, 409, 500 등)
+3. 콘솔 로그로 에러 기록 (개발자 디버깅용)
+4. 사용자 피드백 제공 (토스트, 모달 등)
+5. 적절한 화면으로 이동 (로그인, 대기실 목록 등)
+
+==============================================
+
+구현순서)
+
+1. Types 파일 수정
+   - CapsuleSubmitRequest 인터페이스 추가
+   - BuriedLocation 인터페이스 추가
+   - CapsuleSubmitResponse 인터페이스 추가 (snake_case)
+
+2. API 함수 작성
+   - components/timecapsule-create/components/step-room/api/capsule.ts에 submitCapsule() 함수 추가
+   - 위치 검증 로직 추가 (latitude: -90~90, longitude: -180~180)
+   - API 호출 및 에러 처리
+   - API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+
+3. 위치 가져오기 (선택사항)
+   - expo-location 설치 및 설정
+   - 위치 권한 요청
+   - GPS로 현재 위치 가져오기
+
+4. UI 연동 (선택사항)
+   - 제출 버튼에 submitCapsule() 연결
+   - 방장 권한 확인 (방장에게만 버튼 표시)
+   - 모든 참여자 작성 완료 확인
+   - 로딩 상태 표시
+   - 에러 처리 및 사용자 피드백
+
+5. 테스트
+   - 정상 케이스: 유효한 위치로 제출 성공
+   - 에러 케이스: 400 (INCOMPLETE_PARTICIPANTS, INVALID_LOCATION, PAYMENT_NOT_COMPLETED), 401, 403, 404, 409, 500
+   - 위치 검증: 유효하지 않은 범위의 좌표
+   - 권한 검증: 방장이 아닌 사용자의 제출 시도
+
+6. 체크리스트 작성
+
+==============================================
+
+주의사항)
+
+1. API 응답 형식 준수
+   - 백엔드가 snake_case로 응답
+   - 프론트엔드는 snake_case를 그대로 사용 (프로젝트 일관성)
+   - 타입 불일치 방지
+
+2. ⭐ 방장 권한 확인
+   - 방장(캡슐 소유자)만 제출 가능
+   - 참여자에게는 제출 버튼 비활성화
+   - 403 에러 처리 구현
+
+3. ⭐ 모든 참여자 작성 완료 확인
+   - 제출 전 모든 참여자의 작성 상태 확인
+   - 미완료 참여자가 있으면 제출 불가
+   - 400 INCOMPLETE_PARTICIPANTS 에러 처리
+
+4. ⭐ 중복 제출 방지
+   - 이미 제출된 캡슐은 다시 제출 불가
+   - 409 에러 처리 구현
+   - UI에서도 이미 제출된 캡슐인지 확인
+
+5. 위치 검증
+   - latitude: -90 ~ 90
+   - longitude: -180 ~ 180
+   - 클라이언트와 서버 양쪽에서 검증
+
+6. TypeScript 타입 안정성
+   - API 요청/응답 타입 명시 (snake_case)
+   - any 사용 금지
+
+7. 에러 처리
+   - try-catch 블록 필수
+   - 400 에러 상세 처리 (errorCode 확인)
+   - 에러 로깅 (console.error)
+   - 사용자 피드백 (토스트, 모달 등)
+
+8. ⭐ 인증 필수
+   - Bearer {JWT_TOKEN} 헤더 필수
+   - apiClient가 자동으로 토큰을 헤더에 포함시킴
+   - 401 에러 시 로그인 페이지로 리다이렉트 고려
+
+9. 위치 정보 활용
+   - 현재 위치(GPS) 사용 권장
+   - 지도에서 특정 장소 선택 가능
+   - expo-location 라이브러리 활용
+
+10. 자동 제출
+    - 마감시한 24시간 경과 후 크론잡이 자동 제출
+    - is_auto_submitted: true
+    - 기본 위치(서울시청)로 매장
+
+==============================================
+
+Q&A) 자주 묻는 질문
+
+Q. 참여자도 최종 제출할 수 있나?
+A. 아니요. 방장(캡슐 소유자)만 최종 제출할 수 있습니다. (403 에러)
+
+Q. 일부 참여자가 아직 작성을 완료하지 않았는데 제출할 수 있나?
+A. 아니요. 모든 참여자가 콘텐츠 작성을 완료해야 제출할 수 있습니다. (400 에러)
+
+Q. 이미 제출된 캡슐을 다시 제출할 수 있나?
+A. 아니요. 중복 제출은 불가능합니다. (409 에러)
+
+Q. 위치를 입력하지 않으면?
+A. latitude, longitude는 필수 값입니다. 입력하지 않으면 400 에러가 발생합니다.
+
+Q. 마감시한이 지나면?
+A. 마감시한(deadline) 24시간 경과 후 크론잡이 자동으로 제출합니다. 기본 위치(서울시청)로 설정됩니다.
+
+Q. 제출 후에도 콘텐츠를 수정할 수 있나?
+A. 아니요. 제출(매장) 후에는 콘텐츠 수정이 불가능합니다.
+
+Q. 개봉일(open_date)은 언제 설정되나?
+A. 주문 시 선택한 time_option에 따라 자동으로 계산됩니다.
+
+Q. address는 어떻게 계산되나?
+A. 서버에서 역지오코딩(Reverse Geocoding)으로 위도/경도를 주소로 변환합니다.
+
+==============================================
+
+최종검토 체크리스트)
+
+타입 정의:
+- [ ] CapsuleSubmitRequest 인터페이스 추가됨
+- [ ] BuriedLocation 인터페이스 추가됨
+- [ ] CapsuleSubmitResponse 인터페이스 추가됨 (snake_case)
+- [ ] 모든 필드 타입이 정확히 정의됨
+
+API 함수:
+- [ ] components/timecapsule-create/components/step-room/api/capsule.ts 파일 수정됨
+- [ ] ⭐ submitCapsule(roomId, location) 함수 구현됨
+- [ ] ⭐ POST /api/capsules/step-rooms/:roomId/submit 호출 구현됨
+- [ ] ⭐ JWT 토큰 인증 처리됨 (apiClient 자동 처리)
+- [ ] API URL이 환경변수에서 로드됨
+- [ ] 위치 검증 로직 추가됨 (latitude: -90~90, longitude: -180~180)
+- [ ] API 응답을 그대로 반환 (변환 없음, 프로젝트 일관성)
+- [ ] try-catch 에러 처리 추가됨
+- [ ] ⭐ 에러 처리 구현됨 (400, 401, 403, 404, 409, 500)
+- [ ] ⭐ 400 에러 상세 처리 (INCOMPLETE_PARTICIPANTS, INVALID_LOCATION, PAYMENT_NOT_COMPLETED)
+- [ ] 각 에러별 적절한 메시지 반환
+
+환경 설정:
+- [ ] .env 파일의 EXPO_PUBLIC_API_BASE_URL 확인됨 (✅ 이미 설정됨)
+- [ ] ⭐ JWT 토큰 인증 처리 확인됨 (apiClient 자동 처리)
+
+에러 처리:
+- [ ] ⭐ 400 INCOMPLETE_PARTICIPANTS 에러 처리 구현됨
+- [ ] ⭐ 400 INVALID_LOCATION 에러 처리 구현됨
+- [ ] ⭐ 400 PAYMENT_NOT_COMPLETED 에러 처리 구현됨
+- [ ] ⭐ 401 에러 처리 구현됨 (인증 실패)
+- [ ] ⭐ 403 에러 처리 구현됨 (방장 권한 없음)
+- [ ] ⭐ 404 에러 처리 구현됨
+- [ ] ⭐ 409 에러 처리 구현됨 (중복 제출)
+- [ ] 500 에러 처리 구현됨
+- [ ] 네트워크 에러 처리 구현됨
+- [ ] 에러 로깅 추가됨 (console.error)
+
+코드 품질:
+- [ ] TypeScript 타입 에러 0건
+- [ ] 기존 UI/스타일 수정 0건
+- [ ] 기존 API 함수 수정 0건 (새 함수만 추가)
+- [ ] any 타입 사용 0건
+- [ ] 주석으로 복잡한 로직 설명됨
+- [ ] 커서룰 적용 결과 확인됨
+
+테스트:
+- [ ] ⭐ API 호출 성공 케이스 테스트됨
+- [ ] ⭐ 위치 검증 로직 테스트됨
+- [ ] ⭐ 400 INCOMPLETE_PARTICIPANTS 에러 케이스 테스트됨
+- [ ] ⭐ 400 INVALID_LOCATION 에러 케이스 테스트됨
+- [ ] ⭐ 400 PAYMENT_NOT_COMPLETED 에러 케이스 테스트됨
+- [ ] ⭐ 401 에러 케이스 테스트됨
+- [ ] ⭐ 403 에러 케이스 테스트됨 (방장 권한)
+- [ ] ⭐ 404 에러 케이스 테스트됨
+- [ ] ⭐ 409 에러 케이스 테스트됨 (중복 제출)
+- [ ] 500 에러 케이스 테스트됨
+- [ ] 네트워크 에러 케이스 테스트됨
+- [ ] 응답 데이터 구조 확인됨 (success, data, capsule_id, status, location 등)
+- [ ] 매장 위치 정보 정확히 반환됨 (latitude, longitude, address)
+
+==============================================
+

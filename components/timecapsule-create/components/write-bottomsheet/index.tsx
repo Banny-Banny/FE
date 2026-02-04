@@ -1,0 +1,936 @@
+/**
+ * components/timecapsule-create/components/write-bottomsheet/index.tsx
+ * UserBottomSheet 컴포넌트 - MY CONTENTS 작성 화면
+ *
+ * 체크리스트:
+ * - [✓] Props 인터페이스 정의 (isVisible, onClose, participant)
+ * - [✓] Participant 타입 정의
+ * - [✓] BottomSheet 공통 컴포넌트 사용
+ * - [✓] react-hook-form으로 폼 관리
+ * - [ ] Figma 디자인과 동일하게 구현
+ * - [ ] 색상/타이포그래피 토큰만 사용
+ * - [ ] 인라인 스타일 금지
+ */
+
+import { BottomSheet } from '@/commons/components/bottom-sheet';
+import { Button } from '@/commons/components/button';
+import { DualButton } from '@/commons/components/dual-button';
+import { useModal } from '@/commons/components/modal/hooks/useModal';
+import { Colors } from '@/commons/constants';
+import { AudioAttachment } from '@/components/shared/audio-attachment';
+import React from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Alert, Image, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import Icon from 'react-native-remix-icon';
+import { useMediaPicker, useSubmitContent, useUpdateContent } from './hooks';
+import { styles } from './styles';
+import type { UserBottomSheetProps, UserContentFormData } from './types';
+
+export default function UserBottomSheet({
+  isVisible,
+  onClose,
+  participant,
+  capsuleId,
+  inviteCode,
+  onSave,
+  roomSettings,
+}: UserBottomSheetProps) {
+  // 모달 제어 Hook
+  const { openModal, closeModal } = useModal();
+
+  // ⭐ 로컬 저장 상태 (연타 방지용)
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // ⭐ API 로딩 상태
+  const [isLoadingContent, setIsLoadingContent] = React.useState(false);
+
+  // ⭐ AudioAttachment 모달 상태
+  const [isAudioAttachmentVisible, setIsAudioAttachmentVisible] = React.useState(false);
+
+  // ⭐ 콘텐츠 제출 완료 여부 (서버 status 기반)
+  const [hasSubmitted, setHasSubmitted] = React.useState(false);
+
+  // ⭐ 이미 한 번 콘텐츠를 불러왔는지 여부 (캡슐 ID별로 추적)
+  const hasLoadedRef = React.useRef<string | null>(null);
+
+  // ⭐ 원본 데이터 저장 (수정 시 변경 감지용)
+  const [originalData, setOriginalData] = React.useState<UserContentFormData | null>(null);
+
+  // react-hook-form 설정
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { isDirty },
+  } = useForm<UserContentFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      textContent: '',
+      photos: [],
+      music: null,
+      video: null,
+    },
+  });
+
+  // ⭐ 바텀시트가 열릴 때 서버에서 최신 콘텐츠 불러오기 (한 번만)
+  React.useEffect(() => {
+    async function loadContent() {
+      if (!isVisible || !capsuleId) {
+        return;
+      }
+
+      // ⭐ 이미 이 캡슐의 콘텐츠를 불러왔다면 건너뛰기 (404 방지)
+      if (hasLoadedRef.current === capsuleId) {
+        return;
+      }
+
+      setIsLoadingContent(true);
+
+      try {
+        const { fetchMyContent } = await import('./api/content');
+        const myContent = await fetchMyContent(capsuleId);
+
+        if (myContent && myContent.data) {
+          const textContent =
+            typeof myContent.data.text_message === 'string'
+              ? myContent.data.text_message
+              : JSON.stringify(myContent.data.text_message);
+
+          const loadedData: UserContentFormData = {
+            textContent,
+            photos: myContent.data.images?.map((img) => img.url) || [],
+            music: myContent.data.music?.url || null,
+            video: myContent.data.video?.url || null,
+          };
+
+          reset(loadedData);
+
+          // ⭐ 원본 데이터 저장 (수정 시 변경 감지용)
+          setOriginalData(loadedData);
+
+          // ⭐ 서버에서 기존 콘텐츠가 존재하면 상태와 무관하게 수정 모드로 전환
+          // (WAITING/PENDING 상태에서도 PATCH를 사용하도록 강제)
+          setHasSubmitted(true);
+
+          // ⭐ 불러오기 완료 표시
+          hasLoadedRef.current = capsuleId;
+        }
+      } catch (err: any) {
+        // 404는 정상 (아직 작성 안 함)
+        const { NotFoundError } = await import('./api/content');
+        const errorResponse = err?.response || err?.config?.response;
+        const statusCode = errorResponse?.status || err?.statusCode || err?.status;
+        const isNotFoundError =
+          statusCode === 404 ||
+          err instanceof NotFoundError ||
+          err?.name === 'NotFoundError' ||
+          err?.message?.includes('아직 작성하지 않았습니다');
+
+        if (isNotFoundError) {
+          setHasSubmitted(false); // ⭐ 아직 제출 안 함
+          setOriginalData(null); // ⭐ 원본 데이터 없음
+          // participant.content 폴백 사용 안 함 - 서버가 소스 오브 트루스
+          reset({
+            textContent: '',
+            photos: [],
+            music: null,
+            video: null,
+          });
+
+          // ⭐ 404도 불러오기 시도 완료로 표시 (다음에 다시 시도 안 함)
+          hasLoadedRef.current = capsuleId;
+        } else {
+          // 에러 발생 시에도 빈 폼으로 초기화 (서버를 신뢰)
+          setHasSubmitted(false);
+          setOriginalData(null); // ⭐ 원본 데이터 없음
+          reset({
+            textContent: '',
+            photos: [],
+            music: null,
+            video: null,
+          });
+          // ⭐ 에러 발생 시에는 다음에 다시 시도할 수 있도록 hasLoadedRef 업데이트 안 함
+        }
+      } finally {
+        setIsLoadingContent(false);
+      }
+    }
+
+    loadContent();
+  }, [isVisible, capsuleId, participant, reset]);
+
+  // 현재 폼 상태 감시
+  const currentPhotos = watch('photos');
+  const currentVideo = watch('video');
+  const currentMusic = watch('music');
+
+  // ⭐ 기본값 설정 (roomSettings가 null이면 기본값 사용)
+  const maxImagesPerPerson = roomSettings?.max_images_per_person ?? 3;
+  const hasMusic = roomSettings?.has_music ?? false;
+  const hasVideo = roomSettings?.has_video ?? false;
+
+  // useMediaPicker Hook 사용 (오디오 제외)
+  const { pickImage, pickVideo, isPickingImage, isPickingVideo, error } = useMediaPicker(
+    // 이미지 선택 완료 콜백
+    (uris: string[]) => {
+      setValue('photos', [...currentPhotos, ...uris], { shouldDirty: true });
+    },
+    // 비디오 선택 완료 콜백
+    (uri: string) => {
+      setValue('video', uri, { shouldDirty: true });
+    },
+    // 오디오 선택 완료 콜백 (사용하지 않음 - AudioAttachment로 대체)
+    () => {},
+    currentPhotos.length,
+    !!currentVideo,
+    !!currentMusic,
+    maxImagesPerPerson, // ⭐ 추가
+  );
+
+  // useSubmitContent Hook 사용
+  const {
+    submitContent,
+    isSubmitting,
+    error: submitError,
+    validateContent,
+    uploadProgress, // ⭐ 추가
+  } = useSubmitContent();
+
+  // ⭐ useUpdateContent Hook 사용 (기존 콘텐츠 수정용)
+  const {
+    updateContent,
+    isUpdating,
+    error: updateError,
+    uploadProgress: updateProgress,
+    hasChanges,
+  } = useUpdateContent();
+
+  // ⭐ 수정 모드 여부 (이미 제출 완료된 콘텐츠가 있는 경우)
+  const isEditMode = hasSubmitted;
+
+  // 사진 삭제 핸들러
+  const handleDeletePhoto = (index: number) => {
+    const currentPhotos = watch('photos');
+    setValue(
+      'photos',
+      currentPhotos.filter((_, i) => i !== index),
+    );
+  };
+
+  // 사진 추가 핸들러
+  const handleAddPhoto = () => {
+    pickImage();
+  };
+
+  // 동영상 추가 핸들러
+  const handleAddVideo = () => {
+    pickVideo();
+  };
+
+  // 음성 추가 핸들러 - AudioAttachment 모달 열기
+  const handleAddMusic = () => {
+    // 이미 음성이 있으면 교체 확인
+    if (currentMusic) {
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="question-line" size={64} color={Colors.blue[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              음성 교체
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              이미 음성이 있습니다. 교체하시겠습니까?
+            </Text>
+
+            {/* 버튼 */}
+            <DualButton
+              cancelLabel="취소"
+              confirmLabel="교체"
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={() => {
+                closeModal();
+                setIsAudioAttachmentVisible(true);
+              }}
+            />
+          </View>
+        ),
+      });
+      return;
+    }
+
+    setIsAudioAttachmentVisible(true);
+  };
+
+  // AudioAttachment에서 음성 선택 완료 콜백
+  const handleAudioSelected = (uri: string, name: string) => {
+    setValue('music', uri, { shouldDirty: true });
+    setIsAudioAttachmentVisible(false);
+  };
+
+  // 에러 발생 시 알림 표시
+  React.useEffect(() => {
+    if (error) {
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 에러 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              오류
+            </Text>
+
+            {/* 에러 메시지 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {error}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
+    }
+  }, [error, openModal, closeModal]);
+
+  // ⭐ 바텀시트가 닫혔다가 다시 열릴 때 저장 상태 초기화
+  React.useEffect(() => {
+    if (!isVisible) {
+      setIsSaving(false);
+    }
+  }, [isVisible]);
+
+  // 폼 제출 핸들러
+  const onFormSubmit = async (data: UserContentFormData) => {
+    // ⭐ 수정 모드에서 변경 사항이 없는 경우 안내
+    if (isEditMode && originalData && !hasChanges(data, originalData)) {
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 정보 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="information-line" size={64} color={Colors.blue[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              변경 사항 없음
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              수정된 내용이 없습니다.
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
+      return;
+    }
+
+    // ⭐ 연타 방지: 이미 저장/수정 중이면 즉시 무시
+    if (isSaving || isSubmitting || isUpdating) {
+      return;
+    }
+
+    // ⭐ 즉시 저장 상태를 true로 설정 (연타 차단)
+    setIsSaving(true);
+
+    try {
+      // ⭐ text_message 필수 검증
+      if (!data.textContent || data.textContent.trim().length === 0) {
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              {/* 경고 아이콘 */}
+              <View style={{ marginBottom: 16 }}>
+                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              </View>
+
+              {/* 타이틀 */}
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                검증 실패
+              </Text>
+
+              {/* 설명 */}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  marginBottom: 24,
+                  textAlign: 'center',
+                }}>
+                텍스트 메시지는 필수입니다.
+              </Text>
+
+              {/* 확인 버튼 */}
+              <Button
+                label="확인"
+                variant="primary"
+                size="S"
+                fullWidth={true}
+                onPress={closeModal}
+              />
+            </View>
+          ),
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // 제출 전 검증
+      const validation = validateContent(data);
+      if (!validation.isValid) {
+        openModal({
+          width: 344,
+          height: 'auto',
+          closeOnBackdropPress: true,
+          children: (
+            <View style={{ padding: 24, alignItems: 'center' }}>
+              {/* 경고 아이콘 */}
+              <View style={{ marginBottom: 16 }}>
+                <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+              </View>
+
+              {/* 타이틀 */}
+              <Text
+                style={{
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}>
+                검증 실패
+              </Text>
+
+              {/* 설명 */}
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  marginBottom: 24,
+                  textAlign: 'center',
+                }}>
+                {validation.message}
+              </Text>
+
+              {/* 확인 버튼 */}
+              <Button
+                label="확인"
+                variant="primary"
+                size="S"
+                fullWidth={true}
+                onPress={closeModal}
+              />
+            </View>
+          ),
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      // ⭐ 수정 모드에서는 항상 PATCH API 사용 (POST로 덮어쓰는 문제 방지)
+      if (isEditMode) {
+        await updateContent(data, capsuleId, originalData || undefined);
+        setOriginalData(data);
+      } else if (onSave) {
+        // 신규 저장 시에만 부모 onSave 호출 (POST 흐름)
+        await onSave({
+          text: data.textContent,
+          images: data.photos,
+          voiceRecording: data.music,
+          video: data.video,
+        });
+      } else {
+        // ⭐ 저장 모드: POST API 호출 (capsuleId 및 inviteCode 전달)
+        await submitContent({ ...data, inviteCode }, capsuleId);
+      }
+
+      // 제출/수정 성공 시 모달 표시 후 바텀시트 닫기
+      // ⭐ 저장 성공 시 제출 완료 상태로 설정
+      setHasSubmitted(true);
+      // ⭐ 저장 성공 시 다음에 다시 열 때 최신 데이터를 불러올 수 있도록 초기화
+      hasLoadedRef.current = null;
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="checkbox-circle-fill" size={64} color={Colors.green[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              {isEditMode ? '수정 완료' : '저장 완료'}
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {isEditMode ? '타임캡슐 내용이 수정되었습니다!' : '타임캡슐 내용이 저장되었습니다!'}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button
+              label="확인"
+              variant="primary"
+              size="S"
+              fullWidth={true}
+              onPress={() => {
+                closeModal();
+                setIsSaving(false); // ⭐ 모달 닫을 때 저장 상태 해제
+                onClose();
+              }}
+            />
+          </View>
+        ),
+      });
+    } catch (err) {
+      // 에러 처리
+      if (err instanceof Error && err.stack) {
+      }
+
+      // ⭐ 에러 발생 시 저장 상태 해제
+      setIsSaving(false);
+
+      // 에러 모달 표시
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 에러 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="error-warning-fill" size={64} color={Colors.red[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              {isEditMode ? '수정 실패' : '저장 실패'}
+            </Text>
+
+            {/* 에러 메시지 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {err instanceof Error ? err.message : isEditMode ? '수정에 실패했습니다.' : '저장에 실패했습니다.'}
+            </Text>
+
+            {/* 확인 버튼 */}
+            <Button label="확인" variant="primary" size="S" fullWidth={true} onPress={closeModal} />
+          </View>
+        ),
+      });
+    }
+  };
+
+  // react-hook-form의 handleSubmit 함수 저장
+  const handleFormSubmit = handleSubmit(onFormSubmit);
+
+  // 저장/수정 버튼 핸들러 (플랫폼별 분기: 웹=Modal, 앱=Alert)
+  const handleSave = () => {
+    // ⭐ 플랫폼별 저장/수정 확인 다이얼로그
+    if (Platform.OS === 'web') {
+      // 웹: 커스텀 Modal 사용
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            <View style={{ marginBottom: 16 }}>
+              <Icon name={isEditMode ? 'edit-line' : 'save-line'} size={64} color={Colors.blue[500]} />
+            </View>
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              {isEditMode ? '수정하시겠어요?' : '저장하시겠어요?'}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              {isEditMode ? '변경된 내용을 저장합니다.' : '작성한 내용을 저장합니다.'}
+            </Text>
+            <DualButton
+              cancelLabel="취소"
+              confirmLabel={isEditMode ? '수정하기' : '저장하기'}
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={async () => {
+                closeModal();
+                await new Promise((resolve) => setTimeout(resolve, 100));
+                await handleFormSubmit();
+              }}
+            />
+          </View>
+        ),
+      });
+    } else {
+      // 앱: React Native Alert 사용
+      Alert.alert(
+        isEditMode ? '수정하시겠어요?' : '저장하시겠어요?',
+        isEditMode ? '변경된 내용을 저장합니다.' : '작성한 내용을 저장합니다.',
+        [
+          {
+            text: '취소',
+            style: 'cancel',
+          },
+          {
+            text: isEditMode ? '수정하기' : '저장하기',
+            style: 'default',
+            onPress: async () => {
+              await handleFormSubmit();
+            },
+          },
+        ],
+        { cancelable: true },
+      );
+    }
+  };
+
+  // 취소 버튼 핸들러
+  const handleCancel = () => {
+    if (isDirty) {
+      openModal({
+        width: 344,
+        height: 'auto',
+        closeOnBackdropPress: true,
+        children: (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            {/* 아이콘 */}
+            <View style={{ marginBottom: 16 }}>
+              <Icon name="question-line" size={64} color={Colors.blue[500]} />
+            </View>
+
+            {/* 타이틀 */}
+            <Text
+              style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 8, textAlign: 'center' }}>
+              작성 취소
+            </Text>
+
+            {/* 설명 */}
+            <Text
+              style={{
+                fontSize: 14,
+                color: Colors.grey[600],
+                marginBottom: 24,
+                textAlign: 'center',
+              }}>
+              작성 중인 내용이 있습니다. 취소하시겠습니까?
+            </Text>
+
+            {/* 버튼 */}
+            <DualButton
+              cancelLabel="계속 작성"
+              confirmLabel="취소"
+              size="S"
+              cancelVariant="outline"
+              confirmVariant="primary"
+              fullWidth={true}
+              onCancelPress={closeModal}
+              onConfirmPress={() => {
+                closeModal();
+                onClose();
+              }}
+            />
+          </View>
+        ),
+      });
+    } else {
+      onClose();
+    }
+  };
+
+  // 하단 고정 버튼 영역 (공통 컴포넌트의 footer 스타일 사용)
+  const renderFooter = () => {
+    // ⭐ 현재 진행 중인 작업 상태 확인
+    const isProcessing = isSaving || isSubmitting || isUpdating;
+    const currentProgress = isEditMode ? updateProgress : uploadProgress;
+
+    // ⭐ 버튼 라벨 결정
+    const getConfirmLabel = () => {
+      if (isProcessing) {
+        return currentProgress || (isEditMode ? '수정 중...' : '저장 중...');
+      }
+      return isEditMode ? '수정' : '저장';
+    };
+
+    return (
+      <>
+        <DualButton
+          cancelLabel="취소"
+          confirmLabel={getConfirmLabel()}
+          size="M"
+          cancelVariant="outline"
+          confirmVariant="primary"
+          confirmDisabled={isProcessing}
+          onCancelPress={() => {
+            handleCancel();
+          }}
+          onConfirmPress={() => {
+            handleSave();
+          }}
+        />
+        <Text style={styles.hintText}>
+          {isEditMode ? '수정된 내용을 저장합니다' : '저장 후에도 수정할 수 있어요'}
+        </Text>
+      </>
+    );
+  };
+
+  return (
+    <BottomSheet isVisible={isVisible} onClose={onClose} footer={renderFooter()}>
+      <View style={styles.container}>
+        {/* 헤더 */}
+        <View style={styles.header}>
+          <Text style={styles.title}>MY CONTENTS</Text>
+          <Text style={styles.subtitle}>
+            {isEditMode ? '콘텐츠를 수정할 수 있어요' : '나만의 타임캡슐 내용을 작성해요'}
+          </Text>
+        </View>
+
+        {/* 텍스트 섹션 */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="file-text-line" size={20} color={Colors.black[500]} />
+            <Text style={styles.sectionTitle}>텍스트</Text>
+          </View>
+          <View style={styles.textAreaContainer}>
+            <Controller
+              control={control}
+              name="textContent"
+              rules={{
+                maxLength: { value: 500, message: '최대 500자까지 입력 가능합니다' },
+              }}
+              render={({ field: { onChange, value } }) => (
+                <TextInput
+                  style={styles.textArea}
+                  placeholder="당신의 이야기를 남겨주세요..."
+                  placeholderTextColor={Colors.grey[400]}
+                  multiline
+                  value={value}
+                  onChangeText={onChange}
+                  textAlignVertical="top"
+                />
+              )}
+            />
+          </View>
+        </View>
+
+        {/* 사진 섹션 */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Icon name="image-line" size={20} color={Colors.black[500]} />
+            <Text style={styles.sectionTitle}>
+              사진 ({watch('photos').length}/{maxImagesPerPerson})
+            </Text>
+          </View>
+          <Button
+            label={isPickingImage ? '선택 중...' : '사진 추가'}
+            variant="outline"
+            size="M"
+            icon="ri-add-line"
+            disabled={isPickingImage || currentPhotos.length >= maxImagesPerPerson}
+            onPress={handleAddPhoto}
+          />
+
+          {/* 추가된 사진 미리보기 - 그리드 배치 (3 + 2) */}
+          <Controller
+            control={control}
+            name="photos"
+            rules={{
+              validate: (value) =>
+                value.length <= maxImagesPerPerson ||
+                `최대 ${maxImagesPerPerson}개까지 추가 가능합니다`,
+            }}
+            render={({ field: { value } }) => (
+              <>
+                {value.length > 0 && (
+                  <View style={styles.photoGridContainer}>
+                    {value.map((photo, index) => (
+                      <View key={index} style={styles.photoPreviewItem}>
+                        <View style={styles.photoPreview}>
+                          <Image
+                            source={{ uri: photo }}
+                            style={[styles.photoPreviewImage, { width: '100%', height: '100%' }]}
+                            resizeMode="cover"
+                          />
+                        </View>
+                        <View style={styles.photoPreviewLabel}>
+                          <Text style={styles.photoPreviewText} numberOfLines={1}>
+                            사진 {index + 1}
+                          </Text>
+                        </View>
+                        {/* 삭제 버튼 */}
+                        <Pressable
+                          style={styles.deleteButton}
+                          onPress={() => handleDeletePhoto(index)}>
+                          <Icon name="close-line" size={20} color={Colors.black[500]} />
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+          />
+        </View>
+
+        {/* 음성 섹션 - hasMusic이 true일 때만 표시 */}
+        {hasMusic && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Icon name="mic-line" size={20} color={Colors.black[500]} />
+              <Text style={styles.sectionTitle}>음성 ({currentMusic ? 1 : 0}/1)</Text>
+            </View>
+            <Button
+              label={currentMusic ? '음성 교체' : '음성 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isAudioAttachmentVisible}
+              onPress={handleAddMusic}
+            />
+
+            {/* 선택된 음성 표시 */}
+            {currentMusic && (
+              <View style={styles.mediaFileContainer}>
+                <View style={styles.mediaFileInfo}>
+                  <Icon name="music-fill" size={24} color={Colors.black[500]} />
+                  <Text style={styles.mediaFileName} numberOfLines={1}>
+                    {currentMusic.split('/').pop() || '음성 파일'}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('music', null, { shouldDirty: true })}>
+                  <Icon name="close-line" size={20} color={Colors.black[500]} />
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* 동영상 섹션 - hasVideo가 true일 때만 표시 */}
+        {hasVideo && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Icon name="video-line" size={20} color={Colors.black[500]} />
+              <Text style={styles.sectionTitle}>동영상 ({currentVideo ? 1 : 0}/1)</Text>
+            </View>
+            <Button
+              label={isPickingVideo ? '선택 중...' : currentVideo ? '동영상 교체' : '동영상 추가'}
+              variant="outline"
+              size="M"
+              icon="ri-add-line"
+              disabled={isPickingVideo}
+              onPress={handleAddVideo}
+            />
+
+            {/* 선택된 동영상 표시 */}
+            {currentVideo && (
+              <View style={styles.mediaFileContainer}>
+                <View style={styles.mediaFileInfo}>
+                  <Icon name="video-fill" size={24} color={Colors.black[500]} />
+                  <Text style={styles.mediaFileName} numberOfLines={1}>
+                    {currentVideo.split('/').pop() || '동영상 파일'}
+                  </Text>
+                </View>
+                <Pressable
+                  style={styles.mediaDeleteButton}
+                  onPress={() => setValue('video', null, { shouldDirty: true })}>
+                  <Icon name="close-line" size={20} color={Colors.black[500]} />
+                </Pressable>
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+
+      {/* AudioAttachment 모달 */}
+      <AudioAttachment
+        visible={isAudioAttachmentVisible}
+        onClose={() => setIsAudioAttachmentVisible(false)}
+        onSelectAudio={handleAudioSelected}
+      />
+    </BottomSheet>
+  );
+}

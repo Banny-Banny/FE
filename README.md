@@ -79,9 +79,9 @@
 
 ```
 • React Navigation 7.x
-  - Drawer Navigation
+  - Bottom Tabs Navigation
   - Stack Navigation
-  - Bottom Tabs (planned)
+• Expo Router 6.0 (파일 기반 라우팅)
 ```
 
 ### Styling & Animation
@@ -90,75 +90,214 @@
 • NativeWind 4.2 (Tailwind CSS for React Native)
 • Tailwind CSS 3.4
 • React Native Reanimated 4.1
+• React Native Gesture Handler 2.28
 ```
 
 ### UI/UX Libraries
 
 ```
-• @expo/vector-icons - 아이콘
+• @expo/vector-icons - 벡터 아이콘
+• react-native-remix-icon - Remix Icon
+• react-native-svg - SVG 렌더링
+• react-native-calendars - 캘린더 컴포넌트
+• react-native-webview - 웹뷰 컴포넌트
 • react-native-gesture-handler - 제스처 처리
 • expo-haptics - 햅틱 피드백
 • expo-image - 이미지 최적화
 ```
 
-### Backend & Database (Planned)
+### Data Fetching & State Management
 
 ```
-- 수정예정
+• @tanstack/react-query 5.90 - 서버 상태 관리
+• axios 1.13 - HTTP 클라이언트
+• @react-native-async-storage/async-storage - 로컬 스토리지
+```
+
+### Form Management
+
+```
+• react-hook-form 7.68 - 폼 상태 관리 및 검증
+```
+
+### Payment
+
+```
+• @tosspayments/payment-sdk-react-native - 토스페이먼츠 결제 SDK
+```
+
+### Media & File Management
+
+```
+• expo-image-picker - 이미지 선택
+• expo-document-picker - 문서/파일 선택
+• expo-video-thumbnails - 동영상 썸네일
+• expo-av - 오디오/비디오 재생
+```
+
+### Location
+
+```
+• expo-location - 위치 권한 및 현재 위치
+```
+
+### Utilities
+
+```
+• dayjs - 날짜/시간 처리
 ```
 
 ### Code Quality
 
 ```
 • ESLint 9.25
-• Prettier
-• eslint-plugin-simple-import-sort (자동 import 정렬)
+• TypeScript 5.9
+• eslint-config-expo
 ```
 
 <br/>
 
-## 📁 프로젝트 구조
+## 📁 프로젝트 구조 (Feature-Sliced Design)
 
 ```
 TimeEgg/FE/
-├── app/                          # 페이지 & 라우팅 (Expo Router)
-│   ├── _layout.tsx               # 최상위 레이아웃
-│   ├── (app)/                    # 메인 앱 (로그인 후)
-│   │   ├── _layout.tsx           # Drawer 레이아웃
-│   │   ├── index.tsx             # 홈 (지도)
-│   │   ├── payments.tsx          # 결제
-│   │   └── settings.tsx          # 설정
-│   └── (auth)/                   # 인증 (로그인 전)
-│       ├── _layout.tsx           # Auth Stack 레이아웃
-│       └── login.tsx             # 로그인
+├── app/                          # [Routing Layer] 오직 라우팅만 담당
+│   ├── _layout.tsx               # Root Layout (RootProvider)
+│   ├── (tabs)/                   # 탭 네비게이션
+│   │   ├── _layout.tsx           # Bottom Tabs 설정
+│   │   ├── index.tsx             # 홈 (HomePage)
+│   │   ├── alarm.tsx             # 알람
+│   │   ├── mypage.tsx            # 마이페이지
+│   │   └── timecapsule/          # 타임캡슐 Stack
+│   │       ├── index.tsx         # 목록
+│   │       └── create.tsx        # 생성
+│   ├── (auth)/                   # 인증
+│   │   ├── _layout.tsx           # Auth Stack
+│   │   ├── login.tsx             # 로그인
+│   │   └── auth/
+│   │       └── callback.tsx      # 인증 콜백
+│   ├── api/                      # API Routes
+│   │   └── auth/
+│   │       └── kakao/
+│   │           └── callback.tsx  # 카카오 인증 콜백
+│   └── component-gallery.tsx     # 컴포넌트 갤러리
 │
-├── components/                   # 재사용 컴포넌트
-│   └── map/                      # 지도 컴포넌트
+├── utils/                        # [Pure Functions] 순수 함수
+│   ├── api.ts                    # API 유틸리티
+│   ├── apiClient.ts              # API 클라이언트
+│   ├── auth.ts                   # 인증 유틸리티
+│   ├── date-price.ts             # 날짜/가격 계산
+│   ├── format.ts                 # 포맷팅 함수
+│   ├── mediaType.ts              # 미디어 타입
+│   ├── mediaUpload.ts            # 미디어 업로드
+│   ├── mediaUrl.ts               # 미디어 URL
+│   └── index.ts
 │
-├── commons/                      # 공통 모듈
-│   └── layout/                   # 레이아웃 컴포넌트
-│       └── Drawer/               # Drawer 관련
+├── commons/                      # [Design System] 순수 UI
+│   ├── layout/                   # 레이아웃
+│   │   ├── provider/             # 전역 Provider
+│   │   │   ├── RootProvider.tsx  # 루트 Provider
+│   │   │   ├── auth/             # 인증 Provider
+│   │   │   ├── modal/            # 모달 Provider
+│   │   │   ├── react-query/      # React Query Provider
+│   │   │   └── safe-area/        # Safe Area Provider
+│   │   └── Tabs/                 # 탭 레이아웃
+│   │       ├── TabLayout.tsx     # 탭 레이아웃 컴포넌트
+│   │       ├── HomePage/         # 홈 페이지
+│   │       ├── AlarmPage/        # 알람 페이지
+│   │       └── MyPage/           # 마이페이지
+│   ├── components/               # 재사용 UI 컴포넌트
+│   │   ├── bottom-sheet/         # 바텀시트
+│   │   ├── button/               # 버튼
+│   │   ├── dual-button/          # 듀얼 버튼
+│   │   └── modal/                # 모달
+│   ├── constants/                # 디자인 토큰
+│   │   ├── borderRadius.ts       # 테두리 반경
+│   │   ├── color.ts              # 색상
+│   │   ├── endpoints.ts          # API 엔드포인트
+│   │   ├── fonts.ts              # 폰트
+│   │   ├── media.ts              # 미디어 상수
+│   │   ├── routes.ts             # 라우트 상수
+│   │   ├── spacing.ts            # 간격
+│   │   ├── storage.ts            # 스토리지 키
+│   │   ├── typography.ts         # 타이포그래피
+│   │   └── index.ts
+│   └── hooks/                    # 공통 훅
+│       ├── useMapGestures.ts     # 지도 제스처
+│       ├── useMediaUpload.ts     # 미디어 업로드
+│       └── useNavigation.ts      # 네비게이션
 │
-├── hooks/                        # 커스텀 훅 (예정)
-├── services/                     # API 호출 (예정)
-├── types/                        # TypeScript 타입 (예정)
-├── constants/                    # 상수 및 설정 (예정)
-├── assets/                       # 이미지 및 폰트
-├── scripts/                      # 유틸리티 스크립트
-├── doc/v.1.0/                    # 프로젝트 문서
-│
-├── .cursor/rules/                # AI 코딩 규칙
-├── .vscode/                      # VSCode 설정
-├── .gitignore
-├── .prettierrc.js                # Prettier 설정
-├── eslint.config.js              # ESLint 설정
-├── babel.config.js               # Babel 설정
-├── metro.config.js               # Metro 번들러 설정
-├── tailwind.config.js            # Tailwind 설정
-├── tsconfig.json                 # TypeScript 설정
-├── app.json                      # Expo 설정
-└── package.json                  # 의존성 관리
+└── components/                   # [Features] 기능 단위
+    ├── login/                    # 로그인 기능
+    │   ├── index.tsx             # Feature Container
+    │   ├── types.ts              # Feature Types
+    │   ├── hooks/                # Business Logic
+    │   │   └── useKakaoLogin.ts
+    │   └── components/           # Sub-Components
+    │       └── login-form/       # 로그인 폼
+    │
+    ├── map/                      # 지도 기능
+    │   ├── index.tsx             # Feature Container
+    │   ├── types.ts              # Feature Types
+    │   ├── styles.ts             # Feature Styles
+    │   ├── hooks/                # Business Logic
+    │   │   ├── useMapFeature.ts
+    │   │   └── useEggForm.ts
+    │   └── components/           # Sub-Components
+    │       ├── map-view/         # 지도 뷰
+    │       ├── fab-btn/          # 플로팅 버튼
+    │       ├── egg-form/         # 에그 폼
+    │       ├── egg-detail/       # 에그 상세
+    │       ├── egg-slot/         # 에그 슬롯
+    │       ├── egg-slot-modal/   # 에그 슬롯 모달
+    │       ├── current-location/ # 현재 위치
+    │       ├── current-location-button/ # 현재 위치 버튼
+    │       ├── current-location-marker/  # 현재 위치 마커
+    │       └── reset-egg-slot/   # 에그 슬롯 리셋
+    │
+    ├── mypage/                   # 마이페이지 기능
+    │   ├── index.tsx             # Feature Container
+    │   ├── types.ts              # Feature Types
+    │   ├── styles.ts             # Feature Styles
+    │   ├── hooks/                # Business Logic
+    │   │   ├── useUserInfo.ts
+    │   │   └── useLogout.ts
+    │   └── components/           # Sub-Components
+    │       ├── profile-section/  # 프로필 섹션
+    │       ├── activity-stats/   # 활동 통계
+    │       ├── menu-list/        # 메뉴 리스트
+    │       └── logout-button/    # 로그아웃 버튼
+    │
+    ├── timecapsule-create/       # 타임캡슐 생성 기능
+    │   ├── index.tsx             # Feature Container
+    │   ├── types.ts              # Feature Types
+    │   └── components/           # Sub-Components
+    │       ├── step-info/        # 1단계: 정보 입력
+    │       ├── step-room/        # 2단계: 방 설정
+    │       ├── write-bottomsheet/ # 작성 바텀시트
+    │       └── confirm-modal/    # 확인 모달
+    │
+    └── toss-payments/            # 토스페이먼츠 결제 기능
+        ├── index.tsx             # Feature Container
+        ├── types.ts              # Feature Types
+        ├── styles.ts             # Feature Styles
+        ├── api/                  # API 호출
+        ├── components/           # Sub-Components
+        │   ├── payment-method-selector/ # 결제 수단 선택
+        │   ├── order-summary-card/     # 주문 요약 카드
+        │   ├── agreements-card/        # 약관 동의 카드
+        │   ├── agreement-detail-modal/  # 약관 상세 모달
+        │   ├── payment-footer/         # 결제 푸터
+        │   └── payment-webview/        # 결제 웹뷰
+        ├── hooks/                # Business Logic
+        │   ├── useTossPayment.ts
+        │   ├── usePaymentHandlers.ts
+        │   ├── usePaymentValidation.ts
+        │   └── useOrderSummary.ts
+        └── constants/            # 상수
 ```
+
+> 📖 상세한 아키텍처 설명은 [folder-structure.md](./doc/v.1.0/folder-structure.md)를 참고하세요.
 
 <br/>
 
@@ -193,13 +332,15 @@ npm run android    # Android Emulator
 npm run web        # 웹 브라우저
 ```
 
-### 환경 변수 설정 (예정)
+### 환경 변수 설정
 
 `.env` 파일을 루트 디렉토리에 생성:
 
 ```bash
 EXPO_PUBLIC_API_BASE_URL=your_api_url
-EXPO_PEXPO_PUBLIC_KAKAO_API_KEY=your_kakao_key
+EXPO_PUBLIC_KAKAO_API_KEY=your_kakao_key
+EXPO_PUBLIC_KAKAO_MAP_API_KEY=your_kakao_map_key
+EXPO_PUBLIC_KAKAO_REST_API_KEY=your_kakao_rest_api_key
 ```
 
 <br/>
@@ -304,6 +445,7 @@ docs: README 환경 설정 추가
 ## 📚 문서
 
 - [개발 문서](./doc/v.1.0/implementation.md) - 상세 개발 가이드
+- [폴더 구조](./doc/v.1.0/folder-structure.md) - 프로젝트 구조 상세 설명
 - [Git 협업 가이드](./doc/v.1.0/git-convention.md) - Git & GitHub 컨벤션
 - [패키지 관리](./doc/v.1.0/package.md) - 의존성 관리 가이드
 
